@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uma Cyberpunk World</title>
+<!-- uma-cyberpunk's world bible (docs/design/world.md): the Ring and its Gates, the truth in five layers, the squad and
+     its rivals, the three Holds, the eight factions and who stands behind them, the five acts, how the story is seeded,
+     the tone, the ending and the calls WD1–WD24. Self-contained, uma-kit's tokens, light and dark. Every glyph and sketch
+     is original and abstract: no character art, no franchise logos, no character names, no franchise terms beyond the
+     titles. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #d39a2b; --accent-wash: #fbf1dd; --info: #2f6fe0; --info-wash: #e3ecfc; --success: #2f7a4f;
+    --success-wash: #e1f1e7; --danger: #c23b33; --danger-wash: #fbe5e3; --neon: #b03fd8; --neon-wash: #f4e4fb;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16);
+    --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+      --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+      --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+      --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+    --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+    --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+    --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  /* Page-only tokens: one colour per faction, the corruption accent and the rig sketch's idle fill. Mid-tones that read
+     on both themes, so they don't change with the theme. */
+  :root {
+    --f-muster: #8794a8; --f-commission: #e0408f; --f-envoys: #3fa94f; --f-armada: #2c7fd6;
+    --f-contractors: #8a5cf0; --f-wardens: #d9a521; --f-vigil: #19aebf; --f-bastion: #e5532f;
+    --corrupt: #9db52a; --rig-off: var(--sunken);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Inter', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font: 700 24px/1.2 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; margin: 0 0 6px; }
+  h2 { font: 700 17px/1.25 ui-rounded, system-ui, sans-serif; margin: 0 0 8px; }
+  h3 { font: 700 14px/1.25 system-ui; margin: 0 0 6px; }
+  p, li { color: var(--ink-soft); max-width: 82ch; }
+  a { color: var(--info); }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 5px; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 20px; }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  nav a.ext { background: transparent; color: var(--info); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  .card { background: var(--panel); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .note { font-size: 12px; color: var(--ink-faint); }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; }
+  .tag { display: inline-block; font: 700 11px ui-monospace, Menlo, monospace; padding: 1px 7px; border-radius: 999px; background: var(--neon-wash); color: var(--neon); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+  .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; }
+  .tile { background: var(--raised); border-radius: 10px; padding: 12px 14px; }
+  .tile p { margin: 4px 0 0; font-size: 13px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight: 600; }
+  td b { color: var(--ink); }
+  td { color: var(--ink-soft); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+
+  /* flows (as the concept's loop) */
+  .loop { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .loop span { font: 600 12px system-ui; padding: 8px 12px; border-radius: 10px; background: var(--info-wash); color: var(--ink); max-width: 260px; }
+  .loop span.hot { background: var(--neon-wash); }
+  .loop span.gold { background: var(--accent-wash); }
+  .loop i { color: var(--ink-faint); font-style: normal; }
+
+  /* status */
+  .status { border-left: 4px solid var(--accent); }
+  .status p { margin: 6px 0; }
+
+  /* the Ring */
+  .scroll > svg.wide { min-width: 900px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  .glyphrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .glyphrow svg { width: 30px; height: 30px; }
+
+  /* chips */
+  .chip { display: inline-flex; align-items: center; gap: 5px; font: 600 12px system-ui; padding: 3px 9px 3px 5px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--hairline-strong); color: var(--ink); margin: 2px 4px 2px 0; white-space: nowrap; }
+  .chip svg { width: 16px; height: 16px; flex: none; }
+  .chip i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: 2px; }
+  .lens { display: inline-block; font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--neon-wash); color: var(--ink); margin: 3px 4px 3px 0; }
+  .word { display: inline-block; font: 700 12px ui-monospace, Menlo, monospace; padding: 3px 9px; border-radius: 6px; background: var(--sunken); color: var(--ink); margin: 2px 4px 2px 0; }
+
+  /* the truth ladder */
+  .ladder { display: grid; gap: 6px; }
+  .ends { font: 600 11px system-ui; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; margin: 4px 0; }
+  .rung { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 10px 12px;
+    border-radius: 10px; margin-left: calc(var(--d) * 26px); border: 1px solid var(--hairline); }
+  .rung .n { font: 800 24px/1 ui-rounded, system-ui, sans-serif; color: var(--neon); }
+  .rung h3 { margin: 0 0 2px; }
+  .rung p { margin: 0; font-size: 13px; color: var(--ink-soft); }
+  .rung p b { color: var(--ink); font-weight: 600; }
+  .rev { font: 700 11px ui-monospace, Menlo, monospace; padding: 2px 8px; border-radius: 999px; background: var(--panel); color: var(--ink);
+    white-space: nowrap; border: 1px solid var(--hairline-strong); }
+  .d0 { background: var(--raised); }
+  .d1 { background: color-mix(in srgb, var(--neon) 8%, var(--raised)); }
+  .d2 { background: color-mix(in srgb, var(--neon) 14%, var(--raised)); }
+  .d3 { background: color-mix(in srgb, var(--neon) 20%, var(--raised)); }
+  .d4 { background: color-mix(in srgb, var(--neon) 26%, var(--raised)); }
+  .d5 { background: color-mix(in srgb, var(--accent) 30%, var(--raised)); border-color: color-mix(in srgb, var(--accent) 55%, transparent); }
+  .d5 .n { color: var(--accent); }
+  @media (max-width: 640px) {
+    .rung { grid-template-columns: 30px minmax(0, 1fr); margin-left: calc(var(--d) * 5px); }
+    .rung .rev { grid-column: 2; justify-self: start; }
+  }
+
+  /* squad */
+  .daynight { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); border-radius: 10px; overflow: hidden; margin-bottom: 12px; }
+  .daynight > div { padding: 12px 14px; display: flex; gap: 12px; align-items: flex-start; }
+  .daynight svg { width: 34px; height: 34px; flex: none; }
+  .daynight p { margin: 2px 0 0; font-size: 13px; }
+  .day { background: var(--accent-wash); }
+  .night { background: var(--neon-wash); }
+
+  /* holds */
+  .holds { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 12px; }
+  .hold { background: var(--raised); border-radius: 10px; padding: 14px; border-top: 4px solid var(--hc); }
+  .hold header { display: flex; gap: 14px; align-items: center; margin-bottom: 8px; }
+  .hold header svg { width: 92px; height: 92px; flex: none; background: var(--panel); border-radius: 10px; }
+  .hold .hname { font: 700 20px/1.1 ui-rounded, system-ui, sans-serif; }
+  .hold .hsub { font-size: 12px; color: var(--ink-soft); margin-top: 3px; }
+  dl.kv { margin: 0; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 6px 10px; font-size: 13px; }
+  dl.kv dt { font: 600 10.5px/1.6 system-ui; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; padding-top: 1px; }
+  dl.kv dd { margin: 0; color: var(--ink-soft); }
+  dl.kv dd b { color: var(--ink); }
+  @media (max-width: 420px) { dl.kv { grid-template-columns: 1fr; gap: 0 0; } dl.kv dd { margin-bottom: 6px; } }
+
+  /* factions */
+  .factions { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 12px; }
+  .fc { background: var(--raised); border-radius: 10px; padding: 14px; border-top: 4px solid var(--fc); display: flex; flex-direction: column; gap: 10px; }
+  .fc header { display: flex; gap: 12px; align-items: center; }
+  .fc header svg { width: 52px; height: 52px; flex: none; color: var(--fc); }
+  .fc .franchise { font: 600 11px system-ui; color: var(--ink-faint); letter-spacing: .02em; }
+  .fc .fname { font: 700 20px/1.15 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; color: var(--ink); }
+  .fc .fsub { font-size: 12px; color: var(--ink-soft); }
+  .fc .meta { display: flex; flex-wrap: wrap; gap: 4px; }
+  .pill { font: 700 10.5px system-ui; padding: 2px 8px; border-radius: 999px; background: var(--panel); color: var(--ink-soft); border: 1px solid var(--hairline-strong); }
+  .pill.anchor { color: var(--ink); border-color: var(--corrupt); background: color-mix(in srgb, var(--corrupt) 18%, var(--panel)); }
+  .pill.collar { color: var(--info); border-color: color-mix(in srgb, var(--info) 50%, transparent); background: var(--info-wash); }
+  .mech { background: color-mix(in srgb, var(--fc) 11%, var(--panel)); border-radius: 8px; padding: 8px 10px; font-size: 13px; color: var(--ink-soft); }
+  .mech b { color: var(--ink); }
+  .threat { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--ink-soft); margin-top: auto; padding-top: 8px; border-top: 1px solid var(--hairline); }
+  .threat svg { width: 52px; height: 52px; flex: none; background: var(--panel); border-radius: 8px; }
+  .threat b { color: var(--ink); }
+  .ico { display: inline-block; width: 18px; height: 18px; vertical-align: -4px; margin-right: 6px; }
+
+  /* allies and rivals */
+  .pairs { display: grid; gap: 6px; }
+  .pair { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; padding: 8px 10px; background: var(--raised); border-radius: 8px; }
+  .pair .op { font: 700 11px ui-monospace, Menlo, monospace; color: var(--ink-faint); }
+  .pair .op.vs { color: var(--danger); }
+  .pair .op.plus { color: var(--success); }
+  .pair small { flex-basis: 100%; color: var(--ink-soft); font-size: 12px; }
+
+  /* the acts */
+  .acts { display: grid; grid-template-columns: repeat(5, minmax(190px, 1fr)); gap: 8px; min-width: 1000px; }
+  .tonebar { grid-column: 1 / -1; height: 10px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--hairline-strong);
+    background: linear-gradient(90deg, #e0408f 0%, #d39a2b 14%, #3fa94f 25%, #2c7fd6 35%, #8a5cf0 50%, #8794a8 64%, #39404c 76%, #39404c 84%, #d39a2b 100%); }
+  .act { background: var(--raised); border-radius: 10px; padding: 12px; border: 1px solid var(--hairline); }
+  .act .num { font: 800 28px/1 ui-rounded, system-ui, sans-serif; color: var(--ink); }
+  .act .where { font: 600 13px system-ui; color: var(--ink); margin-top: 4px; }
+  .act .k { font: 600 10.5px system-ui; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin: 10px 0 3px; }
+  .act p { margin: 0; font-size: 12.5px; }
+  .act.finale { background: color-mix(in srgb, var(--accent) 12%, var(--raised)); }
+  .depth { display: flex; gap: 3px; margin: 2px 0 4px; }
+  .depth i { width: 18px; height: 8px; border-radius: 2px; background: var(--sunken); box-shadow: inset 0 0 0 1px var(--hairline); }
+  .depth i.was { background: color-mix(in srgb, var(--neon) 35%, var(--sunken)); }
+  .depth i.now { background: var(--neon); }
+  .thread { grid-column: 1 / -1; border-radius: 8px; padding: 7px 12px; font-size: 12.5px; color: var(--ink);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--f-muster) 22%, var(--panel)) 0%, color-mix(in srgb, var(--f-muster) 22%, var(--panel)) 80%, color-mix(in srgb, var(--success) 30%, var(--panel)) 100%);
+    border-left: 4px solid var(--f-muster); display: flex; align-items: center; gap: 8px; }
+  .thread svg { width: 18px; height: 18px; flex: none; color: var(--f-muster); }
+</style>
+</head>
+<body>
+
+<!-- Sprite: the eight Gate-world glyphs (a ring of light with a gap, each gap turned a different way, around an original
+     mark), the Authority's mark, the plain Gate, and an abstract combat rig whose parts take a colour from custom
+     properties (--rig-arms, --rig-legs, --rig-core, --rig-back, --rig-frame). -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="g-muster" viewBox="0 0 48 48">
+    <path d="M15.0 39.6A18 18 0 1 1 33.0 39.6" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M16 16L24 21L32 16M16 22.5L24 27.5L32 22.5M16 29L24 34L32 29" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="g-commission" viewBox="0 0 48 48">
+    <path d="M39.6 33.0A18 18 0 1 1 39.6 15.0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M27 12L17 26H24L21 36L31 21H24Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-envoys" viewBox="0 0 48 48">
+    <path d="M33.0 8.4A18 18 0 1 1 15.0 8.4" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <g fill="currentColor"><circle cx="24.0" cy="15.0" r="2.3"/><circle cx="31.0" cy="18.4" r="2.3"/><circle cx="32.8" cy="26.0" r="2.3"/><circle cx="27.9" cy="32.1" r="2.3"/><circle cx="20.1" cy="32.1" r="2.3"/><circle cx="15.2" cy="26.0" r="2.3"/><circle cx="17.0" cy="18.4" r="2.3"/></g>
+  </symbol>
+  <symbol id="g-armada" viewBox="0 0 48 48">
+    <path d="M8.4 15.0A18 18 0 1 1 8.4 33.0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M14 20q5-5 10 0t10 0M14 28q5-5 10 0t10 0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="g-contractors" viewBox="0 0 48 48">
+    <path d="M41.4 19.3A18 18 0 1 1 28.7 6.6" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M24 12L27 21L36 24L27 27L24 36L21 27L12 24L21 21Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-wardens" viewBox="0 0 48 48">
+    <path d="M6.6 28.7A18 18 0 1 1 19.3 41.4" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M24 12C30 19 31 25 24 33C17 25 18 19 24 12Z" fill="currentColor"/>
+    <path d="M19 36H29" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="g-vigil" viewBox="0 0 48 48">
+    <path d="M28.7 41.4A18 18 0 1 1 41.4 28.7" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <polygon points="24.0,14.0 32.7,19.0 32.7,29.0 24.0,34.0 15.3,29.0 15.3,19.0" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/>
+    <circle cx="24" cy="24" r="3.2" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-bastion" viewBox="0 0 48 48">
+    <path d="M19.3 6.6A18 18 0 1 1 6.6 19.3" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M14 33V19H18V24H22V16H26V24H30V19H34V33Z" fill="currentColor"/>
+  </symbol>
+  <symbol id="g-authority" viewBox="0 0 48 48">
+    <polygon points="24.0,6.0 39.6,15.0 39.6,33.0 24.0,42.0 8.4,33.0 8.4,15.0" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="M15 24H33M24 15V33" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="g-gate" viewBox="0 0 48 48">
+    <path d="M39.6 15.0A18 18 0 1 1 24.0 6.0" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="rig" viewBox="0 0 64 64">
+    <rect x="13" y="8" width="8" height="12" rx="2" style="fill:var(--rig-back,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="43" y="8" width="8" height="12" rx="2" style="fill:var(--rig-back,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="10" y="21" width="8" height="20" rx="3" style="fill:var(--rig-arms,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="46" y="21" width="8" height="20" rx="3" style="fill:var(--rig-arms,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="23" y="43" width="7" height="17" rx="3" style="fill:var(--rig-legs,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="34" y="43" width="7" height="17" rx="3" style="fill:var(--rig-legs,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="27" y="6" width="10" height="9" rx="3" style="fill:var(--rig-frame,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <rect x="20" y="18" width="24" height="24" rx="5" style="fill:var(--rig-frame,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+    <circle cx="32" cy="30" r="5.5" style="fill:var(--rig-core,var(--rig-off));stroke:var(--ink-faint);stroke-width:1.2"/>
+  </symbol>
+</svg>
+
+<main>
+  <h1>Uma Cyberpunk: the world and its factions</h1>
+  <p>The world bible: what the Ring is, what the Gates really do, why heroines from eight other worlds arrive as enemies,
+    how each can be won back, and the five acts that carry it. Twenty-four calls, WD1–WD24, each a recommendation, adopted
+    until the owner changes one. Source: <code>docs/design/world.md</code>.</p>
+  <nav>
+    <a href="#status">Status</a><a href="#short">The short answer</a><a href="#ring">The Ring</a>
+    <a href="#truth">The truth</a><a href="#squad">The squad</a><a href="#holds">The Holds</a>
+    <a href="#factions">The factions</a><a href="#hardware">Hardware</a><a href="#web">Who's behind whom</a>
+    <a href="#allies">Allies and rivals</a><a href="#acts">The five acts</a><a href="#telling">How it's told</a>
+    <a href="#tone">Tone, names, ending</a><a href="#calls">The calls</a>
+    <a class="ext" href="concept.html">The concept ↗</a><a class="ext" href="references.html">The references ↗</a>
+    <a class="ext" href="../world.md">world.md ↗</a>
+  </nav>
+
+  <!-- ───────────────────────── Status ───────────────────────── -->
+  <section class="card status" id="status">
+    <h2>Status <span class="tag">D3</span></h2>
+    <p><b>2026-11-12, the owner's direction.</b> The owner asked for the lore and story to draw on <i>13 Sentinels: Aegis
+      Rim</i> and League of Legends' <i>Star Guardian</i>, and for the other franchises on the platform to be the enemy
+      factions, tied to the plot. This page is the world bible that answers both. The research behind it is
+      <a href="references.html">the references</a>; the battle and the build are <a href="concept.html">the concept</a>.</p>
+    <div class="tile" style="margin-top:10px">
+      <h3>What's here and what's private <span class="tag">WD22</span></h3>
+      <p>Everything here is original and names no character: no Uma, no heroine, and no franchise's own terms beyond its
+        title. Who plays which part (which Uma leads which route, which heroine leads which faction), the chapters and every
+        line of dialogue are the story, kept in the ignored <code>content/</code> (TC13).</p>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Short answer ───────────────────────── -->
+  <section class="card" id="short">
+    <h2>The short answer</h2>
+    <div class="grid4">
+      <div class="tile"><h3>The Ring runs on stolen light <span class="tag">WD1</span></h3><p>The megacity glows because its Authority opens Gates into other worlds and siphons their power. The Gates aren't natural rifts, and the people they pull in aren't accidents.</p></div>
+      <div class="tile"><h3>The siphons let something in <span class="tag">WD2</span></h3><p>In the dark between worlds lives the Blackout, a hunger that eats and rewrites memory. Every siphon is a door for it, and the Authority's board has made a bargain with it.</p></div>
+      <div class="tile"><h3>The squad fights on the same sin <span class="tag">WD3</span></h3><p>The Umas' combat rigs run on prototype siphon cores, stolen from the Authority. They don't know that yet.</p></div>
+      <div class="tile"><h3>The heroines come to stop the theft <span class="tag">WD9</span></h3><p>Hired, bound, corrupted or simply lied to, they come through the Gates and the Authority points them at the squad. Each is held by one of three Holds, and each Hold has its own way to free her.</p></div>
+      <div class="tile"><h3>Eight factions <span class="tag">WD10</span><span class="tag">WD11</span></h3><p>One per franchise, each with an original name, a reason to be on the Ring, a way to turn and one new battle mechanic.</p></div>
+      <div class="tile"><h3>Five acts <span class="tag">WD15</span></h3><p>From the Ring's underlevels out along the Lanes to a dead sister ring and back to the Gate Heart. Each act peels back one layer of the truth.</p></div>
+      <div class="tile"><h3>The last layer is the squad's own <span class="tag">WD8</span></h3><p>The Umas dream of running on a sunlit track under a sky they've never seen. They came through the first Gate as children, and the Blackout took the rest.</p></div>
+      <div class="tile"><h3>The tone is Star Guardian's <span class="tag">WD20</span></h3><p>Candy-bright neon over a tragic story, a found family, nobody dies on screen, and an Uma is never maimed.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The Ring ───────────────────────── -->
+  <section class="card" id="ring">
+    <h2>1. The setting: the Ring, the Lanes and the Gates <span class="tag">WD4</span><span class="tag">WD5</span></h2>
+    <p>A cross-section of one slice of the Ring. The city stacks in five layers over its hub, the Gate Heart. The Lanes run
+      out to stations and moons, and to the dead sister ring. Eight Gate-worlds sit on either side, each a ring of light with
+      a gap in its own colour, and every siphon runs back to the Gate Heart.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1120 620" role="img" aria-label="A cross-section of the Ring: the Spires, the Districts, the Markets, the Underlevels and the Docks stacked over the Gate Heart, the Lanes arcing overhead to stations, moons and the dead sister ring, and eight Gate-worlds whose siphons run to the Gate Heart" style="font-family:system-ui,-apple-system,sans-serif">
+        <defs>
+          <clipPath id="stackclip"><rect x="360" y="175" width="400" height="250" rx="12"/></clipPath>
+          <radialGradient id="heartglow"><stop offset="0" stop-color="var(--accent)" stop-opacity="0.55"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></radialGradient>
+        </defs>
+        <!-- stars -->
+        <g fill="var(--ink-faint)" opacity="0.55">
+          <circle cx="40" cy="40" r="1.3"/><circle cx="130" cy="62" r="1.1"/><circle cx="300" cy="30" r="1.4"/><circle cx="470" cy="22" r="1"/>
+          <circle cx="650" cy="20" r="1.3"/><circle cx="830" cy="36" r="1.1"/><circle cx="990" cy="52" r="1.4"/><circle cx="1092" cy="96" r="1"/>
+          <circle cx="28" cy="270" r="1.2"/><circle cx="62" cy="390" r="1.4"/><circle cx="104" cy="470" r="1"/><circle cx="40" cy="560" r="1.3"/>
+          <circle cx="300" cy="604" r="1.1"/><circle cx="720" cy="606" r="1.3"/><circle cx="1000" cy="300" r="1"/><circle cx="1090" cy="250" r="1.3"/>
+          <circle cx="1096" cy="420" r="1.1"/><circle cx="830" cy="596" r="1.2"/><circle cx="455" cy="112" r="1"/><circle cx="870" cy="170" r="1.1"/>
+        </g>
+
+        <!-- the Lanes -->
+        <path d="M70 150 Q560 -20 1050 150" fill="none" stroke="var(--info)" stroke-width="3" stroke-dasharray="10 6" opacity="0.7"/>
+        <text x="560" y="46" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">the Lanes</text>
+        <text x="560" y="60" text-anchor="middle" font-size="11" fill="var(--ink-soft)">routes between the Ring, its stations and its moons</text>
+        <circle cx="246" cy="100" r="9" fill="var(--sunken)" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <text x="246" y="126" text-anchor="middle" font-size="11" fill="var(--ink-soft)">moon</text>
+        <rect x="396" y="67" width="14" height="14" rx="3" fill="var(--panel)" stroke="var(--info)" stroke-width="2"/>
+        <text x="403" y="98" text-anchor="middle" font-size="11" fill="var(--ink-soft)">station</text>
+        <rect x="671" y="63" width="14" height="14" rx="3" fill="var(--panel)" stroke="var(--info)" stroke-width="2"/>
+        <text x="678" y="94" text-anchor="middle" font-size="11" fill="var(--ink-soft)">station</text>
+        <circle cx="913" cy="109" r="11" fill="var(--sunken)" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <text x="913" y="137" text-anchor="middle" font-size="11" fill="var(--ink-soft)">moon</text>
+        <text x="1050" y="174" text-anchor="middle" font-size="11" fill="var(--ink-soft)">out to the Gate-worlds</text>
+
+        <!-- the dead sister ring -->
+        <circle cx="75" cy="150" r="27" fill="var(--panel)" stroke="var(--ink-faint)" stroke-width="5" stroke-dasharray="34 7 12 9 40 11 18 8" opacity="0.9"/>
+        <path d="M62 139l7 6-4 5 8 6M86 140l-5 7 6 4" fill="none" stroke="var(--ink-faint)" stroke-width="1.4"/>
+        <text x="75" y="196" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink-soft)">the sister ring</text>
+        <text x="75" y="210" text-anchor="middle" font-size="11" fill="var(--ink-faint)">dead</text>
+
+        <!-- siphons: each Gate-world to the Gate Heart -->
+        <g fill="none" stroke-width="2" stroke-dasharray="3 5" opacity="0.85">
+          <path d="M218 215 C270 215 270 508 528 508" stroke="var(--f-muster)"/>
+          <path d="M218 305 C270 305 270 516 528 516" stroke="var(--f-commission)"/>
+          <path d="M218 395 C270 395 270 524 528 524" stroke="var(--f-envoys)"/>
+          <path d="M218 485 C270 485 270 532 528 532" stroke="var(--f-armada)"/>
+          <path d="M902 215 C850 215 850 508 592 508" stroke="var(--f-contractors)"/>
+          <path d="M902 305 C850 305 850 516 592 516" stroke="var(--f-wardens)"/>
+          <path d="M902 395 C850 395 850 524 592 524" stroke="var(--f-vigil)"/>
+          <path d="M902 485 C850 485 850 532 592 532" stroke="var(--f-bastion)"/>
+        </g>
+        <text x="236" y="566" font-size="11" fill="var(--ink-soft)">siphons: other worlds' light, drained to the hub</text>
+
+        <!-- Gate-worlds, left -->
+        <g font-size="11" fill="var(--ink-soft)" text-anchor="middle">
+          <use href="#g-muster" x="167" y="192" width="46" height="46" style="color:var(--f-muster)"/>
+          <text x="190" y="252">Steel Muster</text>
+          <use href="#g-commission" x="167" y="282" width="46" height="46" style="color:var(--f-commission)"/>
+          <text x="190" y="342">Neon Commission</text>
+          <use href="#g-envoys" x="167" y="372" width="46" height="46" style="color:var(--f-envoys)"/>
+          <text x="190" y="432">Sevenfold Envoys</text>
+          <use href="#g-armada" x="167" y="462" width="46" height="46" style="color:var(--f-armada)"/>
+          <text x="190" y="522">Tideline Armada</text>
+          <use href="#g-contractors" x="907" y="192" width="46" height="46" style="color:var(--f-contractors)"/>
+          <text x="930" y="252">Starward Contractors</text>
+          <use href="#g-wardens" x="907" y="282" width="46" height="46" style="color:var(--f-wardens)"/>
+          <text x="930" y="342">Lantern Wardens</text>
+          <use href="#g-vigil" x="907" y="372" width="46" height="46" style="color:var(--f-vigil)"/>
+          <text x="930" y="432">Iron Vigil</text>
+          <use href="#g-bastion" x="907" y="462" width="46" height="46" style="color:var(--f-bastion)"/>
+          <text x="930" y="522">Ember Bastion</text>
+        </g>
+        <!-- hum: a siphoning Gate hums -->
+        <g fill="none" stroke-width="1.6" stroke-linecap="round" opacity="0.8">
+          <path d="M160 207q-6 8 0 16M153 202q-10 13 0 26" stroke="var(--f-muster)"/>
+          <path d="M160 297q-6 8 0 16M153 292q-10 13 0 26" stroke="var(--f-commission)"/>
+          <path d="M160 387q-6 8 0 16M153 382q-10 13 0 26" stroke="var(--f-envoys)"/>
+          <path d="M160 477q-6 8 0 16M153 472q-10 13 0 26" stroke="var(--f-armada)"/>
+          <path d="M960 207q6 8 0 16M967 202q10 13 0 26" stroke="var(--f-contractors)"/>
+          <path d="M960 297q6 8 0 16M967 292q10 13 0 26" stroke="var(--f-wardens)"/>
+          <path d="M960 387q6 8 0 16M967 382q10 13 0 26" stroke="var(--f-vigil)"/>
+          <path d="M960 477q6 8 0 16M967 472q10 13 0 26" stroke="var(--f-bastion)"/>
+        </g>
+
+        <!-- the Spires' towers -->
+        <g fill="var(--raised)" stroke="var(--ink-faint)" stroke-width="1">
+          <rect x="372" y="138" width="16" height="40" rx="2"/><rect x="396" y="120" width="12" height="58" rx="2"/><rect x="420" y="150" width="20" height="28" rx="2"/>
+          <rect x="610" y="128" width="14" height="50" rx="2"/><rect x="632" y="146" width="22" height="32" rx="2"/><rect x="662" y="114" width="12" height="64" rx="2"/>
+          <rect x="684" y="140" width="18" height="38" rx="2"/><rect x="712" y="124" width="14" height="54" rx="2"/><rect x="734" y="150" width="18" height="28" rx="2"/>
+        </g>
+
+        <!-- the stack -->
+        <g clip-path="url(#stackclip)">
+          <rect x="360" y="175" width="400" height="50" style="fill:color-mix(in srgb, var(--info) 9%, var(--panel))"/>
+          <rect x="360" y="225" width="400" height="50" style="fill:color-mix(in srgb, var(--neon) 30%, var(--panel))"/>
+          <rect x="360" y="275" width="400" height="50" style="fill:color-mix(in srgb, var(--accent) 32%, var(--panel))"/>
+          <rect x="360" y="325" width="400" height="50" style="fill:color-mix(in srgb, #000 40%, var(--sunken))"/>
+          <rect x="360" y="375" width="400" height="50" style="fill:color-mix(in srgb, var(--info) 28%, var(--panel))"/>
+          <g stroke="var(--hairline-strong)" stroke-width="1"><path d="M360 225H760M360 275H760M360 325H760M360 375H760"/></g>
+        </g>
+        <rect x="360" y="175" width="400" height="250" rx="12" fill="none" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <!-- layer marks -->
+        <use href="#g-authority" x="470" y="186" width="28" height="28" style="color:var(--info)"/>
+        <g opacity="0.85"><rect x="478" y="234" width="26" height="11" rx="2" fill="var(--neon)"/><rect x="512" y="252" width="18" height="10" rx="2" fill="#e0408f"/>
+          <path d="M546 232l-4 12M556 238l-4 12M566 231l-4 12M540 252l-4 12" stroke="var(--info)" stroke-width="1.3"/></g>
+        <path d="M466 289Q482 298 500 289" fill="none" stroke="var(--ink-faint)" stroke-width="1"/>
+        <g fill="var(--danger)"><circle cx="471" cy="292" r="3.6"/><circle cx="483" cy="295" r="3.6"/><circle cx="495" cy="292" r="3.6"/></g>
+        <rect x="516" y="290" width="14" height="24" rx="2" fill="var(--ink)" opacity="0.75"/><circle cx="527" cy="303" r="1.3" fill="var(--accent)"/>
+        <use href="#g-gate" x="476" y="336" width="28" height="28" style="color:#ffffff"/>
+        <path d="M478 400h50l-8 11h-34z" fill="var(--info)"/><path d="M500 400v-12l12 9" fill="none" stroke="var(--info)" stroke-width="1.6"/>
+        <!-- layer names -->
+        <g font-size="13" font-weight="700" fill="var(--ink)">
+          <text x="374" y="205">the Spires</text><text x="374" y="255">the Districts</text><text x="374" y="305">the Markets</text>
+          <text x="374" y="355">the Underlevels</text><text x="374" y="405">the Docks</text>
+        </g>
+        <g font-size="11.5" fill="var(--ink)" text-anchor="end">
+          <text x="746" y="205">the Authority, above the light</text><text x="746" y="255">neon, holo-ads, rain</text>
+          <text x="746" y="305">night markets; the Hideout's front</text><text x="746" y="355">the dark; the first Gate opened here</text>
+          <text x="746" y="405">ships leave for the Lanes</text>
+        </g>
+        <!-- the Docks to the Lanes -->
+        <path d="M760 400H776V84" fill="none" stroke="var(--info)" stroke-width="2" stroke-dasharray="6 4"/>
+        <path d="M771 92l5-9 5 9" fill="none" stroke="var(--info)" stroke-width="2"/>
+        <text transform="translate(792 168) rotate(-90)" font-size="11" fill="var(--ink-soft)">to the Lanes</text>
+
+        <!-- the Gate Heart -->
+        <rect x="548" y="425" width="24" height="64" fill="color-mix(in srgb, var(--accent) 25%, var(--panel))" stroke="var(--ink-faint)" stroke-width="1"/>
+        <circle cx="560" cy="520" r="64" fill="url(#heartglow)"/>
+        <circle cx="560" cy="520" r="32" fill="var(--accent-wash)" stroke="var(--accent)" stroke-width="3"/>
+        <use href="#g-gate" x="545" y="505" width="30" height="30" style="color:var(--accent)"/>
+        <text x="560" y="578" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">the Gate Heart</text>
+        <text x="560" y="594" text-anchor="middle" font-size="11" fill="var(--ink-soft)">the hub, where every siphon meets</text>
+
+        <!-- inset: the Ring around its planet -->
+        <text x="1040" y="546" text-anchor="middle" font-size="10.5" fill="var(--ink-faint)">the Ring circles a planet</text>
+        <path d="M984 578A56 12 0 0 1 1096 578" fill="none" stroke="var(--accent)" stroke-width="2"/>
+        <circle cx="1040" cy="578" r="20" style="fill:color-mix(in srgb, var(--info) 35%, var(--panel))"/>
+        <path d="M984 578A56 12 0 0 0 1096 578" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--info)"></i>The Lanes and the ships' route</span>
+      <span><i style="background:linear-gradient(90deg,var(--f-muster),var(--f-commission),var(--f-envoys),var(--f-armada),var(--f-contractors),var(--f-wardens),var(--f-vigil),var(--f-bastion))"></i>Siphons, one colour per Gate-world</span>
+      <span><i style="background:transparent;box-shadow:inset 0 0 0 2px var(--ink-faint)"></i>Arcs beside a Gate: it hums, so it's siphoning</span>
+      <span><i style="background:var(--accent)"></i>The Gate Heart, where the light ends up</span>
+    </div>
+
+    <h3 style="margin-top:18px">The Ring in six layers <span class="tag">WD4</span></h3>
+    <p style="margin-top:0">A megacity built on an orbital ring around a planet. It stacks in layers:</p>
+    <div class="scroll">
+      <table style="min-width:560px">
+        <tr><th>Layer</th><th>What it is</th><th>Who you meet</th></tr>
+        <tr><td><b><span class="sw" style="background:color-mix(in srgb, var(--info) 9%, var(--panel))"></span>The Spires</b></td><td>The Authority's towers, clean and white, above the light</td><td>The Authority's board, the rival squad's handlers</td></tr>
+        <tr><td><b><span class="sw" style="background:color-mix(in srgb, var(--neon) 30%, var(--panel))"></span>The Districts</b></td><td>Neon streets, holo-ads, rain, the city most people know</td><td>Crews for hire, fans of the rival squad</td></tr>
+        <tr><td><b><span class="sw" style="background:color-mix(in srgb, var(--accent) 32%, var(--panel))"></span>The Markets</b></td><td>Night markets and back rooms; the Hideout's front business is here</td><td>The keeper, fixers, informants</td></tr>
+        <tr><td><b><span class="sw" style="background:color-mix(in srgb, #000 40%, var(--sunken))"></span>The Underlevels</b></td><td>The dark under the city, where the first Gate opened</td><td>Gangs, machines, things that came through</td></tr>
+        <tr><td><b><span class="sw" style="background:color-mix(in srgb, var(--info) 28%, var(--panel))"></span>The Docks</b></td><td>Where ships leave for the Lanes</td><td>The fleet, smugglers</td></tr>
+        <tr><td><b><span class="sw" style="background:var(--accent)"></span>The Gate Heart</b></td><td>The hub of the Ring, where every siphon meets</td><td>The end</td></tr>
+      </table>
+    </div>
+
+    <h3 style="margin-top:18px">The Lanes and the Gates <span class="tag">WD5</span></h3>
+    <div class="grid4">
+      <div class="tile"><h3>The Lanes</h3><p>The routes between the Ring, its stations and its moons. Gates open along them and inside the Ring.</p></div>
+      <div class="tile"><h3>A ring of light with a gap</h3><p>That's a Gate, each in its own colour. Every Gate-world has a glyph, and every faction from it carries that glyph.</p>
+        <div class="glyphrow">
+          <svg viewBox="0 0 48 48" style="color:var(--f-muster)"><use href="#g-muster" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-commission)"><use href="#g-commission" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-envoys)"><use href="#g-envoys" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-contractors)"><use href="#g-contractors" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-vigil)"><use href="#g-vigil" width="48" height="48"/></svg>
+          <svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>
+        </div>
+      </div>
+      <div class="tile"><h3>Siphoning Gates hum</h3><p>A Gate that's siphoning hums; one that's only a door is silent. That difference is the first clue (WD18).</p></div>
+      <div class="tile"><h3>Glyphs are ours</h3><p>Each glyph is an original mark: the gap turned a different way around a simple shape. No franchise logos.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The truth ───────────────────────── -->
+  <section class="card" id="truth">
+    <h2>2. The truth, in layers <span class="tag">WD1</span><span class="tag">WD2</span><span class="tag">WD3</span><span class="tag">WD8</span></h2>
+    <p>The game is a mystery the player assembles, 13 Sentinels' way: each act opens on a flash-forward and peels back one
+      layer. The player sees the surface first; each step down is deeper and darker, and the last is the squad's own.</p>
+    <div class="ends">▲ What the player sees first</div>
+    <div class="ladder">
+      <div class="rung d0" style="--d:0"><span class="n">0</span>
+        <div><h3>The surface</h3><p><b>What the player believes:</b> Gates are natural rifts; heroines arrive lost and dangerous; the Authority protects the Ring and its licensed hero squad saves the day.</p></div>
+        <span class="rev">Act I opens here</span></div>
+      <div class="rung d1" style="--d:1"><span class="n">1</span>
+        <div><h3>The frame</h3><p><b>What's true:</b> the first Gate was opened on purpose, and the Authority framed the squad for it because the squad saw it happen.</p></div>
+        <span class="rev">Act I</span></div>
+      <div class="rung d2" style="--d:2"><span class="n">2</span>
+        <div><h3>The Tithe <span class="tag">WD1</span></h3><p><b>What's true:</b> the Gates are siphons. The Ring's light is drained from other worlds' suns, and the heroines who come through are recovery forces, mercenaries the Authority hired, or people it bound.</p></div>
+        <span class="rev">Act II</span></div>
+      <div class="rung d3" style="--d:3"><span class="n">3</span>
+        <div><h3>The cores <span class="tag">WD3</span></h3><p><b>What's true:</b> the squad's rigs run on stolen prototype siphon cores. Every battle they win drains a little more.</p></div>
+        <span class="rev">Act III</span></div>
+      <div class="rung d4" style="--d:4"><span class="n">4</span>
+        <div><h3>The Blackout <span class="tag">WD2</span></h3><p><b>What's true:</b> the siphons let in the Blackout, which eats memory. The Authority's board bargains with it. The dead sister ring is what the Ring becomes when the bargain comes due.</p></div>
+        <span class="rev">Act IV</span></div>
+      <div class="rung d5" style="--d:5"><span class="n">5</span>
+        <div><h3>The squad <span class="tag">WD8</span></h3><p><b>What's true:</b> the Umas came through the first Gate as children, from a world with a sunlit track. The Blackout trimmed their memories down to dreams of running.</p></div>
+        <span class="rev">Act V</span></div>
+    </div>
+    <div class="ends" style="margin-left:130px">▼ The last layer</div>
+
+    <div class="grid4" style="margin-top:14px">
+      <div class="tile"><h3>The Tithe <span class="tag">WD1</span></h3><p>The central truth, which both research passes reached on their own (<a href="references.html">references</a>, "Where the references agree"). It makes the enemies right about something, so the factions are never just monsters.</p></div>
+      <div class="tile"><h3>The Blackout <span class="tag">WD2</span></h3><p>The darkness between worlds is a hunger, not an army. It feeds on fear and doubt, as Star Guardian's darkness does, and it eats and rewrites memory, which is 13 Sentinels' theme. A heroine it touches remembers the squad as her own world's enemy. One it takes completely is <b>Dimmed</b>: the game's fallen, her colours drained to one sickly accent.</p></div>
+      <div class="tile"><h3>The cores <span class="tag">WD3</span></h3><p>The power is a pact with a price, as in Star Guardian. Overdrive draws harder on the core and builds Strain (TC27). In the finale the squad gives the cores up.</p></div>
+      <div class="tile"><h3>The squad's own secret <span class="tag">WD8</span></h3><p>It ties the game to the Umas: they never race here, but they dream of it. It also makes the heroines their mirror. Everyone on the board was pulled through a Gate.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The squad ───────────────────────── -->
+  <section class="card" id="squad">
+    <h2>3. The squad, the rivals and the double life <span class="tag">WD6</span><span class="tag">WD7</span></h2>
+    <div class="daynight">
+      <div class="day">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="7" fill="var(--accent)"/><g stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><path d="M17 3v4M17 27v4M3 17h4M27 17h4M7 7l3 3M24 24l3 3M27 7l-3 3M10 24l-3 3"/></g></svg>
+        <div><h3>By day</h3><p>Ordinary lives in the Districts. Scenes with each other and the city.</p></div>
+      </div>
+      <div class="night">
+        <svg viewBox="0 0 34 34" aria-hidden="true"><path d="M22 5a12 12 0 1 0 8 19A10 10 0 0 1 22 5z" fill="var(--neon)"/></svg>
+        <div><h3>By night</h3><p>They suit up and run missions. Their rigs are unlicensed.</p></div>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="tile"><h3>The squad</h3><p>Four Umas plus a guest at a time, drawn from a cast that grows through the story (TC45).</p></div>
+      <div class="tile"><h3>The Hideout <span class="tag">WD7</span></h3><p>Behind a front business in the Markets, kept by a civilian who knows the secret. It's the hub between battles (TC42).</p></div>
+      <div class="tile"><h3>Suit-up</h3><p>The transformation: the rig's parts snap on, each lit in the Uma's own colour, and the core flares. It plays at the start of each battle (skippable) and at big story moments (TC39).</p></div>
+    </div>
+    <h3 style="margin-top:16px">The squad and its rival <span class="tag">WD6</span></h3>
+    <div class="scroll">
+      <table style="min-width:620px">
+        <tr><th style="width:120px"></th><th>The squad</th><th>The rival squad</th></tr>
+        <tr><td><b>Who</b></td><td>Four Umas plus a guest, from a growing cast (TC45)</td><td>Umas too, from the Uma NPCs board (TC40)</td></tr>
+        <tr><td><b>Licence</b></td><td>None: unlicensed rigs, a double life</td><td>The Authority's licensed heroes</td></tr>
+        <tr><td><b>Fame</b></td><td>Ordinary by day</td><td>Famous, on every billboard, with fans in the Districts</td></tr>
+        <tr><td><b>Cores</b></td><td>Stolen prototype siphon cores, and they don't know it yet (WD3)</td><td>Overclocked cores that burn their pilots out</td></tr>
+        <tr><td><b>The truth</b></td><td>Learned one layer an act</td><td>Their captain knows it and believes the Ring's survival justifies it, so the rivalry is sincere</td></tr>
+        <tr><td><b>The arc</b></td><td>Forms in Act I; one member walks out and comes back</td><td>Allies against something bigger in Act II; Act III shows what burned out their predecessors</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The Holds ───────────────────────── -->
+  <section class="card" id="holds">
+    <h2>4. The three Holds <span class="tag">WD9</span><span class="tag">WD12</span></h2>
+    <p>Every enemy heroine is on the board for a reason, and the reason decides how she's freed. Two of the three run through
+      Front Mission's part targeting, so freeing a heroine is a tactical choice, not a cutscene. Each sketch is her rig; the
+      Hold is the extra part, or none.</p>
+    <div class="holds">
+      <div class="hold" style="--hc:var(--corrupt)">
+        <header>
+          <svg viewBox="0 0 64 64" role="img" aria-label="A rig with a black core grafted on its shoulder" style="--rig-off:color-mix(in srgb, var(--corrupt) 30%, var(--sunken))">
+            <use href="#rig" width="64" height="64"/>
+            <circle cx="49" cy="17" r="9.5" fill="none" stroke="var(--corrupt)" stroke-width="1.4" stroke-dasharray="2 2"/>
+            <circle cx="49" cy="17" r="5.5" fill="#0b0d12" stroke="var(--corrupt)" stroke-width="2"/>
+            <rect x="40" y="2.5" width="18" height="3" rx="1.5" fill="var(--sunken)"/><rect x="40" y="2.5" width="12" height="3" rx="1.5" fill="var(--corrupt)"/>
+          </svg>
+          <div><div class="hname">Anchor</div><div class="hsub">corrupted</div></div>
+        </header>
+        <dl class="kv">
+          <dt>Why she fights</dt><dd>The Blackout has a grip on her</dd>
+          <dt>What it looks like</dt><dd>A black core grafted onto her rig, an extra target that glows; her palette swaps to the corruption ramp and flickers</dd>
+          <dt>How she's freed</dt><dd><b>Break the anchor</b> (it has its own HP), or a Netrunner <b>Jacks Out</b> the corruption (TC26)</dd>
+          <dt>What she leaves</dt><dd>Her parts intact, and often her trust</dd>
+          <dt>Factions</dt><dd>
+            <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-envoys)"><use href="#g-envoys" width="48" height="48"/></svg>Envoys</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>Wardens</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-vigil)"><use href="#g-vigil" width="48" height="48"/></svg>Vigil</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>the Crowned</span></dd>
+        </dl>
+      </div>
+      <div class="hold" style="--hc:var(--info)">
+        <header>
+          <svg viewBox="0 0 64 64" role="img" aria-label="A rig with the Authority's collar at its neck">
+            <use href="#rig" width="64" height="64"/>
+            <rect x="24" y="14.5" width="16" height="5" rx="2.5" fill="var(--info)"/>
+            <use href="#g-authority" x="29" y="14" width="6" height="6" style="color:#ffffff"/>
+          </svg>
+          <div><div class="hname">Collar</div><div class="hsub">controlled</div></div>
+        </header>
+        <dl class="kv">
+          <dt>Why she fights</dt><dd>The Authority holds her command codes</dd>
+          <dt>What it looks like</dt><dd>A collar part on her rig, the Authority's mark</dd>
+          <dt>How she's freed</dt><dd><b>Break the collar,</b> or Jack-Out</dd>
+          <dt>What she leaves</dt><dd>Her parts intact</dd>
+          <dt>Factions</dt><dd><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-muster)"><use href="#g-muster" width="48" height="48"/></svg>Steel Muster</span></dd>
+        </dl>
+      </div>
+      <div class="hold" style="--hc:var(--ink-faint)">
+        <header>
+          <svg viewBox="0 0 64 64" role="img" aria-label="A plain rig with nothing extra">
+            <use href="#rig" width="64" height="64"/>
+          </svg>
+          <div><div class="hname">None</div><div class="hsub">deceived or hired</div></div>
+        </header>
+        <dl class="kv">
+          <dt>Why she fights</dt><dd>She believes the squad is the enemy, or she's being paid</dd>
+          <dt>What it looks like</dt><dd>Nothing to break</dd>
+          <dt>How she's freed</dt><dd><b>Win the battle;</b> the story brings her over, or a better offer does</dd>
+          <dt>What she leaves</dt><dd>What's left of her parts</dd>
+          <dt>Factions</dt><dd>
+            <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-commission)"><use href="#g-commission" width="48" height="48"/></svg>Commission</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>Armada</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-contractors)"><use href="#g-contractors" width="48" height="48"/></svg>Contractors</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>the uncrowned</span></dd>
+        </dl>
+      </div>
+    </div>
+    <div class="grid3" style="margin-top:12px">
+      <div class="tile"><h3>A heroine is never killed</h3><p>At Core 0 she's beaten and withdraws (a Rig Break, as for the squad, TC25), and only her unbroken parts are salvaged.</p></div>
+      <div class="tile"><h3>Freeing keeps everything</h3><p>Freeing her by her Hold or a Jack-Out keeps all her parts. So the Hold is worth aiming for.</p></div>
+      <div class="tile"><h3>The freed <span class="tag">WD12</span></h3><p>Freed heroines open their File and a short log from their side, recasting the rival the way 13 Sentinels gives its villains context. Some join as guests after their chapter (TC47).</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The factions ───────────────────────── -->
+  <section class="card" id="factions">
+    <h2>5. The eight factions <span class="tag">WD10</span><span class="tag">WD11</span></h2>
+    <p>Each franchise on the platform's boss and regular-enemy boards becomes one faction. The names are ours, not the
+      franchises' terms. Each faction brings <b>one new mechanic</b>, so the campaign teaches one idea at a time, and
+      <b>threatens one rig part</b>, so each faction changes how the squad loads out. Glyphs and colours are original.</p>
+    <div class="factions">
+
+      <article class="fc" style="--fc:var(--f-muster)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-muster" width="48" height="48"/></svg>
+          <div><div class="franchise">NIKKE</div><div class="fname">The Steel Muster</div></div>
+        </header>
+        <div class="meta"><span class="pill collar">Hold: Collar</span><span class="pill anchor">Dimmed squads</span><span class="pill">Every act, from the first battle</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>Android squads pulled through a Gate, now the Authority's foot soldiers, in every act</dd>
+          <dt>Why hostile</dt><dd>The Authority holds their command codes (Collar); Dimmed squads hunt for the Blackout</dd>
+          <dt>How they turn</dt><dd>The squad steals the codes back one by one; whole units defect in the finale</dd>
+        </dl>
+        <div class="mech"><b>Cover and volley.</b> They hold cover tiles, leave a gap while they reload, and share a volley meter that fires a squad-wide barrage, signalled a turn ahead.</div>
+        <div class="threat"><svg viewBox="0 0 64 64" style="--rig-arms:var(--fc)" aria-hidden="true"><use href="#rig" width="64" height="64"/></svg><div><b>Threatens the arms.</b> Pinning fire cuts accuracy.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-commission)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-commission" width="48" height="48"/></svg>
+          <div><div class="franchise">Zenless Zone Zero</div><div class="fname">The Neon Commission</div></div>
+        </header>
+        <div class="meta"><span class="pill">Hold: None</span><span class="pill">Act I</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>Crews and agencies for hire in the Underlevels</dd>
+          <dt>Why hostile</dt><dd>They take the Underlevels for one of their own disaster zones, and the Authority has a bounty on the squad (None)</dd>
+          <dt>How they turn</dt><dd>Outbid them, or beat the boss and the job's off; the first guests</dd>
+        </dl>
+        <div class="mech"><b>Stagger.</b> Hits fill a stagger bar, and a full bar costs a turn; allies next to each other chain follow-ups; rift zones reshuffle their tiles every three turns.</div>
+        <div class="threat"><svg viewBox="0 0 64 64" style="--rig-legs:var(--fc)" aria-hidden="true"><use href="#rig" width="64" height="64"/></svg><div><b>Threatens the legs.</b> Knockdowns.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-envoys)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-envoys" width="48" height="48"/></svg>
+          <div><div class="franchise">Genshin Impact</div><div class="fname">The Sevenfold Envoys</div></div>
+        </header>
+        <div class="meta"><span class="pill anchor">Hold: Anchor</span><span class="pill">Act II</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>An honour guard from a world of seven elements, searching for a lost companion</dd>
+          <dt>Why hostile</dt><dd>The Blackout speaks to them in their patron's voice (Anchor)</dd>
+          <dt>How they turn</dt><dd>Break the binding sigils on shrine tiles during the battle, then persuade them</dd>
+        </dl>
+        <div class="mech"><b>Reactions.</b> Attacks leave an element on the tile, and a second element reacts: wet and cold make <b>Frost</b>; fire and current burst. The squad can use them too.</div>
+        <div class="threat"><svg viewBox="0 0 64 64" style="--rig-core:var(--fc)" aria-hidden="true"><use href="#rig" width="64" height="64"/></svg><div><b>Threatens the core.</b> Frost locks it.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-armada)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-armada" width="48" height="48"/></svg>
+          <div><div class="franchise">Azur Lane</div><div class="fname">The Tideline Armada</div></div>
+        </header>
+        <div class="meta"><span class="pill">Hold: None</span><span class="pill">Two blocs</span><span class="pill">Act II</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>An invading fleet in two blocs</dd>
+          <dt>Why hostile</dt><dd>One bloc signed a treaty with the Authority for a way home; the other blockades the Docks, taking the rigs for their old enemy's work (None)</dd>
+          <dt>How they turn</dt><dd>A flagship duel wins the free bloc; the treaty bloc turns when the Authority betrays it</dd>
+        </dl>
+        <div class="mech"><b>Artillery.</b> Back-row ships mark zones that land next turn; escorts shield neighbours; torpedoes run whole rows; aircraft ignore height; sink the flagship and the formation breaks.</div>
+        <div class="threat"><svg viewBox="0 0 64 64" style="--rig-back:var(--fc)" aria-hidden="true"><use href="#rig" width="64" height="64"/></svg><div><b>Threatens the back unit.</b> Barrages.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-contractors)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-contractors" width="48" height="48"/></svg>
+          <div><div class="franchise">Honkai: Star Rail</div><div class="fname">The Starward Contractors</div></div>
+        </header>
+        <div class="meta"><span class="pill">Hold: None</span><span class="pill">Act III</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>Agents from other stars, hired by the Authority</dd>
+          <dt>Why hostile</dt><dd>Their contract is to seize the Gate core, which they believe is a cosmic cancer the squad protects (None)</dd>
+          <dt>How they turn</dt><dd>The truth, or a better contract; some simply leave</dd>
+        </dl>
+        <div class="mech"><b>Typed shields and time.</b> Shields show which damage type breaks them, and a broken shield delays her; they pull their own turns forward and push the squad's back; mid-battle deals let one walk off the map.</div>
+        <div class="threat">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <g style="fill:var(--sunken);stroke:var(--ink-faint);stroke-width:1"><rect x="4" y="32" width="10" height="13" rx="3"/><rect x="16" y="32" width="10" height="13" rx="3"/><rect x="40" y="32" width="10" height="13" rx="3"/><rect x="52" y="32" width="8" height="13" rx="3"/></g>
+            <rect x="28" y="32" width="10" height="13" rx="3" style="fill:var(--fc)"/>
+            <path d="M33 28C30 14 14 14 9 27" fill="none" style="stroke:var(--fc)" stroke-width="2"/><path d="M6 22l3 6 5-4" fill="none" style="stroke:var(--fc)" stroke-width="2"/>
+          </svg>
+          <div><b>Threatens the timeline.</b> Their turns jump forward; the squad's slip back.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-wardens)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-wardens" width="48" height="48"/></svg>
+          <div><div class="franchise">Wuthering Waves</div><div class="fname">The Lantern Wardens</div><div class="fsub">and their cult, the Tolling</div></div>
+        </header>
+        <div class="meta"><span class="pill anchor">Hold: Anchor</span><span class="pill">the Tolling never turn</span><span class="pill">Act IV</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>Survivors of a world that already ended</dd>
+          <dt>Why hostile</dt><dd>Near the Gates the Blackout's static overloads their powers (Anchor); the Tolling want the Blackout to finish its work</dd>
+          <dt>How they turn</dt><dd>Keep a Warden alive until her overload burns out, then a Netrunner calms her; the Tolling's leaders never turn</dd>
+        </dl>
+        <div class="mech"><b>Remnants and overload.</b> A beaten unit leaves a Remnant a Warden can call back up, so the order of kills matters; hitting her with her own element fills an overload that strikes everything around her.</div>
+        <div class="threat">
+          <svg viewBox="0 0 64 64" aria-hidden="true">
+            <path d="M48 26C44 12 20 12 16 26" fill="none" style="stroke:var(--fc)" stroke-width="1.6" stroke-dasharray="3 3"/>
+            <circle cx="14" cy="38" r="8" style="fill:var(--fc)"/><circle cx="32" cy="38" r="8" style="fill:color-mix(in srgb, var(--fc) 55%, var(--sunken))"/><circle cx="50" cy="38" r="8" style="fill:color-mix(in srgb, var(--fc) 25%, var(--sunken))"/>
+            <g font-size="10" font-weight="700" text-anchor="middle" fill="#ffffff" style="font-family:system-ui"><text x="14" y="42">1</text><text x="32" y="42">2</text><text x="50" y="42">3</text></g>
+          </svg>
+          <div><b>Threatens the order of kills.</b> Beat them in the wrong order and they come back.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-vigil)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-vigil" width="48" height="48"/></svg>
+          <div><div class="franchise">Punishing: Gray Raven</div><div class="fname">The Iron Vigil</div><div class="fsub">and its fallen, the Transfigured</div></div>
+        </header>
+        <div class="meta"><span class="pill anchor">Hold: Anchor</span><span class="pill">the squad's dark mirror</span><span class="pill">Act IV</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>The squad's dark mirror: orbital soldiers in combat bodies from the dead sister ring</dd>
+          <dt>Why hostile</dt><dd>Their bodies let the Blackout spread through them like a virus (Anchor)</dd>
+          <dt>How they turn</dt><dd>A Netrunner purges the infection at a core tile; then they're natural allies</dd>
+        </dl>
+        <div class="mech"><b>Infection.</b> It spreads to nearby machines and tiles; an infected Core disables another part until cleaned; a three-signal combo shows on the timeline before a big strike.</div>
+        <div class="threat"><svg viewBox="0 0 64 64" style="--rig-arms:color-mix(in srgb, var(--fc) 50%, var(--sunken));--rig-legs:color-mix(in srgb, var(--fc) 50%, var(--sunken));--rig-back:color-mix(in srgb, var(--fc) 50%, var(--sunken));--rig-core:color-mix(in srgb, var(--fc) 50%, var(--sunken))" aria-hidden="true"><use href="#rig" width="64" height="64"/></svg><div><b>Threatens any part.</b> Infection can reach each one.</div></div>
+      </article>
+
+      <article class="fc" style="--fc:var(--f-bastion)">
+        <header>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-bastion" width="48" height="48"/></svg>
+          <div><div class="franchise">Honkai Impact 3rd</div><div class="fname">The Ember Bastion</div><div class="fsub">and its fallen, the Crowned</div></div>
+        </header>
+        <div class="meta"><span class="pill anchor">Crowned: Anchor</span><span class="pill">Uncrowned: None</span><span class="pill">Act V</span></div>
+        <dl class="kv">
+          <dt>Who</dt><dd>A sisterhood that has fought a corruption all its life; the Blackout's generals</dd>
+          <dt>Why hostile</dt><dd>The Blackout crowned its strongest (Anchor); the rest hunt the squad, believing the core-powered rigs are the corruption's source (None)</dd>
+          <dt>How they turn</dt><dd>Defeat a Crowned to purge her; persuade the uncrowned</dd>
+        </dl>
+        <div class="mech"><b>Phases.</b> At set HP she crowns again, changing her element, range and suit, calling corruption beasts and breaking the ground.</div>
+        <div class="threat"><svg viewBox="0 0 64 64" style="--rig-arms:var(--fc);--rig-legs:var(--fc);--rig-back:var(--fc);--rig-core:var(--fc);--rig-frame:color-mix(in srgb, var(--fc) 45%, var(--sunken))" aria-hidden="true"><use href="#rig" width="64" height="64"/></svg><div><b>Threatens everything.</b></div></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Hardware ───────────────────────── -->
+  <section class="card" id="hardware">
+    <h2>5.2 Faction hardware <span class="tag">WD14</span></h2>
+    <p>Every enemy <b>character</b> is a franchise heroine, from the boards (TC38). Each faction also fields
+      <b>hardware</b>: original machines that fill out a battle, can be hacked, and go in uma-art because they're ours.</p>
+    <div class="scroll">
+      <table style="min-width:480px">
+        <tr><th>Faction</th><th>Hardware</th></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-muster)"><use href="#g-muster" width="48" height="48"/></svg>The Steel Muster</b></td><td>Android troopers, and machine swarms with a glowing core weak point</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-commission)"><use href="#g-commission" width="48" height="48"/></svg>The Neon Commission</b></td><td>Street drones and scrap bots</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-envoys)"><use href="#g-envoys" width="48" height="48"/></svg>The Sevenfold Envoys</b></td><td>Rune constructs that glow in their element</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>The Tideline Armada</b></td><td>Drone skiffs and floating turrets</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-contractors)"><use href="#g-contractors" width="48" height="48"/></svg>The Starward Contractors</b></td><td>Security mechs</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>The Lantern Wardens</b></td><td>Static phantoms</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-vigil)"><use href="#g-vigil" width="48" height="48"/></svg>The Iron Vigil</b></td><td>Infected maintenance machines</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>The Ember Bastion</b></td><td>Corruption husks</td></tr>
+        <tr><td><b><svg class="ico" viewBox="0 0 48 48" style="color:var(--info)"><use href="#g-authority" width="48" height="48"/></svg>The Authority</b></td><td>Security drones, turrets and gates on every map it controls</td></tr>
+      </table>
+    </div>
+    <p class="note">One set of silhouettes covers them all, with a palette and a glyph per faction. The franchises' own
+      monsters stay out: they'd be private art in bulk and would pull the story toward retelling each franchise.</p>
+  </section>
+
+  <!-- ───────────────────────── Who's behind whom ───────────────────────── -->
+  <section class="card" id="web">
+    <h2>5.3 Who's behind whom <span class="tag">WD13</span></h2>
+    <p>The Blackout owns the Authority through its bargain. The Authority pays the Commission and the Contractors, commands
+      the Muster and holds the Armada's treaty. The Blackout reaches the other four directly.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1120 410" role="img" aria-label="The Blackout at the top owns the Authority through a bargain. The Authority pays the Neon Commission and the Starward Contractors, commands the Steel Muster and holds the Tideline Armada's treaty. The Blackout reaches the Sevenfold Envoys through a false voice, the Lantern Wardens through static, the Iron Vigil through infection and the Ember Bastion through crowns." style="font-family:system-ui,-apple-system,sans-serif">
+        <!-- edges: the Authority's four -->
+        <g fill="none" stroke="var(--info)" stroke-width="2">
+          <path d="M280 200C280 250 75 240 75 296"/><path d="M280 200C280 250 210 240 210 296"/>
+          <path d="M280 200C280 250 345 240 345 296"/><path d="M280 200C280 250 480 240 480 296"/>
+        </g>
+        <!-- edges: the Blackout's direct four -->
+        <g fill="none" stroke="var(--ink)" stroke-width="2" stroke-dasharray="7 5">
+          <path d="M590 72C590 190 640 190 640 296"/><path d="M610 72C610 190 775 190 775 296"/>
+          <path d="M630 72C630 190 910 190 910 296"/><path d="M650 70C650 190 1045 190 1045 296"/>
+        </g>
+        <!-- the bargain -->
+        <path d="M490 66C420 112 300 104 286 150" fill="none" stroke="var(--ink)" stroke-width="3"/>
+
+        <!-- the Blackout -->
+        <rect x="450" y="16" width="220" height="56" rx="28" fill="#07090d" stroke="var(--ink-faint)" stroke-width="1.5"/>
+        <text x="560" y="42" text-anchor="middle" font-size="15" font-weight="800" letter-spacing="1.5" fill="#e9eef4">THE BLACKOUT</text>
+        <text x="560" y="59" text-anchor="middle" font-size="11" fill="#e9eef4" opacity="0.75">a hunger between worlds</text>
+        <!-- the Authority -->
+        <rect x="170" y="150" width="220" height="50" rx="10" fill="var(--info-wash)" stroke="var(--info)" stroke-width="2"/>
+        <use href="#g-authority" x="182" y="161" width="28" height="28" style="color:var(--info)"/>
+        <text x="296" y="172" text-anchor="middle" font-size="14" font-weight="800" letter-spacing="1" fill="var(--ink)">THE AUTHORITY</text>
+        <text x="296" y="189" text-anchor="middle" font-size="11" fill="var(--ink-soft)">its board, in the Spires</text>
+
+        <!-- edge labels -->
+        <g font-size="11" font-weight="700" text-anchor="middle">
+          <rect x="350" y="94" width="88" height="20" rx="10" fill="var(--panel)" stroke="var(--ink)"/><text x="394" y="108" fill="var(--ink)">the bargain</text>
+          <rect x="53" y="258" width="44" height="20" rx="10" fill="var(--panel)" stroke="var(--info)"/><text x="75" y="272" fill="var(--info)">pays</text>
+          <rect x="188" y="258" width="44" height="20" rx="10" fill="var(--panel)" stroke="var(--info)"/><text x="210" y="272" fill="var(--info)">pays</text>
+          <rect x="308" y="258" width="74" height="20" rx="10" fill="var(--panel)" stroke="var(--info)"/><text x="345" y="272" fill="var(--info)">commands</text>
+          <rect x="452" y="258" width="56" height="20" rx="10" fill="var(--panel)" stroke="var(--info)"/><text x="480" y="272" fill="var(--info)">treaty</text>
+          <rect x="595" y="246" width="90" height="20" rx="10" fill="var(--panel)" stroke="var(--ink)"/><text x="640" y="260" fill="var(--ink)">a false voice</text>
+          <rect x="747" y="246" width="56" height="20" rx="10" fill="var(--panel)" stroke="var(--ink)"/><text x="775" y="260" fill="var(--ink)">static</text>
+          <rect x="874" y="246" width="72" height="20" rx="10" fill="var(--panel)" stroke="var(--ink)"/><text x="910" y="260" fill="var(--ink)">infection</text>
+          <rect x="1015" y="246" width="60" height="20" rx="10" fill="var(--panel)" stroke="var(--ink)"/><text x="1045" y="260" fill="var(--ink)">crowns</text>
+        </g>
+
+        <!-- faction nodes -->
+        <g text-anchor="middle">
+          <rect x="11" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-commission)" stroke-width="2"/>
+          <use href="#g-commission" x="63" y="301" width="24" height="24" style="color:var(--f-commission)"/>
+          <text x="75" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Neon Commission</text><text x="75" y="355" font-size="10.5" fill="var(--ink-soft)">for hire</text>
+
+          <rect x="146" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-contractors)" stroke-width="2"/>
+          <use href="#g-contractors" x="198" y="301" width="24" height="24" style="color:var(--f-contractors)"/>
+          <text x="210" y="341" font-size="10.5" font-weight="700" fill="var(--ink)">Starward Contractors</text><text x="210" y="355" font-size="10.5" fill="var(--ink-soft)">under contract</text>
+
+          <rect x="281" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-muster)" stroke-width="2"/>
+          <use href="#g-muster" x="333" y="301" width="24" height="24" style="color:var(--f-muster)"/>
+          <text x="345" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Steel Muster</text><text x="345" y="355" font-size="10.5" fill="var(--ink-soft)">command codes held</text>
+
+          <rect x="416" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-armada)" stroke-width="2"/>
+          <use href="#g-armada" x="468" y="301" width="24" height="24" style="color:var(--f-armada)"/>
+          <text x="480" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Tideline Armada</text><text x="480" y="355" font-size="10.5" fill="var(--ink-soft)">the treaty bloc</text>
+
+          <rect x="576" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-envoys)" stroke-width="2"/>
+          <use href="#g-envoys" x="628" y="301" width="24" height="24" style="color:var(--f-envoys)"/>
+          <text x="640" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Sevenfold Envoys</text><text x="640" y="355" font-size="10.5" fill="var(--ink-soft)">their patron's voice</text>
+
+          <rect x="711" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-wardens)" stroke-width="2"/>
+          <use href="#g-wardens" x="763" y="301" width="24" height="24" style="color:var(--f-wardens)"/>
+          <text x="775" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Lantern Wardens</text><text x="775" y="355" font-size="10.5" fill="var(--ink-soft)">+ the Tolling</text>
+
+          <rect x="846" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-vigil)" stroke-width="2"/>
+          <use href="#g-vigil" x="898" y="301" width="24" height="24" style="color:var(--f-vigil)"/>
+          <text x="910" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Iron Vigil</text><text x="910" y="355" font-size="10.5" fill="var(--ink-soft)">+ the Transfigured</text>
+
+          <rect x="981" y="296" width="128" height="66" rx="10" fill="var(--raised)" stroke="var(--f-bastion)" stroke-width="2"/>
+          <use href="#g-bastion" x="1033" y="301" width="24" height="24" style="color:var(--f-bastion)"/>
+          <text x="1045" y="341" font-size="11.5" font-weight="700" fill="var(--ink)">Ember Bastion</text><text x="1045" y="355" font-size="10.5" fill="var(--ink-soft)">+ the Crowned</text>
+        </g>
+
+        <!-- group brackets -->
+        <path d="M11 372v6H544v-6M576 372v6H1109v-6" fill="none" stroke="var(--ink-faint)" stroke-width="1.2"/>
+        <text x="277" y="398" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">Through the Authority: paid, commanded or held by a treaty</text>
+        <text x="842" y="398" text-anchor="middle" font-size="11.5" fill="var(--ink-soft)">Straight from the Blackout: a voice, static, infection, crowns</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#07090d;box-shadow:inset 0 0 0 1px var(--ink-faint)"></i>The bargain: the Blackout owns the Authority</span>
+      <span><i style="background:var(--info)"></i>The Authority's hold: pays, commands, treaty</span>
+      <span><i style="background:transparent;border:2px dashed var(--ink)"></i>The Blackout's direct reach</span>
+    </div>
+    <p style="margin-bottom:0">So every faction can be turned: by showing it the truth, or by burning the darkness out.</p>
+  </section>
+
+  <!-- ───────────────────────── Allies and rivals ───────────────────────── -->
+  <section class="card" id="allies">
+    <h2>5.4 Allies and rivals <span class="tag">WD23</span></h2>
+    <p>Pairings for alliances and duels.</p>
+    <div class="grid2">
+      <div>
+        <h3>Allies once freed</h3>
+        <div class="pairs">
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-muster)"><use href="#g-muster" width="48" height="48"/></svg>Steel Muster</span><span class="op plus">+</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>Tideline Armada</span><small>Soldiers both</small></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-commission)"><use href="#g-commission" width="48" height="48"/></svg>Neon Commission</span><span class="op plus">+</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-contractors)"><use href="#g-contractors" width="48" height="48"/></svg>Starward Contractors</span><small>Mercenaries who trade jobs</small></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-envoys)"><use href="#g-envoys" width="48" height="48"/></svg>Sevenfold Envoys</span><span class="op plus">+</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>Lantern Wardens</span><small>Lost expeditions</small></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-vigil)"><use href="#g-vigil" width="48" height="48"/></svg>Iron Vigil</span><span class="op plus">+</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>Ember Bastion</span><small>Both know how to purge a corruption</small></div>
+        </div>
+      </div>
+      <div>
+        <h3>Rivals</h3>
+        <div class="pairs">
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-vigil)"><use href="#g-vigil" width="48" height="48"/></svg>Iron Vigil</span><span class="op vs">vs</span><span class="chip"><i style="background:var(--accent)"></i>the squad</span><small>The dark mirror: rigs against combat bodies, and the fall that waits for the Umas</small></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>each Crowned</span><span class="op vs">vs</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>her uncrowned sister</span></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>the treaty bloc</span><span class="op vs">vs</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>the free bloc</span><small>The Armada's two blocs</small></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>Lantern Wardens</span><span class="op vs">vs</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>the Tolling</span></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-commission)"><use href="#g-commission" width="48" height="48"/></svg>Neon Commission</span><span class="op vs">vs</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-muster)"><use href="#g-muster" width="48" height="48"/></svg>Steel Muster</span><small>The street against the law</small></div>
+          <div class="pair"><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-envoys)"><use href="#g-envoys" width="48" height="48"/></svg>Sevenfold Envoys</span><span class="op vs">vs</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-contractors)"><use href="#g-contractors" width="48" height="48"/></svg>Starward Contractors</span><small>An oath against a contract</small></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The five acts ───────────────────────── -->
+  <section class="card" id="acts">
+    <h2>6. The five acts <span class="tag">WD15</span><span class="tag">WD16</span><span class="tag">WD17</span></h2>
+    <p>From the Underlevels out along the Lanes to the dead sister ring and back to the Gate Heart. The bar on top is the
+      tone, act by act; the five squares are the layers of the truth (bright: revealed in this act; pale: already known).</p>
+    <div class="scroll">
+      <div class="acts">
+        <div class="tonebar" role="img" aria-label="Tone from bright and urban to space opera, sad and grim, then heroic"></div>
+
+        <div class="act">
+          <div class="num">I</div><div class="where">The Underlevels and the Districts</div>
+          <div class="k">Factions</div>
+          <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-muster)"><use href="#g-muster" width="48" height="48"/></svg>Steel Muster</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-commission)"><use href="#g-commission" width="48" height="48"/></svg>Neon Commission</span>
+          <p class="note" style="margin-top:2px">The Muster from the first battle</p>
+          <div class="k">New mechanics</div><p>Cover and volley; stagger</p>
+          <div class="k">Tone</div><p>Bright, urban</p>
+          <div class="k">Layer revealed</div><div class="depth"><i class="now"></i><i></i><i></i><i></i><i></i></div><p>1. The frame</p>
+          <div class="k">Squad arc</div><p>The squad forms; one member walks out and comes back</p>
+          <div class="k">Shape <span class="tag">WD16</span></div><p>The team that forms and breaks and re-forms</p>
+        </div>
+
+        <div class="act">
+          <div class="num">II</div><div class="where">The upper Districts, then the Docks</div>
+          <div class="k">Factions</div>
+          <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-envoys)"><use href="#g-envoys" width="48" height="48"/></svg>Sevenfold Envoys</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-armada)"><use href="#g-armada" width="48" height="48"/></svg>Tideline Armada</span>
+          <p class="note" style="margin-top:2px">The Steel Muster too</p>
+          <div class="k">New mechanics</div><p>Reactions; artillery</p>
+          <div class="k">Tone</div><p>Bright fantasy, then naval</p>
+          <div class="k">Layer revealed</div><div class="depth"><i class="was"></i><i class="now"></i><i></i><i></i><i></i></div><p>2. The Tithe; breaking the blockade opens the Lanes</p>
+          <div class="k">Squad arc</div><p>The rival squad; an uneasy alliance against something bigger</p>
+          <div class="k">Shape <span class="tag">WD16</span></div><p>The rival veterans</p>
+        </div>
+
+        <div class="act">
+          <div class="num">III</div><div class="where">The Lanes</div>
+          <div class="k">Factions</div>
+          <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-contractors)"><use href="#g-contractors" width="48" height="48"/></svg>Starward Contractors</span>
+          <p class="note" style="margin-top:2px">The Steel Muster too</p>
+          <div class="k">New mechanics</div><p>Typed shields; the timeline</p>
+          <div class="k">Tone</div><p>Space opera</p>
+          <div class="k">Layer revealed</div><div class="depth"><i class="was"></i><i class="was"></i><i class="now"></i><i></i><i></i></div><p>3. The cores</p>
+          <div class="k">Squad arc</div><p>The past returns: the rival squad's burned-out predecessors, Dimmed</p>
+          <div class="k">Shape <span class="tag">WD16</span></div><p>The past that returns</p>
+        </div>
+
+        <div class="act">
+          <div class="num">IV</div><div class="where">A silent moon, then the dead sister ring</div>
+          <div class="k">Factions</div>
+          <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-wardens)"><use href="#g-wardens" width="48" height="48"/></svg>Lantern Wardens</span><span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-vigil)"><use href="#g-vigil" width="48" height="48"/></svg>Iron Vigil</span>
+          <p class="note" style="margin-top:2px">The Steel Muster too</p>
+          <div class="k">New mechanics</div><p>Remnants; infection</p>
+          <div class="k">Tone</div><p>Sad, then grim</p>
+          <div class="k">Layer revealed</div><div class="depth"><i class="was"></i><i class="was"></i><i class="was"></i><i class="now"></i><i></i></div><p>4. The Blackout, and the sister ring as the Ring's future</p>
+          <div class="k">Squad arc</div><p>The enemy in plain sight: a deceiver close to home</p>
+          <div class="k">Shape <span class="tag">WD16</span></div><p>The enemy in plain sight</p>
+        </div>
+
+        <div class="act finale">
+          <div class="num">V</div><div class="where">The Gate Heart, back at the Ring</div>
+          <div class="k">Factions</div>
+          <span class="chip"><svg viewBox="0 0 48 48" style="color:var(--f-bastion)"><use href="#g-bastion" width="48" height="48"/></svg>the Crowned</span><span class="chip"><i style="background:var(--corrupt)"></i>Dimmed from every faction</span><span class="chip"><i style="background:#07090d;box-shadow:0 0 0 1px var(--ink-faint)"></i>the Blackout</span>
+          <div class="k">New mechanics</div><p>Phases</p>
+          <div class="k">Tone</div><p>Tragic, then heroic</p>
+          <div class="k">Layer revealed</div><div class="depth"><i class="was"></i><i class="was"></i><i class="was"></i><i class="was"></i><i class="now"></i></div><p>5. The squad's own secret</p>
+          <div class="k">Squad arc</div><p>The freed come back; the Steel Muster defects; redemption</p>
+          <div class="k">Shape <span class="tag">WD16</span></div><p>The finale: their redemption</p>
+        </div>
+
+        <div class="thread"><svg viewBox="0 0 48 48" aria-hidden="true"><use href="#g-muster" width="48" height="48"/></svg>
+          <span><b>A running thread:</b> the Steel Muster is in every act, so the regular-enemy board has a payoff when it defects in Act V.</span></div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:16px">Why this order</h3>
+    <div class="grid4">
+      <div class="tile"><h3>Difficulty</h3><p>One or two new mechanics an act, from cover and stagger to phase bosses.</p></div>
+      <div class="tile"><h3>Tone</h3><p>The bright factions come first; the grim ones come once the squad is a family.</p></div>
+      <div class="tile"><h3>Setting</h3><p>Street, gun and civic factions suit the megacity; the fleet bridges city and space; star-faring agents own the Lanes; the two factions whose worlds already ended carry the darkest reveals; the fallen guardians guard the finale.</p></div>
+      <div class="tile"><h3>A running thread</h3><p>The Muster is in every act, so the regular-enemy board has a payoff when it defects.</p></div>
+    </div>
+
+    <div class="grid2" style="margin-top:16px">
+      <div>
+        <h3>Arc shapes <span class="tag">WD16</span></h3>
+        <p style="margin-top:0">The squad arc takes Star Guardian's four era shapes (<a href="references.html">references</a> §2.2) in order, one an act, with the finale as their redemption.</p>
+        <div class="loop">
+          <span>I · forms, breaks, re-forms</span><i>→</i><span>II · the rival veterans</span><i>→</i>
+          <span>III · the past that returns</span><i>→</i><span>IV · the enemy in plain sight</span><i>→</i>
+          <span class="gold">V · their redemption</span>
+        </div>
+      </div>
+      <div>
+        <h3>Flash-forwards <span class="tag">WD17</span></h3>
+        <p style="margin-top:0">Each act opens with one mission from its own climax. The mystery is how, not whether.</p>
+        <div class="loop">
+          <span class="hot">The flash-forward: one mission from the act's climax, a fixed squad, the tutorial for its new mechanic</span><i>→</i>
+          <span>The act's chapters lead back toward it</span><i>→</i>
+          <span class="gold">The act's last Operation: the flash-forward again, with what the player now knows</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── How it's told ───────────────────────── -->
+  <section class="card" id="telling">
+    <h2>7. How the story is told <span class="tag">WD18</span><span class="tag">WD19</span></h2>
+    <p>The story structure is in <a href="concept.html">the concept</a> (TC32–TC36): Operations and Routes that gate each
+      other, Leads, the Archive and the Call. Two rules belong to the world.</p>
+
+    <h3 style="margin-top:14px">Seeding <span class="tag">WD18</span></h3>
+    <div class="grid4">
+      <div class="tile"><h3>3+ seeds a layer</h3><p>Every layer of the truth gets at least three seeds, across at least two routes.</p></div>
+      <div class="tile"><h3>1 Anomaly an act</h3><p>Each act carries at least one deliberate contradiction, logged as an <b>Anomaly</b> in the Archive until it's explained.</p></div>
+      <div class="tile"><h3>Clues in the world's own interfaces</h3><p>
+        <span class="word">the battle HUD's core readout</span><span class="word">the Hideout's AI</span><span class="word">news tickers</span><span class="word">billboards for the rival squad</span><span class="word">Gate hum</span></p></div>
+      <div class="tile"><h3>The convention that hides it</h3><p>"Gates pull people in." Players file every oddity under it.</p></div>
+    </div>
+    <div class="scroll" style="margin-top:12px">
+      <table style="min-width:480px">
+        <tr><th>Example seed</th><th>Layer</th></tr>
+        <tr><td>Siphoning Gates hum and plain ones don't</td><td><span class="depth"><i class="now"></i><i class="now"></i><i></i><i></i><i></i></span>1–2</td></tr>
+        <tr><td>The cores' charge rises after every win</td><td><span class="depth"><i></i><i></i><i class="now"></i><i></i><i></i></span>3</td></tr>
+        <tr><td>Heroines remember the squad as enemies they never met</td><td><span class="depth"><i></i><i></i><i></i><i class="now"></i><i></i></span>4</td></tr>
+        <tr><td>Umas dream of a track and a sun</td><td><span class="depth"><i></i><i></i><i></i><i></i><i class="now"></i></span>5</td></tr>
+      </table>
+    </div>
+
+    <h3 style="margin-top:16px">Route lenses <span class="tag">WD19</span></h3>
+    <p style="margin-top:0">Each Uma-led route is told through its own cyberpunk genre:</p>
+    <div>
+      <span class="lens">a heist</span><span class="lens">a noir case</span><span class="lens">an idol scandal</span><span class="lens">a street-racing crew</span><span class="lens">a ghost in the net</span>
+      <span class="lens">a smuggling run</span><span class="lens">a corporate thriller</span><span class="lens">a missing-persons search</span><span class="lens">a courier job</span><span class="lens">a pirate broadcast</span>
+    </div>
+    <div class="loop" style="margin-top:10px">
+      <span>Any route</span><i>→</i><span class="gold">The same last beat: the Uma's signature ability unlocks</span><i>→</i><span class="hot">She joins the act's last Operation</span>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── Tone, names, ending ───────────────────────── -->
+  <section class="card" id="tone">
+    <h2>8. Tone, names and the ending <span class="tag">WD20</span><span class="tag">WD21</span><span class="tag">WD24</span></h2>
+    <div class="grid2">
+      <div class="tile">
+        <h3>Tone <span class="tag">WD20</span></h3>
+        <ul style="margin:6px 0 0;padding-left:18px;font-size:13px">
+          <li>A found family.</li>
+          <li>Candy-bright neon over a tragic story, as Star Guardian does it.</li>
+          <li>No gore; nobody dies on screen.</li>
+          <li>An Uma is never maimed: a damaged pose is weary with the costume intact (uma-quest's rule).</li>
+          <li>A purged Crowned may go home through her Gate rather than join. That's the saddest the game gets.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Names <span class="tag">WD21</span></h3>
+        <p>Every name is ours. No term from 13 Sentinels, Star Guardian, Front Mission or Triangle Strategy, and no
+          franchise's own term for a mechanic or a place. Where a franchise's mechanic inspires a faction's, ours has its own word:</p>
+        <p><span class="word">stagger</span><span class="word">volley</span><span class="word">Remnant</span><span class="word">overload</span><span class="word">Frost</span></p>
+      </div>
+    </div>
+    <h3 style="margin-top:16px">The ending <span class="tag">WD24</span></h3>
+    <div class="loop">
+      <span class="hot">The squad shuts the siphon at the Gate Heart</span><i>→</i>
+      <span class="hot">It gives up its cores</span><i>→</i>
+      <span>The freed heroines lend their own power for the last battle, so the found family is literal</span><i>→</i>
+      <span>The Ring dims but lives</span><i>→</i>
+      <span class="gold">The Gates become doors that open both ways</span>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── The calls ───────────────────────── -->
+  <section class="card" id="calls">
+    <h2>9. The calls</h2>
+    <div class="scroll">
+      <table style="min-width:560px">
+        <tr><th>#</th><th>Call</th><th>Section</th></tr>
+        <tr><td><span class="tag">WD1</span></td><td>The central truth is the Tithe: the Authority opens Gates to siphon other worlds' power, and the Ring's light is stolen</td><td><a href="#truth">2</a></td></tr>
+        <tr><td><span class="tag">WD2</span></td><td>The Blackout: a hunger between worlds that eats and rewrites memory, let in by the siphons, bargained with by the Authority's board; those it takes are the Dimmed</td><td><a href="#truth">2</a></td></tr>
+        <tr><td><span class="tag">WD3</span></td><td>The squad's rigs run on stolen prototype siphon cores: the power is the squad's original sin, given up in the finale</td><td><a href="#truth">2</a></td></tr>
+        <tr><td><span class="tag">WD4</span></td><td>The Ring in six layers: the Spires, the Districts, the Markets, the Underlevels, the Docks and the Gate Heart</td><td><a href="#ring">1</a></td></tr>
+        <tr><td><span class="tag">WD5</span></td><td>The Lanes and the Gates: a ring of light with a gap, a colour and a glyph per Gate-world; siphoning Gates hum</td><td><a href="#ring">1</a></td></tr>
+        <tr><td><span class="tag">WD6</span></td><td>The rival squad: the Authority's licensed, famous heroes, Umas from the NPC board, on overclocked cores, with a sincere captain</td><td><a href="#squad">3</a></td></tr>
+        <tr><td><span class="tag">WD7</span></td><td>The double life: the Hideout behind a front business in the Markets, a civilian keeper, scenes by day and missions by night</td><td><a href="#squad">3</a></td></tr>
+        <tr><td><span class="tag">WD8</span></td><td>The last layer: the Umas came through the first Gate as children; they dream of a sunlit track</td><td><a href="#truth">2</a></td></tr>
+        <tr><td><span class="tag">WD9</span></td><td>Three Holds (Anchor, Collar, None) decide why a heroine fights and how she's freed; a heroine is never killed</td><td><a href="#holds">4</a></td></tr>
+        <tr><td><span class="tag">WD10</span></td><td>Eight factions, one per franchise, with original names: the Steel Muster, the Neon Commission, the Sevenfold Envoys, the Tideline Armada, the Starward Contractors, the Lantern Wardens, the Iron Vigil and the Ember Bastion</td><td><a href="#factions">5.1</a></td></tr>
+        <tr><td><span class="tag">WD11</span></td><td>Each faction brings one new mechanic and threatens one rig part</td><td><a href="#factions">5.1</a></td></tr>
+        <tr><td><span class="tag">WD12</span></td><td>A freed heroine opens her File and a log from her side; some join as guests</td><td><a href="#holds">4</a></td></tr>
+        <tr><td><span class="tag">WD13</span></td><td>Who's behind whom: the Blackout owns the Authority, which pays, commands or binds four factions; the Blackout reaches the other four directly</td><td><a href="#web">5.3</a></td></tr>
+        <tr><td><span class="tag">WD14</span></td><td>Faction hardware: every enemy character is a heroine; each faction also fields original machines, in uma-art; the franchises' own monsters stay out</td><td><a href="#hardware">5.2</a></td></tr>
+        <tr><td><span class="tag">WD15</span></td><td>Five acts: the Underlevels, the Docks, the Lanes, the sister ring, the Gate Heart; one layer of the truth each</td><td><a href="#acts">6.1</a></td></tr>
+        <tr><td><span class="tag">WD16</span></td><td>The squad's arc takes Star Guardian's four era shapes in order, with the finale as their redemption</td><td><a href="#acts">6.2</a></td></tr>
+        <tr><td><span class="tag">WD17</span></td><td>Each act opens with a flash-forward to its own climax, as its tutorial</td><td><a href="#acts">6.3</a></td></tr>
+        <tr><td><span class="tag">WD18</span></td><td>At least three seeds per layer across at least two routes; at least one contradiction an act, logged as an Anomaly; clues in the world's own interfaces</td><td><a href="#telling">7</a></td></tr>
+        <tr><td><span class="tag">WD19</span></td><td>Every route has its own cyberpunk genre lens and ends on the shared beat: her signature unlocks</td><td><a href="#telling">7</a></td></tr>
+        <tr><td><span class="tag">WD20</span></td><td>Tone: found family, candy-bright neon over tragedy, no gore, no one dies on screen, an Uma is never maimed</td><td><a href="#tone">8</a></td></tr>
+        <tr><td><span class="tag">WD21</span></td><td>Every name is ours: no term from the references or the franchises</td><td><a href="#tone">8</a></td></tr>
+        <tr><td><span class="tag">WD22</span></td><td>This page is original and names no character; casting, chapters and dialogue are private in <code>content/</code></td><td><a href="#status">Status</a></td></tr>
+        <tr><td><span class="tag">WD23</span></td><td>Allies and rivals among the factions, for alliances and duels</td><td><a href="#allies">5.4</a></td></tr>
+        <tr><td><span class="tag">WD24</span></td><td>The ending: shut the siphon, give up the cores, the freed lend their power, the Ring dims but lives, the Gates open both ways</td><td><a href="#tone">8</a></td></tr>
+      </table>
+    </div>
+    <p class="note">Source: <a href="../world.md">docs/design/world.md</a>. Research: <a href="references.html">references</a>.
+      The battle and the build: <a href="concept.html">the concept</a>. Casting, chapters and dialogue stay private in
+      <code>content/</code> (TC13).</p>
+  </section>
+</main>
+</body>
+</html>

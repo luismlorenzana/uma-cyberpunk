@@ -7,7 +7,8 @@ this before changing anything.
 ## Read first
 
 1. `docs/handoff/README.md`: the current phase and its queue. Your task is a packet in `docs/handoff/tasks/`.
-2. `docs/design/concept.md`: the concept and its calls (TC1–TC16), the starting point every design builds on.
+2. `docs/design/concept.md`: the concept and its calls (TC1–TC48), the starting point every design builds on; its
+   world bible is `docs/design/world.md` (WD1–WD24), and the research behind both is `docs/design/references.md`.
 3. `docs/game/`: the manual of the game as built. It is empty until the hello app (CY3); after that, look up any rule or
    screen there first.
 4. `docs/decisions.md` (append-only, from D1), and the cross-game plan in uma-platform `docs/architecture.md`.

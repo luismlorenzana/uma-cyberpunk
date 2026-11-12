@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uma Cyberpunk References</title>
+<!-- uma-cyberpunk's research digest (docs/design/references.md): the owner's five directions (D3), the four reference
+     games (13 Sentinels: Aegis Rim, Star Guardian, Front Mission, Triangle Strategy), the eight franchises as enemy
+     factions, what the sibling games already settled, and every source. What each reference does, what players said,
+     what the game takes (with its TC and WD calls) and what it leaves. Self-contained, uma-kit's tokens, light and dark.
+     We borrow structure and ideas only: no character names, no Uma names, no images or logos. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #d39a2b; --accent-wash: #fbf1dd; --info: #2f6fe0; --info-wash: #e3ecfc; --success: #2f7a4f;
+    --success-wash: #e1f1e7; --danger: #c23b33; --danger-wash: #fbe5e3; --neon: #b03fd8; --neon-wash: #f4e4fb;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16);
+    --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+      --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+      --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+      --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+    --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+    --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+    --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Inter', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font: 700 24px/1.2 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; margin: 0 0 6px; }
+  h2 { font: 700 17px/1.25 ui-rounded, system-ui, sans-serif; margin: 0 0 8px; }
+  h3 { font: 700 14px/1.25 system-ui; margin: 0 0 6px; }
+  p, li { color: var(--ink-soft); max-width: 82ch; }
+  p b, li b, td b { color: var(--ink); }
+  a { color: var(--info); }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 5px; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 20px; }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  nav a.doc { background: var(--info-wash); color: var(--info); }
+  nav .sep { width: 1px; background: var(--hairline-strong); margin: 2px 4px; }
+  .card { background: var(--panel); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .note { font-size: 12px; color: var(--ink-faint); }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; }
+  .tag { display: inline-block; font: 700 11px ui-monospace, Menlo, monospace; padding: 1px 7px; border-radius: 999px; background: var(--neon-wash); color: var(--neon); white-space: nowrap; }
+  .tag.wd { background: var(--info-wash); color: var(--info); }
+  .tag.d { background: var(--sunken); color: var(--ink-soft); }
+  .tag + .tag { margin-left: 3px; }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 12px; }
+  .grid3.six { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
+  .tile { background: var(--raised); border-radius: 10px; padding: 12px 14px; }
+  .tile p { margin: 4px 0 0; font-size: 13px; }
+  .tile ul, .tile ol { margin: 6px 0 0; padding-left: 18px; }
+  .tile li { font-size: 13px; margin: 3px 0; }
+  .tile li ul { margin-top: 3px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight: 600; }
+  td { color: var(--ink-soft); }
+  table.takes { min-width: 640px; }
+  table.takes td:first-child { width: 22%; }
+  table.takes td:last-child { width: 15%; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+
+  /* one colour per reference, carried through the page */
+  .r1 { --ref: var(--info); --ref-wash: var(--info-wash); }
+  .r2 { --ref: var(--neon); --ref-wash: var(--neon-wash); }
+  .r3 { --ref: var(--accent); --ref-wash: var(--accent-wash); }
+  .r4 { --ref: var(--success); --ref-wash: var(--success-wash); }
+  .r5 { --ref: var(--danger); --ref-wash: var(--danger-wash); }
+  .card.ref { border-top: 3px solid var(--ref); }
+  .head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 4px; }
+  .head h2 { margin: 0; }
+  .badge { display: inline-grid; place-items: center; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 8px;
+    background: var(--ref-wash); color: var(--ref); font: 700 13px ui-monospace, Menlo, monospace;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ref) 40%, transparent); }
+  .kind { font: 600 12px system-ui; color: var(--ink-faint); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 4px; }
+  .meta span { font: 600 11px system-ui; padding: 3px 9px; border-radius: 999px; background: var(--raised); color: var(--ink-soft); }
+  .meta span.off { background: transparent; color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  .sub { font: 700 11px system-ui; text-transform: uppercase; letter-spacing: .07em; color: var(--ref, var(--ink-faint)); margin: 20px 0 8px; }
+  .sub small { font-weight: 600; text-transform: none; letter-spacing: 0; color: var(--ink-faint); margin-left: 6px; }
+
+  /* status */
+  .dirs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); gap: 10px; margin-top: 10px; }
+  .dir { background: var(--raised); border-radius: 10px; padding: 0 14px 12px; display: flex; flex-direction: column; }
+  .dir::before { content: ''; display: block; height: 4px; margin: 0 -14px 10px; border-radius: 10px 10px 0 0; background: var(--bar); }
+  .dir .n { font: 700 22px/1 ui-rounded, system-ui; color: var(--ink); }
+  .dir h3 { margin: 6px 0 4px; }
+  .dir p { margin: 0 0 8px; font-size: 13px; }
+  .dir .go { margin-top: auto; font: 600 12px system-ui; }
+  .passes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .passes span { font: 600 12px system-ui; padding: 5px 10px; border-radius: 8px; background: var(--ref-wash, var(--sunken)); color: var(--ink);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ref, var(--ink-faint)) 35%, transparent); }
+  .rule { background: var(--accent-wash); border-radius: 10px; padding: 12px 14px; margin-top: 14px; box-shadow: inset 4px 0 0 var(--accent); }
+  .rule p { margin: 0; color: var(--ink); }
+
+  /* the short answer */
+  .refs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 12px; }
+  .refcard { background: var(--raised); border-radius: 10px; padding: 12px 14px 14px; border-top: 3px solid var(--ref); display: flex; flex-direction: column; gap: 8px; }
+  .refcard h3 { margin: 0; font-size: 15px; }
+  .refcard h3 small { display: block; font: 600 12px system-ui; color: var(--ink-faint); margin-top: 2px; }
+  .lbl { display: block; font: 700 10px system-ui; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); margin-bottom: 2px; }
+  .refcard p { margin: 0; font-size: 13px; }
+  .calls { margin-top: auto; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding-top: 4px; }
+  .calls .tag + .tag { margin-left: 0; }
+  .calls a { margin-left: auto; font: 600 12px system-ui; text-decoration: none; }
+
+  /* where the references agree */
+  .agree { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; }
+  .agree > div { background: var(--accent-wash); border-radius: 10px; padding: 12px 14px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .agree p { margin: 0; font-size: 13px; }
+  .eq { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0 10px; }
+  .eq span { font: 600 11px system-ui; padding: 3px 8px; border-radius: 999px; background: var(--panel); color: var(--ink-soft);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ref, var(--ink-faint)) 55%, transparent); }
+  .eq i { font-style: normal; color: var(--ink-faint); font-weight: 700; }
+  .eq strong { font: 700 11px system-ui; padding: 3px 9px; border-radius: 999px; background: var(--ink); color: var(--panel); }
+  .pips { display: inline-flex; gap: 3px; vertical-align: -1px; margin: 0 2px; }
+  .pips i { width: 14px; height: 10px; border-radius: 3px; background: var(--accent); }
+  .pips i.off { background: transparent; box-shadow: inset 0 0 0 1.5px var(--accent); }
+
+  /* players said */
+  .said { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 12px; }
+  .said > div { border-radius: 10px; padding: 12px 14px; }
+  .said .pro { background: var(--success-wash); }
+  .said .con { background: var(--danger-wash); }
+  .said h3 { font-size: 13px; }
+  .said .pro h3 { color: var(--success); }
+  .said .con h3 { color: var(--danger); }
+  .said ul { margin: 4px 0 0; padding-left: 18px; }
+  .said li { font-size: 13px; margin: 3px 0; color: var(--ink); }
+
+  /* what we leave */
+  .leave { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; background: var(--sunken); border-radius: 10px; padding: 10px 12px; margin-top: 14px; }
+  .leave b { font: 700 11px system-ui; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); margin-right: 6px; }
+  .leave span { font-size: 12px; color: var(--ink-faint); padding: 2px 9px; border-radius: 999px; box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  .leave em { font-style: normal; font-size: 12px; color: var(--ink-soft); flex-basis: 100%; margin-top: 2px; }
+
+  /* diagrams */
+  .fig { background: var(--panel); border: 1px solid var(--hairline); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .fig .note { margin: 8px 0 0; }
+  .dg text { fill: var(--ink-soft); font: 12px system-ui, -apple-system, sans-serif; }
+  .dg .t { fill: var(--ink); font-weight: 700; font-size: 13px; }
+  .dg .s { font-size: 11px; }
+  .dg .f { fill: var(--ink-faint); font-size: 11px; }
+  .dg .w { fill: #fff; font-weight: 700; font-size: 11px; }
+  .dg .ln { stroke: var(--ink-faint); stroke-width: 1.5; fill: none; }
+
+  /* star guardian eras */
+  .eras { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 10px; min-width: 860px; }
+  .era { background: var(--raised); border-radius: 10px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .era .yr { font: 700 11px ui-monospace, Menlo, monospace; color: var(--neon); }
+  .era h3 { margin: 0; }
+  .era ol { margin: 0; padding-left: 18px; }
+  .era li { font-size: 12px; margin: 2px 0; }
+  .era .act { margin-top: auto; background: var(--neon-wash); border-radius: 8px; padding: 6px 9px; font-size: 12px; color: var(--ink); }
+  .era .act b { color: var(--neon); }
+
+  /* franchises */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; margin: 10px 0 14px; }
+  .stat { background: var(--raised); border-radius: 10px; padding: 10px 12px; }
+  .stat b { display: block; font: 700 22px/1.1 ui-rounded, system-ui; color: var(--ink); }
+  .stat span { font-size: 12px; color: var(--ink-soft); }
+  .cast { display: flex; align-items: center; gap: 8px; }
+  .cast b { min-width: 2.5ch; text-align: right; font-variant-numeric: tabular-nums; }
+  .cast i { display: block; height: 8px; border-radius: 4px; background: var(--danger); opacity: .75; }
+  .cast .track { flex: 1; min-width: 80px; max-width: 160px; background: var(--sunken); border-radius: 4px; }
+  .board { display: inline-block; font: 600 11px system-ui; padding: 1px 8px; border-radius: 999px; background: var(--danger-wash); color: var(--danger); }
+  .board.reg { background: var(--sunken); color: var(--ink-soft); }
+
+  /* already settled */
+  .checks { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 8px; }
+  .checks > li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; background: var(--raised); border-radius: 10px; padding: 10px 12px; max-width: none; font-size: 13px; }
+  .checks > li::before { content: '\2713'; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--success-wash); color: var(--success); font-weight: 800; font-size: 12px; }
+  .checks > li.wide { grid-column: 1 / -1; }
+  .havenot { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 8px 16px; margin-top: 6px; }
+  .havenot ul { list-style: none; padding: 0; margin: 4px 0 0; }
+  .havenot li { font-size: 12px; padding: 2px 0 2px 18px; position: relative; }
+  .havenot li::before { position: absolute; left: 0; font-weight: 800; }
+  .has li::before { content: '\2713'; color: var(--success); }
+  .not li::before { content: '\2715'; color: var(--danger); }
+  .havenot .lbl { margin: 0; }
+
+  /* sources */
+  .srcs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+  .src { background: var(--raised); border-radius: 10px; padding: 12px 14px; border-top: 3px solid var(--ref, var(--ink-faint)); }
+  .src ul { margin: 6px 0 0; padding-left: 18px; }
+  .src li { font-size: 13px; margin: 4px 0; }
+  .src li small { color: var(--ink-faint); margin-left: 4px; }
+  .src code { font-size: 11px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Uma Cyberpunk: the references</h1>
+  <p>What seven research passes found in four reference games and the platform's eight franchises, and what the game
+    takes from each. The calls themselves live in <a href="concept.html">the concept</a> (TC1–TC48) and
+    <a href="world.html">the world</a> (WD1–WD24). Source: <code>docs/design/references.md</code>, 2026-11-12.</p>
+  <nav>
+    <a href="#status">Status</a><a href="#short">The short answer</a><a href="#agree">Where they agree</a>
+    <a href="#sentinels">1 · 13 Sentinels</a><a href="#guardian">2 · Star Guardian</a><a href="#frontmission">3 · Front Mission</a>
+    <a href="#triangle">4 · Triangle Strategy</a><a href="#franchises">5 · The eight franchises</a>
+    <a href="#settled">6 · Already settled</a><a href="#sources">Sources</a>
+    <span class="sep"></span>
+    <a class="doc" href="concept.html">The concept</a><a class="doc" href="world.html">The world</a>
+    <a class="doc" href="../references.md">references.md</a>
+  </nav>
+
+  <!-- ───────────── Status ───────────── -->
+  <section class="card" id="status">
+    <div class="head"><h2>Status: the owner's direction</h2><span class="tag d">D3</span><span class="kind">2026-11-12</span></div>
+    <p>The owner took the concept further with five directions.</p>
+    <div class="dirs">
+      <div class="dir" style="--bar:var(--ink-faint)"><span class="n">1</span><h3>The cast</h3>
+        <p>A spinoff that uses Uma Musume's characters only, in the same vein as uma-quest and uma-farm.</p>
+        <a class="go" href="#settled">§6 What the siblings settled</a></div>
+      <div class="dir" style="--bar:linear-gradient(90deg, var(--info) 50%, var(--neon) 50%)"><span class="n">2</span><h3>Lore and story</h3>
+        <p>From <i>13 Sentinels: Aegis Rim</i> and League of Legends' <i>Star Guardian</i> series.</p>
+        <span class="go"><a href="#sentinels">§1 13 Sentinels</a> · <a href="#guardian">§2 Star Guardian</a></span></div>
+      <div class="dir" style="--bar:var(--accent)"><span class="n">3</span><h3>Gameplay</h3>
+        <p>Mainly from the <i>Front Mission</i> games, with the characters fighting in combat accessories instead of robots.</p>
+        <a class="go" href="#frontmission">§3 Front Mission</a></div>
+      <div class="dir" style="--bar:var(--success)"><span class="n">4</span><h3>The look and the build-out</h3>
+        <p>The HD-2D look and the in-game build-out from <i>Triangle Strategy</i>.</p>
+        <a class="go" href="#triangle">§4 Triangle Strategy</a></div>
+      <div class="dir" style="--bar:var(--danger)"><span class="n">5</span><h3>The enemies</h3>
+        <p>The other franchises already on the platform as the enemy factions and the overall enemies, tied to the plot.</p>
+        <a class="go" href="#franchises">§5 The eight franchises</a></div>
+    </div>
+
+    <h3 style="margin-top:18px">Seven research passes, run in parallel on 2026-11-12</h3>
+    <div class="passes">
+      <span class="r1">13 Sentinels</span><span class="r2">Star Guardian</span><span class="r3">Front Mission</span>
+      <span class="r4">Triangle Strategy</span><span class="r5">The eight franchises</span>
+      <span>What <code>uma-stage</code> can do for a grid</span><span>How uma-quest and uma-farm use the Umas</span>
+    </div>
+    <p>One per reference, one on the eight franchises, one on the stage and one on the sibling games. This page is what
+      they found and what the game takes from each.</p>
+    <div class="rule"><p><b>We borrow structure and ideas only.</b> No reference's names, terms, characters, plot, art or
+      music goes into the game, and this page names no character from any of them.</p></div>
+  </section>
+
+  <!-- ───────────── The short answer ───────────── -->
+  <section class="card" id="short">
+    <h2>The short answer</h2>
+    <p>Each reference, what it's known for, what the game takes and the calls that hold it. The colour stays with the
+      reference down the page.</p>
+    <div class="refs">
+      <div class="refcard r1">
+        <h3>13 Sentinels: Aegis Rim<small>Story structure</small></h3>
+        <div><span class="lbl">Known for</span><p>A puzzle-box story told through many protagonists' routes, played in
+          any order, that lock and unlock each other; an archive where the player assembles the truth.</p></div>
+        <div><span class="lbl">The game takes</span><p>Acts open on a flash-forward; each act has an <b>Operations</b>
+          track and Uma-led <b>Routes</b> that gate each other; <b>Leads</b> and an <b>Archive</b> of Files and Anomalies;
+          <b>Strain</b> rotates the bench; every reveal is seeded three times.</p></div>
+        <div class="calls"><span class="tag">TC27</span><span class="tag">TC31–TC35</span><span class="tag wd">WD12</span><span class="tag wd">WD15–WD18</span><a href="#sentinels">§1 →</a></div>
+      </div>
+      <div class="refcard r2">
+        <h3>Star Guardian<small>Cosmology and the squad</small></h3>
+        <div><span class="lbl">Known for</span><p>Magical-girl guardians powered by a cosmic source, secret double lives,
+          a corrupting darkness, fallen guardians who return as enemies, redemption by purification.</p></div>
+        <div><span class="lbl">The game takes</span><p>The squad's <b>double life</b> and <b>suit-up</b>; one hue per
+          Uma; a sincere <b>rival squad</b>; heroines arrive <b>corrupted, controlled or deceived</b>, and each can be won
+          back.</p></div>
+        <div class="calls"><span class="tag">TC26</span><span class="tag">TC39–TC41</span><span class="tag wd">WD1–WD9</span><span class="tag wd">WD16</span><a href="#guardian">§2 →</a></div>
+      </div>
+      <div class="refcard r3">
+        <h3>Front Mission<small>The battle</small></h3>
+        <div><span class="lbl">Known for</span><p>Wanzers built from parts (body, two arms, legs), each with its own HP;
+          weight against output; part breaks that change the fight; links; the side-view battle cutaway.</p></div>
+        <div><span class="lbl">The game takes</span><p>The <b>combat rig</b>: four breakable parts and two slots; a
+          <b>Capacity</b> budget; its three range bands (plus Tech for hacks) and three damage types; automatic <b>counters and
+          links</b>; skills learned from parts; jobs as <b>roles</b>; the side-view <b>cut-in</b>; <b>Rig Break</b>, never death;
+          <b>Jack-Out</b> to free a heroine; buy, salvage and remodel.</p></div>
+        <div class="calls"><span class="tag">TC5</span><span class="tag">TC17–TC28</span><span class="tag">TC43</span><a href="#frontmission">§3 →</a></div>
+      </div>
+      <div class="refcard r4">
+        <h3>Triangle Strategy<small>The look and the build-out</small></h3>
+        <div><span class="lbl">Known for</span><p>HD-2D on block-built maps with height; turn order by speed; TP;
+          follow-up attacks; elemental terrain; a voting system over choices; the Encampment between battles.</p></div>
+        <div><span class="lbl">The game takes</span><p>The <b>look</b> on uma-stage at a fixed angle; <b>Charge</b> (its
+          TP); <b>Crossfire</b> (its follow-ups); <b>terrain states</b>; the <b>forecast card</b> and range colours;
+          <b>the Call</b> (its vote); the <b>Hideout</b> as an Encampment with a <b>Sim Pod</b>.</p></div>
+        <div class="calls"><span class="tag">TC3</span><span class="tag">TC10</span><span class="tag">TC20</span><span class="tag">TC21</span><span class="tag">TC23</span><span class="tag">TC24</span><span class="tag">TC29</span><span class="tag">TC30</span><span class="tag">TC35</span><span class="tag">TC36</span><span class="tag">TC42</span><span class="tag">TC44</span><a href="#triangle">§4 →</a></div>
+      </div>
+      <div class="refcard r5">
+        <h3>The eight franchises<small>The enemy factions</small></h3>
+        <div><span class="lbl">Known for</span><p>Azur Lane, Genshin Impact, Wuthering Waves, Honkai: Star Rail, Zenless
+          Zone Zero, Honkai Impact 3rd, Punishing: Gray Raven, NIKKE.</p></div>
+        <div><span class="lbl">The game takes</span><p><b>Eight enemy factions</b>, one per franchise, each with an
+          original name, a reason to be here, a way to turn and a battle identity of its own.</p></div>
+        <div class="calls"><span class="tag">TC37</span><span class="tag">TC38</span><span class="tag wd">WD10–WD14</span><a href="#franchises">§5 →</a></div>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="tag">TC</span> a concept call (<a href="concept.html">the concept</a>)</span>
+      <span><span class="tag wd">WD</span> a world call (<a href="world.html">the world</a>)</span>
+      <span><i style="background:var(--info)"></i>13 Sentinels</span>
+      <span><i style="background:var(--neon)"></i>Star Guardian</span>
+      <span><i style="background:var(--accent)"></i>Front Mission</span>
+      <span><i style="background:var(--success)"></i>Triangle Strategy</span>
+      <span><i style="background:var(--danger)"></i>The eight franchises</span>
+    </div>
+  </section>
+
+  <!-- ───────────── Where the references agree ───────────── -->
+  <section class="card" id="agree">
+    <h2>Where the references agree</h2>
+    <p>The strongest findings are the ones two passes reached on their own.</p>
+    <div class="agree">
+      <div>
+        <h3>The central truth <span class="tag wd">WD1</span></h3>
+        <div class="eq"><span class="r1">13 Sentinels: “the Drain”</span><i>+</i><span class="r2">Star Guardian: “the Tithe”</span><i>=</i><strong>one idea</strong></div>
+        <p>The 13 Sentinels pass proposed “the Drain” (the Ring's power comes from Gates that bleed other worlds) and the
+          Star Guardian pass proposed “the Tithe” (the Ring's Authority siphons other worlds' suns). They're the same
+          idea, from a mystery angle and a cosmology angle, so <a href="world.html">the world</a> is built on it.</p>
+      </div>
+      <div>
+        <h3>One resource for the turn <span class="tag">TC20</span></h3>
+        <div class="eq"><span class="r4">Triangle Strategy: TP</span><i>+</i><span class="r3">Front Mission: spend-or-keep AP</span><i>=</i><strong>Charge</strong></div>
+        <p>They collapse into one small bar, <b>Charge</b> <span class="pips" aria-hidden="true"><i></i><i></i><i class="off"></i></span>:
+          skills spend it, counters and links need it, waiting banks it.</p>
+      </div>
+      <div>
+        <h3>The attack cut-in <span class="tag">TC12</span><span class="tag">TC28</span></h3>
+        <div class="eq"><span class="r3">Front Mission: side view on every attack</span><i>+</i><span>adult combat art, side-on</span><i>=</i><strong>the cut-in</strong></div>
+        <p>Front Mission cuts to a side view on every attack, and the platform's adult combat art is drawn side-on,
+          facing one way. So the cut-in is where the adult art lives, and the map uses the four-facing chibi sets.</p>
+      </div>
+      <div>
+        <h3>No death <span class="tag">TC25</span><span class="tag">TC26</span></h3>
+        <div class="eq"><span class="r3">the pilot walks away</span><i>+</i><span class="r2">guardians are redeemed</span><i>+</i><span>uma-quest never maims</span><i>=</i><strong>Rig Break · freeing</strong></div>
+        <p>Front Mission's pilot walks away from a wrecked body; Star Guardian's guardians fall and are redeemed;
+          uma-quest never maims an Uma. Defeat is a <b>Rig Break</b> for the squad and a <b>freeing</b> for a heroine.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ───────────── 1. 13 Sentinels ───────────── -->
+  <section class="card ref r1" id="sentinels">
+    <div class="head"><span class="badge">1</span><h2>13 Sentinels: Aegis Rim</h2><span class="kind">Story structure</span></div>
+    <div class="meta"><span>Vanillaware and Atlus</span><span>Japan 2019</span><span>Worldwide 2020</span><span>Switch 2022</span>
+      <span>Metacritic 85–88</span><span>Over a million sold</span></div>
+
+    <div class="sub">What it does</div>
+    <div class="fig scroll">
+      <svg class="dg" viewBox="0 0 960 330" style="min-width:760px" role="img"
+        aria-label="Left: 13 Sentinels' adventure, battle mode and archive gate each other. Right: what the game takes, Operations and Routes that gate each other within an act.">
+        <defs><marker id="m-sen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--ink-faint)"/></marker></defs>
+        <text x="20" y="18" class="t">13 Sentinels: three modes that gate each other</text>
+        <rect x="20" y="36" width="210" height="72" rx="10" style="fill:var(--info-wash);stroke:var(--info)"/>
+        <text x="34" y="58" class="t">The adventure</text>
+        <text x="34" y="76" class="s">one route per protagonist,</text>
+        <text x="34" y="92" class="s">any order; routes gate routes</text>
+        <rect x="20" y="240" width="210" height="72" rx="10" style="fill:var(--info-wash);stroke:var(--info)"/>
+        <text x="34" y="262" class="t">The battle mode</text>
+        <text x="34" y="280" class="s">real-time-with-pause defence;</text>
+        <text x="34" y="296" class="s">fatigue benches pilots</text>
+        <rect x="350" y="138" width="210" height="72" rx="10" style="fill:var(--info-wash);stroke:var(--info)"/>
+        <text x="364" y="160" class="t">The archive</text>
+        <text x="364" y="178" class="s">wiki entries and a timeline</text>
+        <text x="364" y="194" class="s">of every scene, replayable</text>
+        <path d="M60 238 V112" class="ln" marker-end="url(#m-sen)"/>
+        <text x="70" y="168" class="s">a battle won</text>
+        <text x="70" y="182" class="s">opens a route</text>
+        <path d="M232 56 C330 56 425 84 445 134" class="ln" marker-end="url(#m-sen)"/>
+        <text x="300" y="46" class="s">the story opens entries</text>
+        <path d="M348 168 C300 168 270 132 236 104" class="ln" marker-end="url(#m-sen)"/>
+        <text x="262" y="180" class="s">an entry opens</text>
+        <text x="262" y="194" class="s">a route</text>
+        <path d="M232 276 C330 276 425 250 445 214" class="ln" marker-end="url(#m-sen)"/>
+        <text x="292" y="298" class="s">top battle ranks buy entries</text>
+        <text x="20" y="326" class="f">A route also opens when another route reaches a scene, or when overall progress passes a mark.</text>
+
+        <line x1="585" y1="8" x2="585" y2="322" style="stroke:var(--hairline-strong)" stroke-dasharray="4 4"/>
+        <text x="610" y="18" class="t">What the game takes, each act (TC32, TC33)</text>
+        <rect x="610" y="32" width="330" height="28" rx="14" style="fill:var(--info-wash)"/>
+        <text x="626" y="50" class="s">Opens on a flash-forward: one mission from its climax</text>
+        <rect x="610" y="86" width="180" height="64" rx="10" style="fill:var(--raised);stroke:var(--info)"/>
+        <text x="624" y="108" class="t">Operations</text>
+        <text x="624" y="125" class="s">the spine, light on story:</text>
+        <text x="624" y="140" class="s">Gate incursions</text>
+        <path d="M792 118 H808" class="ln" marker-end="url(#m-sen)"/>
+        <rect x="812" y="86" width="128" height="64" rx="10" style="fill:var(--raised);stroke:var(--info)"/>
+        <text x="824" y="108" class="t">Last operation</text>
+        <text x="824" y="125" class="s">needs every route</text>
+        <path d="M640 152 V222" class="ln" marker-end="url(#m-sen)"/>
+        <path d="M656 224 V154" class="ln" marker-end="url(#m-sen)"/>
+        <text x="668" y="184" class="s">route chapters need operations;</text>
+        <text x="668" y="199" class="s">operations need route progress</text>
+        <path d="M900 224 V154" class="ln" marker-end="url(#m-sen)"/>
+        <rect x="610" y="226" width="330" height="92" rx="10" style="fill:var(--raised);stroke:var(--info)"/>
+        <text x="624" y="246" class="t">Routes: six an act, each led by one Uma</text>
+        <g style="font-size:9.5px">
+          <rect x="620" y="256" width="48" height="32" rx="6" style="fill:var(--info-wash);stroke:var(--info)"/><text x="644" y="276" text-anchor="middle" style="font-size:10px">Heist</text>
+          <rect x="672" y="256" width="48" height="32" rx="6" style="fill:var(--info-wash);stroke:var(--info)"/><text x="696" y="276" text-anchor="middle" style="font-size:10px">Noir</text>
+          <rect x="724" y="256" width="48" height="32" rx="6" style="fill:var(--info-wash);stroke:var(--info)"/><text x="748" y="276" text-anchor="middle" style="font-size:10px">Idol</text>
+          <rect x="776" y="256" width="48" height="32" rx="6" style="fill:var(--info-wash);stroke:var(--info)"/><text x="800" y="276" text-anchor="middle" style="font-size:10px">Racing</text>
+          <rect x="828" y="256" width="48" height="32" rx="6" style="fill:none;stroke:var(--ink-faint)" stroke-dasharray="3 3"/><text x="852" y="276" text-anchor="middle" style="font-size:10px">Net</text>
+          <rect x="880" y="256" width="48" height="32" rx="6" style="fill:none;stroke:var(--ink-faint)" stroke-dasharray="3 3"/><text x="904" y="276" text-anchor="middle" style="font-size:9px">Smuggling</text>
+        </g>
+        <text x="624" y="308" class="f" style="font-size:10px">solid: open now · dashed: locked; three or four open at once</text>
+      </svg>
+      <p class="note">The six route lenses: heist, noir, idol scandal, street-racing crew, ghost-in-the-net and smuggling
+        run. Each ends on a shared beat.</p>
+    </div>
+    <div class="grid3">
+      <div class="tile">
+        <h3>Three modes that gate each other</h3>
+        <ul>
+          <li><b>The adventure:</b> one route per protagonist, in episodes of 20–30 minutes, played in any order. A route
+            can lock until another character's route reaches a scene, a battle is won, an archive entry opens, or overall
+            progress passes a mark. Each route has a flowchart with hints for its locks.</li>
+          <li><b>The battle mode:</b> real-time-with-pause defence of a terminal against waves. Pilots on the bench guard
+            the terminal; a fatigue meter benches pilots who fight too often.</li>
+          <li><b>The archive:</b> wiki-style entries, some opened by the story and some bought with points from top
+            battle ranks; plus a timeline of every scene, browsable by place, loop and character, and replayable.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>It opens at the end</h3>
+        <ul><li>The tutorial is the final battle, so the mystery is how, not whether.</li></ul>
+        <h3 style="margin-top:12px">Keywords</h3>
+        <ul><li>Words picked up in talk and items can be thought about or used on people.</li>
+          <li>Used in another route, they open branches.</li></ul>
+        <h3 style="margin-top:12px">Cast balance</h3>
+        <ul><li>Each protagonist gets a self-contained route that ends on the same beat, and appears as support in the
+          others.</li></ul>
+      </div>
+      <div class="tile">
+        <h3>How the twists are planted</h3>
+        <ul>
+          <li>Contradictions between routes are deliberate clues.</li>
+          <li>A character who looks like a villain in one route gets context in her own.</li>
+          <li>Small oddities pile up (a different surname in a note, shared dreams of wars never fought).</li>
+          <li>Each route reads as a familiar sci-fi genre story, so players file every oddity under genre convention.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sub">What players said</div>
+    <div class="said">
+      <div class="pro"><h3>Praised</h3><ul><li>The story</li><li>The structure</li><li>The art</li></ul></div>
+      <div class="con"><h3>Criticised</h3><ul>
+        <li>The battles, as repetitive and detached from the story</li>
+        <li>Too much reading for the play</li>
+        <li>Vague lock hints</li>
+        <li>A prologue that splices battles between introductions</li>
+        <li>Thirteen routes open at once</li></ul></div>
+    </div>
+
+    <div class="sub">What the game takes</div>
+    <div class="scroll"><table class="takes">
+      <tr><th>Take</th><th>How it lands here</th><th>Call</th></tr>
+      <tr><td><b>The ending first</b></td><td>Each act opens with a <b>flash-forward</b>: one mission from the act's climax, with a fixed squad, as the act's tutorial</td><td><span class="tag">TC32</span></td></tr>
+      <tr><td><b>Modes that gate each other</b></td><td>Each act has <b>Operations</b> (the spine: Gate incursions, light on story) and <b>Routes</b> (chapters led by one Uma). Operations need route progress; route chapters need operations; the act's last operation needs every route</td><td><span class="tag">TC32</span></td></tr>
+      <tr><td><b>One route per lead</b></td><td><b>Six route leads an act,</b> three or four open at once, each told through its own cyberpunk genre lens (heist, noir, idol scandal, street-racing crew, ghost-in-the-net, smuggling run) and ending on a shared beat</td><td><span class="tag">TC33</span></td></tr>
+      <tr><td><b>Keywords</b></td><td><b>Leads,</b> earned in scenes and battle side objectives, offered as one-tap choices. No hunting, no rewinds</td><td><span class="tag">TC34</span></td></tr>
+      <tr><td><b>The archive</b></td><td><b>The Archive</b> in the Hideout: Files on people, districts, factions and Gate-worlds with redacted lines that fill in; a Timeline of scenes; <b>Anomalies</b>, the contradictions the player has seen, open until explained</td><td><span class="tag">TC34</span></td></tr>
+      <tr><td><b>Villains with context</b></td><td>Freeing a heroine opens her File and a short log from her side</td><td><span class="tag">TC34</span><span class="tag wd">WD12</span></td></tr>
+      <tr><td><b>Fatigue</b></td><td><b>Strain</b> benches an Uma after a run of missions; the bench still earns shared XP and gives one support call a battle</td><td><span class="tag">TC27</span></td></tr>
+      <tr><td><b>Seeding</b></td><td>Three seeds per reveal across two routes; one deliberate contradiction an act; clues in the HUD, the Hideout's AI and the news tickers</td><td><span class="tag wd">WD18</span></td></tr>
+    </table></div>
+
+    <div class="leave"><b>What we leave</b>
+      <span>its twist pieces (simulated eras, clones, an ark, loops and memory wipes, avatars, one woman in three bodies)</span>
+      <span>every term it coined</span><span>thirteen leads at once</span><span>rewinds and hidden trigger spots</span>
+      <span>abstract wave battles</span><span>its fan service</span>
+    </div>
+  </section>
+
+  <!-- ───────────── 2. Star Guardian ───────────── -->
+  <section class="card ref r2" id="guardian">
+    <div class="head"><span class="badge">2</span><h2>Star Guardian</h2><span class="kind">Cosmology and the squad</span></div>
+    <p>Riot's skin universe across four games. The first team in 2015–16 with its short film, a veteran team in 2017 with
+      a co-op mode, the return of a destroyed first team in 2019, and a new generation in 2022 with a visual novel and a
+      comic.</p>
+    <div class="meta"><span>League of Legends</span><span>Wild Rift</span><span>Legends of Runeterra</span><span>Teamfight Tactics</span></div>
+
+    <div class="sub">What it does</div>
+    <div class="grid3 six">
+      <div class="tile">
+        <h3>A cosmic power source</h3>
+        <ul><li>Grants fragments of itself to chosen people with strong will.</li>
+          <li>The power is a pact: a guardian fights until she dies or falls.</li>
+          <li>Fear, doubt and lost hope make her fall.</li></ul>
+      </div>
+      <div class="tile">
+        <h3>A darkness</h3>
+        <ul><li>It comes from outside and feeds on fear and doubt.</li>
+          <li>Its soldiers are void creatures.</li>
+          <li>Small pockets of it open around the city.</li></ul>
+      </div>
+      <div class="tile">
+        <h3>The fallen</h3>
+        <ul><li>A guardian who falls becomes the darkness's monster.</li>
+          <li>Another who broke over it hunts guardians to end the pact.</li>
+          <li>Puppeted former teammates hunt the survivor.</li>
+          <li>An infiltrator poses as a teacher and tempts the member who doubts.</li></ul>
+      </div>
+      <div class="tile">
+        <h3>Teams</h3>
+        <ul><li>Five, with a captain, a mentor and small companions.</li>
+          <li>By day they're students, with one civilian who knows the secret.</li>
+          <li>Rival teams distrust each other, then ally against something bigger.</li></ul>
+      </div>
+      <div class="tile">
+        <h3>Themes</h3>
+        <ul><li>Duty against freedom: nearly every antagonist is a guardian who rejected the oath.</li>
+          <li>The cost of power; found family; legacy and inherited trauma.</li>
+          <li>Doubt against hope; idols and pop music.</li></ul>
+      </div>
+      <div class="tile">
+        <h3>The look</h3>
+        <ul><li>Magical girl meets space opera.</li>
+          <li>A shared base outfit with one signature colour per member, star gems, sparkle.</li>
+          <li>The fallen keep their silhouettes in corrupted palettes and switch between forms mid-fight.</li>
+          <li>The art stays candy-bright over a tragic story.</li></ul>
+      </div>
+    </div>
+
+    <div class="sub">The arc shapes, by era <small>and the act each one becomes (WD16)</small></div>
+    <div class="scroll"><div class="eras">
+      <div class="era">
+        <span class="yr">2015–16 · with a short film</span><h3>First team</h3>
+        <svg class="dg" viewBox="0 0 220 70" role="img" aria-label="The line rises, falls twice, then ends higher than it began">
+          <line x1="6" y1="46" x2="214" y2="46" style="stroke:var(--hairline-strong)" stroke-dasharray="3 3"/>
+          <polyline points="10,46 66,24 110,42 150,60 208,10" style="fill:none;stroke:var(--neon);stroke-width:2.5;stroke-linejoin:round"/>
+          <circle cx="66" cy="24" r="4" style="fill:var(--neon)"/><text x="66" y="14" text-anchor="middle" class="f">1</text>
+          <circle cx="110" cy="42" r="4" style="fill:var(--neon)"/><text x="110" y="32" text-anchor="middle" class="f">2</text>
+          <circle cx="150" cy="60" r="4" style="fill:var(--neon)"/><text x="138" y="66" text-anchor="middle" class="f">3</text>
+          <circle cx="208" cy="10" r="4" style="fill:var(--neon)"/><text x="196" y="12" text-anchor="middle" class="f">4</text>
+        </svg>
+        <ol><li>The captain gathers the team</li><li>One walks out</li><li>The broken team is overwhelmed</li>
+          <li>She returns and the bond is stronger</li></ol>
+        <div class="act"><b>Act I:</b> forms the squad; one member walks out and returns</div>
+      </div>
+      <div class="era">
+        <span class="yr">2017 · with a co-op mode</span><h3>Veterans</h3>
+        <svg class="dg" viewBox="0 0 220 70" role="img" aria-label="Two lines start apart and join into one">
+          <polyline points="10,12 120,36" style="fill:none;stroke:var(--neon);stroke-width:2.5"/>
+          <polyline points="10,60 120,36" style="fill:none;stroke:var(--ink-faint);stroke-width:2.5" stroke-dasharray="5 4"/>
+          <polyline points="120,36 200,36" style="fill:none;stroke:var(--neon);stroke-width:2.5"/>
+          <circle cx="10" cy="60" r="4" style="fill:var(--ink-faint)"/><text x="10" y="50" text-anchor="middle" class="f">1</text>
+          <circle cx="120" cy="36" r="4" style="fill:var(--neon)"/><text x="120" y="26" text-anchor="middle" class="f">2</text>
+          <text x="208" y="41" text-anchor="middle" class="t" style="fill:var(--neon)">?</text><text x="196" y="26" text-anchor="middle" class="f">3</text>
+        </svg>
+        <ol><li>A rival team of veterans</li><li>An uneasy alliance</li><li>The question of who leads</li></ol>
+        <div class="act"><b>Act II:</b> a rival squad, then an alliance</div>
+      </div>
+      <div class="era">
+        <span class="yr">2019</span><h3>The past returns</h3>
+        <svg class="dg" viewBox="0 0 220 70" role="img" aria-label="A line driven down by dashed pursuers, then lifted">
+          <polyline points="10,30 96,62" style="fill:none;stroke:var(--ink-faint);stroke-width:2" stroke-dasharray="5 4"/>
+          <polyline points="10,44 90,68" style="fill:none;stroke:var(--ink-faint);stroke-width:2" stroke-dasharray="5 4"/>
+          <polyline points="10,14 120,56 160,34 208,18" style="fill:none;stroke:var(--neon);stroke-width:2.5;stroke-linejoin:round"/>
+          <circle cx="10" cy="14" r="4" style="fill:var(--neon)"/><text x="22" y="12" class="f">1</text>
+          <circle cx="120" cy="56" r="4" style="fill:var(--neon)"/><text x="132" y="66" class="f">2</text>
+          <circle cx="208" cy="18" r="4" style="fill:var(--neon)"/><text x="196" y="12" text-anchor="middle" class="f">3</text>
+        </svg>
+        <ol><li>The destroyed first team</li><li>Puppeted comrades hunt the survivor</li><li>The old captain saves her</li></ol>
+        <div class="act"><b>Act III:</b> the past returns</div>
+      </div>
+      <div class="era">
+        <span class="yr">2022 · a visual novel and a comic</span><h3>New generation</h3>
+        <svg class="dg" viewBox="0 0 220 70" role="img" aria-label="The line starts low, dips lower, then climbs to the top">
+          <polyline points="10,40 70,58 130,46 208,10" style="fill:none;stroke:var(--neon);stroke-width:2.5;stroke-linejoin:round"/>
+          <circle cx="10" cy="40" r="4" style="fill:var(--neon)"/><text x="10" y="30" text-anchor="middle" class="f">1</text>
+          <circle cx="70" cy="58" r="4" style="fill:var(--neon)"/><text x="70" y="48" text-anchor="middle" class="f">2</text>
+          <circle cx="130" cy="46" r="4" style="fill:var(--neon)"/><text x="130" y="36" text-anchor="middle" class="f">3</text>
+          <circle cx="208" cy="10" r="4" style="fill:var(--neon)"/><text x="196" y="12" text-anchor="middle" class="f">4</text>
+        </svg>
+        <ol><li>Inherited trauma</li><li>The enemy inside the school</li><li>The fallen as victims</li><li>Redemption</li></ol>
+        <div class="act"><b>Act IV:</b> a deceiver in plain sight; Act V redeems it all</div>
+      </div>
+    </div></div>
+
+    <div class="sub">What the game takes</div>
+    <div class="scroll"><table class="takes">
+      <tr><th>Take</th><th>How it lands here</th><th>Call</th></tr>
+      <tr><td><b>A power source as a pact</b></td><td>The squad's rigs run on <b>cores</b> stolen from the Authority's siphon programme; the power is the squad's original sin</td><td><span class="tag wd">WD1</span><span class="tag wd">WD3</span></td></tr>
+      <tr><td><b>A corrupting darkness</b></td><td><b>The Hollow Tide</b> in the dark between Gates, which the Authority bargains with; its backflow corrupts</td><td><span class="tag wd">WD2</span></td></tr>
+      <tr><td><b>The fallen and the redeemed</b></td><td>Heroines arrive <b>corrupted</b> (an anchor part on the rig), <b>controlled</b> (a collar part) or <b>deceived</b> (no part), and each can be freed</td><td><span class="tag">TC26</span><span class="tag wd">WD9</span></td></tr>
+      <tr><td><b>Double life</b></td><td>The Hideout sits behind a <b>front business</b> in the neon markets, kept by a civilian who knows; scenes by day, missions by night</td><td><span class="tag">TC39</span></td></tr>
+      <tr><td><b>Transformation</b></td><td><b>Suit-up:</b> the rig's parts snap on, each lit in the Uma's colour, at the start of a battle (skippable) and at big story moments</td><td><span class="tag">TC39</span></td></tr>
+      <tr><td><b>A rival team</b></td><td><b>The Authority's public hero squad,</b> idol-famous, on overclocked cores that burn their pilots out, led by a captain who knows the truth and believes in it</td><td><span class="tag">TC40</span><span class="tag wd">WD6</span></td></tr>
+      <tr><td><b>The arc shapes</b></td><td>One an act: Act I forms the squad and one member walks out and returns; Act II is a rival squad, then an alliance; Act III's past returns; Act IV is a deceiver in plain sight; Act V is the redemption</td><td><span class="tag wd">WD15</span></td></tr>
+      <tr><td><b>One colour per member</b></td><td>One hue per Uma on a shared graphite-and-white rig base, carried into her timeline icon, move tint and damage numbers</td><td><span class="tag">TC41</span></td></tr>
+    </table></div>
+
+    <div class="leave"><b>What we leave</b>
+      <span>every Riot name and term</span><span>the star gems and tiaras</span><span>star wands</span><span>cat familiars</span>
+      <span>the white-and-gold bodices</span>
+      <span>every plot beat (a team wiped out by a former teammate, the teacher villain, the fallen friend with her companion caged inside, the fake defection, the trophy belt)</span>
+    </div>
+  </section>
+
+  <!-- ───────────── 3. Front Mission ───────────── -->
+  <section class="card ref r3" id="frontmission">
+    <div class="head"><span class="badge">3</span><h2>Front Mission</h2><span class="kind">The battle</span></div>
+    <p>Square's tactics series. <i>Evolved</i> is a shooter and <i>Left Alive</i> a stealth game; neither applies.</p>
+    <div class="meta"><span>1 · 1995 · <i>1st: Remake</i> 2022</span><span>2 · 1997 · remake 2023</span><span>3 · 1999 · remake 2025</span>
+      <span>4 · 2003</span><span>5 · 2005, Japan only</span><span>2089 · mobile and DS</span>
+      <span class="off">Evolved · a shooter</span><span class="off">Left Alive · a stealth game</span></div>
+
+    <div class="sub">What it does</div>
+    <div class="fig scroll">
+      <svg class="dg" viewBox="0 0 960 360" style="min-width:760px" role="img"
+        aria-label="Left: a Front Mission body in four parts and what breaking each does. Right: the game's combat rig, four breakable parts and two slots.">
+        <defs><marker id="m-fm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--danger)"/></marker></defs>
+        <text x="20" y="18" class="t">Front Mission: four parts, each with its own HP</text>
+        <rect x="30" y="84" width="52" height="104" rx="8" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="56" y="130" text-anchor="middle" class="t">L arm</text>
+        <rect x="38" y="170" width="36" height="6" rx="3" style="fill:var(--sunken)"/><rect x="38" y="170" width="24" height="6" rx="3" style="fill:var(--accent)"/>
+        <rect x="90" y="64" width="112" height="124" rx="10" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="146" y="122" text-anchor="middle" class="t">Body</text>
+        <rect x="104" y="170" width="84" height="6" rx="3" style="fill:var(--sunken)"/><rect x="104" y="170" width="70" height="6" rx="3" style="fill:var(--accent)"/>
+        <rect x="210" y="84" width="52" height="104" rx="8" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="236" y="130" text-anchor="middle" class="t">R arm</text>
+        <rect x="218" y="170" width="36" height="6" rx="3" style="fill:var(--sunken)"/><rect x="218" y="170" width="30" height="6" rx="3" style="fill:var(--accent)"/>
+        <rect x="108" y="196" width="76" height="104" rx="8" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="146" y="246" text-anchor="middle" class="t">Legs</text>
+        <rect x="118" y="282" width="56" height="6" rx="3" style="fill:var(--sunken)"/><rect x="118" y="282" width="50" height="6" rx="3" style="fill:var(--accent)"/>
+        <text x="30" y="322" class="f">bars: each part's own HP</text>
+
+        <path d="M146 64 V32 H292" class="ln"/>
+        <text x="300" y="36" class="t">Body at 0</text>
+        <text x="300" y="52" class="s">the unit is out; in the first game the pilot</text>
+        <text x="300" y="66" class="s">walks away, and you pay for a new body</text>
+        <path d="M262 120 H292" class="ln"/>
+        <text x="300" y="124" class="t">One arm at 0</text>
+        <text x="300" y="140" class="s">that arm's weapons are gone for the battle;</text>
+        <text x="300" y="154" class="s">both arms at 0: no attack, no guard</text>
+        <path d="M184 250 H292" class="ln"/>
+        <text x="300" y="254" class="t">Legs at 0</text>
+        <text x="300" y="270" class="s">movement drops to about one tile</text>
+        <text x="300" y="284" class="s">and evasion collapses</text>
+        <text x="300" y="318" class="t">After a battle</text>
+        <text x="300" y="334" class="s">arms and legs are mended free;</text>
+        <text x="300" y="348" class="s">only a wrecked body costs money</text>
+
+        <line x1="585" y1="8" x2="585" y2="352" style="stroke:var(--hairline-strong)" stroke-dasharray="4 4"/>
+        <text x="610" y="18" class="t">What the game takes: the combat rig (TC17)</text>
+        <rect x="708" y="34" width="64" height="24" rx="6" style="fill:none;stroke:var(--ink-faint)" stroke-dasharray="4 3"/>
+        <text x="740" y="50" text-anchor="middle" class="s">Visor</text>
+        <rect x="640" y="84" width="48" height="100" rx="8" style="fill:var(--danger-wash);stroke:var(--danger)"/>
+        <text x="664" y="128" text-anchor="middle" class="t">L arm</text>
+        <text x="664" y="146" text-anchor="middle" class="s" style="fill:var(--danger)">broken</text>
+        <rect x="648" y="168" width="32" height="6" rx="3" style="fill:var(--sunken)"/>
+        <rect x="696" y="64" width="88" height="120" rx="10" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="740" y="120" text-anchor="middle" class="t">Core</text>
+        <rect x="706" y="168" width="68" height="6" rx="3" style="fill:var(--sunken)"/><rect x="706" y="168" width="40" height="6" rx="3" style="fill:var(--accent)"/>
+        <rect x="792" y="84" width="48" height="100" rx="8" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="816" y="128" text-anchor="middle" class="t">R arm</text>
+        <rect x="800" y="168" width="32" height="6" rx="3" style="fill:var(--sunken)"/><rect x="800" y="168" width="26" height="6" rx="3" style="fill:var(--accent)"/>
+        <rect x="708" y="192" width="64" height="100" rx="8" style="fill:var(--accent-wash);stroke:var(--accent)"/>
+        <text x="740" y="240" text-anchor="middle" class="t">Legs</text>
+        <rect x="716" y="276" width="48" height="6" rx="3" style="fill:var(--sunken)"/><rect x="716" y="276" width="44" height="6" rx="3" style="fill:var(--accent)"/>
+        <rect x="856" y="94" width="84" height="56" rx="8" style="fill:none;stroke:var(--ink-faint)" stroke-dasharray="4 3"/>
+        <text x="898" y="120" text-anchor="middle" class="s">Back unit</text>
+        <text x="898" y="136" text-anchor="middle" class="f">a slot</text>
+        <path d="M664 82 C664 58 688 52 708 64" style="fill:none;stroke:var(--danger);stroke-width:1.5" marker-end="url(#m-fm)"/>
+        <text x="624" y="66" class="s" style="fill:var(--danger)">spill</text>
+        <text x="610" y="314" class="s">Solid: breaks. Dashed: a slot that can't be hit.</text>
+        <text x="610" y="330" class="s">Hits on a broken part go to the Core.</text>
+        <text x="610" y="346" class="s">Rig Break: out of the battle, never hurt (TC25).</text>
+      </svg>
+    </div>
+    <div class="grid3 six">
+      <div class="tile">
+        <h3>Parts and targeting</h3>
+        <ul>
+          <li>Wanzers are built from parts: body, left arm, right arm, legs, each with its own HP.</li>
+          <li><b>Targeting is set by the weapon,</b> and mostly random: melee leans to the body, machine guns and
+            shotguns spread across parts, single shots hit one part.</li>
+          <li>Choosing a part needs a skill, and the 2023 remake's lack of it was its top complaint.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Weight against output</h3>
+        <ul>
+          <li>A wanzer's total weight can't pass its body's power output.</li>
+          <li>Backpacks add output or carry items, jump jets, sensors, repair kits or radios.</li>
+          <li>In the first game a lighter load gives extra movement.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Weapons in three bands</h3>
+        <ul>
+          <li><b>Melee:</b> one hit.</li>
+          <li><b>Short range:</b> multi-hit, can counter.</li>
+          <li><b>Long range:</b> long reach, limited ammo, a minimum range; can't be countered and can't counter.</li>
+          <li><b>Damage types</b> in 4 and 5: piercing, impact and fire, against an armour coat of one type.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Turns and links</h3>
+        <ul>
+          <li><b>Turns:</b> phases in 1 to 3; Action Points from 2 on. Moving, attacking, countering and blocking spend
+            one pool, so a unit that spends everything on its turn is defenceless on the enemy's.</li>
+          <li><b>Links:</b> allies join an attack or take a hit for a partner. Setting them up in 4 was a chore; 5
+            simplified it.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Pilot skills and capture</h3>
+        <ul>
+          <li><b>Pilot skills</b> trigger by chance (a second hit, firing the other hand, striking first, stunning,
+            choosing a part).</li>
+          <li>In 3 they're learned at random by fighting with parts that carry them.</li>
+          <li><b>Capture:</b> in 3 a pilot forced out of her machine can board any empty one, so enemy machines can be
+            taken.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Between battles and the cutaway</h3>
+        <ul>
+          <li>Towns with shops, a setup screen, an arena with odds, simulators and, in 3, a pseudo-internet.</li>
+          <li><b>Presentation:</b> every exchange cuts to a side-view duel that shows parts taking hits.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="sub">What players said</div>
+    <div class="said">
+      <div class="pro"><h3>Loved</h3><ul><li>Customisation</li><li>Part damage that makes each fight specific</li>
+        <li>Links in 4 and 5</li><li>Mission variety</li></ul></div>
+      <div class="con"><h3>Frustrating</h3><ul>
+        <li>Slow pacing (unit counts, AP bookkeeping, passive AI that waits for scripts)</li>
+        <li>Hidden hit modifiers</li><li>Chance skills that decide fights</li><li>No part choice</li>
+        <li>Menu weight (no saved loadouts, part-by-part swaps for a dozen units)</li><li>Manual link setup</li>
+        <li>A fast mode in the 2025 remake that hid the part damage</li></ul></div>
+    </div>
+
+    <div class="sub">What the game takes</div>
+    <div class="scroll"><table class="takes">
+      <tr><th>Take</th><th>How it lands here</th><th>Call</th></tr>
+      <tr><td><b>Wanzer parts</b></td><td><b>The combat rig:</b> Core, Left arm, Right arm and Legs break; the Visor and the Back unit are slots that can't be hit</td><td><span class="tag">TC17</span></td></tr>
+      <tr><td><b>Part-break effects</b></td><td>Front Mission 1's rules, plus spill-over: hits on a broken part go to the Core</td><td><span class="tag">TC17</span></td></tr>
+      <tr><td><b>Weight against output</b></td><td><b>Capacity:</b> every part has a Load of 1–6; Capacity comes from Power, the Core and the Back unit; a light load gives +1 Move</td><td><span class="tag">TC18</span></td></tr>
+      <tr><td><b>Three weapon bands</b></td><td>Melee, Short and Long, with ammo only on Long, plus a fourth band, <b>Tech,</b> for a Netrunner's hacks</td><td><span class="tag">TC19</span></td></tr>
+      <tr><td><b>Damage types</b></td><td><b>P, I and F</b> (pierce, impact, fire); a <b>Coat</b> halves one</td><td><span class="tag">TC19</span></td></tr>
+      <tr><td><b>Part targeting</b></td><td>Each weapon sets where hits land; <b>Aim</b> picks a part at −25% hit. The forecast lights the likely parts</td><td><span class="tag">TC19</span></td></tr>
+      <tr><td><b>AP's spend-or-keep choice</b></td><td>Folded into <b>Charge</b>: counters and links need it, so spending it all leaves the Uma open</td><td><span class="tag">TC20</span></td></tr>
+      <tr><td><b>Links</b></td><td><b>Crossfire:</b> up to two allies join automatically; a shielded neighbour can take a hit. A toggle per unit, nothing to set up</td><td><span class="tag">TC21</span></td></tr>
+      <tr><td><b>Skills from parts</b></td><td><b>Mastery,</b> not chance: a rarer part teaches its skill as it's used; mastered skills go in Visor slots</td><td><span class="tag">TC22</span></td></tr>
+      <tr><td><b>Chance skills</b></td><td>Five only, with the % always shown, and one chain per attack</td><td><span class="tag">TC22</span></td></tr>
+      <tr><td><b>Jobs (Front Mission 5)</b></td><td>The five <b>roles</b> become jobs whose signature action needs its Back unit</td><td><span class="tag">TC5</span></td></tr>
+      <tr><td><b>Pilot walks away</b></td><td><b>Rig Break:</b> the Uma is out of the battle, never hurt; a Medic can reboot her in time; a broken Core costs credits</td><td><span class="tag">TC25</span></td></tr>
+      <tr><td><b>Capture</b></td><td><b>Jack-Out:</b> a Netrunner frees a weakened heroine with her parts intact</td><td><span class="tag">TC26</span></td></tr>
+      <tr><td><b>Buy, salvage, remodel</b></td><td>Credits, salvage and scrap; a small bonus for three parts from one maker; free repainting</td><td><span class="tag">TC43</span></td></tr>
+      <tr><td><b>Arena</b></td><td>A two-minute one-on-one on a 6 × 6 map with odds and a payout cap a chapter</td><td><span class="tag">TC43</span></td></tr>
+      <tr><td><b>The cutaway</b></td><td><b>Cut-ins</b> at three speeds (Full, Quick, Off), with part damage always shown on the map too</td><td><span class="tag">TC28</span></td></tr>
+    </table></div>
+
+    <div class="leave"><b>What we leave</b>
+      <span>AP arithmetic</span><span>hidden modifiers (night, weather, friendly-fire lines)</span>
+      <span>random skill learning</span><span>link setup screens</span><span>uncapped arena money</span>
+      <span>backpacks with no clear job</span><span>Front Mission's own words (wanzer and the rest)</span>
+      <em>We say rig, Core, Back unit, Rig Break and Jack-Out.</em>
+    </div>
+  </section>
+
+  <!-- ───────────── 4. Triangle Strategy ───────────── -->
+  <section class="card ref r4" id="triangle">
+    <div class="head"><span class="badge">4</span><h2>Triangle Strategy</h2><span class="kind">The look and the build-out</span></div>
+    <div class="meta"><span>Square Enix and Artdink</span><span>2022</span><span>Unreal Engine 4</span><span>Metacritic 83–85</span>
+      <span>Over a million sold</span></div>
+
+    <div class="sub">What it does</div>
+    <div class="grid2">
+      <div class="tile">
+        <h3>The look</h3>
+        <ul>
+          <li>HD-2D on larger, block-built maps than Octopath, with a camera that turns a full circle (which made every
+            map edge a cost).</li>
+          <li>Sprites were tuned to read as pixel art at more realistic proportions.</li>
+          <li>Depth of field, bloom, vignette and chromatic aberration; reviewers found the image cleaner with depth of
+            field off.</li>
+          <li>Rain leaves puddles, snow melts, wind lowers arrow accuracy.</li>
+          <li>Octopath's published recipe adds:
+            <ul><li>deep depth of field, so near and far stay sharp;</li><li>point lights that cast moving shadows;</li>
+              <li>a screen-space fade on anything in front of a character;</li><li>pulsing emissive masks.</li></ul></li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Battle UX</h3>
+        <ul>
+          <li>A turn-order bar.</li>
+          <li>Tile colours: blue reachable and safe, purple reachable in enemy range, red lines from each enemy that
+            could hit, red attack range, yellow area (the legend below).</li>
+          <li>A forecast of HP, damage and hit chance for the attack and the follow-up.</li>
+          <li>A simulation of out-of-range enemies.</li>
+          <li>A terrain card.</li>
+          <li>An autosave every turn and a retry.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Battle systems</h3>
+        <ul>
+          <li>Each unit's clock fills by Speed; a turn is a move and an action; waiting brings the next turn sooner.</li>
+          <li><b>TP:</b> +1 a turn, a cap of 3 rising with promotions; skills cost it, basic attacks are free.</li>
+          <li><b>Follow-ups:</b> an ally on the far side of the target attacks too.</li>
+          <li>Back attacks always crit; height adds damage and archer range.</li>
+          <li><b>Terrain:</b> fire melts ice into puddles, lightning spreads across wet tiles and metal track; houses
+            collapse; wind pushes.</li>
+          <li><b>Kudos</b> from back attacks and follow-ups buy once-a-battle <b>Quietuses</b>.</li>
+          <li>No permadeath; retreat keeps XP.</li>
+        </ul>
+      </div>
+      <div class="tile">
+        <h3>Between battles</h3>
+        <ul>
+          <li><b>The Scales of Conviction:</b> seven companions vote with tokens on key choices, after the hero tries to
+            persuade each; some arguments only unlock with what exploration found.</li>
+          <li>Three hidden convictions move with dialogue and how you fight, and decide some recruits and the ending.</li>
+          <li><b>Exploration</b> of the next battlefield.</li>
+          <li><b>The Encampment:</b> a provisioner, a smithy that ranks up weapons, a trade post and <b>mock battles</b>
+            that give XP even on a loss.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="fig scroll" style="margin-top:12px">
+      <svg class="dg" viewBox="0 0 960 236" style="min-width:820px" role="img" aria-label="Triangle Strategy's tile colours in three moments: moving, attacking and an area skill, with a legend.">
+      <text x="20" y="24" class="t">1 · Moving</text>
+      <rect x="20" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="50" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="50" y="36" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="80" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="110" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="140" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="170" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="200" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="66" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="50" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="50" y="66" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="80" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="80" y="66" width="28" height="28" rx="4" style="fill:var(--neon);fill-opacity:.45"/>
+      <rect x="110" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="140" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="170" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="200" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="96" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="50" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="50" y="96" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="80" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="80" y="96" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="110" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="110" y="96" width="28" height="28" rx="4" style="fill:var(--neon);fill-opacity:.45"/>
+      <rect x="140" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="170" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="200" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="126" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="50" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="80" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="80" y="126" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="110" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="110" y="126" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="140" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="140" y="126" width="28" height="28" rx="4" style="fill:var(--neon);fill-opacity:.45"/>
+      <rect x="170" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="200" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="156" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="50" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="50" y="156" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="80" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="80" y="156" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="110" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="110" y="156" width="28" height="28" rx="4" style="fill:var(--neon);fill-opacity:.45"/>
+      <rect x="140" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="170" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="200" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="20" y="186" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="50" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="50" y="186" width="28" height="28" rx="4" style="fill:var(--info);fill-opacity:.45"/>
+      <rect x="80" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="80" y="186" width="28" height="28" rx="4" style="fill:var(--neon);fill-opacity:.45"/>
+      <rect x="110" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="140" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="170" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="200" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <line x1="64" y1="140" x2="154" y2="140" style="stroke:var(--info);stroke-width:2" stroke-dasharray="4 3"/>
+      <rect x="139" y="125" width="30" height="30" rx="5" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+      <line x1="214" y1="80" x2="154" y2="140" style="stroke:var(--danger);stroke-width:2.5"/>
+      <line x1="214" y1="200" x2="154" y2="140" style="stroke:var(--danger);stroke-width:2.5"/>
+      <circle cx="64" cy="140" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/><text x="64" y="144" text-anchor="middle" class="w">A</text>
+      <path d="M214 68 L226 80 L214 92 L202 80 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="214" y="84" text-anchor="middle" class="w">E</text>
+      <path d="M214 188 L226 200 L214 212 L202 200 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="214" y="204" text-anchor="middle" class="w">E</text>
+      <text x="270" y="24" class="t">2 · Attacking</text>
+      <rect x="270" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="36" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="360" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="390" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="420" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="450" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="270" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="66" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="330" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="66" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="360" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="360" y="66" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="390" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="420" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="450" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="270" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="270" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="300" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="330" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="360" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="360" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="390" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="390" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="420" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="450" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="270" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="126" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="330" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="126" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="360" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="360" y="126" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="390" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="420" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="450" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="270" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="156" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="360" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="390" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="420" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="450" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="270" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="300" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="330" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="360" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="390" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="420" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="450" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <circle cx="344" cy="110" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/><text x="344" y="114" text-anchor="middle" class="w">A</text>
+      <path d="M404 98 L416 110 L404 122 L392 110 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="404" y="114" text-anchor="middle" class="w">E</text>
+      <path d="M464 158 L476 170 L464 182 L452 170 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="464" y="174" text-anchor="middle" class="w">E</text>
+      <text x="520" y="24" class="t">3 · An area skill</text>
+      <rect x="520" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="550" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="580" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="610" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="640" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="670" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="700" y="36" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="550" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="550" y="66" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="580" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="610" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="640" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="670" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="700" y="66" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="550" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="550" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="580" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="580" y="96" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="610" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="610" y="96" width="28" height="28" rx="4" style="fill:var(--accent);fill-opacity:.45"/>
+      <rect x="640" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="670" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="700" y="96" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="126" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="550" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="550" y="126" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="580" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="580" y="126" width="28" height="28" rx="4" style="fill:var(--accent);fill-opacity:.45"/>
+      <rect x="610" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="610" y="126" width="28" height="28" rx="4" style="fill:var(--accent);fill-opacity:.45"/>
+      <rect x="640" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="640" y="126" width="28" height="28" rx="4" style="fill:var(--accent);fill-opacity:.45"/>
+      <rect x="670" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="700" y="126" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="156" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="550" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="580" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="580" y="156" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="610" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="610" y="156" width="28" height="28" rx="4" style="fill:var(--accent);fill-opacity:.45"/>
+      <rect x="640" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="640" y="156" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="670" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="700" y="156" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="520" y="186" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="550" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="550" y="186" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="580" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="580" y="186" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="610" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="610" y="186" width="28" height="28" rx="4" style="fill:var(--danger);fill-opacity:.45"/>
+      <rect x="640" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="670" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <rect x="700" y="186" width="28" height="28" rx="4" style="fill:var(--sunken)"/>
+      <circle cx="624" cy="140" r="6" style="fill:none;stroke:var(--ink);stroke-width:2"/>
+      <circle cx="564" cy="170" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/><text x="564" y="174" text-anchor="middle" class="w">A</text>
+      <path d="M654 128 L666 140 L654 152 L642 140 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="654" y="144" text-anchor="middle" class="w">E</text>
+      <path d="M624 98 L636 110 L624 122 L612 110 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="624" y="114" text-anchor="middle" class="w">E</text>
+      <text x="762" y="24" class="t">The tile colours</text>
+      <rect x="762" y="40" width="16" height="16" rx="3" style="fill:var(--info);fill-opacity:.45"/>
+      <text x="786" y="52" class="t" style="font-size:12px">Blue</text>
+      <text x="786" y="66" class="s">reachable and safe</text>
+      <rect x="762" y="72" width="16" height="16" rx="3" style="fill:var(--neon);fill-opacity:.45"/>
+      <text x="786" y="84" class="t" style="font-size:12px">Purple</text>
+      <text x="786" y="98" class="s">reachable, in enemy range</text>
+      <line x1="762" y1="118" x2="778" y2="106" style="stroke:var(--danger);stroke-width:2.5"/>
+      <text x="786" y="116" class="t" style="font-size:12px">Red lines</text>
+      <text x="786" y="130" class="s">from each enemy that could hit</text>
+      <rect x="762" y="136" width="16" height="16" rx="3" style="fill:var(--danger);fill-opacity:.45"/>
+      <text x="786" y="148" class="t" style="font-size:12px">Red</text>
+      <text x="786" y="162" class="s">attack range</text>
+      <rect x="762" y="168" width="16" height="16" rx="3" style="fill:var(--accent);fill-opacity:.45"/>
+      <text x="786" y="180" class="t" style="font-size:12px">Yellow</text>
+      <text x="786" y="194" class="s">the area</text>
+      <circle cx="770" cy="214" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/><text x="770" y="218" text-anchor="middle" class="w">A</text>
+      <text x="786" y="218" class="s">ally</text>
+      <path d="M840 202 L852 214 L840 226 L828 214 Z" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/><text x="840" y="218" text-anchor="middle" class="w">E</text>
+      <text x="858" y="218" class="s">enemy</text>
+      </svg>
+      <p class="note">Ours: the <b>forecast card</b> and range colours, with a toggle that paints every enemy's reach
+        (TC29).</p>
+    </div>
+    <div class="fig scroll">
+      <svg class="dg" viewBox="0 0 960 272" style="min-width:820px" role="img" aria-label="Four units' clocks fill at their Speed; each full clock is a turn. The turn order bar on top follows from it. Unit D waits and acts sooner.">
+      <text x="20" y="30" class="t">Turn order</text>
+      <rect x="160" y="12" width="60" height="26" rx="7" style="fill:var(--info)"/>
+      <text x="190" y="30" text-anchor="middle" class="w" style="font-size:12px">1 · A</text>
+      <rect x="230" y="12" width="60" height="26" rx="7" style="fill:var(--danger)"/>
+      <text x="260" y="30" text-anchor="middle" class="w" style="font-size:12px">2 · B</text>
+      <rect x="300" y="12" width="60" height="26" rx="7" style="fill:var(--info)"/>
+      <text x="330" y="30" text-anchor="middle" class="w" style="font-size:12px">3 · C</text>
+      <rect x="370" y="12" width="60" height="26" rx="7" style="fill:var(--info)"/>
+      <text x="400" y="30" text-anchor="middle" class="w" style="font-size:12px">4 · A</text>
+      <rect x="440" y="12" width="60" height="26" rx="7" style="fill:var(--danger)"/>
+      <text x="470" y="30" text-anchor="middle" class="w" style="font-size:12px">5 · D</text>
+      <rect x="510" y="12" width="60" height="26" rx="7" style="fill:var(--danger)"/>
+      <text x="540" y="30" text-anchor="middle" class="w" style="font-size:12px">6 · B</text>
+      <rect x="580" y="12" width="60" height="26" rx="7" style="fill:var(--info)"/>
+      <text x="610" y="30" text-anchor="middle" class="w" style="font-size:12px">7 · A</text>
+      <rect x="650" y="12" width="60" height="26" rx="7" style="fill:var(--info)"/>
+      <text x="680" y="30" text-anchor="middle" class="w" style="font-size:12px">8 · C</text>
+      <rect x="720" y="12" width="60" height="26" rx="7" style="fill:var(--danger)"/>
+      <text x="750" y="30" text-anchor="middle" class="w" style="font-size:12px">9 · D</text>
+      <rect x="790" y="12" width="60" height="26" rx="7" style="fill:var(--info)"/>
+      <text x="820" y="30" text-anchor="middle" class="w" style="font-size:12px">10 · A</text>
+      <rect x="860" y="12" width="60" height="26" rx="7" style="fill:var(--danger)"/>
+      <text x="890" y="30" text-anchor="middle" class="w" style="font-size:12px">11 · B</text>
+      <text x="20" y="84" class="t" style="fill:var(--info)">A</text>
+      <text x="36" y="84" class="s">Speed 10</text>
+      <line x1="160" y1="92" x2="940" y2="92" style="stroke:var(--hairline-strong)"/>
+      <polyline points="160,92 310,68 310,92 460,68 460,92 610,68 610,92 760,68 760,92 910,68 910,92 940,87.2" style="fill:none;stroke:var(--info);stroke-width:2;stroke-linejoin:round"/>
+      <circle cx="310" cy="68" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/>
+      <text x="310" y="72" text-anchor="middle" class="w">1</text>
+      <circle cx="460" cy="68" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/>
+      <text x="460" y="72" text-anchor="middle" class="w">4</text>
+      <circle cx="610" cy="68" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/>
+      <text x="610" y="72" text-anchor="middle" class="w">7</text>
+      <circle cx="760" cy="68" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/>
+      <text x="760" y="72" text-anchor="middle" class="w">10</text>
+      <circle cx="910" cy="68" r="5" style="fill:var(--info);fill-opacity:.5"/>
+      <text x="20" y="126" class="t" style="fill:var(--danger)">B</text>
+      <text x="36" y="126" class="s">Speed 7</text>
+      <line x1="160" y1="134" x2="940" y2="134" style="stroke:var(--hairline-strong)"/>
+      <polyline points="160,134 374.3,110 374.3,134 588.6,110 588.6,134 802.9,110 802.9,134 940,118.6" style="fill:none;stroke:var(--danger);stroke-width:2;stroke-linejoin:round"/>
+      <circle cx="374.3" cy="110" r="10" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/>
+      <text x="374.3" y="114" text-anchor="middle" class="w">2</text>
+      <circle cx="588.6" cy="110" r="10" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/>
+      <text x="588.6" y="114" text-anchor="middle" class="w">6</text>
+      <circle cx="802.9" cy="110" r="10" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/>
+      <text x="802.9" y="114" text-anchor="middle" class="w">11</text>
+      <text x="20" y="168" class="t" style="fill:var(--info)">C</text>
+      <text x="36" y="168" class="s">Speed 6</text>
+      <line x1="160" y1="176" x2="940" y2="176" style="stroke:var(--hairline-strong)"/>
+      <polyline points="160,176 410,152 410,176 660,152 660,176 910,152 910,176 940,173.1" style="fill:none;stroke:var(--info);stroke-width:2;stroke-linejoin:round"/>
+      <circle cx="410" cy="152" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/>
+      <text x="410" y="156" text-anchor="middle" class="w">3</text>
+      <circle cx="660" cy="152" r="10" style="fill:var(--info);stroke:var(--panel);stroke-width:2"/>
+      <text x="660" y="156" text-anchor="middle" class="w">8</text>
+      <circle cx="910" cy="152" r="5" style="fill:var(--info);fill-opacity:.5"/>
+      <text x="20" y="210" class="t" style="fill:var(--danger)">D</text>
+      <text x="36" y="210" class="s">Speed 4</text>
+      <line x1="160" y1="218" x2="940" y2="218" style="stroke:var(--hairline-strong)"/>
+      <polyline points="535,218 910,194" style="fill:none;stroke:var(--ink-faint);stroke-width:1.5" stroke-dasharray="4 3"/>
+      <circle cx="910" cy="194" r="5" style="fill:none;stroke:var(--ink-faint);stroke-width:1.5" stroke-dasharray="2 2"/>
+      <text x="902" y="186" text-anchor="end" class="f">without the wait</text>
+      <text x="543" y="232" class="f">waits: keeps part of its clock</text>
+      <polyline points="160,218 535,194 535,206 722.5,194 722.5,218 940,204.1" style="fill:none;stroke:var(--danger);stroke-width:2;stroke-linejoin:round"/>
+      <circle cx="535" cy="194" r="10" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/>
+      <text x="535" y="198" text-anchor="middle" class="w">5</text>
+      <circle cx="722.5" cy="194" r="10" style="fill:var(--danger);stroke:var(--panel);stroke-width:2"/>
+      <text x="722.5" y="198" text-anchor="middle" class="w">9</text>
+      <line x1="160" y1="248" x2="940" y2="248" style="stroke:var(--ink-faint)"/>
+      <line x1="160" y1="248" x2="160" y2="253" style="stroke:var(--ink-faint)"/>
+      <text x="160" y="266" text-anchor="middle" class="f">0</text>
+      <line x1="310" y1="248" x2="310" y2="253" style="stroke:var(--ink-faint)"/>
+      <text x="310" y="266" text-anchor="middle" class="f">10</text>
+      <line x1="460" y1="248" x2="460" y2="253" style="stroke:var(--ink-faint)"/>
+      <text x="460" y="266" text-anchor="middle" class="f">20</text>
+      <line x1="610" y1="248" x2="610" y2="253" style="stroke:var(--ink-faint)"/>
+      <text x="610" y="266" text-anchor="middle" class="f">30</text>
+      <line x1="760" y1="248" x2="760" y2="253" style="stroke:var(--ink-faint)"/>
+      <text x="760" y="266" text-anchor="middle" class="f">40</text>
+      <line x1="910" y1="248" x2="910" y2="253" style="stroke:var(--ink-faint)"/>
+      <text x="910" y="266" text-anchor="middle" class="f">50</text>
+      <text x="20" y="266" class="f">time</text>
+      <text x="20" y="62" class="f">each clock fills by Speed</text>
+      </svg>
+      <p class="note">A turn is a move and an action. D waits on turn 5, keeps part of its clock and acts again on turn 9
+        instead of at time 50 (the dashed line). Ours keeps the Speed timeline across the top (TC3). <b>TP</b> (+1 a turn, cap 3) becomes
+        <b>Charge</b> <span class="pips" aria-hidden="true"><i></i><i></i><i></i><i class="off"></i><i class="off"></i></span>
+        (+1 a turn, cap 3, up to 5 with licences, TC20).</p>
+    </div>
+
+    <div class="sub">What players said</div>
+    <div class="said">
+      <div class="pro"><h3>Praised</h3><ul><li>The map design</li><li>Follow-ups and scarce TP</li>
+        <li>How the votes tie into the story</li><li>The art</li></ul></div>
+      <div class="con"><h3>Criticised</h3><ul>
+        <li>An hour or more of cutscenes between battles, and a slow opening</li>
+        <li>Story chapters that are all cutscene</li><li>Convictions that feel predictable</li>
+        <li>Blur on Switch</li><li>Rooftop archers that trivialise maps</li></ul></div>
+    </div>
+
+    <div class="sub">What the game takes</div>
+    <div class="scroll"><table class="takes">
+      <tr><th>Take</th><th>How it lands here</th><th>Call</th></tr>
+      <tr><td><b>The HD-2D diorama</b></td><td>uma-stage's fixed 35° camera with no rotation in v1; a wide sharp band of tilt-shift in battle, a stronger one in story shots; bloom only on neon, flashes and holograms; night by default</td><td><span class="tag">TC10</span></td></tr>
+      <tr><td><b>Speed clocks</b></td><td>Kept: the Speed timeline across the top</td><td><span class="tag">TC3</span></td></tr>
+      <tr><td><b>TP</b></td><td><b>Charge:</b> +1 a turn, cap 3, up to 5 with licences</td><td><span class="tag">TC20</span></td></tr>
+      <tr><td><b>Follow-ups</b></td><td><b>Crossfire,</b> extended to Gunners with a line of fire, since a squad of four rarely sandwiches a target</td><td><span class="tag">TC21</span></td></tr>
+      <tr><td><b>Back attacks and height</b></td><td>Side +25%, back +50% and past shields and counters; +10% a height level; every high perch has an answer</td><td><span class="tag">TC23</span></td></tr>
+      <tr><td><b>Elemental terrain</b></td><td><b>Terrain states:</b> Wet, Oil (and its fire), Smoke, Live current, plus <b>terminals</b> a Netrunner can use</td><td><span class="tag">TC24</span></td></tr>
+      <tr><td><b>Tile colours and forecast</b></td><td>The <b>forecast card</b> and range colours, with a toggle that paints every enemy's reach</td><td><span class="tag">TC29</span></td></tr>
+      <tr><td><b>Quietus</b></td><td><b>Overrides:</b> a squad pool, each once a battle, bought with Rep</td><td><span class="tag">TC44</span></td></tr>
+      <tr><td><b>Convictions and the vote</b></td><td><b>The Call:</b> the squad votes with tokens; three convictions (<b>Code, Edge, Free</b>) are visible, not hidden</td><td><span class="tag">TC35</span></td></tr>
+      <tr><td><b>Exploration</b></td><td><b>Intel scenes:</b> one district diorama, four to six hotspots, about three minutes</td><td><span class="tag">TC35</span></td></tr>
+      <tr><td><b>The Encampment</b></td><td><b>The Hideout:</b> Workshop, Shop, Fixer, Sim Pod, Crew and Archive</td><td><span class="tag">TC42</span></td></tr>
+      <tr><td><b>Mock battles</b></td><td><b>The Sim Pod:</b> replays story maps with new enemies, XP for the whole squad even on a loss</td><td><span class="tag">TC42</span></td></tr>
+    </table></div>
+
+    <div class="leave"><b>What we leave</b>
+      <span>the 360° camera</span><span>armies and hour-long battles</span><span>hidden convictions</span>
+      <span>fixed weapons</span><span>loot bags that cost a turn</span>
+      <span>long cutscene runs: a scene is three minutes at most (TC36)</span>
+    </div>
+  </section>
+
+  <!-- ───────────── 5. The eight franchises ───────────── -->
+  <section class="card ref r5" id="franchises">
+    <div class="head"><span class="badge">5</span><h2>The eight franchises</h2><span class="kind">The enemy factions</span>
+      <span class="tag">TC37</span><span class="tag">TC38</span><span class="tag wd">WD10–WD14</span></div>
+    <p>The platform's seven boss boards and its regular-enemies board come from eight franchises. Each becomes a faction
+      with an original name, a reason to be on the Ring, a way to turn and a battle identity. <a href="world.html">The
+      world</a> holds the full design (WD10–WD14).</p>
+    <div class="stats">
+      <div class="stat"><b>8</b><span>franchises, one faction each</span></div>
+      <div class="stat"><b>7</b><span>boss boards</span></div>
+      <div class="stat"><b>1</b><span>regular-enemies board</span></div>
+      <div class="stat"><b>SS · S · A</b><span>the Ranker's casts counted below</span></div>
+    </div>
+    <div class="scroll"><table style="min-width:640px">
+      <tr><th>Franchise</th><th>Board</th><th>Cast</th><th>What it brings to a grid</th></tr>
+      <tr><td><b>Azur Lane</b></td><td><span class="board">Boss</span> <span class="note">and most of Key</span></td><td><div class="cast"><b>53</b><span class="track"><i style="width:93%"></i></span></div></td><td>Long-range naval artillery, carrier drones, formations</td></tr>
+      <tr><td><b>Genshin Impact</b></td><td><span class="board">Boss</span></td><td><div class="cast"><b>56</b><span class="track"><i style="width:98%"></i></span></div></td><td>Elements that react on tiles</td></tr>
+      <tr><td><b>Wuthering Waves</b></td><td><span class="board">Boss</span></td><td><div class="cast"><b>39</b><span class="track"><i style="width:68%"></i></span></div></td><td>Echoes summoned from defeated foes; resonance</td></tr>
+      <tr><td><b>Honkai: Star Rail</b></td><td><span class="board">Boss</span></td><td><div class="cast"><b>48</b><span class="track"><i style="width:84%"></i></span></div></td><td>Paths: shields, buffs and a train that lays rails across the Lanes</td></tr>
+      <tr><td><b>Zenless Zone Zero</b></td><td><span class="board">Boss</span></td><td><div class="cast"><b>35</b><span class="track"><i style="width:61%"></i></span></div></td><td>Agents in corrupted zones; stagger and assist chains</td></tr>
+      <tr><td><b>Honkai Impact 3rd</b></td><td><span class="board">Boss</span></td><td><div class="cast"><b>57</b><span class="track"><i style="width:100%"></i></span></div></td><td>Battlesuits and a corruption that turns its hosts</td></tr>
+      <tr><td><b>Punishing: Gray Raven</b></td><td><span class="board">Boss</span></td><td><div class="cast"><b>37</b><span class="track"><i style="width:65%"></i></span></div></td><td>Frames, a virus that turns machines, signal orbs</td></tr>
+      <tr><td><b>NIKKE</b></td><td><span class="board reg">Regular</span></td><td><span class="note">all units</span></td><td>Squads of gunners behind cover, against machine swarms</td></tr>
+    </table></div>
+    <p class="note">The counts are the Ranker's casts (SS, S and A) on the local copy of 2026-11-11, so they move as the
+      owner ranks.</p>
+  </section>
+
+  <!-- ───────────── 6. What the sibling games already settled ───────────── -->
+  <section class="card" id="settled">
+    <div class="head"><span class="badge" style="--ref:var(--success);--ref-wash:var(--success-wash)">6</span><h2>What the sibling games already settled</h2></div>
+    <p>The pass over uma-quest, uma-farm and uma-platform set rules this game follows.</p>
+    <ul class="checks">
+      <li><div><b>The cast is the Ranker's 100,</b> one per outfit, in its ten batches of ten (uma-platform P131, P138,
+        P139). The base outfit is the real Uma; sisters are Umas of their own; F means unused. Umas are keyed by outfit,
+        never by character id alone, because a sister shares her base Uma's character id.</div></li>
+      <li><div><b>Roles come from an authored tag,</b> not the running style. uma-quest moved its Ways to a hand-authored
+        story class (its SC7, D50) and uma-farm its favourite line to the bible (RM6), after the owner said he was moving
+        away from the class separation (P123). Running style only colours how she moves.</div></li>
+      <li><div><b>Stats:</b> both games read the five stats per outfit. Every outfit's 5★ stats sum to 550, so only the
+        spread differs.</div></li>
+      <li><div><b>Bosses come from the boards' casts</b> in authoring order, the owner picks, the tools never rank,
+        left-out units are never used, and tiers are never game rules (TS14). uma-quest fills encounter slots (Regulars by
+        role, one Key, one Boss) from pools of board ids (its SP43).</div></li>
+      <li><div><b>Umas are adults and are never maimed.</b> A damaged pose is weary with the costume intact.</div></li>
+      <li><div><b>Stories</b> go through Uma Story's draft, review and publish (P141). A fourth book needs its own
+        P-decision.</div></li>
+      <li><div><b>Art:</b> the Combat Adult Character keys are side-on and face one way (uma-quest ships 12 a Uma, never
+        mirrored, in its own private pack, D45). The chibi sets walk in four facings.</div></li>
+      <li class="wide"><div><b>uma-stage today</b> (<a href="concept.html">the concept §7</a>)
+        <div class="havenot">
+          <div class="has"><span class="lbl">It has</span><ul>
+            <li>an orthographic camera pitched 35° with a fixed yaw, one texel per device pixel</li>
+            <li>a grid builder with heights 0–2</li>
+            <li>pure tile picking and A*</li>
+            <li>tilt-shift and bloom, which the battery saver turns off by default on phones</li>
+            <li>at most 8 live sprite sets</li></ul></div>
+          <div class="not"><span class="lbl">It has no</span><ul>
+            <li>range overlays</li><li>tactical camera</li><li>rotation</li><li>emissive glow</li><li>rain</li></ul></div>
+        </div></div></li>
+    </ul>
+  </section>
+
+  <!-- ───────────── Sources ───────────── -->
+  <section class="card" id="sources">
+    <h2>Sources</h2>
+    <div class="srcs">
+      <div class="src r1"><h3>13 Sentinels: Aegis Rim</h3><ul>
+        <li><a href="https://en.wikipedia.org/wiki/13_Sentinels:_Aegis_Rim">Wikipedia</a><small>en.wikipedia.org</small></li>
+        <li><a href="https://13sentinels.wiki.gg/wiki/Analysis">wiki: Analysis</a><small>13sentinels.wiki.gg</small></li>
+        <li><a href="https://www.rpgsite.net/feature/12635-13-sentinels-aegis-rim-destruction-mode-guide-walkthrough">RPG Site: battle guide</a><small>rpgsite.net</small></li>
+        <li><a href="https://rpgsite.net/review/10226-13-sentinels-aegis-rim-review">RPG Site: review</a><small>rpgsite.net</small></li>
+        <li><a href="https://www.siliconera.com/george-kamitani-speaks-on-13-sentinels-aegis-rims-inspirations-early-teaser-and-more/">Siliconera: director interview</a><small>siliconera.com</small></li>
+        <li><a href="https://www.siliconera.com/interview-understanding-13-sentinels-aegis-rim-with-vanillawares-akiyasu-yamamoto/">Siliconera: producer interview</a><small>siliconera.com</small></li>
+        <li><a href="https://www.superjumpmagazine.com/13-sentinels-and-the-blessing-of-narrative/">SuperJump: on its narrative</a><small>superjumpmagazine.com</small></li>
+      </ul></div>
+      <div class="src r2"><h3>Star Guardian</h3><ul>
+        <li><a href="https://www.leagueoflegends.com/en-us/news/lore/previously-on-star-guardian/">Riot: the recap</a><small>leagueoflegends.com</small></li>
+        <li><a href="https://wiki.leagueoflegends.com/en-us/Universe:Star_Guardian">LoL wiki: the universe</a><small>wiki.leagueoflegends.com</small></li>
+        <li><a href="https://wiki.leagueoflegends.com/en-us/Universe:Another_Sky">LoL wiki: the 2022 visual novel</a><small>wiki.leagueoflegends.com</small></li>
+        <li><a href="https://www.leagueoflegends.com/en-us/news/dev/developing-the-star-nemesis-villains/">Riot: designing the villains</a><small>leagueoflegends.com</small></li>
+        <li><a href="https://www.leagueoflegends.com/en-us/news/dev/dev-star-guardian-narrative/">Riot: the narrative</a><small>leagueoflegends.com</small></li>
+        <li><a href="https://www.riotgames.com/en/news/hope-burns-brighter-than-fear-in-star-guardian-2022">Riot: the 2022 event</a><small>riotgames.com</small></li>
+      </ul></div>
+      <div class="src r3"><h3>Front Mission</h3><ul>
+        <li>Wikipedia on
+          <a href="https://en.wikipedia.org/wiki/Front_Mission_(video_game)">1</a>,
+          <a href="https://en.wikipedia.org/wiki/Front_Mission_2">2</a>,
+          <a href="https://en.wikipedia.org/wiki/Front_Mission_3">3</a>,
+          <a href="https://en.wikipedia.org/wiki/Front_Mission_4">4</a> and
+          <a href="https://en.wikipedia.org/wiki/Front_Mission_5:_Scars_of_the_War">5</a><small>en.wikipedia.org</small></li>
+        <li>The first game's mechanics:
+          <a href="https://jiangsheng.readthedocs.io/en/latest/games/frontmission/mechanics/parts.html">parts</a>,
+          <a href="https://jiangsheng.readthedocs.io/en/latest/games/frontmission/mechanics/weapons.html">weapons</a>,
+          <a href="https://jiangsheng.readthedocs.io/en/latest/games/frontmission/mechanics/skills.html">skills</a><small>jiangsheng.readthedocs.io</small></li>
+        <li><a href="https://www.rpgfan.com/review/front-mission-2-remake/">RPGFan: 2 Remake</a><small>rpgfan.com</small></li>
+        <li><a href="https://www.siliconera.com/review-front-mission-1st-remake-is-faithful-for-better-or-worse/">Siliconera: 1st Remake</a><small>siliconera.com</small></li>
+        <li><a href="https://gamingbolt.com/front-mission-3-remake-ps5-review-an-improvement-over-the-switch-version">GamingBolt: 3 Remake</a><small>gamingbolt.com</small></li>
+      </ul></div>
+      <div class="src r4"><h3>Triangle Strategy</h3><ul>
+        <li><a href="https://en.wikipedia.org/wiki/Triangle_Strategy">Wikipedia</a><small>en.wikipedia.org</small></li>
+        <li><a href="https://nintendoeverything.com/triangle-strategy-devs-on-how-the-game-uses-accurate-hd-2d">Nintendo Everything: on its HD-2D</a><small>nintendoeverything.com</small></li>
+        <li><a href="https://www.destructoid.com/triangle-strategy-interview-producers-asano-arai-square-enix-hd-2d-tactics-rpg/">Destructoid: producers' interview</a><small>destructoid.com</small></li>
+        <li><a href="https://www.nintendolife.com/news/2021/09/here_are_all_the_changes_coming_to_triangle_strategy_thanks_to_player_demo_feedback">Nintendo Life: changes from the demo survey</a><small>nintendolife.com</small></li>
+        <li><a href="https://www.docswell.com/s/EpicGamesJapan/KXPWY5-UE4_UFE2018_ACQUIRE_OCTOPATHTRAVELER">Acquire: Octopath's HD-2D recipe (Unreal Fest 2018)</a><small>docswell.com</small></li>
+        <li><a href="https://www.rpgsite.net/review/12464-triangle-strategy-review">RPG Site: review</a><small>rpgsite.net</small></li>
+      </ul></div>
+      <div class="src"><h3>The platform</h3><ul>
+        <li>uma-platform: <code>docs/decisions.md</code> (P113–P145), <code>docs/authoring/tiers.md</code>,
+          <code>docs/master-data.md</code>, <code>packages/stage/</code></li>
+        <li>uma-quest: <code>docs/design/campaign.md</code>, <code>story-cast.md</code>, <code>hd2d.md</code>,
+          <code>kits.md</code></li>
+        <li>uma-farm: <code>docs/design/romance-spec.md</code>, <code>hd2d-farm.md</code></li>
+      </ul></div>
+    </div>
+  </section>
+
+  <p class="note">Source: <code>docs/design/references.md</code> (<a href="../references.md">the markdown</a>). The calls:
+    <a href="concept.html">the concept</a> (TC1–TC48) and <a href="world.html">the world</a> (WD1–WD24).</p>
+</main>
+</body>
+</html>

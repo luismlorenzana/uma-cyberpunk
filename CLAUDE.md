@@ -5,8 +5,9 @@
   Phase 10 (P144).
 - **Start with [docs/handoff/README.md](docs/handoff/README.md):** the current phase, the packet queue and the owner's
   steps. The concept is [docs/design/concept.md](docs/design/concept.md) ([page](docs/design/previews/concept.html));
-  its calls are TC1–TC16. New decisions go in `docs/decisions.md` from D3 (fetch `main` first). Packets are
-  CY-numbered from CY1.
+  its calls are TC1–TC48; the world bible is [docs/design/world.md](docs/design/world.md) (WD1–WD24) and the research
+  behind both [docs/design/references.md](docs/design/references.md). New decisions go in `docs/decisions.md` from D4
+  (fetch `main` first). Packets are CY-numbered from CY1.
 - **`docs/game/` is the manual of the game as built.** It starts with CY3. Every rule change keeps it in step.
 - **This game stands alone:** its own save, rules and economy (uma-platform P2, P3). It reads master data from
   uma-platform by stable IDs only, and never imports from uma-rpg, uma-racer, uma-quest or uma-farm at runtime.
