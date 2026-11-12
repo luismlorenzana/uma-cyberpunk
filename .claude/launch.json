@@ -1,0 +1,25 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "cyber-api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@cyber/api",
+        "dev"
+      ],
+      "port": 8121
+    },
+    {
+      "name": "cyber-web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--filter",
+        "@cyber/web",
+        "dev"
+      ],
+      "port": 5214
+    }
+  ]
+}

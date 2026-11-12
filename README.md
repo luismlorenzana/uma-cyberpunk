@@ -13,9 +13,19 @@ a Home Screen web app, in landscape (working title). It has:
 The world and the story are written in their own session, from [the story brief](docs/design/story-brief.md); this repo's
 game work starts with the app and the combat testing ([the build plan](docs/design/build-plan.md)).
 
-**Status (2026-11-12, after D4):** the repo, its concept, the story brief, the build plan, the first-pass world, the
-references, the packets CY1–CY12 and the private-content guard exist; there's no code yet. CY1, the workspace, is
-ready.
+**Status (2026-11-12):** the workspace and its checks are in (CY1): a placeholder web page, an API behind the owner
+guard, and the domain package, installing all six platform packages. Next are CY4 and CY7 (the battle rules and the
+board) beside CY2, the cloud, which waits on the owner's go.
+
+## Layout
+
+| Path | What |
+|---|---|
+| `apps/web` | `@cyber/web`: Vite, React 19 and uma-kit's theme, with uma-stage installed but not rendered. A placeholder page until CY3 |
+| `apps/api` | `@cyber/api`: NestJS 11 behind uma-server's owner guard: `/api/health` and `/api/save` |
+| `packages/domain` | `@cyber/domain`: the game's rules, pure, no I/O |
+| `scripts/` | The 180 KB size check and the private-content guard, each with tests |
+| `.github/workflows/deploy.yml` | Verify on every push and pull request; the deploy job comes with CY2 |
 
 ## Where things are
 

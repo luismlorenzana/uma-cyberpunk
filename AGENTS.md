@@ -36,12 +36,20 @@ this before changing anything.
 
 ## Commands
 
-None yet. CY1 adds the workspace (Node 22+ and pnpm 10, with `@luismlorenzana/*` packages from GitHub Packages) and
-lists its commands here. Until then the only check is the private-content guard:
+Node 22+ and pnpm 10. The `@luismlorenzana/*` packages come from GitHub Packages, so export
+`NODE_AUTH_TOKEN=$(gh auth token)` before installing.
 
-```bash
-node --test scripts/*.test.mjs
-```
+| Command | What |
+|---|---|
+| `pnpm install` | Install the workspace |
+| `pnpm lint` | Type-check every package |
+| `pnpm test` | The script checks (size, private content), then every package's Vitest |
+| `pnpm build` | Build everything; the web build ends with the 180 KB size check |
+| `pnpm api` | The API on :8121, auth off (`AUTH_MODE=disabled`) |
+| `pnpm web` | The web app on :5214, `/api` proxied to :8121 |
+
+The preview pane starts both from `.claude/launch.json` (`cyber-api`, `cyber-web`). To try the guard locally, run the
+built API with `ALLOWED_EMAIL` set and no `AUTH_MODE`.
 
 ## Conventions
 
