@@ -1,14 +1,16 @@
 # Handoff: open work
 
-> **Status: 2026-11-12, after D3.** The repo exists with its concept, its references, its world bible and its
-> private-content guard. There is no code yet. The owner's direction (D3) reshaped the concept: Front Mission's rigs on
-> Triangle Strategy's boards, a world from 13 Sentinels and Star Guardian, the eight franchises as enemy factions.
-> **The next phase is still Phase 1: the workspace, the cloud and the hello app** ([the concept](../design/concept.md#9-phases-tc15)).
+> **Status: 2026-11-12, after D4.** The repo exists with its concept, its build plan, its story brief, its references,
+> the world's first pass and its private-content guard. There is no code yet. The owner split the work (D4): **the
+> story has its own session,** which writes the world and the story from [the story brief](../design/story-brief.md),
+> and **this queue starts with the app and the combat testing,** on test content, so the story drops into a finished
+> game. The world is now interplanetary: each lead Uma's Chapter 1 on her own world, then the ship as the hub.
 >
-> - **The design:** [the concept](../design/concept.md) (TC1–TC48, [page](../design/previews/concept.html)),
->   [the world](../design/world.md) (WD1–WD24, [page](../design/previews/world.html)) and
+> - **The design:** [the concept](../design/concept.md) (TC1–TC54, [page](../design/previews/concept.html)),
+>   [the build plan](../design/build-plan.md) (BP1–BP9, [page](../design/previews/build-plan.html)),
+>   [the story brief](../design/story-brief.md) (SB1–SB11, [page](../design/previews/story-brief.html)),
+>   [the world's first pass](../design/world.md) (WD1–WD24, [page](../design/previews/world.html)) and
 >   [the references](../design/references.md) ([page](../design/previews/references.html)).
->
 > - **The manual of the game as built** will be [docs/game/](../game/README.md). It starts with CY3.
 > - Each task is a self-contained packet in [tasks/](tasks/). Start a worker, Claude or ChatGPT, with uma-platform's
 >   [master prompt](https://github.com/luismlorenzana/uma-platform/blob/main/docs/handoff/master-prompt.md) and name the
@@ -16,39 +18,72 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-## Phase 1: the workspace, the cloud and the hello app
+Packet ids run CY1–CY12; decision numbers continue from D5.
 
-Packet ids start at CY1; decision numbers continue from D4.
+## Phase 1: the foundation
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
 | CY1 | [The workspace and its checks](tasks/CY1-workspace.md): placeholders installing the six platform packages, CI, ports 8121 and 5214 | Claude | S | The owner's six package-access entries, for CI | **Ready** |
-| CY2 | The cloud in the `uma-rpg` project: site `uma-cyberpunk`, Cloud Run `cyber-api`, Firestore `cyber`, the deploy pipeline (TC11, D2) | Claude | M | CY1; the owner's go on its cost table | Packet written after CY1 |
-| CY3 | The hello app: uma-rpg's stack, Google sign-in, save v1 synced, the update prompt, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | After CY2 |
+| CY2 | [The cloud](tasks/CY2-cloud.md) in the `uma-rpg` project: site `uma-cyberpunk`, Cloud Run `cyber-api`, Firestore `cyber`, the deploy job, with its cost table | Claude | M | CY1; the owner's go | Written |
+| CY3 | [The hello app](tasks/CY3-hello-app.md): uma-quest's wiring, Google sign-in, save v1 synced, the update prompt, master data, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | Written |
 
-**Order:** CY1 can start now. CY2 follows CY1 and the owner's go. CY3 follows CY2.
+## Phase 2: the combat, tested three ways
+
+Starts as soon as CY1 is in, beside the cloud.
+
+| Id | What | Who | Size | Needs | State |
+|---|---|---|---|---|---|
+| CY4 | [The battle rules, core](tasks/CY4-battle-core.md): `@cyber/battle`, the map format, the rig, loadout, timeline, Charge, movement, attacks, counters, Crossfire, Cover, Rig Break, objectives, the forecast; golden replays | Claude | L | CY1 | Written |
+| CY5 | [The battle rules, the rest](tasks/CY5-battle-rest.md): terrain states and terminals, Tech and the Holds, Back units, chance skills, items, Stride, the Steel Muster's cover and volley | Claude | L | CY4 | Written |
+| CY6 | [The AI and the simulator](tasks/CY6-ai-and-simulator.md): enemy AI, ally Auto, the scenario format, `pnpm sim`, the first balance pass | Claude | M | CY5 | Written |
+| CY7 | [The board on uma-stage](tasks/CY7-board.md): the game-owned scene from the stage's parts, its five checks, the stage requests | Claude | M | CY1 | Written |
+| CY8 | [The sandbox](tasks/CY8-sandbox.md): the battle screen on the phone, the cut-in, autosave and resume, scenario files | Claude | L | CY3, CY6, CY7 | Written |
+
+## Phase 3: the app, on test content
+
+| Id | What | Who | Size | Needs | State |
+|---|---|---|---|---|---|
+| CY9 | [The story format and runner](tasks/CY9-story-runner.md): the parser, `pnpm story:check`, the stand-in, the loader, the scene player, save v2 | Claude | M | CY3 | Written |
+| CY10 | [The ship and the mission flow](tasks/CY10-ship-and-flow.md): the rooms, the star map, a world's map, briefing to results, save v3 | Claude | L | CY8, CY9 | Written |
+| CY11 | [The crew and the Hangar](tasks/CY11-crew-and-hangar.md): roster, profiles, loadouts, parts, roles, the bench | Claude | M | CY10 | Written |
+| CY12 | [The Chapter 1 loop](tasks/CY12-chapter-one-loop.md): two stand-in worlds, two pickups, rooms opening, debriefs | Claude | M | CY10, CY11 | Written |
+
+**Order for one worker:** CY1; then CY4, CY5 and CY7 while the owner's go and sign-in entries come in; CY2 and CY3 as
+soon as they do; then CY6, CY8, CY9, CY10, CY11 and CY12 ([the build plan §8](../design/build-plan.md#8-the-packets-bp8)).
 
 ## Later phases
 
-Each phase's packets are written when it starts, from [the concept](../design/concept.md):
+Each phase's packets are written when it starts:
 
-| Id | What | Who | Needs |
+| Phase | What | Who | Needs |
 |---|---|---|---|
-| CY4 | Phase 2, the stage spike: a game-owned battle scene from `uma-stage`'s parts (TC10): a 14 × 14 grid with heights at the fixed 35° in landscape, tile picking at about 24 pt, game-side range overlays, tilt-shift and bloom with battery saver off, about thirteen figures live, how much heights hide. It files only the stage requests it shows are needed (TC48). If it fails, the fallback board is a Phaser 4 isometric scene | Claude | CY3 |
-| CY5–CY6 | Phase 2, the battle prototype: the battle rules as a pure domain package with tests (the rig, Charge, the timeline, counters, Crossfire, facing, height, terrain, Rig Break, Jack-Out: TC3–TC5, TC17–TC27), then one Underlevels map, four against the Steel Muster, on stand-ins | Claude | CY4 |
-| — | Phase 3, Act I's opening: the flash-forward, the first Operation and the first route chapter; the Hideout's Workshop and Archive; the story runner; the first batch from master data on chibi sets, renders and standees (TC12) | Claude; ChatGPT for the Combat Adult keys and kits | Phase 2 |
-| — | Phase 4, progression and the Ring's map: levels, roles, licences, the Shop, salvage, contracts, the Sim Pod, the Call; Phase 5, Acts II–V as content waves with their factions and guests | Claude; ChatGPT | Phase 3 |
+| 4 | The first worlds: the story session's first world and its Chapter 1, then a second; master data's chibi sets, renders and the Ranker's standees; the story's private bucket, with its cost table; the first world's map kit | Claude; ChatGPT for the Combat Adult keys; Claude in uma-platform for the kit | Phase 3; the story session's items 1–3 ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)) |
+| 5 | Progression: levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents | Claude | Phase 4 |
+| 6 | Worlds as content waves, with their leads, factions and guests | Claude; ChatGPT | Phase 5; the story session's worlds |
+
+## Story requests
+
+The story session asks here for anything the game doesn't give it yet: a new mechanic, hook, room, talent or Hold
+([SB10](../design/story-brief.md#10-how-the-two-sessions-work-together-sb10)). The game session answers in its next
+packet, or says why not.
+
+| # | Date | Asked | Answer |
+|---|---|---|---|
 
 ## Across the repos
 
+- **The story session** works in this repo from [the story brief](../design/story-brief.md). It starts with one line:
+  "Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief."
 - **uma-platform:** P144 logs this repo as Phase 10. Shared changes go there as requests, never forks here:
-  - **`uma-stage`:** CY4 files only what its spike needs, from TC48's seven (a grid stage, heights 0–3, overlays, a
-    tactical camera, glowing frames and tunable effects, rain, a battery-saver tier of effects);
-  - **the heroines' delivery** from the franchise boards and the Ranker's images (TC7, TC12), when Phase 3 needs its
+  - **`uma-stage`:** CY7 files only what its checks prove, one at a time (TC48): likely tunable bloom and tilt-shift,
+    glowing kit frames, a tactics kit kind cached by id, and a saver tier;
+  - **the map kits** are drawn in code by Claude in a uma-platform session (`scripts/kit-art`, P147), from the story
+    session's world outline, in Phase 4;
+  - **the heroines' delivery** from the franchise boards and the Ranker's images (TC7, TC12), when Phase 4 needs its
     first;
-  - **a fourth Story App book,** when the owner wants the story readable beside the others (TC13).
-- **uma-rpg:** CY2 adds this game's pieces to its project and its cloud plan's isolation matrix, touching none of the
-  other apps' pieces.
+  - **a fourth Uma Story book,** when the owner wants the story readable beside the others (TC13).
+- **uma-rpg:** CY2 adds this game's pieces to its project, touching none of the other apps' pieces.
 - **The Character Art Studio** already has an "Uma Cyberpunk: Combat Adult Character" category (P143). ChatGPT's art
   for this game starts there: each Uma in her rig, side-on, facing left, for the cut-in (TC12, TC28).
 
@@ -56,10 +91,12 @@ Each phase's packets are written when it starts, from [the concept](../design/co
 
 | When | What |
 |---|---|
-| Now | Read [the concept](../design/previews/concept.html), [the world](../design/previews/world.html) and [the references](../design/previews/references.html) pages and say what to change; silence keeps TC1–TC48 and WD1–WD24 as written |
+| Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | For CY1's CI | On GitHub, for `uma-data`, `uma-kit`, `uma-work`, `uma-server`, `uma-art` and `uma-stage`: Package settings → **Manage Actions access** → add `uma-cyberpunk` with **Read** |
-| CY2 | The go for the cloud; then the two sign-in entries for `uma-cyberpunk.web.app` in the Cloud console |
-| CY3 | The phone check: install, sign in, see the save sync |
+| CY2 | The go for the cloud, on its cost table |
+| CY3 | The two sign-in entries for `uma-cyberpunk.web.app` (the packet names the pages); then the phone check: install, sign in, see the save sync |
+| CY8 | One play of the sandbox on the phone |
+| CY12 | One play-through of the Chapter 1 loop on the phone |
 
 ## Done
 

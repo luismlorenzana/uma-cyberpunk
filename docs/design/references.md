@@ -10,8 +10,14 @@
 >
 > Seven research passes ran in parallel on 2026-11-12: one per reference, one on the eight franchises, one on what
 > `uma-stage` can do for a grid, and one on how uma-quest and uma-farm use the Umas. This page is what they found and
-> what the game takes from each. The calls themselves live in [the concept](concept.md) (TC1–TC48) and
+> what the game takes from each. The calls themselves live in [the concept](concept.md) (TC1–TC54) and
 > [the world](world.md) (WD1–WD24). Visual page: [previews/references.html](previews/references.html).
+>
+> **Added in D4.** The owner made the world interplanetary, with each Uma's Chapter 1 on her own world, "a little like
+> the Octopath Traveler approach", and moved the story to its own session. An eighth pass covered *Octopath Traveler*
+> (§7); its full digest is in [the story brief §5](story-brief.md#5-what-octopath-traveler-teaches-sb5). Two audits,
+> of `uma-stage` 0.3.0 and of the sibling games' app shells, battle code and story pipelines, back
+> [the build plan](build-plan.md).
 >
 > **We borrow structure and ideas only.** No reference's names, terms, characters, plot, art or music goes into the
 > game, and this page names no character from any of them.
@@ -285,10 +291,34 @@ The pass over uma-quest, uma-farm and uma-platform set rules this game follows:
 - **Stories** go through Uma Story's draft, review and publish (P141). A fourth book needs its own P-decision.
 - **Art:** the Combat Adult Character keys are side-on and face one way (uma-quest ships 12 a Uma, never mirrored, in
   its own private pack, D45). The chibi sets walk in four facings.
-- **uma-stage today:** an orthographic camera pitched 35° with a fixed yaw, one texel per device pixel; a grid builder
-  with heights 0–2; pure tile picking and A*; tilt-shift and bloom that the battery saver turns off by default on phones;
-  at most 8 live sprite sets. It has no range overlays, no tactical camera, no rotation, no emissive glow and no rain
-  ([the concept §7](concept.md#7-how-its-built-tc10-tc11-tc14-tc48)).
+- **uma-stage today (0.3.0, rechecked in D4):** an orthographic camera pitched 35° with a fixed yaw, one texel per
+  device pixel; a grid builder with heights 0–2; pure tile picking and A*; tilt-shift and bloom that the battery saver
+  turns off by default on phones; at most 8 live sprite sets. Its two finished scenes are uma-quest's field and
+  uma-farm's band, so a grid is a game-owned scene from its parts. It has no range overlays, no tactical camera, no
+  rotation, no emissive glow and no rain, and its bloom can't be tuned
+  ([the concept §7](concept.md#7-how-its-built-tc10-tc11-tc14-tc48-tc54), [the build plan §3](build-plan.md)).
+- **Art since uma-platform P147:** ChatGPT draws character art only, enemies included; Claude draws everything else in
+  code, the HD-2D map kits included (`scripts/kit-art`).
+
+## 7. Octopath Traveler (the structure, D4)
+
+**What it does.** Eight travelers, each with her own chapters: four each in the first game (2018), three to five in the
+second (2023). The player picks a starter and meets the others in their home towns, where each one's Chapter 1 can be
+played on the spot or later. Each chapter shows a recommended level on the map. Each traveler brings a path action, a
+way to deal with people in towns.
+
+**What players said.** The first game's stories were siloed: the other travelers vanish from a lead's cutscenes,
+chapters all run the same shape, and the hidden true ending needed a guide. The second answered with Crossed Paths
+(chapters for two travelers), varied chapter shapes and a signposted finale with the whole cast; reviews still wanted
+more connection.
+
+**What the game takes** (TC51, TC52, [the story brief §5](story-brief.md#5-what-octopath-traveler-teaches-sb5)): each
+lead's Chapter 1 on her own world brings her aboard the ship; interjection slots and debriefs keep the crew in each
+other's scenes; crossed paths pair every lead twice; danger levels in small steps; six talents as small path actions; a
+signposted finale.
+
+**What we leave:** the starter locked in the party (Strain rotates the cast), level gates ten levels apart, a bench
+that earns nothing, and the hidden ending.
 
 ## Sources
 
@@ -327,3 +357,10 @@ the first game's mechanics: [parts](https://jiangsheng.readthedocs.io/en/latest/
 **The platform:** uma-platform `docs/decisions.md` (P113–P145), `docs/authoring/tiers.md`, `docs/master-data.md`,
 `packages/stage/`; uma-quest `docs/design/campaign.md`, `story-cast.md`, `hd2d.md`, `kits.md`; uma-farm
 `docs/design/romance-spec.md`, `hd2d-farm.md`.
+
+**Octopath Traveler:** [Kotaku on the structure](https://kotaku.com/how-octopath-travelers-structure-actually-works-1827478495) ·
+[Famitsu interview, via Nintendo Everything](https://nintendoeverything.com/octopath-traveler-ii-devs-on-having-the-protagonists-interact/) ·
+[RPG Site review](https://www.rpgsite.net/review/7465-octopath-traveler-review) ·
+[Engadget review of II](https://www.engadget.com/octopath-traveler-2-review-eight-different-stories-but-not-enough-connection-090045893.html) ·
+[RPG Site on Crossed Paths](https://www.rpgsite.net/feature/13837-octopath-traveler-ii-crossed-paths-guide); the rest
+are in [the story brief §5](story-brief.md#5-what-octopath-traveler-teaches-sb5).

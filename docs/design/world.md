@@ -12,6 +12,13 @@
 > heroine, and no franchise's own terms beyond its title. Who plays which part (which Uma leads which route, which
 > heroine leads which faction), the chapters and every line of dialogue are the story, kept in the ignored `content/`
 > (TC13).
+>
+> **D4: now the story session's first pass.** The owner moved the world and the story to their own session and made the
+> world interplanetary: this page's Ring becomes the **first world**, each lead Uma's Chapter 1 plays on her own world,
+> and she then joins **the ship**, the hub, *Octopath Traveler*'s way. The story session starts from this page and may
+> keep, change or drop any WD call; [the story brief](story-brief.md) says what the game fixes and what it needs back.
+> The single-city structure (the Hideout, five acts on one ring) is superseded; the three Holds (WD9) and the faction
+> mechanics (WD11) are fixed by the battle.
 
 ## The short answer
 

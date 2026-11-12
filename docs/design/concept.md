@@ -14,6 +14,19 @@
 > **TC17–TC48 are new.** The world, its truth and its eight factions are their own page, [world.md](world.md)
 > (WD1–WD24). Every call is a recommendation, adopted until the owner changes one. Visual page:
 > [previews/concept.html](previews/concept.html).
+>
+> **Revised again the same day (D4).** The owner split the work and widened the world:
+> - **The story has its own session.** It authors the world and the story from [the story brief](story-brief.md); this
+>   page keeps the game. [world.md](world.md) is now that session's first-pass input, not adopted calls.
+> - **The world is interplanetary.** The Ring from D3 becomes the first world. Each lead Uma has her own chapters, as
+>   in *Octopath Traveler*: her **Chapter 1** plays on her home world, and finishing it brings her aboard **the ship**,
+>   the squad's hub and stronghold. The ship then travels to other worlds, where other leads join through their own
+>   Chapter 1.
+> - **The build starts with the app and the combat testing.** [The build plan](build-plan.md) maps what's reused from
+>   uma-platform and the sibling games, and the packets follow it.
+>
+> In D4, **sixteen calls were amended** (TC6, TC8–TC10, TC12, TC13, TC15, TC31–TC34, TC39, TC40, TC42, TC45 and
+> TC48 say "amended D4"), eight were reworded (TC4, TC5, TC22, TC35, TC36, TC38, TC41, TC43), and **TC49–TC54 are new.**
 
 ## The short answer
 
@@ -24,31 +37,36 @@
   broken legs pin her down, a broken Core is a **Rig Break**: she's out of the battle, never hurt (TC17, TC25).
 - **Speed decides who moves next** on a timeline, as in Triangle Strategy. One small resource, **Charge**, pays for
   skills and also for counters and joining an ally's attack, so spending it all leaves an Uma open (TC3, TC20, TC21).
-- **The setting:** a neon megacity on an orbital ring that runs on light stolen from other worlds through its Gates.
-  Heroines from eight other worlds come through to stop it, and the Ring's Authority points them at the squad. The
-  truth comes out in five layers over five acts, 13 Sentinels' way, with Star Guardian's candy-bright neon over a
-  tragic story ([world.md](world.md), TC6, TC31).
+- **The setting is interplanetary (D4).** A ship carries the squad between worlds. The first world is D3's neon city
+  on an orbital ring. Each lead Uma has her own chapters, *Octopath Traveler*'s way: her **Chapter 1** plays on her
+  home world, and finishing it brings her aboard. The world, its mystery and its story are written by the story
+  session from [the story brief](story-brief.md), in 13 Sentinels' and Star Guardian's spirit (TC6, TC51, TC53).
 - **The enemies are the eight franchises** on the platform's boards (Azur Lane, Genshin Impact, Wuthering Waves,
   Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, Punishing: Gray Raven and NIKKE), as eight factions with
   original names, one new mechanic each. Every enemy character is a heroine, and a beaten heroine is **freed**, never
   killed; some join (TC7, TC37, TC38, TC26).
-- **Between battles, the Hideout** works like Triangle Strategy's Encampment: a Workshop for rig parts, a Sim Pod, the
-  Archive of the mystery, and **the Call**, where the squad votes on the big choices (TC42, TC34, TC35).
+- **Between battles, the ship** works like Triangle Strategy's Encampment: a Hangar for rig parts, a Sim Pod, the Log
+  of the mystery, the Bridge's star map, and **the Call**, where the crew votes on the big choices. It grows a room
+  as each lead comes aboard (TC42, TC49, TC50, TC34, TC35).
 - **No new character art blocks the start.** The map uses the Umas' existing four-facing chibi sets and the heroines'
   Ranker images as standees; attack cut-ins use the Umas' full-body renders until ChatGPT's Combat Adult keys arrive
   (TC12).
-- **The order:** the workspace, cloud and hello app (Phase 1), a battle prototype with rigs on stand-ins (Phase 2), then
-  Act I's opening (Phase 3) (TC15).
+- **The order (D4):** the workspace, cloud and hello app (Phase 1); the combat, tested three ways: rules with tests, a
+  sandbox on the phone and a headless simulator (Phase 2, which can start beside the cloud); then the whole app on test
+  content: the ship, the star map, the crew, the Hangar, the mission flow and the story runner (Phase 3). The first
+  worlds follow when the story session delivers them (Phase 4) (TC15, TC54).
 
-## How the owner's five directions land
+## How the owner's directions land
 
 | Direction | Where it's answered | The heart of it |
 |---|---|---|
 | Uma Musume's characters only, like uma-quest and uma-farm | §3, TC4, TC5, TC45, TC46 | The Ranker's 100 Umas by outfit; no racing, but her stats, her authored role and her running style as Stride; she dreams of a track she can't remember (WD8) |
-| Lore from 13 Sentinels and Star Guardian | [world.md](world.md), §5, TC31–TC36, TC39–TC41 | A five-layer mystery with flash-forwards, routes, Leads and an Archive; a cosmic theft, a darkness that eats memory, a double life, a suit-up and a rival squad |
+| Lore from 13 Sentinels and Star Guardian | [the story brief](story-brief.md), [world.md](world.md) (first pass), §5, TC32–TC36, TC39–TC41 | The story session writes it; the game gives it flash-forwards, gates, Leads, the Log and the Call, a suit-up and a rival squad |
 | Front Mission's gameplay, characters in accessories | §4, TC17–TC28 | The rig of breakable parts, Capacity, the weapon bands, damage types, counters and links, skills from parts, the side-view cut-in, Rig Break and Jack-Out |
-| Triangle Strategy's HD-2D look and build-out | §4.11, §6, §7, TC10, TC23, TC24, TC29, TC35, TC42 | The diorama on uma-stage, Charge and Crossfire, terrain states, the forecast card, the Call, the Hideout and its Sim Pod |
-| The franchises as enemy factions tied to the plot | §3, TC7, TC37, TC38, [world.md §5](world.md#5-the-eight-factions-wd10wd14) | Eight factions with a reason to be here, a way to turn and a mechanic each; the Authority and the Blackout behind them |
+| Triangle Strategy's HD-2D look and build-out | §4.11, §6, §7, TC10, TC23, TC24, TC29, TC35, TC42, TC50 | The diorama on uma-stage, Charge and Crossfire, terrain states, the forecast card, the Call, the ship's rooms and its Sim Pod, the world maps |
+| The franchises as enemy factions tied to the plot | §3, TC7, TC37, TC38, [world.md §5](world.md#5-the-eight-factions-wd10wd14) | Eight factions with a mechanic each, built by the game; who they are, where and why is the story session's (TC53) |
+| **D4:** the story in its own session; an interplanetary world; each Uma's Chapter 1, then the ship as hub, *Octopath Traveler*'s way | §2, §5, §6, TC49–TC53, [the story brief](story-brief.md) | Lead Umas join through their own Chapter 1 on their own world; the ship grows a room for each; the game and the story meet at a content contract |
+| **D4:** start with the app buildout and the combat testing, reusing uma-platform's HD-2D engine | §7, §9, TC54, [the build plan](build-plan.md) | uma-stage's parts and uma-quest's patterns; a rules package, a sandbox and a simulator before the content |
 
 ## 1. The game in one page
 
@@ -56,10 +74,11 @@
 |---|---|
 | **Genre** | Turn-based grid tactics RPG with part-based combat rigs |
 | **Platform** | The owner's iPhone, a Home Screen web app, landscape only; personal and never distributed (TC1) |
-| **Session** | About fifteen minutes: a scene of three minutes at most, a battle of about ten, two in the Hideout (TC36) |
-| **The squad** | Four Umas from the Ranker's cast, plus one guest heroine once freed (TC2, TC45, TC47) |
+| **Session** | About fifteen minutes: a scene of three minutes at most, a battle of about ten, two aboard the ship (TC36) |
+| **The squad** | Four Umas from the ship's crew, plus one guest heroine once freed (TC2, TC45, TC47) |
+| **The structure** | Worlds reached by the ship; each lead Uma's own chapters, her Chapter 1 on her home world (TC8, TC51) |
 | **The enemies** | Heroines from eight franchises as factions, plus their original machines (TC37, TC38) |
-| **Tone** | Neon city, orbital stations and star lanes; a found family; candy-bright over tragic, never grimdark (WD20) |
+| **Tone** | Neon worlds and the ship between them; a found family; candy-bright over tragic, never grimdark (the story session's to keep) |
 
 **Three pillars:**
 1. **Tactics first.** Every system serves the grid: position, facing, height, turn order, parts and loadout. Nothing
@@ -71,33 +90,43 @@
 
 ## 2. The world (TC6, TC31)
 
-The full bible is [world.md](world.md). In short:
-- **The Ring** is a megacity on an orbital ring, in six layers: the Spires, the Districts, the Markets, the Underlevels,
-  the Docks and the Gate Heart (WD4). **The Lanes** run out to stations, moons and a dead sister ring.
-- **The Gates** are siphons. The Authority opens them to drain other worlds, and the Ring's neon is stolen light (WD1).
-  The siphons let in **the Blackout**, a hunger that eats memory (WD2). The squad's rigs run on stolen siphon **cores**
-  (WD3), and the Umas themselves came through the first Gate as children (WD8).
-- **The five layers** come out one an act, each act opening on a flash-forward to its own climax (WD15, WD17).
+**TC6 (amended D4).** The world is **interplanetary,** and the story session writes it (TC53). What the game builds
+for, whatever the story becomes:
+- **Worlds.** Each is its own setting, with its own maps, map kits, factions and grade, and at least one lead Uma's
+  Chapter 1 (TC51). A world is a node map of locations, reached from the ship's Bridge (TC50).
+- **The ship** carries the squad between worlds and is its hub (TC49). Travel is a menu; ship battles stay deferred
+  (TC16).
+- **The first world** is D3's: the neon city on an orbital ring, in six layers (WD4). The owner put it plainly: the
+  system D3 described is Chapter 1. The Gates, the Tithe and the Blackout (WD1–WD3) may carry across worlds, or not:
+  that's the story session's call.
+
+**TC31 (amended D4).** [world.md](world.md) (WD1–WD24) is the **first pass** the story session starts from. It may keep,
+change or drop any WD call. Its single-city structure (the Hideout, five acts on one ring) is superseded by this page's
+interplanetary one.
 
 ## 3. The cast and the crossover (TC7, TC38, TC40, TC45–TC47)
 
 | Who | Where from | Role in the game | Where it lives |
 |---|---|---|---|
-| **Umas** | The Ranker's Playable Umas: 100 outfits in ten batches, sisters included (uma-platform P131, P139) | The squad, joining through the story two batches an act (TC45) | Read by outfit id from master data, never in git |
-| **The rival squad** | The Ranker's Uma NPCs board | The Authority's licensed heroes; rivals, then allies (TC40, WD6) | Same |
+| **Umas** | The Ranker's Playable Umas: 100 outfits in ten batches, sisters included (uma-platform P131, P139) | The crew: lead Umas join through their own Chapter 1, the rest through the leads' chapters (TC45, TC51) | Read by outfit id from master data, never in git |
+| **A rival squad** | The Ranker's Uma NPCs board | Rivals, then allies, if the story keeps them (TC40, WD6) | Same |
 | **Enemy heroines** | The seven boss boards (Bosses), Key enemies (Keys) and Regular enemies (Regulars, all of NIKKE included) | Eight factions (TC37); freed when beaten; some join as guests (TC26, TC47) | Read by board id through the platform, never in git |
 | **Faction hardware** | This game | Each faction's machines, the Authority's drones and turrets (WD14) | Original art, in uma-art |
 
 - **TC7 (amended D3).** Eight franchises, not seven: NIKKE joins, as the regular-enemy board's thread (the Steel
   Muster). Who plays which part is private (`content/`).
 - **TC38, the enemy ranks.** Every enemy character is a heroine. A battle's encounter is **slots filled from pools of
-  board ids**, as uma-quest does it (its SP43): Regulars by job, at most one Key and at most one Boss, all from the act's
-  factions, plus the faction's hardware. The owner's ranking orders who appears first; tiers are authoring order, never
-  game rules, and left-out units never appear (uma-platform TS14, P121).
-- **TC45, the cast grows through the story.** Each act brings two of the Ranker's batches, twenty Umas, in batch order:
-  six lead routes (TC33) and the other fourteen join through those routes. Act V completes the hundred. An Uma is keyed
-  by her outfit id, never her character id alone, since a sister shares her base Uma's. This differs from uma-quest,
-  where every traveler plays from minute one: a found-family story needs arrivals.
+  board ids**, as uma-quest does it (its SP43): Regulars by job, at most one Key and at most one Boss, all from the
+  mission's factions, plus the faction's hardware. The owner's ranking orders who appears first; tiers are authoring
+  order, never game rules, and left-out units never appear (uma-platform TS14, P121).
+- **TC45 (amended D4), the cast grows through the story.** The crew comes from the Ranker's 100, in two kinds:
+  - **lead Umas** have their own chapters, and each comes aboard through her Chapter 1 on her home world (TC51);
+  - **crew Umas** come aboard through a lead's chapter or a world's side job. They have no chapters of their own but
+    speak in scenes and fight in any squad.
+
+  The story session picks the leads and when each crew Uma joins (private), with the Ranker's batch order as its guide:
+  earlier batches first. An Uma is keyed by her outfit id, never her character id alone, since a sister shares her base
+  Uma's. This differs from uma-quest, where every traveler plays from minute one: a found-family story needs arrivals.
 - **TC46, Stride.** Her best running style doesn't set her role (TC5); it colours how she moves:
 
   | Stride | From | Effect |
@@ -111,15 +140,16 @@ The full bible is [world.md](world.md). In short:
 - **TC47, guests.** A freed heroine whose chapter allows it joins the guest slot. Her stats are set by hand in the
   private content (other franchises' numbers don't map to Uma stats), her job comes from her franchise archetype, and
   her rig starts from her own salvaged parts.
-- **TC40, the rival squad.** The Authority's famous heroes are Umas from the Uma NPCs board, on overclocked cores. They
-  fight the squad in Acts I–II, stand with it against something bigger, and can join late.
+- **TC40 (amended D4), a rival squad.** The game supports Umas from the Uma NPCs board as enemies, with the squad's own
+  rigs and roles, who can later join. D3's version (the Authority's famous heroes on overclocked cores) is the story
+  session's to keep, move to another world or drop.
 
 ## 4. The battle
 
 ### 4.1 The board (TC2, TC30)
 
-- **Maps of 10 × 10 to 14 × 14 tiles,** with up to four height levels (0–3). uma-stage builds heights 0–2 today, so
-  level 3 is a request (TC48).
+- **Maps of 10 × 10 to 14 × 14 tiles,** with up to four height levels (0–3). uma-stage's format stops at 2, but its
+  builder may already raise level 3 from a design made directly; CY7 tests it before asking (TC48).
 - **Four Umas plus a guest** against **five to eight enemies.**
 - **Facing matters** (TC23). Each unit faces one of four ways, shown as a wedge on its base ring.
 - **One objective per map,** and meeting it ends the battle at once: defeat all, defeat or free the leader, reach a
@@ -161,8 +191,8 @@ plays differently from day one. Levels, gear and growth are this game's own (uma
 | **Guts** | Resists Stun and Jack-Out, +10% a band; at band 4+, **Hold on**: once a battle she survives at 1 Core | — |
 | **Wit** | Accuracy +3% a band; chance-skill triggers +5% a band | Visor slots: 2 + band (TC22) |
 
-**Bands** are 70–89, 90–109, 110–129, 130–149 and 150 or more. The numbers are a starting point; CY5 tunes them against
-the cast.
+**Bands** are 70–89, 90–109, 110–129, 130–149 and 150 or more. The numbers are a starting point; the simulator (CY6)
+tunes them against the cast.
 
 ### 4.4 The rig (TC17, TC18)
 
@@ -268,7 +298,7 @@ A long press on any tile shows its **terrain card:** state, height, whether it c
 **TC5 (amended D3).** Five roles, now **jobs:** each gives job skills and a weapon affinity, and its signature action
 needs its own **Back unit,** so a role reads at a glance. Her default role comes from an **authored per-Uma tag** in the
 private content, as uma-quest now does with its story class (uma-quest SC7, D50; uma-platform P123). Running style is
-the fallback, with ties going to the earlier style, and otherwise only her Stride (TC46). Roles change in the Hideout.
+the fallback, with ties going to the earlier style, and otherwise only her Stride (TC46). Roles change aboard the ship.
 
 | Role | Plays like | Back unit | Signature |
 |---|---|---|---|
@@ -284,7 +314,7 @@ the fallback, with ties going to the earlier style, and otherwise only her Strid
   hers and goes in a Visor slot (skills cost 1–3 slots; Wit sets 3–7). Salvage becomes the progression loop (TC43).
 - **Five chance skills only,** with the % always shown and one chain per attack: **Double** (a second melee hit),
   **Switch** (fire the other hand too), **Burst** (extra rounds), **First** (strike before a counter) and **Stun**.
-- **Signature abilities.** Each route lead unlocks one at the end of her route (TC33): once a battle, costs 3 Charge.
+- **Signature abilities.** Each lead Uma unlocks one at the end of her own story (TC51): once a battle, costs 3 Charge.
 
 ### 4.10 Rig Break, freeing and Strain (TC25–TC27)
 
@@ -344,78 +374,121 @@ Part damage always shows on the map too, on a paper doll that pops above the tar
 5. **Face:** the arrows are preset toward the last target; she turns to face the next enemy's approach.
 6. The Gunner has spent her Charge, so on the trooper's turn she can't counter. That was the price.
 
-## 5. The story and the loop (TC8, TC31–TC36)
+## 5. The story and the loop (TC8, TC32–TC36, TC51, TC52)
 
 ```text
- the Hideout ──▶ the route board ──▶ a scene (≤3 min) ──▶ loadout ──▶ the battle (~10 min) ──▶ rewards ──┐
-      ▲                                                                                                   │
-      └──────────────── the Call, at the big choices ◀── Leads and Intel into the Archive ◀───────────────┘
+ the ship ──▶ the Bridge: a world ──▶ the world's map: a chapter or a side job ──▶ a scene (≤3 min)
+    ▲                                                                                │
+    │                                                                                ▼
+    └── aboard: the Hangar, the Log, the Call ◀─ rewards, Leads, a new member ◀─ the battle (~10 min) ◀─ loadout
 ```
 
-- **TC8 (amended D3), the structure.** **Acts → two tracks → chapters → missions.** Story missions move the plot;
-  **contracts** are repeatable missions for credits and parts, led by any Uma. The map starts as the Ring's layers and
-  becomes a map of the Lanes in Act III.
-- **TC31, the world bible** is [world.md](world.md): the Tithe in five layers (WD1–WD24).
-- **TC32, two tracks that gate each other** (13 Sentinels' modes, made explicit):
-  - **Operations** are the act's spine: the Gate incursions, rising in difficulty, light on story. The act's first
-    battle is a **flash-forward** to its last Operation, with a fixed squad (WD17).
-  - **Routes** are chapters led by one Uma.
-  - An Operation opens at a share of route progress; a route chapter can wait for an Operation; the act's last
-    Operation needs every route finished.
-- **TC33, routes.** Six route leads an act, three or four open at a time, three chapters each. A route chapter fixes
-  its lead; the player picks the other three and the guest. Each route has its own genre lens and ends on the shared
-  beat: her signature unlocks and she joins the last Operation (WD19).
-- **TC34, Leads and the Archive.**
+- **TC8 (amended D4), the structure.** **Worlds → chapters → missions.**
+  - A **chapter** is a short arc led by one Uma: scenes and two to four missions, about three sessions.
+  - **Story missions** move a chapter. **Side jobs** are repeatable missions on a world's map, for credits and parts,
+    led by any Uma (D3's contracts).
+  - Worlds ship as content waves (TC15). How many worlds, leads and chapters is the story session's (TC53).
+- **TC51 (new D4), lead Umas and their chapters,** *Octopath Traveler*'s structure, with its sequel's fixes
+  ([the story brief §5](story-brief.md#5-what-octopath-traveler-teaches-sb5)):
+  - Each lead Uma has her own chapters. **Her Chapter 1 plays on her home world** and ends with her coming aboard,
+    at the squad's level, never level 1.
+  - **The first Chapter 1 opens the game** on the first world. Whether the player picks a starter, as Octopath does, is
+    the story session's call; the game supports both. Octopath locks its starter in the party; this game doesn't,
+    because Strain rotates the cast (TC27).
+  - **She's fixed in her own chapters;** the player picks the other three and the guest.
+  - **Chapter 1s stay short** (one or two battles) and never run back to back: the ship's route puts a later chapter
+    or a crossed path between pickups.
+  - **Later chapters** can play on any world. Each shows a **danger level** (a recommended squad level, in small steps)
+    and names its keys on the world's map (TC34). Leads vary in shape: three to five chapters, some with a branch, and
+    objectives other than "beat the boss".
+  - **The crew is in the cutscenes.** Each scene has one to three short **interjection slots,** filled by whichever
+    leads are in the squad, with a fallback line, and each chapter ends with a **debrief aboard,** replayable from the
+    Log. Octopath's most cited flaw was leads absent from each other's stories.
+  - **Crossed paths:** a chapter can name two leads, both fixed. Every lead appears in at least two. **One main thread**
+    runs through the ship's own chapters, ties the leads' stories together, and ends in a **signposted finale** whose
+    conditions are listed, with the whole crew in it (two squads in turn).
+  - Her **signature** (TC22) unlocks at the end of her last chapter.
+- **TC52 (new D4), talents,** Octopath's path actions, kept small. Each lead brings one talent, used on a world's map,
+  never in battle. The game defines six, so with more than six leads some share one; the story session gives each lead
+  hers:
+
+  | Talent | On a world's map |
+  |---|---|
+  | **Scout** | Shows a location's enemies and hidden side objective before you go |
+  | **Bargain** | Opens a better stock at a world's market |
+  | **Hack** | Opens a locked location or a redacted line in the Log |
+  | **Recruit** | Talks a crew Uma aboard after her side job |
+  | **Duel** | Challenges a named rival to a one-on-one on a 6 × 6 map, for a rare part |
+  | **Mend** | Clears one Uma's Strain, once a world visit |
+
+- **TC32 (amended D4), story tools.** 13 Sentinels' devices stay, as features the story can use, no longer a fixed act
+  shape: a **flash-forward** (any mission can fix its squad and loadouts and play ahead of its chapter), and **gates**
+  (a chapter can wait on another chapter, a mission or a File, and says so). D3's Operations-and-Routes acts are
+  dropped as a fixed form.
+- **TC33 (amended D4)** folds into TC51: D3's route leads are the lead Umas, and their genre lenses (WD19) are the story
+  session's.
+- **TC34 (amended D4), Leads and the Log.**
   - **Leads** come from scenes and battle side objectives (hack that terminal, save that civilian, free a heroine with
-    a given Uma). A scene offers the Leads that apply as one-tap choices; used in another Uma's route, one opens a
+    a given Uma). A scene offers the Leads that apply as one-tap choices; used in another lead's chapter, one opens a
     branch or a File. No hunting for hidden spots, and no rewinds.
-  - **The Archive** in the Hideout: **Files** on people, districts, factions and Gate-worlds, with redacted lines that
-    fill in; a **Timeline** of every scene, by place and date, replayable; **Anomalies**, the contradictions the player
-    has seen, open until explained (WD18).
-  - **Every lock names its key** on the route board: which chapter, Operation or File opens it.
-  - **Freed heroines** open their File and a short log from their side (WD12).
+  - **The Log** aboard the ship (D3's Archive): **Files** on people, places, factions and worlds, with redacted lines
+    that fill in; a **Timeline** of every scene, by world and date, replayable; **Anomalies**, the contradictions the
+    player has seen, open until explained.
+  - **Every lock names its key** on the world's map: which chapter, mission or File opens it.
+  - **Freed heroines** open their File and a short log from their side.
 - **TC35, the Call** (Triangle Strategy's vote, without hidden numbers).
-  - At a big choice, the squad votes with tokens. Before the vote, one try to persuade each voter, with arguments that
-    unlock through **Intel scenes** (a district diorama with four to six hotspots, about three minutes) and the
-    matching conviction.
+  - At a big choice, the crew votes with tokens. Before the vote, one try to persuade each voter, with arguments that
+    unlock through **Intel scenes** (a diorama with four to six hotspots, about three minutes) and the matching
+    conviction.
   - Three convictions, **Code, Edge and Free,** move with choices and with how the squad fights. They're **visible**,
     and each voter shows her reasons.
-  - A branch swaps the next one or two missions, then rejoins. The act's last vote shapes its ending, and conviction
-    thresholds decide which guests join.
+  - A branch swaps the next one or two missions, then rejoins. Conviction thresholds decide which guests join.
 - **TC36, the session.** A scene of three minutes at most, with auto, skip and a log; a battle of about ten minutes;
-  about two in the Hideout. A new game reaches its first battle within two minutes. Optional scenes live in the Crew
-  station.
+  about two aboard the ship. A new game reaches its first battle within two minutes. Optional scenes live in the
+  Quarters.
 
-**Volume:** an act is about **23 story battles** (six routes of three chapters, and five Operations) plus contracts.
-Five acts make about 115 story battles. Acts ship as content waves (TC15).
+**Volume:** a chapter is two to four battles. Eight leads with four chapters each, plus the main thread, would be about
+**110 story battles,** close to D3's five acts. The story session sets the real counts; side jobs come on top.
 
-## 6. The Hideout and progression (TC9, TC39, TC42–TC44)
+## 6. The ship and progression (TC9, TC39, TC42–TC44, TC49, TC50)
 
-**TC9 (amended D3).** The Hideout is the hub between battles, on uma-kit's shell and screens where they fit. There's no
-gacha: Umas join through the story (TC45), guests through their chapters (TC47), and parts through salvage and the
-shop.
+**TC9 (amended D4).** **The ship is the hub** between battles and the squad's stronghold, on uma-kit's shell and
+screens where they fit. There's no gacha: Umas join through the story (TC45), guests through their chapters (TC47),
+and parts through salvage and the market.
 
-**TC39, the double life.** The Hideout sits behind a front business in the Markets, kept by a civilian who knows. Scenes
-by day, missions by night. **Suit-up** (the rig's parts snapping on in her colour) opens each battle, skippable, and big
-story moments (WD7).
+**TC49 (new D4), the ship grows with its crew.** It starts with the rooms the first chapter needs. Each lead who comes
+aboard opens a room or upgrades one, as Triangle Strategy's Encampment grows. The room plan is the game's; which lead
+opens which is the story session's.
 
-**TC42, the stations** (Triangle Strategy's Encampment):
+**TC50 (new D4), the Bridge and the star map.**
+- The Bridge shows the known worlds as a **star map.** Travel is a tap and a short jump scene, with no fuel and no
+  clock.
+- A world opens on a **node map** of its locations, Triangle Strategy's world map: chapters, side jobs, the market and
+  waiting scenes, each with its danger level and any lock's key.
+- A world never closes. Side jobs and the Sim Pod keep every visited world useful.
 
-| Station | What it does |
-|---|---|
-| **Workshop** | Loadouts; parts and their remodel ranks 1–3 (each rank opens 2–3 upgrades), for credits and scrap; dismantle; repaint (free) |
-| **Shop** | Parts and items; its stock grows by chapter; shows what's owned |
-| **Fixer** | Rep buys Overrides and licences (TC44); contracts are taken here |
-| **Sim Pod** | Replays story maps with new enemies, including a five-minute variant; XP for the whole squad even on a loss; one new sim a chapter; the **Arena** (TC43) |
-| **Crew** | Optional scenes with the cast, bench status (TC27) |
-| **Archive** | Files, the Timeline and Anomalies (TC34) |
+**TC39 (amended D4), suit-up.** The rig's parts snap on in her colour at the start of each battle (skippable) and at big
+story moments. D3's double life (a hideout behind a front business) is the story session's to keep, perhaps for the
+first world only (WD7).
+
+**TC42 (amended D4), the rooms** (Triangle Strategy's Encampment, aboard a ship):
+
+| Room | What it does | Opens |
+|---|---|---|
+| **Bridge** | The star map and travel (TC50); the Call is held here (TC35) | From the start |
+| **Hangar** | Loadouts; parts and their remodel ranks 1–3 (each rank opens 2–3 upgrades), for credits and scrap; dismantle; repaint (free) | From the start |
+| **Quarters** | Optional scenes with the crew; bench status (TC27) | From the start |
+| **Log** | Files, the Timeline and Anomalies (TC34) | From the start |
+| **Store** | Parts and items; its stock grows by chapter and by world; shows what's owned. Each world's market sells there too | With a lead |
+| **Comms** | Rep buys Overrides and licences (TC44); side jobs from every visited world | With a lead |
+| **Sim Pod** | Replays story maps with new enemies, including a five-minute variant; XP for the whole squad even on a loss; one new sim a chapter; the **Arena** (TC43) | With a lead |
 
 **TC43, the economy.**
-- **Credits** from missions and bonus goals; spent at the Shop, on Core repairs and remodels.
+- **Credits** from missions and bonus goals; spent at the Store and the worlds' markets, on Core repairs and remodels.
 - **Salvage:** intact enemy parts, kept (TC26). **Scrap** from dismantled parts feeds remodels.
 - **Makers:** three parts from one maker give a small bonus and unlock that maker's paint.
 - **The Arena:** a two-minute one-against-one on a 6 × 6 map, with odds and a payout cap each chapter.
-- **Items:** one squad stock with six loadout slots, restocked in the Hideout; using one costs the action, not Charge.
+- **Items:** one squad stock with six loadout slots, restocked aboard; using one costs the action, not Charge.
 
 **TC44, progression.**
 - **Levels** 1–50 per Uma; the bench earns half (TC27).
@@ -425,43 +498,76 @@ story moments (WD7).
 - **Overrides** (Triangle Strategy's Quietus): a squad pool that refills each battle; each Override works once a battle.
   The first three: a sure hit, freeze one enemy's clock for a turn, reboot a broken rig from anywhere.
 
-## 7. How it's built (TC10, TC11, TC14, TC48)
+## 7. How it's built (TC10, TC11, TC14, TC48, TC54)
 
-**TC10 (amended D3), the battle view.** An HD-2D diorama on `@luismlorenzana/uma-stage` (0.2.0, uma-platform P142), in
-Triangle Strategy's look:
-- **A game-owned battle scene built from the stage's parts,** as uma-quest's fights already are: its grid builder,
-  tile picking, A*, sprite actor, camera maths, tilt-shift and bloom. The range overlays, the timeline and the cut-ins are
-  this game's own (DOM over the canvas for lasting UI).
+The full plan, with every reused part and the packets, is [the build plan](build-plan.md).
+
+**TC10 (amended D4), the battle view.** An HD-2D diorama on `@luismlorenzana/uma-stage` (**0.3.0**, uma-platform P142,
+P145, P146), in Triangle Strategy's look:
+- **A game-owned battle scene built from the stage's parts,** as uma-quest's fights already are. The stage's two
+  finished scenes don't fit a grid: `StageEngine` is uma-quest's field (a leader, four followers, a follow camera) and
+  `BandStage` is uma-farm's (a farm design, a vertical pan), and both keep their three.js scene private. The parts do
+  fit: the terrain builder (`roomGeometry` takes cells and heights up to 16 × 16), `SpriteActor` and `Standee`, the
+  camera and pixel maths, the pure picking functions (`rayAt`, `hitQuad`, `tileQuad`), the fade functions, `Effects`,
+  the frame pacer, the grade maths and the sprite-set cap of eight.
+- **This game's own:** the map parser, movement and ranges (in the battle package, TC54), tile picking over every
+  tile's top, the range overlays as one merged mesh on the tile tops, a two-axis pan, the facing wedge, the timeline and
+  the cut-in (copying uma-quest's `FightStage`, on the borrowed renderer). Lasting UI is DOM over the canvas.
 - **A fixed camera:** orthographic, pitched 35°, one texel per device pixel, **no rotation in v1** (rotation was
-  Triangle Strategy's biggest cost, and the stage builds south faces only). Anything between the camera and the acting
-  or target unit fades. Terrain rises toward the back of a map so heights hide little.
+  Triangle Strategy's biggest cost, and the stage builds south faces only). A tile is about 43 × 24 pt on a 3× iPhone in
+  landscape, so about 20 tiles fit across and 16 deep: a flat 14 × 14 board fits, and a board with height pans.
+  Anything between the camera and the acting or target unit fades. Terrain rises toward the back of a map so heights
+  hide little.
 - **The look:** night by default (a dark blue-violet ambient, a cool key light, a grade per map); neon signs as glowing
   textures with their light painted on the ground; the stage's four live lights on the acting unit, the ability flash
   and two hero signs; bloom only on neon, flashes and holograms; a wide sharp band of tilt-shift in battle, a stronger
   one in story shots; no motion blur, chromatic aberration only as a pulse on a hit or a hack.
 - **Rain:** one scrolling streak layer, small splashes, and wet-tile kit variants with reflections painted in. Rain
   makes open tiles Wet (TC24).
-- **The diorama edge:** the board is a cut slab over far parallax layers (the city, the Ring's arc), with the
-  Underlevels' layers on its front face.
-- **CY4 is a spike** that proves it on the phone before anything builds on it: a 14 × 14 grid with heights at 35° in
-  landscape; tile picking at about 24 pt tile depth; tilt-shift and bloom with battery saver off; about thirteen figures
-  live (four Umas' chibi sets, and standees for the guest and eight enemies); how much heights hide. If it fails, the
-  fallback is a Phaser 4 isometric board, the platform's baseline for 2D scenes.
+- **The diorama edge:** the board is a cut slab over far parallax layers (the world's skyline), with the lower layers on
+  its front face.
+- **It renders only when something moves,** uma-farm's wake-and-sleep loop, which suits a turn-based game and the
+  battery.
+- **CY7 proves it on the phone** before the app builds on it: a 14 × 14 grid with heights at 35° in landscape; tile
+  picking at about 24 pt tile depth; tilt-shift and bloom with battery saver off; about thirteen figures live (four
+  Umas and nine standees, about 56 MB of the 112 MB sprite budget); how much heights hide. If it fails, the fallback is
+  a Phaser 4 isometric board, the platform's baseline for 2D scenes.
 
-**TC48, the stage requests.** CY4 files with uma-platform only what the spike shows is needed, as requests, never a
-fork:
-1. a grid stage: figures, picking and grade over a room-format grid, with a free two-axis pan;
-2. heights 0–3 in the format, and a jump step;
-3. tile overlays and highlights (ranges, a cursor), if drawing them game-side costs too much;
-4. a tactical camera: a steeper pitch or a zoom, with the pixel rule relaxed;
-5. glowing kit frames and tunable bloom and tilt-shift;
-6. rain particles;
-7. a lighter tier of effects that stays on under battery saver, which is on by default on phones.
+**TC48 (amended D4), the stage requests.** CY7 files with uma-platform only what it shows is needed, one piece at a
+time, as requests, never a fork. The audit sorts them:
+
+| Request | Why | Likely |
+|---|---|---|
+| **Tunable bloom and tilt-shift** | Bloom's threshold is fixed at 0.86 on luminance, so saturated neon never blooms (magenta is about 0.28); tilt-shift is fixed, and story shots want it stronger | Needed |
+| **Glowing kit frames** | A kit frame can make a live light but can't glow | Needed |
+| **A tactics kit kind, cached by kit id** | A biome kit must carry dungeon frames to parse, and the loader keeps one page per kind for the session, so a second map gets the first map's kit | Needed |
+| **A lighter tier of effects under battery saver** | Saver is on by default on phones and turns every effect off | Needed |
+| **Heights 0–3** | `MAX_LEVEL` is 2 in the format; the builder may already raise level 3 from a design built directly, which CY7 tests first | If the test fails |
+| **A tactical zoom** | A 2× phone fits about 10 tiles each way; the owner's 3× iPhone fits a 14 × 14 board | If the phone needs it |
+| **Rain particles** | Missing | Only if the game-side layer costs too much |
+| **Overlays in the stage** | The game draws them in its own scene | Only if that costs too much |
 
 Rotation in 90° steps stays deferred (TC16). Attacks in more facings aren't needed: the cut-in carries the attack.
 
+**TC54 (new D4), combat testing, three ways,** before any content depends on the battle:
+1. **The rules as a pure package,** `@cyber/battle`: a deterministic reducer, uma-rpg's pattern. A battle is a frozen
+   input (map, units, loadouts, seed) plus a list of actions; each action returns the new state and **cues** (what
+   happened, for the scene to play back). Randomness is a seeded hash, never `Math.random`. The forecast calls the
+   same pure functions the resolution uses and shows chances and ranges, never the seeded roll, so the card never lies
+   and never spoils (TC29). Every rule has unit tests, and **golden replays** (an input, its
+   actions and the exact cues) catch any change in behaviour. Rules carry a version, so an old save's battle still
+   replays.
+2. **A sandbox on the phone,** uma-quest's test room grown up: a route that sets up any skirmish (map, squad,
+   loadouts, enemies, seed), plays it with the full battle UI, and saves the setup as a **scenario file** to replay or
+   share. The owner's play tests run here before any chapter exists.
+3. **A headless simulator,** uma-racer's `pnpm sim` and uma-rpg's balance plays: scenarios played AI against AI over
+   many seeds, reporting win rates, battle length in turns and minutes, damage by band and type, parts broken, Charge
+   spent, counters and Crossfires. The tuning numbers (bands, part HP, Capacity, damage) live in one table, so a
+   balance pass is a table edit and a rerun.
+
 **TC11, the stack** is uma-rpg's: React, Vite, Tailwind, Zustand and Dexie on the web, NestJS on Cloud Run, Firebase
-Hosting and Auth, a PWA. It installs uma-data, uma-kit, uma-work, uma-server, uma-art and uma-stage. **The cloud**
+Hosting and Auth, a PWA. It installs uma-data, uma-kit, uma-work, uma-server, uma-art and uma-stage, and copies
+uma-quest's wiring, save sync and PWA set-up ([the build plan](build-plan.md)). **The cloud**
 goes in the `uma-rpg` GCP project like uma-quest's and uma-farm's (uma-platform P88), every piece its own: site
 `uma-cyberpunk`, Cloud Run `cyber-api`, Firestore database `cyber`. CY2 creates it on the owner's go, with a free-tier
 cost table.
@@ -469,9 +575,10 @@ cost table.
 **TC14, it stands alone:** its own save, rules and economy, and no parcels from uma-farm at the start. Parcels can come
 later the way uma-quest takes them (uma-platform P89), on the owner's word.
 
-## 8. Art and story (TC12, TC13, TC41)
+## 8. Art and story (TC12, TC13, TC41, TC53)
 
-**TC12 (amended D3), art by kind,** cheapest that looks fine first. Nothing here blocks Phases 2 and 3:
+**TC12 (amended D4), art by kind,** cheapest that looks fine first. Since uma-platform P147, ChatGPT draws character
+art only (enemies included) and Claude draws everything else in code. Nothing here blocks Phases 2 and 3:
 
 | What | Stand-in first | The real art | Who | Where |
 |---|---|---|---|---|
@@ -480,7 +587,7 @@ later the way uma-quest takes them (uma-platform P89), on the owner's word.
 | Heroines on the map | **Standees** from the Ranker's figure images | Drawn map sprites, wave by wave, bosses first | ChatGPT | Private |
 | Heroines in the cut-in | The Ranker's figure and splash images | Combat keys, side-on, facing right | ChatGPT | Private |
 | Faction hardware and the Authority's machines | Code-drawn blocks | Original sprites | ChatGPT (P126: enemies are character art) | uma-art |
-| Map kits (the Ring's layers, the Lanes, the moons) | uma-stage's code-drawn stand-in kits | Painted kits | ChatGPT, after its character work | uma-art |
+| Map kits, one set per world, and the ship's rooms | uma-stage's code-drawn stand-in kits | Full-colour kits drawn in code (`scripts/kit-art`, uma-platform P147) | Claude, in a uma-platform session | uma-art |
 | Part icons, the paper doll, glyphs, tile states, UI marks | — | Code-drawn pixel art | Claude (`scripts/pixel-art`) | uma-art |
 
 The rig itself shows on the cut-in keys, on the paper doll and as her colour on the map; the chibi sets stay as they
@@ -489,31 +596,42 @@ are.
 **TC41, visual identity** (Star Guardian's colour coding, made cheap):
 - **One hue per Uma** on a shared graphite-and-white rig base: a three-tone ramp and one glow colour, carried into her
   timeline icon, move tint, damage numbers and suit-up.
-- **A glyph per faction** and per Gate-world, and the squad's own: a ring with a gap.
+- **A glyph per faction** and per world, and the squad's own.
 - **Corruption is a palette swap:** one shared ramp and a one-pixel scanline flicker, no extra art; freeing swaps it back
   mid-fight.
 - **Sparkle:** small cross glints in her hue and neon trails on moves; the bloom does the rest.
 - **A companion drone** per Uma, 8–12 px with a two-frame bob, standing in for Star Guardian's familiars.
 - **Busts** swap from a plain frame to a neon frame once she's suited up.
 
-**TC13 (amended D3), the story.** [world.md](world.md) is in git: it's original and names no character (WD22). Who
-plays which part, the chapters and every line of dialogue are private, in the ignored `content/` and a private bucket
-once the cloud exists. When the owner wants it readable beside the other games' stories, it becomes a fourth book in the
-platform's Story App (uma-platform P141), which needs its own uma-platform decision, its own format and validator, and a
-home for the heroines' profiles, since the Cast book holds Umas only.
+**TC13 (amended D4), the story.** The story session writes it (TC53). Its world doc is in git, original and nameless,
+as [world.md](world.md) is. Who plays which part, the chapters and every line of dialogue are private, in the ignored
+`content/` and a private bucket once the cloud exists. When the owner wants it readable beside the other games' stories,
+it becomes a fourth book in the platform's Story App (uma-platform P141), which needs its own uma-platform decision, its
+own format and validator, and a home for the heroines' profiles, since the Cast book holds Umas only.
+
+**TC53 (new D4), the story session and the content contract.**
+- **A separate session authors the world and the story** from [the story brief](story-brief.md) (SB1–SB11). This page
+  keeps the game: the battle, the systems, the ship's rooms, the talents and the faction mechanics.
+- **They meet at a content contract:** worlds, chapters, scenes, missions and casting as files in `content/stories/`,
+  keyed by master data's stable ids, checked by the content package's validator (CY9). Until CY9, the brief's sketch
+  is the contract.
+- **A story need the game doesn't meet** (a new mechanic, hook, room, talent or Hold) is a story request, a row in the
+  handoff, answered in the game's next packet.
 
 ## 9. Phases (TC15)
 
-**TC15 (amended D3).**
+**TC15 (amended D4).** The app and the combat come first, on test content, so the story plugs into a finished game.
+Phase 2 starts as soon as CY1 is in, beside the cloud.
 
 | Phase | What | Packets | Exit check |
 |---|---|---|---|
-| **0** | The repo, the concept, the references, the world and the guard | (D1–D3) | Done 2026-11-12 |
-| **1** | The workspace, the cloud and the hello app | CY1, CY2, CY3 | Signed in on the phone, with the save synced |
-| **2** | The battle prototype: the stage spike (TC10, TC48); the battle rules as a pure, tested domain package (the rig, Charge, the timeline, counters, Crossfire, facing, height, terrain, Rig Break, Jack-Out); one Underlevels map, four against the Steel Muster, on stand-ins | CY4–CY6 | A full battle plays on the phone, start to win or loss, in about ten minutes |
-| **3** | Act I's opening: the flash-forward, the first Operation and the first route chapter; the Hideout's Workshop and Archive; the story runner; the first batch from master data; chibi sets, renders and standees | Written when Phase 2 ends | The opening plays end to end |
-| **4** | Progression and the map: levels, roles, licences, the Shop, salvage and remodels, contracts, the Sim Pod, the Call, the Ring's map | Written when Phase 3 ends | Act I plays end to end and needs the progression to win |
-| **5** | Content waves: Acts II–V, one at a time, with their factions, batches and guests | One wave at a time | Each act plays end to end |
+| **0** | The repo, the concept, the references, the first-pass world, the story brief and the build plan | (D1–D4) | Done 2026-11-12 |
+| **1** | **The foundation:** the workspace, the cloud and the hello app | CY1, CY2, CY3 | Signed in on the phone, with the save synced |
+| **2** | **The combat, tested three ways:** the battle rules as a pure, seeded package with tests; the AI and the headless simulator; the board on uma-stage; the sandbox on the phone, on stand-ins | CY4–CY8 | Any skirmish set up in the sandbox plays on the phone, start to win or loss, in about ten minutes; the simulator runs a thousand battles and reports |
+| **3** | **The app:** the content contract and the story runner; the ship, the star map and the mission flow; the crew and the Hangar; the Chapter 1 loop, on test content | CY9–CY12 | A test lead's Chapter 1 plays from the ship to her world and back, brings her aboard, and resumes after iOS closes the app |
+| **4** | **The first worlds:** the story session's first world and its Chapter 1, and a second world's, with chibi sets, renders and standees | Written when the story delivers | The opening and the first pickup play end to end |
+| **5** | **Progression:** levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents | Written when Phase 4 ends | The first two worlds play end to end and need the progression to win |
+| **6** | **Worlds as content waves,** each with its leads, factions and guests | One wave at a time | Each world plays end to end |
 
 ## 10. The calls
 
@@ -523,24 +641,24 @@ home for the heroines' profiles, since the Cast book holds Umas only.
 | TC2 | *(amended D3)* Grid tactics on 10 × 10 to 14 × 14 tiles with up to four heights, facing, one objective per map; four Umas plus a guest against five to eight enemies; battles of about ten minutes | [4.1](#41-the-board-tc2-tc30) |
 | TC3 | *(amended D3)* Turn order by Speed on a visible eight-turn timeline, not phases; a turn is move, one action, face; Wait brings the next turn sooner and banks Charge | [4.2](#42-the-turn-and-charge-tc3-tc20) |
 | TC4 | *(amended D3)* The five Uma stats at 5★ become five bands; each does one job in combat and one on the rig; levelling is this game's own | [4.3](#43-the-stats-tc4) |
-| TC5 | *(amended D3)* Five roles as jobs, each with a signature Back unit; the default from an authored per-Uma tag, running style as the fallback; swapped in the Hideout | [4.8](#48-roles-tc5) |
-| TC6 | *(amended D3)* An original setting: the Ring, the Lanes and the Gates, with the world bible in world.md | [2](#2-the-world-tc6-tc31) |
+| TC5 | *(amended D3)* Five roles as jobs, each with a signature Back unit; the default from an authored per-Uma tag, running style as the fallback; swapped aboard the ship | [4.8](#48-roles-tc5) |
+| TC6 | *(amended D4)* Interplanetary: worlds reached by the ship, each with its maps, factions and a lead's Chapter 1; the first world is D3's Ring; the story session writes the world | [2](#2-the-world-tc6-tc31) |
 | TC7 | *(amended D3)* Umas are the squad; heroines from eight franchises (NIKKE added) are the enemy factions; none of it in git | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
-| TC8 | *(amended D3)* Acts, two tracks, chapters and missions; story missions and repeatable contracts; the map grows from the Ring's layers to the Lanes | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
-| TC9 | *(amended D3)* The Hideout is the hub between battles, on uma-kit's shell; no gacha | [6](#6-the-hideout-and-progression-tc9-tc39-tc42tc44) |
-| TC10 | *(amended D3)* Battles are an HD-2D diorama in Triangle Strategy's look, a game-owned scene from uma-stage's parts at a fixed 35°, night and neon by default; proved by the CY4 spike; the fallback is a Phaser 4 isometric board | [7](#7-how-its-built-tc10-tc11-tc14-tc48) |
-| TC11 | uma-rpg's stack and the six platform packages; the cloud in the `uma-rpg` project with every piece its own, created on the owner's go | [7](#7-how-its-built-tc10-tc11-tc14-tc48) |
-| TC12 | *(amended D3)* Art by kind with stand-ins first: chibi sets and renders for the Umas, the Ranker's images as standees for the heroines, Combat Adult keys from ChatGPT in a private pack, hardware and kits in uma-art, Claude's code-drawn marks | [8](#8-art-and-story-tc12-tc13-tc41) |
-| TC13 | *(amended D3)* The world bible is in git, original and nameless; casting, chapters and dialogue are private; a fourth Story App book later | [8](#8-art-and-story-tc12-tc13-tc41) |
-| TC14 | It stands alone: its own save, rules and economy; no parcels at the start | [7](#7-how-its-built-tc10-tc11-tc14-tc48) |
-| TC15 | *(amended D3)* Six phases: the repo, the foundation, the battle prototype with rigs, Act I's opening, progression, acts as content waves | [9](#9-phases-tc15) |
+| TC8 | *(amended D4)* Worlds, chapters and missions; a chapter is a lead's short arc of two to four battles; side jobs repeat on a world's map | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC9 | *(amended D4)* The ship is the hub and the squad's stronghold, on uma-kit's shell; no gacha | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC10 | *(amended D4)* Battles are an HD-2D diorama in Triangle Strategy's look, a game-owned scene from uma-stage 0.3.0's parts at a fixed 35°, night and neon, rendered only when something moves; proved by CY7; the fallback is a Phaser 4 isometric board | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
+| TC11 | uma-rpg's stack and the six platform packages; the cloud in the `uma-rpg` project with every piece its own, created on the owner's go | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
+| TC12 | *(amended D4)* Art by kind with stand-ins first: chibi sets and renders for the Umas, the Ranker's images as standees for the heroines, Combat Adult keys and enemies from ChatGPT, map kits and marks drawn in code by Claude (P147) | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
+| TC13 | *(amended D4)* The story session writes the story; its world doc is in git, nameless; casting, chapters and dialogue are private; a fourth Story App book later | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
+| TC14 | It stands alone: its own save, rules and economy; no parcels at the start | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
+| TC15 | *(amended D4)* Seven phases: the repo; the foundation; the combat tested three ways; the app on test content; the first worlds; progression; worlds as waves | [9](#9-phases-tc15) |
 | TC16 | *(amended D3)* Deferred, for discussion only: ship battles, permadeath, camera rotation, difficulty modes, recruiting beyond the story, franchise monsters as summons. Never: multiplayer | [Deferred](#deferred) |
 | TC17 | The rig: Core, two arms and Legs take damage and break; the Visor and Back unit can't be hit; hits on a broken part go to the Core | [4.4](#44-the-rig-tc17-tc18) |
 | TC18 | The loadout: eight slots and a Coat; Capacity from Power, the Core and the Back unit; a light rig gets +1 Move; saved loadouts from day one | [4.4](#44-the-rig-tc17-tc18) |
 | TC19 | Weapons in four bands (Melee, Short, Long, Tech); damage types P, I and F against a Coat; the weapon sets where hits land; Aim picks a part at −25% | [4.5](#45-weapons-and-hits-tc19) |
 | TC20 | Charge: one pip bar; +1 a turn, cap 3 to 5; skills cost it, counters and support need it, Wait banks it | [4.2](#42-the-turn-and-charge-tc3-tc20) |
 | TC21 | Automatic counters from the front and side; Crossfire (up to two allies join, by pincer or line of fire); Cover; one link toggle | [4.6](#46-counters-crossfire-and-cover-tc21) |
-| TC22 | Parts teach skills by mastery into Visor slots; five chance skills with the % shown; a signature ability per route lead | [4.9](#49-skills-tc22) |
+| TC22 | Parts teach skills by mastery into Visor slots; five chance skills with the % shown; a signature ability per lead Uma | [4.9](#49-skills-tc22) |
 | TC23 | Side +25%, back +50% past shield and counter; ±10% a height level; Long +1 range from two up; every perch has an answer | [4.7](#47-facing-height-and-terrain-tc23-tc24) |
 | TC24 | Five terrain states (Wet, Oil, Fire, Live, Smoke) plus terminals, and one more per faction at most; the terrain card | [4.7](#47-facing-height-and-terrain-tc23-tc24) |
 | TC25 | Rig Break at Core 0: out of the battle, never hurt; a Medic can reboot her in time; limbs mended free, a Core costs credits; XP kept on a loss | [4.10](#410-rig-break-freeing-and-strain-tc25tc27) |
@@ -549,32 +667,38 @@ home for the heroines' profiles, since the Cast book holds Umas only.
 | TC28 | The side-view cut-in at three speeds (Full, Quick, Off), with part damage always on the map | [4.11](#411-on-screen-tc28-tc29) |
 | TC29 | The phone UX: two-tap move with undo, the forecast card, Triangle Strategy's range colours, the timeline, one-thumb commands, an autosave after every action | [4.11](#411-on-screen-tc28-tc29) |
 | TC30 | Ten-minute guard rails: at most eight enemies and 14 × 14 tiles, fast enemy turns, no idle AI, no objective that needs every Uma | [4.1](#41-the-board-tc2-tc30) |
-| TC31 | The world bible is world.md: the Tithe in five layers (WD1–WD24) | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
-| TC32 | Each act opens on a flash-forward; Operations and Routes gate each other; the last Operation needs every route | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
-| TC33 | Six route leads an act, three chapters each, the lead fixed and three picked, each with its genre lens, ending on her signature | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
-| TC34 | Leads as one-tap choices; the Archive's Files, Timeline and Anomalies; every lock names its key; freed heroines' logs | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
-| TC35 | The Call: the squad votes with tokens; visible convictions Code, Edge and Free; Intel scenes unlock arguments; branches rejoin; thresholds pick guests | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
-| TC36 | A session of about fifteen minutes: a scene of three at most, a battle of ten, two in the Hideout; the first battle within two minutes | [5](#5-the-story-and-the-loop-tc8-tc31tc36) |
+| TC31 | *(amended D4)* world.md (WD1–WD24) is the story session's first pass, its single-city structure superseded | [2](#2-the-world-tc6-tc31) |
+| TC32 | *(amended D4)* Story tools, not a fixed shape: flash-forwards with fixed squads, and gates that wait on a chapter, mission or File | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC33 | *(amended D4)* Folded into TC51: route leads are the lead Umas; genre lenses are the story session's | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC34 | *(amended D4)* Leads as one-tap choices; the Log's Files, Timeline and Anomalies; every lock names its key on the world's map; freed heroines' logs | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC35 | The Call: the crew votes with tokens; visible convictions Code, Edge and Free; Intel scenes unlock arguments; branches rejoin; thresholds pick guests | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC36 | A session of about fifteen minutes: a scene of three at most, a battle of ten, two aboard; the first battle within two minutes | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC37 | Eight factions, one per franchise, with original names and one new mechanic each (world.md WD10–WD14) | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC38 | Every enemy character is a heroine from the Boss, Key and Regular boards, in slots filled from pools; each faction adds original hardware | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
-| TC39 | The double life: the Hideout behind a front business, a civilian keeper; suit-up opens each battle | [6](#6-the-hideout-and-progression-tc9-tc39-tc42tc44) |
-| TC40 | The rival squad: the Authority's licensed heroes, Umas from the NPC board; rivals, then allies | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
-| TC41 | Visual identity: a hue per Uma, a glyph per faction, corruption as a palette swap, a companion drone, neon busts | [8](#8-art-and-story-tc12-tc13-tc41) |
-| TC42 | The Hideout's six stations: Workshop, Shop, Fixer, Sim Pod, Crew and Archive | [6](#6-the-hideout-and-progression-tc9-tc39-tc42tc44) |
-| TC43 | The economy: credits, salvage, scrap and remodels; maker bonuses; the capped Arena; one item stock | [6](#6-the-hideout-and-progression-tc9-tc39-tc42tc44) |
-| TC44 | Progression: levels 1–50, role ranks, licences that raise the Charge cap, Rep, and once-a-battle Overrides | [6](#6-the-hideout-and-progression-tc9-tc39-tc42tc44) |
-| TC45 | The cast is the Ranker's 100 by outfit, joining two batches an act through the story | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
+| TC39 | *(amended D4)* Suit-up opens each battle and big moments; D3's double life is the story session's | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC40 | *(amended D4)* A rival squad of Umas from the NPC board, with the squad's own rigs, who can join later, if the story keeps one | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
+| TC41 | Visual identity: a hue per Uma, a glyph per faction and per world, corruption as a palette swap, a companion drone, neon busts | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
+| TC42 | *(amended D4)* The ship's seven rooms: Bridge, Hangar, Quarters and Log from the start; Store, Comms and Sim Pod with leads | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC43 | The economy: credits, salvage, scrap and remodels; maker bonuses; the capped Arena; one item stock | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC44 | Progression: levels 1–50, role ranks, licences that raise the Charge cap, Rep, and once-a-battle Overrides | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC45 | *(amended D4)* The crew is the Ranker's 100 by outfit: lead Umas join through their own Chapter 1, crew Umas through chapters and side jobs, in batch order as a guide | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC46 | Stride: her running style colours her movement (Break, Draft, Surge, Kick) | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC47 | Guests: freed heroines in the guest slot, with hand-set stats, a job from her archetype and her own salvaged parts | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
-| TC48 | CY4 files with uma-platform only the stage requests the spike shows are needed, from a list of seven | [7](#7-how-its-built-tc10-tc11-tc14-tc48) |
+| TC48 | *(amended D4)* CY7 files the stage requests it shows are needed, one at a time: tunable bloom and tilt-shift, glowing frames, a tactics kit kind, a saver tier; heights 0–3, zoom, rain and overlays only if needed | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
+| TC49 | *(new D4)* The ship grows with its crew: each lead who comes aboard opens or upgrades a room | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC50 | *(new D4)* The Bridge's star map of worlds, travel with no fuel or clock; each world a node map of locations with danger levels and named keys; no world closes | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC51 | *(new D4)* Lead Umas, Octopath's way: her Chapter 1 on her home world brings her aboard at the squad's level; fixed in her chapters; short Chapter 1s never back to back; interjection slots and debriefs; crossed paths; a main thread and a signposted finale | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC52 | *(new D4)* Talents, Octopath's path actions kept small: six (Scout, Bargain, Hack, Recruit, Duel, Mend), one per lead (leads may share), used on a world's map | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC53 | *(new D4)* A separate story session writes the world and the story from the story brief; the two meet at a content contract checked by a validator; story requests go in the handoff | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
+| TC54 | *(new D4)* Combat testing three ways: a pure seeded rules package with golden replays, a sandbox on the phone with scenario files, a headless simulator with one tuning table | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 
 ## Deferred
 
 Discussion only, not planned (TC16, amended D3):
-- **Ship battles** along the Lanes, as a second battle mode.
+- **Ship battles** between worlds, as a second battle mode; the ship as hub (TC49) makes them a natural later add.
 - **Permadeath,** as an option; Rig Break is the rule (TC25).
 - **Camera rotation** in 90° steps, if a map ever needs it (TC48).
 - **Difficulty modes.**
-- **Recruiting beyond the story,** such as contracts that unlock extra Umas.
+- **Recruiting beyond the story,** past what chapters, side jobs and the Recruit talent already bring aboard.
 - **Franchise monsters,** as a boss's summons (WD14).
 - **Multiplayer** is never planned: the game is personal (TC1).

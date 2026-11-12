@@ -5,9 +5,13 @@
   Phase 10 (P144).
 - **Start with [docs/handoff/README.md](docs/handoff/README.md):** the current phase, the packet queue and the owner's
   steps. The concept is [docs/design/concept.md](docs/design/concept.md) ([page](docs/design/previews/concept.html));
-  its calls are TC1–TC48; the world bible is [docs/design/world.md](docs/design/world.md) (WD1–WD24) and the research
-  behind both [docs/design/references.md](docs/design/references.md). New decisions go in `docs/decisions.md` from D4
-  (fetch `main` first). Packets are CY-numbered from CY1.
+  its calls are TC1–TC54. The build plan is [docs/design/build-plan.md](docs/design/build-plan.md) (BP1–BP9): what's
+  reused and how the packets build it. The research is [docs/design/references.md](docs/design/references.md). New
+  decisions go in `docs/decisions.md` from D5 (fetch `main` first). Packets are CY-numbered from CY1.
+- **The story has its own session (D4).** It writes the world and the story from
+  [docs/design/story-brief.md](docs/design/story-brief.md) (SB1–SB11); [docs/design/world.md](docs/design/world.md)
+  (WD1–WD24) is its first pass. This session builds the game, keeps the brief current when a hook changes, and answers
+  the handoff's story requests. It reads `content/stories/` on disk and never commits it.
 - **`docs/game/` is the manual of the game as built.** It starts with CY3. Every rule change keeps it in step.
 - **This game stands alone:** its own save, rules and economy (uma-platform P2, P3). It reads master data from
   uma-platform by stable IDs only, and never imports from uma-rpg, uma-racer, uma-quest or uma-farm at runtime.
@@ -24,11 +28,11 @@
 - **Claude commits and pushes to `main`** in Conventional Commits style. Delegated agents use a branch and a pull
   request. When Claude reviews a ChatGPT pull request, it sends back only must-fixes (a broken rule, original-game
   content, a failing check, a real bug).
-- **Art is split by kind (uma-platform P126):** **ChatGPT draws character art end to end** (Uma sprites and keys, guest
-  heroines, enemies, busts and any portrait), starting from the Character Art Studio's "Uma Cyberpunk: Combat Adult
-  Character" category (P143), and the painted full-colour art that needs image generation (map kits), and publishes
-  those releases. **Claude draws the code-drawn pixel art** (uma-platform's `scripts/pixel-art`: items, UI marks, crests,
-  emblems, tile marks) **and the art tools,** and publishes those uma-art releases in a uma-platform session. The
+- **Art is split by kind (uma-platform P126, amended by P147):** **ChatGPT draws character art only,** end to end (Uma
+  sprites and keys, guest heroines, enemies, busts and any portrait), starting from the Character Art Studio's "Uma
+  Cyberpunk: Combat Adult Character" category (P143), and publishes those releases. **Claude draws everything else in
+  code** and publishes those uma-art releases in a uma-platform session: the pixel art (`scripts/pixel-art`: items, UI
+  marks, crests, emblems, tile marks), the full-colour HD-2D map kits (`scripts/kit-art`) and the art tools. The
   uma-cyberpunk packet that first uses the art pins it.
 
 ## Autonomy: what you do without asking
@@ -71,8 +75,9 @@ The owner gave every session full autonomy to commit, publish and deploy (2026-1
 ## Building and running
 
 Nothing runs yet. CY1 adds the workspace and its commands (in `AGENTS.md`), and `.claude/launch.json` for the web app
-and the API. The preview pane can't screenshot WebGL: once the stage arrives (CY4), check scenes on a canvas fallback,
-or ask the owner for a phone check. Never validate in the iOS Simulator (uma-platform P60).
+and the API. The preview pane can't screenshot WebGL: once the board arrives (CY7), check scenes headless through
+`?debug` and `step()` or on a canvas fallback, or ask the owner for a phone check. Never validate in the iOS Simulator
+(uma-platform P60).
 
 **Never change the active gcloud account.** When the cloud exists (CY2), scope every command with
 `CLOUDSDK_ACTIVE_CONFIG_NAME=default CLOUDSDK_CORE_PROJECT=uma-rpg`, and never run `gcloud config set`. Never type

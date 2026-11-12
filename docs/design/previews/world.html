@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Uma Cyberpunk World</title>
-<!-- uma-cyberpunk's world bible (docs/design/world.md): the Ring and its Gates, the truth in five layers, the squad and
+<!-- uma-cyberpunk's world bible (docs/design/world.md), since D4 the story session's first pass: the Ring and its Gates, the truth in five layers, the squad and
      its rivals, the three Holds, the eight factions and who stands behind them, the five acts, how the story is seeded,
      the tone, the ending and the calls WD1–WD24. Self-contained, uma-kit's tokens, light and dark. Every glyph and sketch
      is original and abstract: no character art, no franchise logos, no character names, no franchise terms beyond the
@@ -84,6 +84,12 @@
   /* status */
   .status { border-left: 4px solid var(--accent); }
   .status p { margin: 6px 0; }
+  .d4note { margin: 4px 0 14px; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent); }
+  .d4note h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 15px; }
+  .d4note .tag { background: var(--accent-wash); color: var(--accent); }
+  .d4note .grid4 { margin-top: 10px; }
+  .d4note .tile { background: var(--panel); border-top: 3px solid var(--k); }
 
   /* the Ring */
   .scroll > svg.wide { min-width: 900px; }
@@ -254,20 +260,39 @@
   <h1>Uma Cyberpunk: the world and its factions</h1>
   <p>The world bible: what the Ring is, what the Gates really do, why heroines from eight other worlds arrive as enemies,
     how each can be won back, and the five acts that carry it. Twenty-four calls, WD1–WD24, each a recommendation, adopted
-    until the owner changes one. Source: <code>docs/design/world.md</code>.</p>
+    until the owner changes one. <b>Since D4 it is the story session's first pass</b>, starting from
+    <a href="story-brief.html">the story brief</a>. Source: <code>docs/design/world.md</code>.</p>
   <nav>
     <a href="#status">Status</a><a href="#short">The short answer</a><a href="#ring">The Ring</a>
     <a href="#truth">The truth</a><a href="#squad">The squad</a><a href="#holds">The Holds</a>
     <a href="#factions">The factions</a><a href="#hardware">Hardware</a><a href="#web">Who's behind whom</a>
     <a href="#allies">Allies and rivals</a><a href="#acts">The five acts</a><a href="#telling">How it's told</a>
     <a href="#tone">Tone, names, ending</a><a href="#calls">The calls</a>
-    <a class="ext" href="concept.html">The concept ↗</a><a class="ext" href="references.html">The references ↗</a>
+    <a class="ext" href="story-brief.html">The story brief ↗</a><a class="ext" href="concept.html">The concept ↗</a><a class="ext" href="references.html">The references ↗</a>
     <a class="ext" href="../world.md">world.md ↗</a>
   </nav>
 
   <!-- ───────────────────────── Status ───────────────────────── -->
   <section class="card status" id="status">
-    <h2>Status <span class="tag">D3</span></h2>
+    <h2>Status <span class="tag">D3</span><span class="tag">D4</span></h2>
+    <div class="d4note">
+      <h3>D4: now the story session's first pass <span class="tag">D4</span></h3>
+      <p>The owner moved the world and the story to their own session and made the world interplanetary: this page's Ring
+        becomes the <b>first world</b>, each lead Uma's Chapter 1 plays on her own world, and she then joins <b>the ship</b>,
+        the hub, <i>Octopath Traveler</i>'s way. The story session starts from this page and may keep, change or drop any WD
+        call; <a href="story-brief.html">the story brief</a> (<a href="../story-brief.md">story-brief.md</a>) says what the
+        game fixes and what it needs back.</p>
+      <div class="grid4">
+        <div class="tile" style="--k:var(--info)"><h3>The first world</h3><p>This page's Ring. Each lead Uma's Chapter 1 plays
+          on her own world, and she then joins the ship (<a href="concept.html#world">the concept §2</a>).</p></div>
+        <div class="tile" style="--k:var(--neon)"><h3>A first pass</h3><p>Every WD call is the story session's input: it may
+          keep, change or drop any of them.</p></div>
+        <div class="tile" style="--k:var(--danger)"><h3>Superseded</h3><p>The single-city structure: the Hideout, and five acts
+          on one ring.</p></div>
+        <div class="tile" style="--k:var(--success)"><h3>Fixed by the battle</h3><p>The three Holds (WD9) and the faction
+          mechanics (WD11).</p></div>
+      </div>
+    </div>
     <p><b>2026-11-12, the owner's direction.</b> The owner asked for the lore and story to draw on <i>13 Sentinels: Aegis
       Rim</i> and League of Legends' <i>Star Guardian</i>, and for the other franchises on the platform to be the enemy
       factions, tied to the plot. This page is the world bible that answers both. The research behind it is

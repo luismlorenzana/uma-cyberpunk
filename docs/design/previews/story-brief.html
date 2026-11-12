@@ -1,0 +1,940 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uma Cyberpunk Story Brief</title>
+<!-- uma-cyberpunk's story brief (docs/design/story-brief.md): the hand-off from the game session to the story session.
+     Who owns what, the owner's interplanetary direction (each lead's Chapter 1 on her own world, then the ship as hub,
+     Octopath Traveler's way), what's fixed and what's free, the hooks the game builds, what Octopath teaches, the first
+     pass carried across worlds, twelve questions with defaults, the content contract, the five deliveries against the
+     game's phases, how the sessions work together, and the calls SB1–SB11. Self-contained, uma-kit's tokens, light and
+     dark. Every sketch is original and abstract: no character art, no franchise logos, no character names, no franchise
+     terms beyond the titles. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #d39a2b; --accent-wash: #fbf1dd; --info: #2f6fe0; --info-wash: #e3ecfc; --success: #2f7a4f;
+    --success-wash: #e1f1e7; --danger: #c23b33; --danger-wash: #fbe5e3; --neon: #b03fd8; --neon-wash: #f4e4fb;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16);
+    --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+      --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+      --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+      --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+    --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+    --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+    --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Inter', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font: 700 24px/1.2 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; margin: 0 0 6px; }
+  h2 { font: 700 17px/1.25 ui-rounded, system-ui, sans-serif; margin: 0 0 8px; }
+  h3 { font: 700 14px/1.25 system-ui; margin: 0 0 6px; }
+  p, li { color: var(--ink-soft); max-width: 82ch; }
+  a { color: var(--info); }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 5px; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 20px; }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  nav a.ext { background: transparent; color: var(--info); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  .card { background: var(--panel); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .note { font-size: 12px; color: var(--ink-faint); }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; }
+  .tag { display: inline-block; font: 700 11px ui-monospace, Menlo, monospace; padding: 1px 7px; border-radius: 999px; background: var(--neon-wash); color: var(--neon); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+  .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; }
+  .tile { background: var(--raised); border-radius: 10px; padding: 12px 14px; }
+  .tile p { margin: 4px 0 0; font-size: 13px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight: 600; }
+  td b { color: var(--ink); }
+  td { color: var(--ink-soft); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+
+  /* flows (as the concept's loop) */
+  .loop { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .loop span { font: 600 12px system-ui; padding: 8px 12px; border-radius: 10px; background: var(--info-wash); color: var(--ink); max-width: 300px; }
+  .loop span.hot { background: var(--neon-wash); }
+  .loop span.gold { background: var(--accent-wash); }
+  .loop i { color: var(--ink-faint); font-style: normal; }
+
+  /* status */
+  .status { border-left: 4px solid var(--accent); }
+  .status p { margin: 6px 0; }
+
+  /* page-only: the sticky section nav, anchors that clear it, wide sketches */
+  nav.sections { position: sticky; top: 0; z-index: 10; background: var(--page); padding: 8px 0; margin: 4px 0 16px; box-shadow: 0 1px 0 var(--hairline); }
+  nav.sections { gap: 5px; }
+  nav.sections a { padding: 5px 10px; font-size: 11.5px; }
+  section[id] { scroll-margin-top: 84px; }
+  .scroll > svg.wide { min-width: 900px; }
+
+  /* the owner's words */
+  .quote { margin: 0 0 14px; border-left: 4px solid var(--neon); background: var(--neon-wash); border-radius: 10px; padding: 12px 16px; }
+  .quote p { margin: 0; color: var(--ink); font-size: 14px; max-width: none; }
+  .quote .who { margin-top: 6px; font: 600 11px system-ui; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .05em; }
+
+  /* numbered tiles: the fixed rules and the seven lessons */
+  .ntile { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 4px 10px; align-items: start; }
+  .ntile .n { font: 800 24px/1 ui-rounded, system-ui, sans-serif; color: var(--neon); }
+  .ntile h3 { margin: 2px 0 0; }
+  .ntile p { margin: 4px 0 0; }
+  .ntile.gold .n { color: var(--accent); }
+  .stats { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .stat { font: 600 11.5px system-ui; padding: 4px 10px; border-radius: 999px; background: var(--panel); color: var(--ink); border: 1px solid var(--hairline-strong); }
+  .stat b { font: 800 13px ui-rounded, system-ui, sans-serif; color: var(--neon); margin-right: 4px; }
+  .pill { font: 700 10.5px system-ui; padding: 2px 8px; border-radius: 999px; background: var(--panel); color: var(--ink-soft); border: 1px solid var(--hairline-strong); white-space: nowrap; }
+
+  /* chips for the directions */
+  .chip { display: inline-flex; align-items: center; gap: 5px; font: 600 12px system-ui; padding: 4px 10px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--hairline-strong); color: var(--ink); margin: 2px 4px 2px 0; }
+
+  /* code */
+  .codehead { display: flex; justify-content: space-between; gap: 12px; font: 600 11px system-ui; color: var(--ink-faint); text-transform: uppercase; letter-spacing: .05em; margin: 14px 0 4px; }
+  .codehead .sub { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 12px; text-align: right; }
+  pre.code { margin: 0 0 12px; padding: 12px 14px; background: var(--sunken); border-radius: 10px; overflow-x: auto; color: var(--ink);
+    font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; box-shadow: inset 0 0 0 1px var(--hairline); tab-size: 2; }
+  pre.code .c { color: var(--ink-faint); font-style: italic; }
+  pre.code .k { color: var(--info); }
+  pre.code .s { color: var(--success); }
+  pre.code .n { color: var(--neon); }
+  pre.code .d { color: var(--accent); font-weight: 700; }
+  pre.code.tree .c { color: var(--ink-soft); font-style: normal; }
+  pre.code.one { user-select: all; font-size: 13px; border-left: 4px solid var(--accent); }
+
+  /* step kinds */
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 6px; margin: 6px 0 10px; }
+  .steps div { background: var(--raised); border-radius: 8px; padding: 6px 10px; font-size: 12.5px; color: var(--ink-soft); }
+  .steps div code { background: var(--panel); color: var(--ink); font-weight: 700; margin-right: 4px; }
+  .steps div.hot { background: color-mix(in srgb, var(--neon) 12%, var(--raised)); }
+
+  .ids { font: 700 11px ui-monospace, Menlo, monospace; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Uma Cyberpunk: the story brief</h1>
+  <p>From the game session to the story session: who owns what, the owner's direction, what the game and the platform fix,
+    what's free, the hooks the game builds, what <i>Octopath Traveler</i> teaches, the first pass carried across worlds, the
+    questions the story answers, the content contract, and what the story delivers back, where and in what shape. Eleven
+    calls, SB1–SB11, each a recommendation from the game side. Source: <code>docs/design/story-brief.md</code>.</p>
+  <nav class="sections">
+    <a href="#status">Status</a><a href="#short">Short answer</a><a href="#own">Who owns what</a>
+    <a href="#direction">Direction</a><a href="#fixed">What's fixed</a><a href="#hooks">Hooks</a>
+    <a href="#octopath">Octopath</a><a href="#carry">First pass</a><a href="#questions">Questions</a>
+    <a href="#contract">Contract</a><a href="#deliver">Deliveries</a><a href="#together">Working together</a>
+    <a href="#start">Starting</a><a href="#calls">Calls</a>
+    <a class="ext" href="concept.html">Concept ↗</a><a class="ext" href="world.html">World ↗</a>
+    <a class="ext" href="references.html">References ↗</a><a class="ext" href="build-plan.html">Build plan ↗</a>
+    <a class="ext" href="../story-brief.md">story-brief.md ↗</a>
+  </nav>
+
+  <!-- ───────────────────────── Status ───────────────────────── -->
+  <section class="card status" id="status">
+    <h2>Status <span class="tag">D4</span></h2>
+    <p><b>2026-11-12 (D4). From the game session to the story session.</b> The owner split the work: a separate session
+      authors the world and the story, and this repo's game session builds the app and the combat. This brief is what the
+      story session needs to start: the owner's direction, what the game and the platform fix, what's free, the first pass
+      to start from, the questions it answers, and what it delivers back, where and in what shape. Its calls are
+      <b>SB1–SB11</b>, each a recommendation from the game side, kept until the owner or the story session changes one.</p>
+    <p class="note">This page is the visual page for <a href="../story-brief.md">docs/design/story-brief.md</a>. Like the
+      brief, it names no character.</p>
+  </section>
+
+  <!-- ───────────────────────── Short answer ───────────────────────── -->
+  <section class="card" id="short">
+    <h2>The short answer</h2>
+    <div class="grid3">
+      <div class="tile"><h3>You own the world and the story; the game session owns the game <span class="tag">SB1</span></h3>
+        <p>You meet at the hooks the game builds (SB4) and at one content contract (SB8).</p></div>
+      <div class="tile"><h3>The owner's direction <span class="tag">SB2</span></h3>
+        <p>An interplanetary world; D3's neon city on an orbital ring becomes the first world and its Chapter 1; the Umas
+          join <b>the ship</b>, the hub and stronghold, once their Chapter 1 ends; the ship travels to other worlds and picks
+          up other Umas on their own Chapter 1, <i>Octopath Traveler</i>'s way.</p></div>
+      <div class="tile"><h3>Fixed <span class="tag">SB3</span></h3>
+        <p>The crew is Umas only; every enemy character is a heroine from the eight franchises on the platform's boards, and
+          she's freed, never killed; the battle's rules are the game's; names are ours, and casting and dialogue never go
+          in git.</p></div>
+      <div class="tile"><h3>Free <span class="tag">SB7</span></h3>
+        <p>The worlds, the mystery and its layers, the leads and their chapters, the ship and why it travels, where each
+          faction is and why, the rival squad, the ending.</p></div>
+      <div class="tile"><h3>Start from <span class="tag">SB6</span></h3>
+        <p>The first pass, <a href="world.html">world.md</a> (WD1–WD24), and <a href="references.html">the references</a>.
+          Most of it carries across worlds, and the Ring is already a first world.</p></div>
+      <div class="tile"><h3>Deliver <span class="tag">SB8</span><span class="tag">SB9</span></h3>
+        <p>A nameless world doc in git and the private casting and chapters in <code>content/</code>, the first world's
+          Chapter 1 first.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 1. Who owns what ───────────────────────── -->
+  <section class="card" id="own">
+    <h2>1. Who owns what <span class="tag">SB1</span></h2>
+    <p>Two sessions, one repo. The story session writes; the game session builds and plays. They meet in four places: the
+      nameless world doc in git, the private <code>content/stories/</code> under the content contract, the hooks the game
+      builds, and a story request when the story needs something the game doesn't have.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1120 372" role="img" aria-label="The story session on the left writes the world, decides who's who, and writes chapters, the Call's questions and mission briefs. The game session on the right builds for the world, reads who's who by stable ids, plays the chapters, builds and tunes the missions and the battle. They meet in the middle at world.md in git, content/stories/ which is private, the hooks the game builds, and a story request in the handoff." style="font-family:system-ui,-apple-system,sans-serif">
+        <defs>
+          <marker id="o-neon" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--neon)"/></marker>
+          <marker id="o-info" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--info)"/></marker>
+        </defs>
+
+        <!-- the story session -->
+        <rect x="10" y="40" width="320" height="322" rx="14" style="fill:color-mix(in srgb, var(--neon) 9%, var(--panel))" stroke="var(--neon)" stroke-width="1.5"/>
+        <text x="30" y="70" font-size="16" font-weight="800" fill="var(--ink)">The story session</text>
+        <text x="30" y="89" font-size="12" fill="var(--ink-soft)">owns the world and the story</text>
+        <path d="M30 104H310" stroke="var(--hairline-strong)"/>
+        <g fill="var(--neon)">
+          <circle cx="36" cy="124" r="3"/><circle cx="36" cy="153" r="3"/><circle cx="36" cy="182" r="3"/><circle cx="36" cy="211" r="3"/>
+          <circle cx="36" cy="240" r="3"/><circle cx="36" cy="269" r="3"/><circle cx="36" cy="298" r="3"/><circle cx="36" cy="327" r="3"/>
+        </g>
+        <g font-size="12" fill="var(--ink)">
+          <text x="48" y="128">writes the world: worlds, history, mystery</text>
+          <text x="48" y="157">writes the ship and the tone</text>
+          <text x="48" y="186">decides who's who, privately</text>
+          <text x="48" y="215">writes chapters, scenes, dialogue, choices</text>
+          <text x="48" y="244">writes the Call's questions</text>
+          <text x="48" y="273">writes a brief per mission</text>
+          <text x="48" y="302">gives the systems meaning; asks for changes</text>
+          <text x="48" y="331">describes places, looks and moods</text>
+        </g>
+
+        <!-- the game session -->
+        <rect x="790" y="40" width="320" height="322" rx="14" style="fill:color-mix(in srgb, var(--info) 9%, var(--panel))" stroke="var(--info)" stroke-width="1.5"/>
+        <text x="810" y="70" font-size="16" font-weight="800" fill="var(--ink)">The game session</text>
+        <text x="810" y="89" font-size="12" fill="var(--ink-soft)">owns the game</text>
+        <path d="M810 104H1090" stroke="var(--hairline-strong)"/>
+        <g fill="var(--info)">
+          <circle cx="816" cy="124" r="3"/><circle cx="816" cy="153" r="3"/><circle cx="816" cy="182" r="3"/><circle cx="816" cy="211" r="3"/>
+          <circle cx="816" cy="240" r="3"/><circle cx="816" cy="269" r="3"/><circle cx="816" cy="298" r="3"/><circle cx="816" cy="327" r="3"/>
+        </g>
+        <g font-size="12" fill="var(--ink)">
+          <text x="828" y="128">builds for the world: the hooks (§4)</text>
+          <text x="828" y="157">builds the star map and the ship's rooms</text>
+          <text x="828" y="186">reads who's who by stable ids</text>
+          <text x="828" y="215">plays the chapters and the scenes</text>
+          <text x="828" y="244">builds each mission's map</text>
+          <text x="828" y="273">fills the encounter and tunes it</text>
+          <text x="828" y="302">designs and builds the battle's systems</text>
+          <text x="828" y="331">answers story requests in its next packet</text>
+        </g>
+
+        <!-- where they meet -->
+        <text x="560" y="28" text-anchor="middle" font-size="11" font-weight="700" letter-spacing="1.2" fill="var(--ink-faint)">WHERE THEY MEET</text>
+        <g style="fill:color-mix(in srgb, var(--accent) 10%, var(--panel))" stroke="var(--accent)" stroke-width="1.5">
+          <rect x="400" y="40" width="320" height="70" rx="12"/><rect x="400" y="124" width="320" height="70" rx="12"/>
+          <rect x="400" y="208" width="320" height="70" rx="12"/><rect x="400" y="292" width="320" height="70" rx="12"/>
+        </g>
+        <!-- icons: a page, a lock, a socket, a flag -->
+        <g fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M416 50h12l6 6v16h-18z M428 50v6h6 M420 62h10 M420 67h7"/>
+          <rect x="416" y="141" width="18" height="13" rx="2"/><path d="M419 141v-4a6 6 0 0 1 12 0v4"/>
+          <path d="M418 220v8a7 7 0 0 0 14 0v-8z M421 220v-5 M429 220v-5 M425 235v4"/>
+          <path d="M418 318v-18 M418 301h14l-4 5 4 5h-14"/>
+        </g>
+        <g font-size="13" font-weight="700" fill="var(--ink)">
+          <text x="444" y="66">world.md</text><text x="444" y="150">content/stories/</text>
+          <text x="444" y="234">The hooks (SB4)</text><text x="444" y="318">A story request (SB10)</text>
+        </g>
+        <!-- pills -->
+        <g font-size="10" font-weight="700" text-anchor="middle">
+          <rect x="652" y="52" width="56" height="18" rx="9" fill="var(--panel)" stroke="var(--success)"/><text x="680" y="65" fill="var(--success)">in git</text>
+          <rect x="648" y="136" width="60" height="18" rx="9" fill="var(--panel)" stroke="var(--danger)"/><text x="678" y="149" fill="var(--danger)">private</text>
+          <rect x="644" y="220" width="64" height="18" rx="9" fill="var(--panel)" stroke="var(--info)"/><text x="676" y="233" fill="var(--info)">Phase 3</text>
+          <rect x="644" y="304" width="64" height="18" rx="9" fill="var(--panel)" stroke="var(--ink-faint)"/><text x="676" y="317" fill="var(--ink-soft)">handoff</text>
+        </g>
+        <g font-size="11" fill="var(--ink-soft)">
+          <text x="416" y="88">the world outline, nameless</text>
+          <text x="416" y="102">the story writes it; the game builds for it</text>
+          <text x="416" y="172">casting, worlds, chapters, Files, Calls (SB8)</text>
+          <text x="416" y="186">the story writes them; the game reads stable ids</text>
+          <text x="416" y="256">built on test content; your content plugs in</text>
+          <text x="416" y="270">the game builds them; the story fills them</text>
+          <text x="416" y="340">a new mechanic, hook, room, talent or Hold</text>
+          <text x="416" y="354">asked by the story, answered in the next packet</text>
+        </g>
+
+        <!-- connectors: the story into the middle; the middle to and from the game -->
+        <g stroke="var(--neon)" stroke-width="2" fill="none" marker-end="url(#o-neon)">
+          <path d="M332 75H396"/><path d="M332 159H396"/><path d="M332 243H396"/><path d="M332 327H396"/>
+        </g>
+        <g stroke="var(--info)" stroke-width="2" fill="none">
+          <path d="M724 75H786" marker-end="url(#o-info)"/>
+          <path d="M724 159H786" marker-end="url(#o-info)"/>
+          <path d="M788 243H726" marker-end="url(#o-info)"/>
+          <path d="M726 327H786" marker-start="url(#o-info)" marker-end="url(#o-info)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--neon)"></i>the story session, and what it hands over</span>
+      <span><i style="background:var(--info)"></i>the game session, and what it builds or reads</span>
+      <span><i style="background:var(--accent)"></i>where they meet</span>
+    </div>
+
+    <div class="scroll" style="margin-top:14px">
+      <table style="min-width:760px">
+        <tr><th style="width:26%">Area</th><th>The story session</th><th>The game session</th><th>Where they meet</th></tr>
+        <tr><td><b>The world:</b> worlds, history, the mystery, the ship, tone</td><td>Writes it</td><td>Builds for it (<a href="#hooks">§4</a>)</td><td><a href="world.html">world.md</a>, in git, nameless</td></tr>
+        <tr><td><b>Who's who:</b> leads, crew order, which heroine is in which faction, each heroine's Hold, guests, the rival squad</td><td>Decides it, privately</td><td>Reads it by stable ids</td><td><code>content/stories/</code> (private)</td></tr>
+        <tr><td><b>Chapters, scenes, dialogue, choices, the Call's questions</b></td><td>Writes them, privately</td><td>Plays them</td><td>The content contract (<a href="#contract">SB8</a>)</td></tr>
+        <tr><td><b>Missions:</b> objective, place, enemies, side objectives, fixed squads</td><td>Writes a brief per mission</td><td>Builds the map, fills the encounter, tunes it</td><td>Mission entries in the contract</td></tr>
+        <tr><td><b>The battle and its systems:</b> the rig, roles, Charge, terrain, faction mechanics, Holds, progression, economy, the ship's rooms, talents</td><td>Gives them meaning in the world; asks for changes</td><td>Designs and builds them (<a href="concept.html">the concept</a>)</td><td>A story request (<a href="#together">SB10</a>)</td></tr>
+        <tr><td><b>Maps and art</b></td><td>Describes places, looks and moods</td><td>Builds maps; Claude draws the kits in code (uma-platform P147); ChatGPT draws the characters</td><td>Map briefs in the contract</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 2. The owner's direction ───────────────────────── -->
+  <section class="card" id="direction">
+    <h2>2. The owner's direction <span class="tag">SB2</span></h2>
+    <div class="quote">
+      <p>"interplanetary type world, where maybe the whole system you described is only Chapter 1 for every Uma and then
+        after finishing that they join into 'the spaceship' which would act as the hub or stronghold, then, when traveling
+        to other worlds there would be other Umas to pickup on their own Chapter 1, a little like the Octopath Traveler
+        approach"</p>
+      <div class="who">In the owner's words (D4)</div>
+    </div>
+
+    <h3>What the game builds from it</h3>
+    <div class="grid3">
+      <div class="tile"><h3>Interplanetary</h3><p>Worlds are separate settings, reached by the ship.</p></div>
+      <div class="tile"><h3>The first world is D3's Ring</h3><p>The neon city on an orbital ring, with its layers and its Gates (WD4, WD5). The owner calls that whole system Chapter 1.</p></div>
+      <div class="tile"><h3>Every lead Uma has a Chapter 1 on her own world</h3><p>Finishing it brings her aboard.</p></div>
+      <div class="tile"><h3>The ship is the hub and stronghold</h3><p>The rooms between battles, the Bridge's star map and the crew's home.</p></div>
+      <div class="tile"><h3>The ship travels and picks up leads</h3><p>Each on her own Chapter 1, as Octopath's travelers are met in their home towns.</p></div>
+    </div>
+
+    <h3 style="margin-top:16px">The shape, Octopath's way</h3>
+    <p>Each world is a node; on each, a lead's Chapter 1 ends with her coming aboard the ship, which then travels on to the
+      next world. One ship, drawn at each pickup: it grows a room with every lead.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1120 420" role="img" aria-label="A sawtooth path. At the bottom, worlds as planets: World 1, the Ring, whose whole system is Chapter 1; World 2; World 3; and more, about eight in all. From each world, a lead's Chapter 1 rises to the ship at the top, ending with her aboard. The ship then travels on down to the next world. The ship is drawn at each pickup with one, two, then three rooms lit." style="font-family:system-ui,-apple-system,sans-serif">
+        <defs>
+          <marker id="s-neon" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--neon)"/></marker>
+          <marker id="s-info" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--info)"/></marker>
+        </defs>
+        <!-- stars -->
+        <g fill="var(--ink-faint)" opacity="0.5">
+          <circle cx="40" cy="40" r="1.2"/><circle cx="150" cy="22" r="1"/><circle cx="420" cy="30" r="1.3"/><circle cx="730" cy="18" r="1.1"/>
+          <circle cx="1060" cy="36" r="1.3"/><circle cx="60" cy="210" r="1"/><circle cx="1090" cy="210" r="1.2"/><circle cx="300" cy="400" r="1.1"/>
+          <circle cx="600" cy="404" r="1"/><circle cx="880" cy="398" r="1.2"/><circle cx="1000" cy="150" r="1"/><circle cx="20" cy="320" r="1.3"/>
+        </g>
+        <text x="585" y="22" text-anchor="middle" font-size="11" font-weight="700" letter-spacing="1.2" fill="var(--ink-faint)">THE SHIP · THE HUB AND STRONGHOLD</text>
+
+        <!-- up-strokes: a lead's Chapter 1 brings her aboard -->
+        <g stroke="var(--neon)" stroke-width="2.2" fill="none" marker-end="url(#s-neon)">
+          <path d="M150 298L240 114"/><path d="M450 298L540 114"/><path d="M750 298L840 114"/>
+        </g>
+        <!-- down-strokes: the ship travels on -->
+        <g stroke="var(--info)" stroke-width="2" stroke-dasharray="7 5" fill="none" marker-end="url(#s-info)">
+          <path d="M330 112L414 296"/><path d="M630 112L714 296"/><path d="M930 112L990 296"/>
+        </g>
+        <g font-size="11" font-weight="700" text-anchor="middle">
+          <rect x="336" y="196" width="76" height="18" rx="9" fill="var(--panel)" stroke="var(--info)"/><text x="374" y="209" fill="var(--info)">travels on</text>
+          <rect x="636" y="196" width="76" height="18" rx="9" fill="var(--panel)" stroke="var(--info)"/><text x="674" y="209" fill="var(--info)">travels on</text>
+          <rect x="922" y="196" width="76" height="18" rx="9" fill="var(--panel)" stroke="var(--info)"/><text x="960" y="209" fill="var(--info)">travels on</text>
+        </g>
+
+        <!-- the ship, three times -->
+        <g stroke="var(--ink-soft)" stroke-width="1.5" stroke-linejoin="round" fill="var(--panel)">
+          <path d="M213 74L325 70L365 90L325 110L213 106L223 90Z"/>
+          <path d="M513 74L625 70L665 90L625 110L513 106L523 90Z"/>
+          <path d="M813 74L925 70L965 90L925 110L813 106L823 90Z"/>
+        </g>
+        <g fill="var(--info)" opacity="0.85">
+          <rect x="203" y="78" width="10" height="7" rx="2"/><rect x="203" y="95" width="10" height="7" rx="2"/>
+          <rect x="503" y="78" width="10" height="7" rx="2"/><rect x="503" y="95" width="10" height="7" rx="2"/>
+          <rect x="803" y="78" width="10" height="7" rx="2"/><rect x="803" y="95" width="10" height="7" rx="2"/>
+          <circle cx="342" cy="90" r="4"/><circle cx="642" cy="90" r="4"/><circle cx="942" cy="90" r="4"/>
+        </g>
+        <g stroke="var(--hairline-strong)" stroke-width="1">
+          <!-- rooms: lit ones are open -->
+          <rect x="235" y="83.5" width="13" height="13" rx="2" fill="var(--accent)"/>
+          <rect x="253" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="271" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="289" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="307" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="535" y="83.5" width="13" height="13" rx="2" fill="var(--accent)"/>
+          <rect x="553" y="83.5" width="13" height="13" rx="2" fill="var(--accent)"/>
+          <rect x="571" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="589" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="607" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="835" y="83.5" width="13" height="13" rx="2" fill="var(--accent)"/>
+          <rect x="853" y="83.5" width="13" height="13" rx="2" fill="var(--accent)"/>
+          <rect x="871" y="83.5" width="13" height="13" rx="2" fill="var(--accent)"/>
+          <rect x="889" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+          <rect x="907" y="83.5" width="13" height="13" rx="2" fill="var(--sunken)"/>
+        </g>
+        <g font-size="11.5" font-weight="700" fill="var(--ink)" text-anchor="middle">
+          <text x="285" y="58">the ship · 1 lead aboard</text>
+          <text x="585" y="58">the ship · 2 leads aboard</text>
+          <text x="885" y="58">the ship · 3 leads aboard</text>
+        </g>
+
+        <!-- World 1: the Ring, an orbital ring around a world -->
+        <g transform="rotate(-14 135 330)">
+          <path d="M80 330A55 13 0 0 1 190 330" fill="none" stroke="var(--neon)" stroke-width="3" opacity="0.55"/>
+        </g>
+        <circle cx="135" cy="330" r="32" style="fill:color-mix(in srgb, var(--info) 26%, var(--panel))" stroke="var(--ink-faint)" stroke-width="1.2"/>
+        <path d="M108 318q27 8 54 0M106 336q29 8 58 0" fill="none" stroke="var(--hairline-strong)" stroke-width="1.2"/>
+        <g transform="rotate(-14 135 330)">
+          <path d="M80 330A55 13 0 0 0 190 330" fill="none" stroke="var(--neon)" stroke-width="3"/>
+          <g fill="var(--accent)"><circle cx="96" cy="337" r="1.6"/><circle cx="114" cy="341" r="1.6"/><circle cx="135" cy="343" r="1.6"/><circle cx="156" cy="341" r="1.6"/><circle cx="174" cy="337" r="1.6"/></g>
+        </g>
+        <!-- World 2, World 3 -->
+        <circle cx="435" cy="330" r="32" style="fill:color-mix(in srgb, var(--success) 28%, var(--panel))" stroke="var(--ink-faint)" stroke-width="1.2"/>
+        <path d="M408 322q27 9 54 0M410 340q25 7 50 0" fill="none" stroke="var(--hairline-strong)" stroke-width="1.2"/>
+        <circle cx="735" cy="330" r="32" style="fill:color-mix(in srgb, var(--accent) 30%, var(--panel))" stroke="var(--ink-faint)" stroke-width="1.2"/>
+        <path d="M708 326q27 9 54 0M712 343q23 6 46 0" fill="none" stroke="var(--hairline-strong)" stroke-width="1.2"/>
+        <!-- the next world -->
+        <circle cx="1010" cy="330" r="32" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" stroke-dasharray="5 5"/>
+        <path d="M1052 330h40" stroke="var(--ink-faint)" stroke-width="1.5" stroke-dasharray="3 5"/>
+        <!-- a lead on each world -->
+        <g fill="var(--neon)" stroke="var(--panel)" stroke-width="1.5">
+          <path d="M152 300l6 6-6 6-6-6z"/><path d="M452 300l6 6-6 6-6-6z"/><path d="M752 300l6 6-6 6-6-6z"/>
+        </g>
+        <path d="M1027 300l6 6-6 6-6-6z" fill="none" stroke="var(--neon)" stroke-width="1.5" opacity="0.7"/>
+
+        <!-- Chapter 1 pills on the up-strokes -->
+        <g style="fill:color-mix(in srgb, var(--neon) 14%, var(--panel))" stroke="var(--neon)" stroke-width="1.5">
+          <rect x="120" y="185" width="150" height="42" rx="12"/><rect x="420" y="185" width="150" height="42" rx="12"/><rect x="720" y="185" width="150" height="42" rx="12"/>
+        </g>
+        <g text-anchor="middle">
+          <text x="195" y="203" font-size="11.5" font-weight="700" fill="var(--ink)">a lead's Chapter 1</text>
+          <text x="195" y="219" font-size="10.5" fill="var(--ink-soft)">ends with her aboard</text>
+          <text x="495" y="203" font-size="11.5" font-weight="700" fill="var(--ink)">a lead's Chapter 1</text>
+          <text x="495" y="219" font-size="10.5" fill="var(--ink-soft)">ends with her aboard</text>
+          <text x="795" y="203" font-size="11.5" font-weight="700" fill="var(--ink)">a lead's Chapter 1</text>
+          <text x="795" y="219" font-size="10.5" fill="var(--ink-soft)">ends with her aboard</text>
+        </g>
+
+        <!-- world labels -->
+        <g text-anchor="middle">
+          <text x="135" y="386" font-size="12" font-weight="700" fill="var(--ink)">World 1: D3's Ring</text>
+          <text x="135" y="402" font-size="10.5" fill="var(--ink-soft)">its whole system is Chapter 1</text>
+          <text x="435" y="386" font-size="12" font-weight="700" fill="var(--ink)">World 2</text>
+          <text x="435" y="402" font-size="10.5" fill="var(--ink-soft)">a lead's own world; proves the pickup</text>
+          <text x="735" y="386" font-size="12" font-weight="700" fill="var(--ink)">World 3</text>
+          <text x="735" y="402" font-size="10.5" fill="var(--ink-soft)">another lead, another world</text>
+          <text x="1010" y="386" font-size="12" font-weight="700" fill="var(--ink)">and on</text>
+          <text x="1010" y="402" font-size="10.5" fill="var(--ink-soft)">about eight worlds (SB7)</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--neon);transform:rotate(45deg) scale(.8)"></i>a lead Uma on her own world</span>
+      <span><i style="background:var(--neon-wash);box-shadow:inset 0 0 0 1.5px var(--neon)"></i>her Chapter 1; finishing it brings her aboard</span>
+      <span><i style="background:var(--info)"></i>the ship travels on to the next world</span>
+      <span><i style="background:var(--accent)"></i>a room she opens or upgrades aboard (TC49)</span>
+    </div>
+    <p class="note">Later chapters, crossed paths and the main thread run from the ship between pickups (<a href="#hooks">§4</a>,
+      lesson 4 in <a href="#octopath">§5</a>). The counts are the game's defaults (<a href="#questions">SB7</a>), yours to change.</p>
+
+    <h3 style="margin-top:16px">D3's directions still hold</h3>
+    <div>
+      <span class="chip">Uma Musume's characters only</span>
+      <span class="chip">lore and story in the spirit of <i>13 Sentinels: Aegis Rim</i> and League of Legends' <i>Star Guardian</i></span>
+      <span class="chip">gameplay from <i>Front Mission</i></span>
+      <span class="chip">the look from <i>Triangle Strategy</i></span>
+      <span class="chip">the other franchises as the enemy factions, tied to the plot</span>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 3. What's fixed ───────────────────────── -->
+  <section class="card" id="fixed">
+    <h2>3. What's fixed <span class="tag">SB3</span></h2>
+    <p>These come from the owner, the platform or the battle. Changing one is the owner's call or a story request
+      (<a href="#together">SB10</a>).</p>
+    <div class="grid2">
+      <div class="tile ntile"><span class="n">1</span><div>
+        <h3>The crew is Umas only</h3>
+        <p>The Ranker's 100 Playable Umas, keyed by outfit id (a sister shares her base Uma's character id), and the Uma
+          NPCs board for rivals and Uma NPCs. They never race; they can remember or dream of it. Minor original characters
+          (a ship's AI, a broker, a world's officials) are fine; named heroes are Umas.</p></div></div>
+      <div class="tile ntile"><span class="n">2</span><div>
+        <h3>Every enemy character is a heroine</h3>
+        <p>From the platform's Boss, Key and Regular boards for the eight franchises (Azur Lane, Genshin Impact, Wuthering
+          Waves, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, Punishing: Gray Raven and NIKKE). They fight as
+          eight factions with original names. Each faction also fields original machines. The franchises' own monsters stay
+          out.</p></div></div>
+      <div class="tile ntile"><span class="n">3</span><div>
+        <h3>A heroine is freed, never killed</h3>
+        <p>Her <b>Hold</b> decides how: an <b>Anchor</b> (a corruption grafted on her rig, broken in battle), a
+          <b>Collar</b> (someone else's control, broken in battle), or <b>None</b> (deceived or hired: win, and the story
+          brings her over). A Netrunner can also <b>Jack-Out</b> an Anchor or a Collar. Each heroine's Hold is yours to
+          pick, privately. A new kind of Hold is a request.</p>
+        <div class="stats"><span class="pill">Anchor · broken in battle</span><span class="pill">Collar · broken in battle</span><span class="pill">None · win, the story brings her over</span><span class="pill">Jack-Out · Anchor or Collar</span></div></div></div>
+      <div class="tile ntile"><span class="n">4</span><div>
+        <h3>No one dies in battle</h3>
+        <p>A broken Core is a <b>Rig Break</b>: she's out of the fight, weary, costume intact. An Uma is never maimed.
+          Whether anyone dies off the battlefield is yours; D3's tone rule was no one on screen.</p></div></div>
+      <div class="tile ntile"><span class="n">5</span><div>
+        <h3>The shape of play</h3>
+        <p>A scene of three minutes at most; a battle of about ten; a chapter of two to four battles; a new game's first
+          battle within two minutes; a session of about fifteen minutes.</p>
+        <div class="stats">
+          <span class="stat"><b>≤ 3</b>min a scene</span><span class="stat"><b>≈ 10</b>min a battle</span>
+          <span class="stat"><b>2–4</b>battles a chapter</span><span class="stat"><b>≤ 2</b>min to the first battle</span>
+          <span class="stat"><b>≈ 15</b>min a session</span>
+        </div></div></div>
+      <div class="tile ntile"><span class="n">6</span><div>
+        <h3>Each faction brings one battle mechanic, and the game builds it</h3>
+        <p>(<a href="world.html">world.md</a> WD11: cover and volley, stagger, reactions, artillery, typed shields and
+          time, Remnants and overload, infection, phases.) You decide where and why a faction appears and may rename it,
+          but <b>at most two new mechanics in one world,</b> so the battle teaches one idea at a time.</p></div></div>
+      <div class="tile ntile"><span class="n">7</span><div>
+        <h3>Names are ours</h3>
+        <p>No term from the four reference works, and no franchise's own term for a person, place or mechanic.
+          <b>The franchises' own worlds stay off the star map:</b> the worlds are ours, and the factions come to them.
+          Visiting a franchise's world would mean retelling it, in its names.</p></div></div>
+      <div class="tile ntile"><span class="n">8</span><div>
+        <h3>Privacy</h3>
+        <p>Docs in git name no character: no Uma, no heroine, nothing from a franchise beyond its title. Who plays which
+          part, the chapters and every line live in the ignored <code>content/</code> (CLAUDE.md;
+          <code>scripts/check-private-content.test.mjs</code> runs in CI). Check <code>git status</code> before every
+          commit.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 4. The hooks ───────────────────────── -->
+  <section class="card" id="hooks">
+    <h2>4. The hooks the game builds <span class="tag">SB4</span></h2>
+    <p>Everything below is in <a href="concept.html">the concept</a>. Phase 3 builds most of it on test content, so your
+      content plugs straight in; the Call, talents, side jobs and role changes come with progression in Phase 5. The right
+      column is what the game needs from you.</p>
+    <div class="scroll">
+      <table style="min-width:760px">
+        <tr><th style="width:18%">Hook</th><th style="width:40%">What the game does</th><th>What you give it</th></tr>
+        <tr><td><b>A world</b> (TC6, TC50)</td><td>A node on the Bridge's star map; a node map of locations; its own map kits and night grade</td><td>Its name, look and mood; its locations; the factions present; its lead or leads</td></tr>
+        <tr><td><b>A lead Uma</b> (TC51)</td><td>Fixed in the squad on her own chapters; opens or upgrades a ship room (TC49); unlocks her signature at the end (TC22)</td><td>Who she is, her home world, her chapters, her talent (TC52), the room she opens, her signature's theme</td></tr>
+        <tr><td><b>Chapter 1</b> (TC51)</td><td>Ends with her coming aboard</td><td>The recruitment beat: why she leaves her world</td></tr>
+        <tr><td><b>A later chapter</b></td><td>Shows its danger level and its keys on the world's map</td><td>Its arc, its world, what it needs first</td></tr>
+        <tr><td><b>Crossed paths</b> (TC51)</td><td>A chapter that fixes two leads</td><td>Which pairs, and when</td></tr>
+        <tr><td><b>The main thread</b> (TC51)</td><td>The ship's own chapters, between the leads'</td><td>The spine that ties the leads together</td></tr>
+        <tr><td><b>A crew Uma</b> (TC45)</td><td>Joins through a chapter or a side job; speaks in scenes; fights in any squad</td><td>Who joins when, and through what</td></tr>
+        <tr><td><b>A mission</b> (TC2, TC38)</td><td>Builds the map, fills enemy slots from board pools, tunes it</td><td>Place, objective (defeat all, defeat or free the leader, reach, hold, escort, hack), who's there, side objectives, any fixed squad</td></tr>
+        <tr><td><b>A scene</b> (TC36)</td><td>Plays dialogue with busts, auto, skip and a log; offers Leads as one-tap choices</td><td>The script</td></tr>
+        <tr><td><b>An Intel scene</b> (TC35)</td><td>A diorama with four to six hotspots, about three minutes</td><td>The hotspots and their lines</td></tr>
+        <tr><td><b>Leads</b> (TC34)</td><td>One-tap choices that open a branch or a File in another lead's chapter</td><td>Where each comes from and what it opens</td></tr>
+        <tr><td><b>The Log</b> (TC34)</td><td>Files with redacted lines that fill in; a replayable Timeline; Anomalies</td><td>The Files, their redactions, the Anomalies and when each is explained</td></tr>
+        <tr><td><b>The Call</b> (TC35)</td><td>A crew vote with tokens; visible convictions Code, Edge and Free; branches of one or two missions that rejoin</td><td>The questions, the arguments and the branches</td></tr>
+        <tr><td><b>A flash-forward</b> (TC32)</td><td>Any mission can fix its squad and loadouts and play ahead of its chapter</td><td>Where to use one</td></tr>
+        <tr><td><b>Gates and keys</b> (TC32, TC34)</td><td>Every lock names its key</td><td>Which chapter, mission or File opens what</td></tr>
+        <tr><td><b>A guest</b> (TC47)</td><td>A freed heroine in the guest slot, with hand-set stats</td><td>Who joins and when, her archetype, her stats (private)</td></tr>
+        <tr><td><b>Suit-up</b> (TC39)</td><td>Opens each battle, skippable</td><td>What it is in the world</td></tr>
+        <tr><td><b>A rival squad</b> (TC40)</td><td>Umas from the NPC board as enemies, with the squad's own rigs; can join later</td><td>Whether, where and who</td></tr>
+        <tr><td><b>Roles</b> (TC5)</td><td>Five jobs: Vanguard, Striker, Gunner, Netrunner, Medic</td><td>Each Uma's default role, as an authored tag (private)</td></tr>
+        <tr><td><b>Side jobs</b> (TC8)</td><td>Repeatable missions on a world's map</td><td>Optional flavour lines per world</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 5. Octopath ───────────────────────── -->
+  <section class="card" id="octopath">
+    <h2>5. What <i>Octopath Traveler</i> teaches <span class="tag">SB5</span></h2>
+    <p>The owner named Octopath as the model. A research pass on both games and their reception (sources below) gives the
+      facts and seven lessons. The game already builds for each lesson (TC51); the story decides how to use it.</p>
+
+    <h3 style="margin-top:12px">How Octopath works</h3>
+    <div class="scroll">
+      <table style="min-width:760px">
+        <tr><th style="width:17%"></th><th><i>Octopath Traveler</i> (2018)</th><th><i>Octopath Traveler II</i> (2023)</th></tr>
+        <tr><td><b>The start</b></td><td>Pick one of eight travelers; she stays in the party until her last chapter</td><td>The same</td></tr>
+        <tr><td><b>Recruiting</b></td><td>Visit her home town; play her Chapter 1 now, or later at a tavern</td><td>The same; a skipped recruit joins low and as a stranger</td></tr>
+        <tr><td><b>Chapters</b></td><td>Four each, 32 in all</td><td>Three to five each, some with branches</td></tr>
+        <tr><td><b>Gating</b></td><td>Each chapter's flag on the map shows a level, about ten levels apart; each area shows a danger level</td><td>The same</td></tr>
+        <tr><td><b>Party</b></td><td>Four, swapped at taverns; the bench earns nothing, blamed for grinding</td><td>The same</td></tr>
+        <tr><td><b>Path actions</b></td><td>One per traveler, in noble and rogue pairs (Inquire or Scrutinize, Purchase or Steal…)</td><td>A day action and a night action each</td></tr>
+        <tr><td><b>Connecting the stories</b></td><td>Optional two-person banter skits after story scenes; chapter cutscenes show only the lead</td><td><b>Crossed Paths:</b> four fixed pairs, two parts each; banter replayable</td></tr>
+        <tr><td><b>The finale</b></td><td>Hidden behind obscure side stories; all eight fight in two teams of four</td><td>Signposted: unlocks after all stories and Crossed Paths; the whole cast in its scenes</td></tr>
+        <tr><td><b>Travel</b></td><td>On foot, fast travel to visited towns</td><td>Ferries, and a ship bought late for the open sea</td></tr>
+      </table>
+    </div>
+
+    <div class="tile" style="margin-top:14px;border-left:4px solid var(--info)">
+      <h3>What players and critics said</h3>
+      <p>The first game's stories were "strictly siloed", every chapter ran the same shape (town, path action, dungeon,
+        boss), nothing explained why the eight travelled together, and the true ending needed a guide. Its defenders liked
+        the focus on one hero at a time. The sequel's director said Crossed Paths came straight from players asking for
+        "dialogue between protagonists beyond travel banter", and that each story was rebuilt to feel like a different RPG.
+        Reviews called the signposted finale a big improvement, but still wanted more connection: each traveler pairs only
+        once, and other characters ignore the party in cutscenes.</p>
+    </div>
+
+    <h3 style="margin-top:16px">Seven lessons for this game</h3>
+    <div class="grid3">
+      <div class="tile ntile gold"><span class="n">1</span><div><h3>The ship is the reason to travel together,</h3><p>which Octopath's first game lacked. Give each lead a part to play aboard (the room she opens, TC49).</p></div></div>
+      <div class="tile ntile gold"><span class="n">2</span><div><h3>Write the crew into every scene, cheaply:</h3><p>one to three short interjection slots per scene, each filled by a lead who's in the squad, with a fallback line; and a short debrief aboard after each chapter, replayable from the Log.</p></div></div>
+      <div class="tile ntile gold"><span class="n">3</span><div><h3>Pair every lead at least twice</h3><p>in crossed paths, the first part short and early.</p></div></div>
+      <div class="tile ntile gold"><span class="n">4</span><div><h3>Break up the run of Chapter 1s.</h3><p>Keep each short (one or two battles). Put a later chapter or a crossed path between pickups. A new lead joins at the squad's level, never level 1.</p></div></div>
+      <div class="tile ntile gold"><span class="n">5</span><div><h3>Give each lead's chapters their own shape:</h3><p>three to five chapters, a branch here and there, and objectives other than beating a boss (escape, defend, escort, a heist).</p></div></div>
+      <div class="tile ntile gold"><span class="n">6</span><div><h3>Show the gating:</h3><p>a danger level on every chapter, in small steps. The bench earns half XP (TC27), so a lead who sat out isn't stranded.</p></div></div>
+      <div class="tile ntile gold"><span class="n">7</span><div><h3>Signpost the finale from the start:</h3><p>seed the shared threat in every lead's chapters, list its conditions, and bring the whole crew into it (two squads in turn).</p></div></div>
+    </div>
+
+    <p class="note" style="margin-top:14px;max-width:none">Sources:
+      <a href="https://kotaku.com/how-octopath-travelers-structure-actually-works-1827478495">Kotaku on the structure</a> ·
+      <a href="https://nintendoeverything.com/octopath-traveler-ii-devs-on-having-the-protagonists-interact/">Famitsu interview, via Nintendo Everything</a> ·
+      <a href="https://www.pushsquare.com/features/interview-octopath-traveler-2-devs-on-series-goals-the-first-game-skipping-playstation-and-more">Push Square interview</a> ·
+      <a href="https://www.siliconera.com/octopath-travelers-travel-banter-offers-socialization-without-losing-focus/">Siliconera on travel banter</a> ·
+      <a href="https://www.rpgsite.net/review/7465-octopath-traveler-review">RPG Site review</a> ·
+      <a href="https://shacknews.com/article/134209/octopath-traveler-2-review-score">Shacknews review of II</a> ·
+      <a href="https://www.engadget.com/octopath-traveler-2-review-eight-different-stories-but-not-enough-connection-090045893.html">Engadget review of II</a> ·
+      <a href="https://www.rpgsite.net/feature/13837-octopath-traveler-ii-crossed-paths-guide">RPG Site on Crossed Paths</a> ·
+      <a href="https://game8.co/games/Octopath-Traveler-2/archives/404331">Game8 story list</a> ·
+      <a href="https://gameranx.com/features/id/449065/article/octopath-traveler-2-how-to-unlock-the-ship-overworld-travel-guide/">Gameranx on the ship</a>.
+      The first game's chapter levels come from player reports, not an official table.</p>
+  </section>
+
+  <!-- ───────────────────────── 6. The first pass ───────────────────────── -->
+  <section class="card" id="carry">
+    <h2>6. The first pass, carried across worlds <span class="tag">SB6</span></h2>
+    <p><a href="world.html">world.md</a> was written for one city over five acts. The owner's frame widens it. What
+      carries, as the game session sees it; every row is yours to keep, change or drop:</p>
+    <div class="scroll">
+      <table style="min-width:760px">
+        <tr><th style="width:30%">First pass</th><th style="width:32%">In an interplanetary frame</th><th>Suggestion</th></tr>
+        <tr><td><b>The Ring and its six layers</b> (WD4)</td><td>The first world, whole</td><td>Keep: it's the owner's "Chapter 1"</td></tr>
+        <tr><td><b>The Tithe:</b> the Ring runs on light siphoned from other worlds (WD1)</td><td>The ship visits the very worlds being drained</td><td>A strong main thread: each world shows the Tithe's cost first-hand</td></tr>
+        <tr><td><b>The Gates</b> (WD5)</td><td>How the ship travels, or what it hunts</td><td>Decide early: it sets the Bridge's look</td></tr>
+        <tr><td><b>The Blackout,</b> a hunger that eats memory (WD2)</td><td>A threat that spans worlds</td><td>Keeps 13 Sentinels' memory theme across chapters</td></tr>
+        <tr><td><b>The cores,</b> the rigs' stolen power (WD3)</td><td>Every lead's rig runs on one</td><td>A shared secret that ties the leads</td></tr>
+        <tr><td><b>The Umas came through the first Gate</b> and dream of a sunlit track (WD8)</td><td>Leads on many worlds who share one dream</td><td>A spine: a lost world the crew is looking for</td></tr>
+        <tr><td><b>The Hideout and the double life</b> (WD7)</td><td>The first world only, or gone</td><td>The ship replaces it as the hub</td></tr>
+        <tr><td><b>The rival squad</b> (WD6)</td><td>One world's heroes, or a rival ship</td><td>Yours</td></tr>
+        <tr><td><b>Eight factions, their reasons and who's behind whom</b> (WD10, WD13)</td><td>Expeditions, mercenaries and the bound, on our worlds</td><td>Keep the reasons; place each where its mechanic suits the world</td></tr>
+        <tr><td><b>The Holds</b> (WD9)</td><td>Unchanged</td><td>Fixed by the battle (<a href="#fixed">SB3</a>)</td></tr>
+        <tr><td><b>Five acts and their order</b> (WD15, WD16)</td><td>Replaced by worlds and chapters</td><td>Keep the difficulty order: one or two new mechanics a world</td></tr>
+        <tr><td><b>Flash-forwards and seeding</b> (WD17, WD18)</td><td>Tools, not a fixed shape</td><td>Keep the seeding rule: three seeds a layer, an Anomaly a world</td></tr>
+        <tr><td><b>Route lenses</b> (WD19)</td><td>A genre per lead, as each Octopath traveler has one</td><td>Keep</td></tr>
+        <tr><td><b>Tone, names, the ending</b> (WD20, WD21, WD24)</td><td>Unchanged in spirit</td><td>Yours</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 7. The questions ───────────────────────── -->
+  <section class="card" id="questions">
+    <h2>7. The questions you answer <span class="tag">SB7</span></h2>
+    <p>Each has the game session's default, so nothing waits on an answer:</p>
+    <div class="scroll">
+      <table style="min-width:680px">
+        <tr><th style="width:40px">#</th><th style="width:42%">Question</th><th>The game's default</th></tr>
+        <tr><td><b>1</b></td><td>How many worlds, and in what order?</td><td>The first wave is the first world and one more, so Phase 4 proves a pickup; about eight in all</td></tr>
+        <tr><td><b>2</b></td><td>How many leads, and which?</td><td>Eight, one per world, Octopath's count; every other Uma is crew</td></tr>
+        <tr><td><b>3</b></td><td>A fixed opening, or a starter the player picks?</td><td>Fixed for the first wave; a pick later, if the worlds allow it</td></tr>
+        <tr><td><b>4</b></td><td>How many chapters per lead?</td><td>Four, Chapter 1 included, plus the main thread</td></tr>
+        <tr><td><b>5</b></td><td>What's the ship, whose is it, and why does it travel?</td><td>Yours</td></tr>
+        <tr><td><b>6</b></td><td>What's the mystery, and how does it come out across worlds?</td><td>Yours, in layers, 13 Sentinels' way</td></tr>
+        <tr><td><b>7</b></td><td>Where is each faction, why, and in what order?</td><td>At most two new mechanics a world</td></tr>
+        <tr><td><b>8</b></td><td>Each heroine's Hold, and who joins as a guest?</td><td>Private</td></tr>
+        <tr><td><b>9</b></td><td>Is there a rival squad, and where?</td><td>Yours</td></tr>
+        <tr><td><b>10</b></td><td>Each Uma's role tag; each lead's talent, room and signature theme</td><td>Private</td></tr>
+        <tr><td><b>11</b></td><td>The tone and the ending</td><td>D3's tone: candy-bright neon over a tragic story, a found family</td></tr>
+        <tr><td><b>12</b></td><td>The names: the ship, the worlds, the factions</td><td>Ours; D3's faction names can stay or go</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 8. The content contract ───────────────────────── -->
+  <section class="card" id="contract">
+    <h2>8. The content contract <span class="tag">SB8</span></h2>
+    <p>The game reads the story from files, the way uma-quest and uma-farm do: the format and its validator live in git,
+      the content never does. This is a sketch; <b>CY9</b> builds the parser and the check, <code>pnpm story:check</code>,
+      and may tighten it. Any change is logged and this section updated.</p>
+
+    <div class="codehead"><span>Where the files live</span><span class="sub">the ignored <code>content/</code>, on the same disk as the repo, so both sessions see them</span></div>
+    <pre class="code tree"><span class="d">content/stories/</span>                 <span class="c">ignored by git; the story session's</span>
+  <span class="d">world-notes.md</span>                 <span class="c">the world with its names (the nameless version is docs/design/world.md, in git)</span>
+  <span class="d">casting.json</span>                   <span class="c">leads, crew order, heroines by faction and Hold, guests, rivals, minor characters</span>
+  <span class="d">worlds/&lt;worldId&gt;.json</span>          <span class="c">a world: its name, look, mood, locations (the map's nodes), factions present</span>
+  <span class="d">chapters/&lt;chapterId&gt;.json</span>      <span class="c">a chapter: its leads, world, number, danger level, keys, scenes, missions, debrief</span>
+  <span class="d">log/&lt;fileId&gt;.json</span>              <span class="c">a Log File: its lines, which are redacted, and what fills each in</span>
+  <span class="d">calls/&lt;callId&gt;.json</span>            <span class="c">a Call: the question, the voters' arguments, the branches</span>
+  <span class="d">reviews.json</span>                   <span class="c">the owner's verdicts, if the owner reviews here</span></pre>
+
+    <div class="grid2">
+      <div class="tile"><h3>Ids</h3>
+        <p>An Uma is her <b>outfit id</b> from master data (a sister shares her base Uma's character id, so never the
+          character id alone). A heroine is her <b>board id</b> from the Ranker. Everything ours (worlds, places, chapters,
+          scenes, missions, Files, Calls, minor characters) has a short lowercase slug of your choosing that never changes
+          once used. Names, portraits and busts come from master data at run time, so the files never repeat them.</p></div>
+      <div class="tile">
+        <h3>Three kinds of id</h3>
+        <div class="stats" style="margin-top:6px">
+          <span class="stat"><b>Uma</b>outfit id</span><span class="stat"><b>Heroine</b>board id</span><span class="stat"><b>Ours</b>a lowercase slug, fixed once used</span>
+        </div>
+        <p style="margin-top:8px">The files carry ids only; every name and picture is looked up at run time.</p></div>
+    </div>
+
+    <div class="codehead"><span>A chapter, sketched</span><span class="sub"><code>content/stories/chapters/&lt;chapterId&gt;.json</code></span></div>
+    <pre class="code">{
+  <span class="k">"schemaVersion"</span>: <span class="n">1</span>,
+  <span class="k">"id"</span>: <span class="s">"w1-ch1"</span>,                       <span class="c">// a slug, ours</span>
+  <span class="k">"world"</span>: <span class="s">"w1"</span>,
+  <span class="k">"leads"</span>: [<span class="n">1001</span>],                      <span class="c">// outfit ids: one lead, or two for crossed paths</span>
+  <span class="k">"number"</span>: <span class="n">1</span>,                          <span class="c">// 1 = her Chapter 1, which ends with "aboard"</span>
+  <span class="k">"danger"</span>: <span class="n">1</span>,                          <span class="c">// the recommended squad level</span>
+  <span class="k">"needs"</span>: [],                          <span class="c">// keys, each named on the world's map: "chapter:…", "mission:…", "file:…"</span>
+  <span class="k">"scenes"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"w1-ch1-s1"</span>,
+      <span class="k">"place"</span>: <span class="s">"w1-docks"</span>,               <span class="c">// a location on the world's map</span>
+      <span class="k">"trigger"</span>: { <span class="k">"arrive"</span>: <span class="s">"w1-docks"</span> }, <span class="c">// or { "after": "mission-id" }, { "talk": "place-id" }</span>
+      <span class="k">"cast"</span>: [{ <span class="k">"outfit"</span>: <span class="n">1001</span> }],
+      <span class="k">"steps"</span>: [
+        { <span class="k">"line"</span>: { <span class="k">"speaker"</span>: <span class="n">1001</span>, <span class="k">"text"</span>: <span class="s">"…"</span> } },               <span class="c">// 160 characters at most</span>
+        { <span class="k">"slot"</span>: { <span class="k">"lines"</span>: { <span class="k">"1002"</span>: <span class="s">"…"</span>, <span class="k">"1003"</span>: <span class="s">"…"</span> }, <span class="k">"fallback"</span>: <span class="s">"…"</span> } },  <span class="c">// an interjection slot (TC51)</span>
+        { <span class="k">"choice"</span>: [{ <span class="k">"text"</span>: <span class="s">"…"</span>, <span class="k">"lead"</span>: <span class="s">"lead-id"</span>, <span class="k">"then"</span>: [] }] },          <span class="c">// a Lead as a one-tap choice</span>
+        { <span class="k">"narrate"</span>: <span class="s">"…"</span> }
+      ]
+    }
+  ],
+  <span class="k">"missions"</span>: [
+    {
+      <span class="k">"id"</span>: <span class="s">"w1-ch1-m1"</span>,
+      <span class="k">"place"</span>: <span class="s">"w1-underlevels"</span>,
+      <span class="k">"objective"</span>: { <span class="k">"kind"</span>: <span class="s">"defeat-leader"</span> },   <span class="c">// defeat-all, defeat-leader, free-leader, reach, hold, escort, hack</span>
+      <span class="k">"brief"</span>: <span class="s">"…"</span>,                                <span class="c">// what the map looks like, for the game session to build</span>
+      <span class="k">"enemies"</span>: [
+        { <span class="k">"slot"</span>: <span class="s">"boss"</span>, <span class="k">"pool"</span>: [<span class="s">"board-id"</span>] },
+        { <span class="k">"slot"</span>: <span class="s">"regular"</span>, <span class="k">"job"</span>: <span class="s">"gunner"</span>, <span class="k">"count"</span>: <span class="n">3</span>, <span class="k">"faction"</span>: <span class="s">"steel-muster"</span> }
+      ],
+      <span class="k">"fixedSquad"</span>: <span class="n">null</span>,                          <span class="c">// or outfit ids, for a flash-forward (TC32)</span>
+      <span class="k">"side"</span>: [{ <span class="k">"kind"</span>: <span class="s">"hack"</span>, <span class="k">"gives"</span>: <span class="s">"lead-id"</span> }]
+    }
+  ],
+  <span class="k">"debrief"</span>: { <span class="k">"steps"</span>: [] }                       <span class="c">// the scene aboard after the chapter (TC51)</span>
+}</pre>
+
+    <h3>Step kinds</h3>
+    <div class="steps">
+      <div><code>line</code></div><div><code>slot</code></div><div><code>narrate</code></div><div><code>thought</code></div>
+      <div><code>emote</code></div><div><code>wait</code></div><div><code>choice</code></div>
+      <div><code>flag</code>(set a story flag)</div><div><code>lead</code>(gain a Lead)</div>
+      <div><code>file</code>(fill in a File's line)</div><div><code>anomaly</code>(open or close one)</div>
+      <div><code>join</code>(a crew Uma comes aboard)</div>
+      <div class="hot"><code>aboard</code>(the lead comes aboard: Chapter 1's last step)</div>
+      <div><code>call</code>(hold a Call)</div><div><code>battle</code>(play a mission)</div>
+    </div>
+    <p>They follow uma-quest's chapter format (<code>packages/domain/src/story/script.ts</code> there) and uma-farm's steps,
+      so the runner and the checks are proven ones.</p>
+
+    <div class="grid2" style="margin-top:12px">
+      <div class="tile"><h3>The stand-in</h3>
+        <p>Git holds an invented stand-in world and chapter with made-up ids (as uma-farm's 9000001–9000003), so the game
+          runs end to end before your first file lands, and the dev server falls back to it when <code>content/</code> is
+          empty.</p></div>
+      <div class="tile"><h3>Review</h3>
+        <p>Until a fourth Uma Story book exists (TC13), the owner reads chapters in the game itself, through the dev server
+          or the deployed app reading the private pack. The validator writes Uma Story's <code>checks.json</code> shape from
+          day one, so a book can follow without rework.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 9. What you deliver ───────────────────────── -->
+  <section class="card" id="deliver">
+    <h2>9. What you deliver, and when <span class="tag">SB9</span></h2>
+    <p>Uma Story's layers set the order: skeleton, then bible, then scripted. The owner reads each layer before the next.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1120 345" role="img" aria-label="The game's six phases across the top: Phases 1 to 3 run on the stand-in, so nothing waits on the story. Phase 4, the first worlds, needs deliveries 1 to 4: the world outline for its kits and maps, the casting for its first battles and rooms, the first world and its Chapter 1 for the opening, and the second world and its Chapter 1 for the first pickup. Phase 6's waves need delivery 5, a world at a time. Below, the story's deliveries in order, skeleton, then bible, then scripted, with the owner reading each layer before the next." style="font-family:system-ui,-apple-system,sans-serif">
+        <defs>
+          <marker id="d-info" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--info)"/></marker>
+          <marker id="d-neon" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--neon)"/></marker>
+          <marker id="d-accent" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+        </defs>
+        <!-- lane labels -->
+        <g font-size="11" font-weight="700" letter-spacing="1.2" fill="var(--ink-faint)">
+          <text x="14" y="94">THE GAME</text><text x="14" y="252">THE STORY</text>
+        </g>
+        <g font-size="10.5" fill="var(--ink-soft)">
+          <text x="14" y="110">its phases</text><text x="14" y="268">its deliveries</text>
+        </g>
+
+        <!-- the stand-in bracket -->
+        <path d="M146 36V29H614V36" fill="none" stroke="var(--ink-faint)" stroke-width="1.2"/>
+        <text x="380" y="21" text-anchor="middle" font-size="11" font-weight="600" fill="var(--ink-soft)">Phases 1–3 run on the stand-in: nothing waits on the story</text>
+
+        <!-- phases -->
+        <g stroke-width="1.2">
+          <rect x="143" y="44" width="154" height="108" rx="10" fill="var(--raised)" stroke="var(--hairline-strong)"/>
+          <rect x="303" y="44" width="154" height="108" rx="10" fill="var(--raised)" stroke="var(--hairline-strong)"/>
+          <rect x="463" y="44" width="154" height="108" rx="10" fill="var(--raised)" stroke="var(--hairline-strong)"/>
+          <rect x="623" y="44" width="154" height="108" rx="10" style="fill:color-mix(in srgb, var(--accent) 16%, var(--panel))" stroke="var(--accent)" stroke-width="1.8"/>
+          <rect x="783" y="44" width="154" height="108" rx="10" fill="var(--raised)" stroke="var(--hairline-strong)"/>
+          <rect x="943" y="44" width="154" height="108" rx="10" style="fill:color-mix(in srgb, var(--neon) 9%, var(--panel))" stroke="var(--neon)"/>
+        </g>
+        <g font-size="10" font-weight="700" letter-spacing="1" fill="var(--ink-faint)">
+          <text x="155" y="63">PHASE 1</text><text x="315" y="63">PHASE 2</text><text x="475" y="63">PHASE 3</text>
+          <text x="635" y="63">PHASE 4</text><text x="795" y="63">PHASE 5</text><text x="955" y="63">PHASE 6</text>
+        </g>
+        <g font-size="13" font-weight="700" fill="var(--ink)">
+          <text x="155" y="81">The foundation</text><text x="315" y="81">The combat</text><text x="475" y="81">The app</text>
+          <text x="635" y="81">The first worlds</text><text x="795" y="81">Progression</text><text x="955" y="81">Worlds as waves</text>
+        </g>
+        <g font-size="10.5" fill="var(--ink-soft)">
+          <text x="155" y="99">the workspace, the cloud,</text><text x="155" y="113">the hello app</text>
+          <text x="315" y="99">the battle rules, the AI,</text><text x="315" y="113">the board, the sandbox</text>
+          <text x="475" y="99">the contract, the ship,</text><text x="475" y="113">the Chapter 1 loop</text>
+          <text x="795" y="99">levels, roles, the Store,</text><text x="795" y="113">the Call, talents</text>
+          <text x="955" y="99">each with its leads,</text><text x="955" y="113">factions and guests</text>
+        </g>
+        <g font-size="10.5" fill="var(--ink)">
+          <text x="635" y="99">① its kits and maps</text><text x="635" y="113">② first battles, rooms</text>
+          <text x="635" y="127">③ the opening</text><text x="635" y="141">④ proving the pickup</text>
+          <text x="955" y="134">⑤ a world at a time</text>
+        </g>
+        <!-- stand-in badges -->
+        <g>
+          <rect x="155" y="126" width="94" height="17" rx="8.5" fill="var(--panel)" stroke="var(--hairline-strong)"/>
+          <rect x="315" y="126" width="94" height="17" rx="8.5" fill="var(--panel)" stroke="var(--hairline-strong)"/>
+          <rect x="475" y="126" width="94" height="17" rx="8.5" fill="var(--panel)" stroke="var(--hairline-strong)"/>
+        </g>
+        <g font-size="10" font-weight="600" fill="var(--ink-soft)" text-anchor="middle">
+          <text x="202" y="138">on the stand-in</text><text x="362" y="138">on the stand-in</text><text x="522" y="138">on the stand-in</text>
+        </g>
+
+        <!-- the story lane -->
+        <rect x="140" y="196" width="960" height="134" rx="12" fill="var(--raised)"/>
+        <!-- layers: skeleton, bible, scripted; the owner reads at each step -->
+        <rect x="152" y="301" width="226" height="18" rx="9" style="fill:color-mix(in srgb, var(--info) 18%, var(--panel))"/>
+        <rect x="382" y="301" width="66" height="18" rx="9" style="fill:color-mix(in srgb, var(--neon) 20%, var(--panel))"/>
+        <rect x="452" y="301" width="636" height="18" rx="9" style="fill:color-mix(in srgb, var(--accent) 22%, var(--panel))"/>
+        <g font-size="10" font-weight="700" fill="var(--ink)" text-anchor="middle">
+          <text x="265" y="314">skeleton</text><text x="415" y="314">bible</text><text x="770" y="314">scripted</text>
+        </g>
+        <g fill="var(--ink)" stroke="var(--raised)" stroke-width="1.5">
+          <path d="M380 303l6 7-6 7-6-7z"/><path d="M450 303l6 7-6 7-6-7z"/>
+        </g>
+
+        <!-- connectors: what each delivery is for -->
+        <g fill="none" stroke-width="1.6" stroke-dasharray="5 4">
+          <path d="M205 221C205 178 650 205 650 156" stroke="var(--info)" marker-end="url(#d-info)"/>
+          <path d="M310 221C310 182 668 205 668 156" stroke="var(--info)" marker-end="url(#d-info)"/>
+          <path d="M430 221C430 186 686 205 686 156" stroke="var(--neon)" marker-end="url(#d-neon)"/>
+          <path d="M580 221C580 190 704 205 704 156" stroke="var(--accent)" marker-end="url(#d-accent)"/>
+          <path d="M1000 221V156" stroke="var(--accent)" marker-end="url(#d-accent)"/>
+        </g>
+
+        <!-- markers -->
+        <g fill="var(--panel)" stroke-width="3">
+          <circle cx="205" cy="236" r="15" stroke="var(--info)"/>
+          <circle cx="310" cy="236" r="15" stroke="var(--info)"/>
+          <circle cx="430" cy="236" r="15" stroke="none"/>
+          <circle cx="580" cy="236" r="15" stroke="var(--accent)"/>
+          <circle cx="1000" cy="236" r="15" stroke="var(--accent)"/>
+        </g>
+        <path d="M430 221A15 15 0 0 0 430 251" fill="none" stroke="var(--neon)" stroke-width="3"/>
+        <path d="M430 221A15 15 0 0 1 430 251" fill="none" stroke="var(--accent)" stroke-width="3"/>
+        <g fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3">
+          <circle cx="1042" cy="236" r="9"/><circle cx="1076" cy="236" r="9"/>
+        </g>
+        <g font-size="13" font-weight="800" fill="var(--ink)" text-anchor="middle">
+          <text x="205" y="241">1</text><text x="310" y="241">2</text><text x="430" y="241">3</text><text x="580" y="241">4</text><text x="1000" y="241">5</text>
+        </g>
+        <g text-anchor="middle">
+          <text x="205" y="270" font-size="11" font-weight="700" fill="var(--ink)">the world outline</text>
+          <text x="205" y="285" font-size="10.5" fill="var(--ink-soft)">nameless · in git</text>
+          <text x="310" y="270" font-size="11" font-weight="700" fill="var(--ink)">the casting</text>
+          <text x="310" y="285" font-size="10.5" fill="var(--ink-soft)">private</text>
+          <text x="430" y="270" font-size="11" font-weight="700" fill="var(--ink)">first world, Chapter 1</text>
+          <text x="430" y="285" font-size="10.5" fill="var(--ink-soft)">bible, then scripted</text>
+          <text x="580" y="270" font-size="11" font-weight="700" fill="var(--ink)">second world, Chapter 1</text>
+          <text x="580" y="285" font-size="10.5" fill="var(--ink-soft)">proves the pickup</text>
+          <text x="1010" y="270" font-size="11" font-weight="700" fill="var(--ink)">then a world at a time</text>
+          <text x="1010" y="285" font-size="10.5" fill="var(--ink-soft)">chapters, Files, Calls</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:color-mix(in srgb, var(--info) 18%, var(--panel));box-shadow:inset 0 0 0 2px var(--info)"></i>skeleton</span>
+      <span><i style="background:color-mix(in srgb, var(--neon) 20%, var(--panel));box-shadow:inset 0 0 0 2px var(--neon)"></i>bible</span>
+      <span><i style="background:color-mix(in srgb, var(--accent) 22%, var(--panel));box-shadow:inset 0 0 0 2px var(--accent)"></i>scripted</span>
+      <span><i style="background:var(--ink);transform:rotate(45deg) scale(.7)"></i>the owner reads the layer before the next</span>
+      <span>dashed arrow: what the game needs it for</span>
+    </div>
+
+    <div class="scroll" style="margin-top:14px">
+      <table style="min-width:820px">
+        <tr><th style="width:36px">#</th><th style="width:34%">Deliver</th><th>Layer</th><th>Where</th><th>The game needs it for</th></tr>
+        <tr><td><b>1</b></td><td><b>The world outline:</b> the worlds and their order, the ship, the main thread, the mystery's layers, the factions' places; nameless</td><td>Skeleton</td><td><code>docs/design/world.md</code> rewritten, with its page, in git</td><td>Phase 4's map kits and maps, which Claude draws in code (uma-platform P147)</td></tr>
+        <tr><td><b>2</b></td><td><b>The casting:</b> the leads and their worlds, talents, rooms and role tags; the crew order; the heroines by faction and Hold; guests</td><td>Skeleton</td><td><code>content/stories/casting.json</code></td><td>Phase 4's first battles and the ship's rooms</td></tr>
+        <tr><td><b>3</b></td><td><b>The first world and its lead's Chapter 1</b></td><td>Bible, then scripted</td><td><code>content/stories/worlds/</code>, <code>chapters/</code></td><td>Phase 4's start: the opening plays end to end</td></tr>
+        <tr><td><b>4</b></td><td><b>The second world and its Chapter 1</b></td><td>Scripted</td><td>Same</td><td>Proving the pickup</td></tr>
+        <tr><td><b>5</b></td><td>Then a world at a time, with its chapters, Files and Calls</td><td>Scripted</td><td>Same</td><td>Phase 6's waves</td></tr>
+      </table>
+    </div>
+    <div class="tile" style="margin-top:12px;border-left:4px solid var(--accent)">
+      <p style="margin:0">Nothing blocks the game before item 1: Phases 1–3 run on the stand-in. The sooner item 1 lands, the
+        sooner the first world's kit and maps can be drawn.</p>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 10. Working together ───────────────────────── -->
+  <section class="card" id="together">
+    <h2>10. How the two sessions work together <span class="tag">SB10</span></h2>
+    <div class="grid3">
+      <div class="tile"><h3>One repo</h3><p>Both sessions work in <code>uma-cyberpunk</code> and commit to <code>main</code> in Conventional Commits style (fetch first): the story's commits are <code>docs(story): …</code>.</p></div>
+      <div class="tile"><h3>Decisions</h3><p>Go in <a href="../../decisions.md">decisions.md</a> with the next free D-number, from either session.</p></div>
+      <div class="tile"><h3>A story request</h3><p>A new mechanic, hook, room, talent or Hold is a row in the handoff's "Story requests" table (<a href="../../handoff/README.md">handoff</a>). The game session answers it in its next packet or says why not.</p></div>
+      <div class="tile"><h3>This brief</h3><p>Is the game session's. When the game changes a hook, it updates the brief and logs a D-decision.</p></div>
+      <div class="tile"><h3>Each doc keeps a desktop HTML page</h3><p>In <code>docs/design/previews/</code>, as the owner asks of every doc.</p></div>
+      <div class="tile"><h3>The game session reads <code>content/</code> on disk</h3><p>To build maps and test chapters, and never commits it.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 11. Starting ───────────────────────── -->
+  <section class="card" id="start">
+    <h2>11. Starting the story session <span class="tag">SB11</span></h2>
+    <p>Give the story session this one line:</p>
+    <pre class="code one">Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief.</pre>
+  </section>
+
+  <!-- ───────────────────────── The calls ───────────────────────── -->
+  <section class="card" id="calls">
+    <h2>12. The calls</h2>
+    <div class="scroll">
+      <table style="min-width:560px">
+        <tr><th>#</th><th>Call</th><th>Section</th></tr>
+        <tr><td><span class="tag">SB1</span></td><td>The story session owns the world and the story; the game session owns the game; they meet at the hooks and the content contract</td><td><a href="#own">1</a></td></tr>
+        <tr><td><span class="tag">SB2</span></td><td>The owner's direction: interplanetary; the Ring is the first world and its Chapter 1; each lead's Chapter 1 brings her aboard the ship, the hub; <i>Octopath Traveler</i>'s pickups</td><td><a href="#direction">2</a></td></tr>
+        <tr><td><span class="tag">SB3</span></td><td>Fixed: Umas only as the crew; heroines from the eight franchises as enemies, freed never killed, by their Hold; Rig Break; the shape of play; one mechanic a faction, two new at most a world; names ours, franchise worlds off the map; privacy</td><td><a href="#fixed">3</a></td></tr>
+        <tr><td><span class="tag">SB4</span></td><td>The hooks the game builds, and what each needs from the story</td><td><a href="#hooks">4</a></td></tr>
+        <tr><td><span class="tag">SB5</span></td><td>What <i>Octopath Traveler</i> teaches</td><td><a href="#octopath">5</a></td></tr>
+        <tr><td><span class="tag">SB6</span></td><td>The first pass carried across worlds</td><td><a href="#carry">6</a></td></tr>
+        <tr><td><span class="tag">SB7</span></td><td>Twelve questions for the story session, each with the game's default</td><td><a href="#questions">7</a></td></tr>
+        <tr><td><span class="tag">SB8</span></td><td>The content contract</td><td><a href="#contract">8</a></td></tr>
+        <tr><td><span class="tag">SB9</span></td><td>What the story delivers, and when</td><td><a href="#deliver">9</a></td></tr>
+        <tr><td><span class="tag">SB10</span></td><td>How the sessions work together: one repo, shared decisions, story requests</td><td><a href="#together">10</a></td></tr>
+        <tr><td><span class="tag">SB11</span></td><td>The one line that starts the story session</td><td><a href="#start">11</a></td></tr>
+      </table>
+    </div>
+    <p class="note">Source: <a href="../story-brief.md">docs/design/story-brief.md</a>. The world's first pass:
+      <a href="world.html">the world</a> (<a href="../world.md">world.md</a>). The battle and the build:
+      <a href="concept.html">the concept</a> and <a href="build-plan.html">the build plan</a>. Research:
+      <a href="references.html">the references</a>. Casting, chapters and dialogue stay private in <code>content/</code>
+      (TC13).</p>
+  </section>
+</main>
+</body>
+</html>

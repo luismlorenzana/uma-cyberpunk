@@ -1,6 +1,6 @@
 # CY1 — The workspace and its checks
 
-**uma-cyberpunk · Claude · S · Needs: the owner's package access (below) · Unblocks: CY2**
+**uma-cyberpunk · Claude · S · Needs: the owner's package access (below) · Unblocks: CY2, CY4 and CY7**
 
 ## Why
 
@@ -10,14 +10,15 @@ the real stack arrives in CY3.
 
 ## Context (read first)
 
-- [The concept](../../design/concept.md), its Phases section, and the decisions D1–D2.
+- [The concept](../../design/concept.md), its Phases section, and the decisions D1–D4.
+- [The build plan](../../design/build-plan.md): the workspace's shape (BP1) and what's copied from where (BP2).
 - **uma-quest is the closest model** (it already runs on `uma-stage`): its root `package.json`, `pnpm-workspace.yaml`,
   `turbo.json`, `tsconfig.base.json`, `.npmrc`, `scripts/check-size.mjs` (180 KB), `apps/api` (NestJS, `uma-server`'s
   `AuthGuard`, `/api/health`), and the `verify` job of `.github/workflows/deploy.yml`. uma-rpg is where those came
   from. Copy, never import.
 - **The packages**, all on GitHub Packages under `@luismlorenzana`. Today's versions are `uma-data` 1.5.0, `uma-kit`
-  0.19.0, `uma-work` 0.1.0, `uma-server` 0.2.0, `uma-art` 2.26.0 and `uma-stage` 0.1.0. Check for newer ones when you
-  start, and pin exact versions.
+  0.19.0, `uma-work` 0.1.0, `uma-server` 0.2.0, `uma-art` 2.26.0 and `uma-stage` 0.3.0 (with `three` 0.187.0, exact).
+  Check for newer ones when you start, and pin exact versions.
 - **What exists:** `.gitignore`, `.nvmrc`, `.npmrc`, `scripts/check-private-content.test.mjs` and
   `.github/workflows/check.yml` (the guard alone).
 

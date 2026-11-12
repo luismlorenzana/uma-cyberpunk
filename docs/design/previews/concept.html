@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Uma Cyberpunk Concept</title>
-<!-- uma-cyberpunk's concept as revised on 2026-11-12 at the owner's direction (D3), from docs/design/concept.md: the
-     five directions, the game, the world in brief, the cast, the battle (the rig, Charge, counters, Crossfire, facing,
-     height, terrain, roles, Rig Break, the phone UX), the story's two tracks, the Hideout, the build, the art, the phases
-     and all 48 calls (TC1–TC48). Self-contained: inline CSS and inline SVG, uma-kit's tokens, light and dark. No
-     character art, no character or Uma names, no logos. The world has its own page, world.html. -->
+<!-- uma-cyberpunk's concept as revised on 2026-11-12 at the owner's direction (D3, then D4), from
+     docs/design/concept.md: the directions, the game, the interplanetary world, the cast, the battle (the rig, Charge,
+     counters, Crossfire, facing, height, terrain, roles, Rig Break, the phone UX), the worlds-and-chapters loop with lead
+     Umas and talents, the ship and its rooms, the build and combat testing, the art, the story session's content
+     contract, the seven phases and all 54 calls (TC1–TC54). Self-contained: inline CSS and inline SVG, uma-kit's tokens,
+     light and dark. No character art, no character or Uma names, no logos. The world, the story brief and the build plan
+     have their own pages: world.html, story-brief.html and build-plan.html. -->
 <style>
   :root {
     --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
@@ -73,7 +75,7 @@
   .loop i { color: var(--ink-faint); font-style: normal; }
 
   /* phases */
-  .phases { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 8px; min-width: 940px; }
+  .phases { display: grid; grid-template-columns: repeat(7, minmax(140px, 1fr)); gap: 8px; min-width: 1060px; }
   .phase { border-radius: 10px; padding: 10px 12px; background: var(--raised); border: 1px solid var(--hairline-strong); }
   .phase b { font: 700 12px ui-monospace, Menlo, monospace; color: var(--ink-faint); }
   .phase h3 { margin: 2px 0 4px; }
@@ -178,6 +180,42 @@
   @media (max-width: 420px) { .grid2, .grid4 { grid-template-columns: 1fr; } }
   td.id .tag { margin-right: 4px; }
 
+  /* ---- added for D4 ---- */
+  .tag.d4 { box-shadow: inset 0 0 0 1px currentColor; }
+  .tag.rew { background: var(--sunken); color: var(--ink-soft); }
+  .d4note { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 7%, var(--panel));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 40%, transparent); }
+  .d4note > p { margin: 4px 0 10px; }
+  .d4note .tile { background: var(--panel); }
+  .dir .tile.d4dir { border-top-color: var(--neon); }
+  .dir .tile.d4dir .n { color: var(--neon); }
+  .tile.lead { border-left: 3px solid var(--neon); }
+  .tile.crew { border-left: 3px solid var(--info); }
+  .batches { display: grid; grid-template-columns: repeat(10, minmax(52px, 1fr)); gap: 4px; min-width: 600px; margin-top: 10px; }
+  .batches div { border-radius: 8px; padding: 6px 4px; text-align: center; font: 600 11px system-ui; color: var(--ink); }
+  .stack.mini { margin-top: 8px; }
+  .stack.mini div { padding: 4px 10px; font-size: 12px; }
+  .ux.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); }
+  .scene { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .scene span { font: 600 11px system-ui; padding: 5px 9px; border-radius: 8px; color: var(--ink); background: var(--info-wash); }
+  .scene span.slot { background: var(--panel); border: 1px dashed var(--neon); }
+  .scene span.deb { background: var(--accent-wash); }
+  .scene small { display: block; font-weight: 500; color: var(--ink-soft); }
+  .talents { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 10px; }
+  .talents .tile { border-left: 3px solid var(--success); }
+  .talents h3 { display: flex; align-items: center; gap: 7px; font: 700 15px ui-rounded, system-ui; }
+  .talents h3 svg { width: 18px; height: 18px; flex: none; color: var(--success); }
+  .pill { display: inline-block; font: 600 11px system-ui; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.start { background: var(--success-wash); color: var(--success); }
+  .pill.lead { color: var(--ink-soft); box-shadow: inset 0 0 0 1px var(--ink-faint); }
+  .pill.need { background: var(--danger-wash); color: var(--danger); }
+  .pill.if { background: var(--accent-wash); color: var(--accent); }
+  .pill.only { color: var(--ink-faint); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  .tile.reuse { border-top: 3px solid var(--info); }
+  .tile.own { border-top: 3px solid var(--neon); }
+  .phase.par { background: var(--info-wash); border: 1px dashed color-mix(in srgb, var(--info) 60%, transparent); }
+  .phase.story { background: var(--neon-wash); border-color: color-mix(in srgb, var(--neon) 45%, transparent); }
+
   /* diagrams */
   .d text { font-family: system-ui, -apple-system, 'Inter', sans-serif; }
   .d .t { fill: var(--ink); font-size: 12px; font-weight: 600; }
@@ -271,34 +309,56 @@
 <main>
   <h1>Uma Cyberpunk: the concept</h1>
   <p class="lede">Front Mission's rigs on Triangle Strategy's boards. A personal tactics RPG on the owner's iPhone: a squad
-    of Umas fights in combat rigs built from accessories, on small HD-2D grid maps in a neon megacity on an orbital ring,
-    against heroines from the platform's eight other franchises. Source: <a href="../concept.md"><code>docs/design/concept.md</code></a>.</p>
+    of Umas fights in combat rigs built from accessories, on small HD-2D grid maps across neon worlds, with a ship as their
+    hub, against heroines from the platform's eight other franchises. Source: <a href="../concept.md"><code>docs/design/concept.md</code></a>.</p>
   <nav>
-    <a href="#status">Status</a><a href="#short">The short answer</a><a href="#directions">Five directions</a>
+    <a href="#status">Status</a><a href="#short">The short answer</a><a href="#directions">The directions</a>
     <a href="#game">The game</a><a href="#world">The world</a><a href="#cast">The cast</a><a href="#battle">The battle</a>
-    <a href="#story">The story</a><a href="#hideout">The Hideout</a><a href="#built">How it's built</a>
-    <a href="#art">Art and story</a><a href="#phases">Phases</a><a href="#calls">The 48 calls</a><a href="#deferred">Deferred</a>
+    <a href="#story">The story and the loop</a><a href="#ship">The ship</a><a href="#built">How it's built</a>
+    <a href="#art">Art and story</a><a href="#phases">Phases</a><a href="#calls">The 54 calls</a><a href="#deferred">Deferred</a>
+    <a class="out" href="story-brief.html">Story brief page</a><a class="out" href="build-plan.html">Build plan page</a>
     <a class="out" href="world.html">World page</a><a class="out" href="references.html">References page</a>
     <a class="out" href="../concept.md">concept.md</a>
   </nav>
 
   <!-- ============ Status ============ -->
   <section class="card status" id="status">
-    <h2>Status: 2026-11-12, revised the same day at the owner's direction <span class="tag">D3</span></h2>
+    <h2>Status: 2026-11-12, revised twice the same day at the owner's direction <span class="tag">D3</span><span class="tag">D4</span></h2>
     <p>The first concept (D1) set a tactics RPG on a neon orbital ring with heroines from other worlds. The owner then set
-      five directions. Seven research passes ran in parallel (<a href="references.html">references page</a>,
-      <a href="../references.md">references.md</a>), and this page is rebuilt on them.</p>
-    <div class="kpis">
-      <div class="kpi"><b>48</b><span>calls, TC1–TC48</span></div>
-      <div class="kpi"><b>16</b><span>kept: TC1–TC16 keep their ids</span></div>
-      <div class="kpi"><b>13</b><span>of those amended in D3</span></div>
-      <div class="kpi"><b>32</b><span>new: TC17–TC48</span></div>
-      <div class="kpi"><b>24</b><span>world calls, WD1–WD24, on the <a href="world.html">world page</a></span></div>
+      five directions (D3). Seven research passes ran in parallel (<a href="references.html">references page</a>,
+      <a href="../references.md">references.md</a>), and this page is rebuilt on them: TC1–TC16 kept their ids, thirteen of
+      them amended, and TC17–TC48 were new. The world, its truth and its eight factions are their own page,
+      <a href="world.html">world.html</a> (<a href="../world.md">world.md</a>, WD1–WD24). Every call is a recommendation,
+      adopted until the owner changes one.</p>
+
+    <div class="d4note">
+      <h3>Revised again the same day <span class="tag amend d4">D4</span></h3>
+      <p>The owner split the work and widened the world:</p>
+      <div class="grid3">
+        <div class="tile"><h3>The story has its own session</h3><p>It authors the world and the story from
+          <a href="story-brief.html">the story brief</a> (<a href="../story-brief.md">story-brief.md</a>); this page keeps the
+          game. The <a href="world.html">world page</a> (<a href="../world.md">world.md</a>) is now that session's first-pass
+          input, not adopted calls.</p></div>
+        <div class="tile"><h3>The world is interplanetary</h3><p>The Ring from D3 becomes the first world. Each lead Uma has
+          her own chapters, as in <i>Octopath Traveler</i>: her <b>Chapter 1</b> plays on her home world, and finishing it
+          brings her aboard <b>the ship</b>, the squad's hub and stronghold. The ship then travels to other worlds, where
+          other leads join through their own Chapter 1.</p></div>
+        <div class="tile"><h3>The build starts with the app and the combat testing</h3><p><a href="build-plan.html">The
+          build plan</a> (<a href="../build-plan.md">build-plan.md</a>) maps what's reused from uma-platform and the sibling
+          games, and the packets follow it.</p></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><b>54</b><span>calls, TC1–TC54</span></div>
+        <div class="kpi"><b>16</b><span>amended in D4</span></div>
+        <div class="kpi"><b>8</b><span>reworded in D4</span></div>
+        <div class="kpi"><b>6</b><span>new in D4: TC49–TC54</span></div>
+        <div class="kpi"><b>24</b><span>world calls, WD1–WD24: now the story session's first pass</span></div>
+      </div>
+      <p><span class="tag amend d4">amended D4</span> marks TC6, TC8–TC10, TC12, TC13, TC15, TC31–TC34, TC39, TC40, TC42, TC45 and TC48.
+        <span class="tag rew">reworded D4</span> marks TC4, TC5, TC22, TC35, TC36, TC38, TC41 and TC43. <span class="tag new d4">new D4</span> marks TC49–TC54.
+        <span class="tag amend">amended D3</span> and <span class="tag new">new D3</span> mark what D3 changed and added;
+        where a call changed twice, the later tag shows.</p>
     </div>
-    <p><span class="tag amend">amended D3</span> marks TC2–TC10, TC12, TC13, TC15 and TC16.
-      <span class="tag new">new</span> marks TC17–TC48. The world, its truth and its eight factions are their own page,
-      <a href="world.html">world.html</a> (<a href="../world.md">world.md</a>). Every call is a recommendation, adopted
-      until the owner changes one.</p>
   </section>
 
   <!-- ============ The short answer ============ -->
@@ -311,39 +371,46 @@
         <p>In place of Front Mission's robots: a <b>Core</b>, <b>two arms</b> and <b>Legs</b> that each take damage and break, plus a <b>Back unit</b> and a <b>Visor</b>. A broken arm drops its weapon, broken legs pin her down, a broken Core is a <b>Rig Break</b>: she's out of the battle, never hurt.</p></div>
       <div class="tile"><h3>Speed decides who moves next <span class="tag">TC3</span><span class="tag">TC20</span><span class="tag">TC21</span></h3>
         <p>On a timeline, as in Triangle Strategy. One small resource, <b>Charge</b>, pays for skills and also for counters and joining an ally's attack, so spending it all leaves an Uma open.</p></div>
-      <div class="tile"><h3>The setting <span class="tag">TC6</span><span class="tag">TC31</span></h3>
-        <p>A neon megacity on an orbital ring that runs on light stolen from other worlds through its Gates. Heroines from eight other worlds come through to stop it, and the Ring's Authority points them at the squad. The truth comes out in five layers over five acts, 13 Sentinels' way, with Star Guardian's candy-bright neon over a tragic story (<a href="world.html">world page</a>).</p></div>
+      <div class="tile"><h3>The setting is interplanetary <span class="tag amend d4">D4</span><span class="tag">TC6</span><span class="tag">TC51</span><span class="tag">TC53</span></h3>
+        <p>A ship carries the squad between worlds. The first world is D3's neon city on an orbital ring. Each lead Uma has her own chapters, <i>Octopath Traveler</i>'s way: her <b>Chapter 1</b> plays on her home world, and finishing it brings her aboard. The world, its mystery and its story are written by the story session from <a href="story-brief.html">the story brief</a>, in 13 Sentinels' and Star Guardian's spirit.</p></div>
       <div class="tile"><h3>The enemies are the eight franchises <span class="tag">TC7</span><span class="tag">TC37</span><span class="tag">TC38</span><span class="tag">TC26</span></h3>
         <p>On the platform's boards (Azur Lane, Genshin Impact, Wuthering Waves, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, Punishing: Gray Raven and NIKKE), as eight factions with original names, one new mechanic each. Every enemy character is a heroine, and a beaten heroine is <b>freed</b>, never killed; some join.</p></div>
-      <div class="tile"><h3>Between battles, the Hideout <span class="tag">TC42</span><span class="tag">TC34</span><span class="tag">TC35</span></h3>
-        <p>It works like Triangle Strategy's Encampment: a Workshop for rig parts, a Sim Pod, the Archive of the mystery, and <b>the Call</b>, where the squad votes on the big choices.</p></div>
+      <div class="tile"><h3>Between battles, the ship <span class="tag">TC42</span><span class="tag">TC49</span><span class="tag">TC50</span><span class="tag">TC34</span><span class="tag">TC35</span></h3>
+        <p>It works like Triangle Strategy's Encampment: a Hangar for rig parts, a Sim Pod, the Log of the mystery, the Bridge's star map, and <b>the Call</b>, where the crew votes on the big choices. It grows a room as each lead comes aboard.</p></div>
       <div class="tile"><h3>No new character art blocks the start <span class="tag">TC12</span></h3>
         <p>The map uses the Umas' existing four-facing chibi sets and the heroines' Ranker images as standees; attack cut-ins use the Umas' full-body renders until ChatGPT's Combat Adult keys arrive.</p></div>
-      <div class="tile"><h3>The order <span class="tag">TC15</span></h3>
-        <p>The workspace, cloud and hello app (Phase 1), a battle prototype with rigs on stand-ins (Phase 2), then Act I's opening (Phase 3).</p></div>
+      <div class="tile"><h3>The order <span class="tag amend d4">D4</span><span class="tag">TC15</span><span class="tag">TC54</span></h3>
+        <p>The workspace, cloud and hello app (Phase 1); the combat, tested three ways: rules with tests, a sandbox on the phone and a headless simulator (Phase 2, which can start beside the cloud); then the whole app on test content: the ship, the star map, the crew, the Hangar, the mission flow and the story runner (Phase 3). The first worlds follow when the story session delivers them (Phase 4).</p></div>
     </div>
   </section>
 
   <!-- ============ Five directions ============ -->
   <section class="card" id="directions">
-    <h2>How the owner's five directions land</h2>
+    <h2>How the owner's directions land</h2>
     <div class="dir">
       <div class="tile"><span class="n">1</span><h3>Uma Musume's characters only, like uma-quest and uma-farm</h3>
         <p>The Ranker's 100 Umas by outfit; no racing, but her stats, her authored role and her running style as Stride; she dreams of a track she can't remember (WD8).</p>
         <div class="where">Answered in <a href="#cast">§3</a>, TC4, TC5, TC45, TC46</div></div>
       <div class="tile"><span class="n">2</span><h3>Lore and story from 13 Sentinels: Aegis Rim and Star Guardian</h3>
-        <p>A five-layer mystery with flash-forwards, routes, Leads and an Archive; a cosmic theft, a darkness that eats memory, a double life, a suit-up and a rival squad.</p>
-        <div class="where">Answered in the <a href="world.html">world page</a>, <a href="#story">§5</a>, TC31–TC36, TC39–TC41</div></div>
+        <p>The story session writes it; the game gives it flash-forwards, gates, Leads, the Log and the Call, a suit-up and a rival squad.</p>
+        <div class="where">Answered in <a href="story-brief.html">the story brief</a>, the <a href="world.html">world page</a> (first pass), <a href="#story">§5</a>, TC32–TC36, TC39–TC41</div></div>
       <div class="tile"><span class="n">3</span><h3>Front Mission's gameplay, the characters in combat accessories instead of robots</h3>
         <p>The rig of breakable parts, Capacity, the weapon bands, damage types, counters and links, skills from parts, the side-view cut-in, Rig Break and Jack-Out.</p>
         <div class="where">Answered in <a href="#battle">§4</a>, TC17–TC28</div></div>
       <div class="tile"><span class="n">4</span><h3>Triangle Strategy's HD-2D look and in-game build-out</h3>
-        <p>The diorama on uma-stage, Charge and Crossfire, terrain states, the forecast card, the Call, the Hideout and its Sim Pod.</p>
-        <div class="where">Answered in <a href="#screen">§4.11</a>, <a href="#hideout">§6</a>, <a href="#built">§7</a>, TC10, TC23, TC24, TC29, TC35, TC42</div></div>
+        <p>The diorama on uma-stage, Charge and Crossfire, terrain states, the forecast card, the Call, the ship's rooms and its Sim Pod, the world maps.</p>
+        <div class="where">Answered in <a href="#screen">§4.11</a>, <a href="#ship">§6</a>, <a href="#built">§7</a>, TC10, TC23, TC24, TC29, TC35, TC42, TC50</div></div>
       <div class="tile"><span class="n">5</span><h3>The other franchises as the enemy factions and the overall enemies, tied to the plot</h3>
-        <p>Eight factions with a reason to be here, a way to turn and a mechanic each; the Authority and the Blackout behind them.</p>
+        <p>Eight factions with a mechanic each, built by the game; who they are, where and why is the story session's (TC53).</p>
         <div class="where">Answered in <a href="#cast">§3</a>, TC7, TC37, TC38, the <a href="world.html">world page</a> §5</div></div>
+      <div class="tile d4dir"><span class="n">D4</span><h3>The story in its own session; an interplanetary world; each Uma's Chapter 1, then the ship as hub, <i>Octopath Traveler</i>'s way</h3>
+        <p>Lead Umas join through their own Chapter 1 on their own world; the ship grows a room for each; the game and the story meet at a content contract.</p>
+        <div class="where">Answered in <a href="#world">§2</a>, <a href="#story">§5</a>, <a href="#ship">§6</a>, TC49–TC53, <a href="story-brief.html">the story brief</a></div></div>
+      <div class="tile d4dir"><span class="n">D4</span><h3>Start with the app buildout and the combat testing, reusing uma-platform's HD-2D engine</h3>
+        <p>uma-stage's parts and uma-quest's patterns; a rules package, a sandbox and a simulator before the content.</p>
+        <div class="where">Answered in <a href="#built">§7</a>, <a href="#phases">§9</a>, TC54, <a href="build-plan.html">the build plan</a></div></div>
     </div>
+    <p class="note">The owner's five directions from D3, and the two D4 added.</p>
   </section>
 
   <!-- ============ 1. The game ============ -->
@@ -353,10 +420,11 @@
       <div class="scroll"><table>
         <tr><td><b>Genre</b></td><td>Turn-based grid tactics RPG with part-based combat rigs</td></tr>
         <tr><td><b>Platform</b></td><td>The owner's iPhone, a Home Screen web app, landscape only; personal and never distributed <span class="tag">TC1</span></td></tr>
-        <tr><td><b>Session</b></td><td>About fifteen minutes: a scene of three minutes at most, a battle of about ten, two in the Hideout <span class="tag">TC36</span></td></tr>
-        <tr><td><b>The squad</b></td><td>Four Umas from the Ranker's cast, plus one guest heroine once freed <span class="tag">TC2</span><span class="tag">TC45</span><span class="tag">TC47</span></td></tr>
+        <tr><td><b>Session</b></td><td>About fifteen minutes: a scene of three minutes at most, a battle of about ten, two aboard the ship <span class="tag">TC36</span></td></tr>
+        <tr><td><b>The squad</b></td><td>Four Umas from the ship's crew, plus one guest heroine once freed <span class="tag">TC2</span><span class="tag">TC45</span><span class="tag">TC47</span></td></tr>
+        <tr><td><b>The structure</b></td><td>Worlds reached by the ship; each lead Uma's own chapters, her Chapter 1 on her home world <span class="tag">TC8</span><span class="tag">TC51</span></td></tr>
         <tr><td><b>The enemies</b></td><td>Heroines from eight franchises as factions, plus their original machines <span class="tag">TC37</span><span class="tag">TC38</span></td></tr>
-        <tr><td><b>Tone</b></td><td>Neon city, orbital stations and star lanes; a found family; candy-bright over tragic, never grimdark (WD20)</td></tr>
+        <tr><td><b>Tone</b></td><td>Neon worlds and the ship between them; a found family; candy-bright over tragic, never grimdark (the story session's to keep)</td></tr>
       </table></div>
       <div>
         <h3>Three pillars</h3>
@@ -371,38 +439,82 @@
 
   <!-- ============ 2. The world ============ -->
   <section class="card" id="world">
-    <h2><span class="num">2</span>The world <span class="tag">TC6</span><span class="tag">TC31</span></h2>
-    <p>The full bible is the <a href="world.html">world page</a> (<a href="../world.md">world.md</a>, WD1–WD24). In short:</p>
-    <div class="split">
-      <div>
-        <h3>The Ring, in six layers <span class="tag wd">WD4</span></h3>
-        <div class="stack">
-          <div style="background:color-mix(in srgb, var(--neon) 8%, var(--raised))">The Spires<small>1</small></div>
-          <div style="background:color-mix(in srgb, var(--neon) 15%, var(--raised))">The Districts<small>2</small></div>
-          <div style="background:color-mix(in srgb, var(--neon) 22%, var(--raised))">The Markets<small>3</small></div>
-          <div style="background:color-mix(in srgb, var(--neon) 29%, var(--raised))">The Underlevels<small>4</small></div>
-          <div style="background:color-mix(in srgb, var(--neon) 36%, var(--raised))">The Docks<small>5</small></div>
-          <div style="background:color-mix(in srgb, var(--neon) 46%, var(--raised))">The Gate Heart<small>6</small></div>
-        </div>
-        <p class="note">A megacity on an orbital ring. <b>The Lanes</b> run out to stations, moons and a dead sister ring.</p>
-      </div>
-      <div class="grid3" style="grid-template-columns:1fr">
-        <div class="tile"><h3>The Gates are siphons <span class="tag wd">WD1</span></h3><p>The Authority opens them to drain other worlds, and the Ring's neon is stolen light.</p></div>
-        <div class="tile"><h3>The Blackout <span class="tag wd">WD2</span></h3><p>The siphons let in the Blackout, a hunger that eats memory.</p></div>
-        <div class="tile"><h3>Stolen cores <span class="tag wd">WD3</span><span class="tag wd">WD8</span></h3><p>The squad's rigs run on stolen siphon <b>cores</b>, and the Umas themselves came through the first Gate as children.</p></div>
-      </div>
+    <h2><span class="num">2</span>The world <span class="tag">TC6</span><span class="tag">TC31</span><span class="tag amend d4">amended D4</span></h2>
+    <p><b>TC6.</b> The world is <b>interplanetary,</b> and the story session writes it (TC53). What the game builds for,
+      whatever the story becomes:</p>
+    <div class="scroll"><svg class="d wide" viewBox="0 0 1000 320" role="img" aria-label="The ship at the centre as the hub, travelling to the first world (the ring city), a second world and more worlds; each world is a node map with a lead’s Chapter 1, and finishing it brings her aboard">
+<path d="M402 172 C 340 196, 290 196, 238 186" class="ln-info dash" marker-end="url(#ah-info)" marker-start="url(#ah-info)"/>
+<path d="M604 159 C 664 126, 704 104, 748 94" class="ln-info dash" marker-end="url(#ah-info)" marker-start="url(#ah-info)"/>
+<path d="M604 171 C 664 206, 704 226, 748 234" class="ln-info dash" marker-end="url(#ah-info)" marker-start="url(#ah-info)"/>
+<circle cx="170" cy="170" r="64" style="fill:color-mix(in srgb, var(--neon) 9%, var(--raised));stroke:var(--neon);stroke-width:1.5"/>
+<path d="M186 126 L136 158" class="ln" style="stroke-width:1.2"/>
+<path d="M186 126 L196 184" class="ln" style="stroke-width:1.2"/>
+<path d="M136 158 L150 206" class="ln" style="stroke-width:1.2"/>
+<path d="M196 184 L150 206" class="ln" style="stroke-width:1.2"/>
+<circle cx="136" cy="158" r="6" style="fill:var(--panel);stroke:var(--ink-faint);stroke-width:1.5"/>
+<circle cx="196" cy="184" r="6" style="fill:var(--panel);stroke:var(--ink-faint);stroke-width:1.5"/>
+<circle cx="150" cy="206" r="6" style="fill:var(--panel);stroke:var(--ink-faint);stroke-width:1.5"/>
+<circle cx="186" cy="126" r="10" style="fill:var(--neon)"/>
+<text class="tw" x="186" y="130" text-anchor="middle">1</text>
+<text class="tb" x="170" y="256" text-anchor="middle">World 1: the first world</text>
+<text class="ts" x="170" y="273" text-anchor="middle">D3’s neon city on an orbital ring,</text>
+<text class="ts" x="170" y="288" text-anchor="middle">in six layers (WD4)</text>
+<text class="ts" x="170" y="305" text-anchor="middle">a lead’s Chapter 1 opens the game</text>
+<path d="M188 114 C 232 40, 400 40, 452 128" class="ln-neon" marker-end="url(#ah-neon)" style="stroke-width:2.5"/>
+<text class="t" x="318" y="50" text-anchor="middle" style="fill:var(--neon);font-size:11px;font-weight:700">her Chapter 1 ends: she comes aboard (TC51)</text>
+<path d="M410 134 H566 L612 165 L566 196 H410 Q394 165 410 134 Z" class="op-last"/>
+<text class="tb" x="503" y="161" text-anchor="middle">The ship</text>
+<text class="ts" x="503" y="178" text-anchor="middle">hub and stronghold (TC49)</text>
+<text class="ts" x="503" y="222" text-anchor="middle">it grows a room as each lead comes aboard</text>
+<text class="ts" x="640" y="161">travel from the Bridge (TC50):</text>
+<text class="ts" x="640" y="176">a tap and a jump scene</text>
+<circle cx="800" cy="80" r="52" style="fill:color-mix(in srgb, var(--info) 9%, var(--raised));stroke:var(--info);stroke-width:1.5"/>
+<path d="M812 58 L776 88" class="ln" style="stroke-width:1.2"/>
+<path d="M812 58 L824 104" class="ln" style="stroke-width:1.2"/>
+<path d="M776 88 L824 104" class="ln" style="stroke-width:1.2"/>
+<circle cx="776" cy="88" r="6" style="fill:var(--panel);stroke:var(--ink-faint);stroke-width:1.5"/>
+<circle cx="824" cy="104" r="6" style="fill:var(--panel);stroke:var(--ink-faint);stroke-width:1.5"/>
+<circle cx="812" cy="58" r="10" style="fill:var(--neon)"/>
+<text class="tw" x="812" y="62" text-anchor="middle">1</text>
+<text class="tb" x="864" y="64">World 2</text>
+<text class="ts" x="864" y="80">its own maps, kits,</text>
+<text class="ts" x="864" y="95">factions and grade;</text>
+<text class="ts" x="864" y="110">a lead’s Chapter 1</text>
+<circle cx="800" cy="240" r="52" style="fill:none;stroke:var(--ink-faint);stroke-width:1.5;stroke-dasharray:6 5"/>
+<text class="ts" x="800" y="245" text-anchor="middle">and on</text>
+<text class="tb" x="864" y="224">More worlds</text>
+<text class="ts" x="864" y="240">as content waves</text>
+<text class="ts" x="864" y="255">(TC15); how many</text>
+<text class="ts" x="864" y="270">is the story’s (TC53)</text>
+</svg></div>
+    <div class="legend">
+      <span><i style="background:var(--neon);border-radius:50%"></i>A lead's Chapter 1, on her home world</span>
+      <span><i style="background:var(--panel);border:1.5px solid var(--ink-faint);border-radius:50%"></i>A location on the world's node map (TC50)</span>
+      <span><i style="background:var(--info-wash);border:1px dashed var(--info)"></i>Travel, from the Bridge</span>
+      <span><i style="background:var(--neon)"></i>Finishing her Chapter 1 brings her aboard</span>
     </div>
-    <div class="block">
-      <h3>The five layers of the truth come out one an act <span class="tag wd">WD15</span><span class="tag wd">WD17</span></h3>
-      <div class="scroll"><div class="acts">
-        <div class="act"><b>Act I</b>Layer 1. Opens on a flash-forward to its own climax.</div>
-        <div class="act"><b>Act II</b>Layer 2. Opens on a flash-forward to its own climax.</div>
-        <div class="act"><b>Act III</b>Layer 3. Opens on a flash-forward to its own climax.</div>
-        <div class="act"><b>Act IV</b>Layer 4. Opens on a flash-forward to its own climax.</div>
-        <div class="act"><b>Act V</b>Layer 5. Opens on a flash-forward to its own climax.</div>
-      </div></div>
-      <p class="note">What each layer reveals is on the <a href="world.html">world page</a>.</p>
+    <div class="grid3 block">
+      <div class="tile"><h3>Worlds</h3><p>Each is its own setting, with its own maps, map kits, factions and grade, and at
+        least one lead Uma's Chapter 1 (TC51). A world is a node map of locations, reached from the ship's Bridge (TC50).</p></div>
+      <div class="tile"><h3>The ship</h3><p>It carries the squad between worlds and is its hub (TC49). Travel is a menu;
+        ship battles stay deferred (TC16).</p></div>
+      <div class="tile"><h3>The first world <span class="tag wd">WD4</span></h3><p>D3's: the neon city on an orbital ring,
+        in six layers. The owner put it plainly: the system D3 described is Chapter 1. The Gates, the Tithe and the Blackout
+        (WD1–WD3) may carry across worlds, or not: that's the story session's call.</p>
+        <div class="stack mini">
+          <div style="background:color-mix(in srgb, var(--neon) 8%, var(--panel))">The Spires<small>1</small></div>
+          <div style="background:color-mix(in srgb, var(--neon) 15%, var(--panel))">The Districts<small>2</small></div>
+          <div style="background:color-mix(in srgb, var(--neon) 22%, var(--panel))">The Markets<small>3</small></div>
+          <div style="background:color-mix(in srgb, var(--neon) 29%, var(--panel))">The Underlevels<small>4</small></div>
+          <div style="background:color-mix(in srgb, var(--neon) 36%, var(--panel))">The Docks<small>5</small></div>
+          <div style="background:color-mix(in srgb, var(--neon) 46%, var(--panel))">The Gate Heart<small>6</small></div>
+        </div></div>
     </div>
+    <div class="tile block"><h3>The first pass <span class="tag">TC31</span><span class="tag amend d4">amended D4</span></h3>
+      <p>The <a href="world.html">world page</a> (<a href="../world.md">world.md</a>, WD1–WD24) is the <b>first pass</b> the
+        story session starts from, beside <a href="story-brief.html">the story brief</a>
+        (<a href="../story-brief.md">story-brief.md</a>). It may keep, change or drop any WD call. Its single-city structure
+        (the Hideout, five acts on one ring) is superseded by this page's interplanetary one.</p></div>
   </section>
 
   <!-- ============ 3. The cast ============ -->
@@ -410,8 +522,8 @@
     <h2><span class="num">3</span>The cast and the crossover <span class="tag">TC7</span><span class="tag">TC38</span><span class="tag">TC40</span><span class="tag">TC45–TC47</span></h2>
     <div class="scroll"><table class="wide">
       <tr><th>Who</th><th>Where from</th><th>Role in the game</th><th>Where it lives</th></tr>
-      <tr><td><b>Umas</b></td><td>The Ranker's Playable Umas: 100 outfits in ten batches, sisters included (uma-platform P131, P139)</td><td>The squad, joining through the story two batches an act (TC45)</td><td>Read by outfit id from master data, never in git</td></tr>
-      <tr><td><b>The rival squad</b></td><td>The Ranker's Uma NPCs board</td><td>The Authority's licensed heroes; rivals, then allies (TC40, WD6)</td><td>Same</td></tr>
+      <tr><td><b>Umas</b></td><td>The Ranker's Playable Umas: 100 outfits in ten batches, sisters included (uma-platform P131, P139)</td><td>The crew: lead Umas join through their own Chapter 1, the rest through the leads' chapters (TC45, TC51)</td><td>Read by outfit id from master data, never in git</td></tr>
+      <tr><td><b>A rival squad</b></td><td>The Ranker's Uma NPCs board</td><td>Rivals, then allies, if the story keeps them (TC40, WD6)</td><td>Same</td></tr>
       <tr><td><b>Enemy heroines</b></td><td>The seven boss boards (Bosses), Key enemies (Keys) and Regular enemies (Regulars, all of NIKKE included)</td><td>Eight factions (TC37); freed when beaten; some join as guests (TC26, TC47)</td><td>Read by board id through the platform, never in git</td></tr>
       <tr><td><b>Faction hardware</b></td><td>This game</td><td>Each faction's machines, the Authority's drones and turrets (WD14)</td><td>Original art, in uma-art</td></tr>
     </table></div>
@@ -419,14 +531,14 @@
     <div class="grid2 block">
       <div class="tile"><h3>Eight franchises, not seven <span class="tag">TC7</span><span class="tag amend">amended D3</span></h3>
         <p>NIKKE joins, as the regular-enemy board's thread (the Steel Muster). Who plays which part is private (<code>content/</code>).</p></div>
-      <div class="tile"><h3>Eight factions <span class="tag">TC37</span><span class="tag new">new</span></h3>
+      <div class="tile"><h3>Eight factions <span class="tag">TC37</span><span class="tag new">new D3</span></h3>
         <p>One per franchise, with original names and one new mechanic each: a reason to be here and a way to turn. The factions are on the <a href="world.html">world page</a> (WD10–WD14).</p></div>
     </div>
 
     <div class="block">
       <h3>The enemy ranks: slots filled from pools <span class="tag">TC38</span></h3>
       <p>Every enemy character is a heroine. A battle's encounter is <b>slots filled from pools of board ids</b>, as uma-quest
-        does it (its SP43): Regulars by job, at most one Key and at most one Boss, all from the act's factions, plus the
+        does it (its SP43): Regulars by job, at most one Key and at most one Boss, all from the mission's factions, plus the
         faction's hardware. An example encounter of eight, the most a map holds (TC30):</p>
       <div class="scroll">
         <div class="enc">
@@ -440,18 +552,31 @@
     </div>
 
     <div class="block">
-      <h3>The cast grows through the story <span class="tag">TC45</span></h3>
-      <p>Each act brings two of the Ranker's batches, twenty Umas, in batch order: six lead routes (TC33) and the other
-        fourteen join through those routes. An Uma is keyed by her outfit id, never her character id alone, since a sister
-        shares her base Uma's. This differs from uma-quest, where every traveler plays from minute one: a found-family story
-        needs arrivals.</p>
-      <div class="scroll"><div class="acts">
-        <div class="act"><b>Act I</b><span class="bt">batch 1</span><span class="bt">batch 2</span><br>20 Umas: 6 route leads, 14 who join</div>
-        <div class="act"><b>Act II</b><span class="bt">batch 3</span><span class="bt">batch 4</span><br>20 more: 40 in all</div>
-        <div class="act"><b>Act III</b><span class="bt">batch 5</span><span class="bt">batch 6</span><br>20 more: 60 in all</div>
-        <div class="act"><b>Act IV</b><span class="bt">batch 7</span><span class="bt">batch 8</span><br>20 more: 80 in all</div>
-        <div class="act last"><b>Act V</b><span class="bt">batch 9</span><span class="bt">batch 10</span><br>Completes the hundred</div>
+      <h3>The cast grows through the story <span class="tag">TC45</span><span class="tag amend d4">amended D4</span></h3>
+      <p>The crew comes from the Ranker's 100, in two kinds:</p>
+      <div class="grid2">
+        <div class="tile lead"><h3>Lead Umas</h3><p>Have their own chapters, and each comes aboard through her <b>Chapter 1</b>
+          on her home world (TC51).</p></div>
+        <div class="tile crew"><h3>Crew Umas</h3><p>Come aboard through a lead's chapter or a world's side job. They have no
+          chapters of their own but speak in scenes and fight in any squad.</p></div>
+      </div>
+      <p>The story session picks the leads and when each crew Uma joins (private), with the Ranker's batch order as its
+        guide: earlier batches first. An Uma is keyed by her outfit id, never her character id alone, since a sister shares
+        her base Uma's. This differs from uma-quest, where every traveler plays from minute one: a found-family story needs
+        arrivals.</p>
+      <div class="scroll"><div class="batches">
+        <div style="background:color-mix(in srgb, var(--info) 34%, var(--raised))">batch 1</div>
+        <div style="background:color-mix(in srgb, var(--info) 31%, var(--raised))">batch 2</div>
+        <div style="background:color-mix(in srgb, var(--info) 28%, var(--raised))">batch 3</div>
+        <div style="background:color-mix(in srgb, var(--info) 25%, var(--raised))">batch 4</div>
+        <div style="background:color-mix(in srgb, var(--info) 22%, var(--raised))">batch 5</div>
+        <div style="background:color-mix(in srgb, var(--info) 19%, var(--raised))">batch 6</div>
+        <div style="background:color-mix(in srgb, var(--info) 16%, var(--raised))">batch 7</div>
+        <div style="background:color-mix(in srgb, var(--info) 13%, var(--raised))">batch 8</div>
+        <div style="background:color-mix(in srgb, var(--info) 10%, var(--raised))">batch 9</div>
+        <div style="background:color-mix(in srgb, var(--info) 7%, var(--raised))">batch 10</div>
       </div></div>
+      <p class="note">The Ranker's ten batches of ten, earlier first: the story session's guide, not a schedule.</p>
     </div>
 
     <div class="split block">
@@ -469,7 +594,7 @@
       </div>
       <div class="grid3" style="grid-template-columns:1fr">
         <div class="tile"><h3>Guests <span class="tag">TC47</span></h3><p>A freed heroine whose chapter allows it joins the guest slot. Her stats are set by hand in the private content (other franchises' numbers don't map to Uma stats), her job comes from her franchise archetype, and her rig starts from her own salvaged parts.</p></div>
-        <div class="tile"><h3>The rival squad <span class="tag">TC40</span></h3><p>The Authority's famous heroes are Umas from the Uma NPCs board, on overclocked cores. They fight the squad in Acts I–II, stand with it against something bigger, and can join late.</p></div>
+        <div class="tile"><h3>A rival squad <span class="tag">TC40</span><span class="tag amend d4">amended D4</span></h3><p>The game supports Umas from the Uma NPCs board as enemies, with the squad's own rigs and roles, who can later join. D3's version (the Authority's famous heroes on overclocked cores) is the story session's to keep, move to another world or drop.</p></div>
       </div>
     </div>
   </section>
@@ -490,7 +615,7 @@
     <h2><span class="num">4.1</span>The board <span class="tag">TC2</span><span class="tag amend">amended D3</span><span class="tag">TC30</span></h2>
     <div class="kpis">
       <div class="kpi"><b>10×10 – 14×14</b><span>tiles a map</span></div>
-      <div class="kpi"><b>0–3</b><span>height levels, four in all; uma-stage builds 0–2 today, so level 3 is a request (TC48)</span></div>
+      <div class="kpi"><b>0–3</b><span>height levels, four in all; uma-stage's format stops at 2; CY7 tests whether its builder raises 3 before asking (TC48)</span></div>
       <div class="kpi"><b>4 + 1</b><span>four Umas plus a guest</span></div>
       <div class="kpi"><b>5–8</b><span>enemies</span></div>
       <div class="kpi"><b>1</b><span>objective a map; meeting it ends the battle at once</span></div>
@@ -631,11 +756,11 @@
       <tr><td><b>Evasion</b> (Speed)</td><td>+2%</td><td>+4%</td><td>+6%</td><td>+8%</td><td>+10%</td></tr>
       <tr><td><b>Stun and Jack-Out resist</b> (Guts)</td><td>+10%</td><td>+20%</td><td>+30%</td><td>+40%, Hold on</td><td>+50%, Hold on</td></tr>
     </table></div>
-    <p class="note">The numbers are a starting point; CY5 tunes them against the cast.</p>
+    <p class="note">The numbers are a starting point; the simulator (CY6) tunes them against the cast.</p>
   </section>
 
   <section class="card" id="rig">
-    <h2><span class="num">4.4</span>The rig <span class="tag new">new</span><span class="tag">TC17</span><span class="tag">TC18</span></h2>
+    <h2><span class="num">4.4</span>The rig <span class="tag new">new D3</span><span class="tag">TC17</span><span class="tag">TC18</span></h2>
     <p>The Umas fight in a combat rig built from accessories, in place of Front Mission's robots. Four parts take damage and
       break; two are slots that can't be hit.</p>
     <div class="split wl">
@@ -759,7 +884,7 @@
   </section>
 
   <section class="card" id="weapons">
-    <h2><span class="num">4.5</span>Weapons and hits <span class="tag new">new</span><span class="tag">TC19</span></h2>
+    <h2><span class="num">4.5</span>Weapons and hits <span class="tag new">new D3</span><span class="tag">TC19</span></h2>
     <div class="split wl">
       <div class="scroll"><svg class="d" viewBox="0 0 730 208" role="img" aria-label="Weapon bands by range in tiles: Melee 1, Short 1 to 3, Long 3 to 6, Tech 2 to 4">
 <text class="tf" x="190" y="24" text-anchor="middle">her tile</text>
@@ -815,7 +940,7 @@
   </section>
 
   <section class="card" id="counters">
-    <h2><span class="num">4.6</span>Counters, Crossfire and Cover <span class="tag new">new</span><span class="tag">TC21</span></h2>
+    <h2><span class="num">4.6</span>Counters, Crossfire and Cover <span class="tag new">new D3</span><span class="tag">TC21</span></h2>
     <div class="scroll"><svg class="d wide" viewBox="0 0 960 292" role="img" aria-label="Three small grids: Crossfire by pincer, Crossfire by line of fire with a wall blocking a second ally, and Cover">
 <text class="tb" x="20" y="30">Crossfire by pincer</text>
 <rect x="20" y="50" width="46" height="46" class="tl2"/>
@@ -925,7 +1050,7 @@
   </section>
 
   <section class="card" id="facing">
-    <h2><span class="num">4.7</span>Facing, height and terrain <span class="tag new">new</span><span class="tag">TC23</span><span class="tag">TC24</span></h2>
+    <h2><span class="num">4.7</span>Facing, height and terrain <span class="tag new">new D3</span><span class="tag">TC23</span><span class="tag">TC24</span></h2>
     <div class="split">
       <div><svg class="d" viewBox="0 0 380 396" role="img" aria-label="A top-down five by five grid around a unit facing north: front tiles, side tiles at plus 25 percent, back tiles at plus 50 percent">
 <text class="tb" x="190" y="22" text-anchor="middle">She faces north: where a hit comes from</text>
@@ -1096,11 +1221,11 @@
   </section>
 
   <section class="card" id="roles">
-    <h2><span class="num">4.8</span>Roles <span class="tag">TC5</span><span class="tag amend">amended D3</span></h2>
+    <h2><span class="num">4.8</span>Roles <span class="tag">TC5</span><span class="tag amend">amended D3</span><span class="tag rew">reworded D4</span></h2>
     <p>Five roles, now <b>jobs:</b> each gives job skills and a weapon affinity, and its signature action needs its own
       <b>Back unit,</b> so a role reads at a glance. Her default role comes from an <b>authored per-Uma tag</b> in the private
       content, as uma-quest now does with its story class (uma-quest SC7, D50; uma-platform P123). Running style is the
-      fallback, with ties going to the earlier style, and otherwise only her Stride (TC46). Roles change in the Hideout.</p>
+      fallback, with ties going to the earlier style, and otherwise only her Stride (TC46). Roles change aboard the ship.</p>
     <div class="roles">
       <div class="role"><h3>Vanguard</h3><span class="bu">Back unit: Bulwark</span><p>Holds the line, shields, Cover.</p><p><b>Signature:</b> deploys a one-tile barrier.</p></div>
       <div class="role"><h3>Striker</h3><span class="bu">Back unit: Thruster</span><p>Fast melee, flanks, starts Crossfire.</p><p><b>Signature:</b> dash and jump one level higher.</p></div>
@@ -1111,18 +1236,18 @@
   </section>
 
   <section class="card" id="skills">
-    <h2><span class="num">4.9</span>Skills <span class="tag new">new</span><span class="tag">TC22</span></h2>
+    <h2><span class="num">4.9</span>Skills <span class="tag new">new D3</span><span class="tag">TC22</span><span class="tag rew">reworded D4</span></h2>
     <div class="grid3">
       <div class="tile"><h3>Parts teach skills</h3><p>A rarer part carries a skill. Using the part fills a mastery bar; once mastered, the skill is hers and goes in a Visor slot (skills cost 1–3 slots; Wit sets 3–7). Salvage becomes the progression loop (TC43).</p></div>
       <div class="tile"><h3>Five chance skills only</h3><p>With the % always shown and one chain per attack:</p>
         <p><span class="chip">Double<small>a second melee hit</small></span><span class="chip">Switch<small>fire the other hand too</small></span><span class="chip">Burst<small>extra rounds</small></span><span class="chip">First<small>strike before a counter</small></span><span class="chip">Stun</span></p></div>
-      <div class="tile"><h3>Signature abilities</h3><p>Each route lead unlocks one at the end of her route (TC33): once a battle, costs 3 Charge.</p>
+      <div class="tile"><h3>Signature abilities</h3><p>Each lead Uma unlocks one at the end of her own story (TC51): once a battle, costs 3 Charge.</p>
         <p><i class="pip spend"></i><i class="pip spend"></i><i class="pip spend"></i></p></div>
     </div>
   </section>
 
   <section class="card" id="rigbreak">
-    <h2><span class="num">4.10</span>Rig Break, freeing and Strain <span class="tag new">new</span><span class="tag">TC25–TC27</span></h2>
+    <h2><span class="num">4.10</span>Rig Break, freeing and Strain <span class="tag new">new D3</span><span class="tag">TC25–TC27</span></h2>
     <div class="block" style="margin-top:4px">
       <h3>Rig Break <span class="tag">TC25</span></h3>
       <div class="loop">
@@ -1168,7 +1293,7 @@
   </section>
 
   <section class="card" id="screen">
-    <h2><span class="num">4.11</span>On screen <span class="tag new">new</span><span class="tag">TC28</span><span class="tag">TC29</span></h2>
+    <h2><span class="num">4.11</span>On screen <span class="tag new">new D3</span><span class="tag">TC28</span><span class="tag">TC29</span></h2>
     <h3>The cut-in <span class="tag">TC28</span></h3>
     <p>Every attack can cut to a side view of the two fighters, Front Mission's duel. The Uma's adult art faces left and the
       enemy's right, as the platform's combat keys are drawn, so no mirroring. Three speeds:</p>
@@ -1413,198 +1538,340 @@
 
   <!-- ============ 5. The story ============ -->
   <section class="card" id="story">
-    <h2><span class="num">5</span>The story and the loop <span class="tag">TC8</span><span class="tag">TC31–TC36</span></h2>
-    <div class="loop">
-      <span>The Hideout</span><i>→</i><span>The route board</span><i>→</i><span>A scene (≤ 3 min)</span><i>→</i>
-      <span>Loadout</span><i>→</i><span class="battle">The battle (~10 min)</span><i>→</i><span>Rewards</span><i>→</i>
-      <span>Leads and Intel into the Archive</span><i>→</i><span>The Call, at the big choices</span><i>↺ the Hideout</i>
-    </div>
+    <h2><span class="num">5</span>The story and the loop <span class="tag">TC8</span><span class="tag">TC32–TC36</span><span class="tag">TC51</span><span class="tag">TC52</span></h2>
+    <div class="scroll"><svg class="d wide" viewBox="0 0 1000 200" role="img" aria-label="The loop: the ship, the Bridge picks a world, the world’s map offers a chapter or a side job, a scene, loadout, the battle, rewards, then back aboard to the Hangar, the Log and the Call">
+<rect x="20" y="20" width="210" height="52" rx="10" class="op-last"/>
+<text class="tb" x="125" y="42" text-anchor="middle">The ship</text>
+<text class="ts" x="125" y="60" text-anchor="middle">the hub (TC9, TC49)</text>
+<rect x="270" y="20" width="210" height="52" rx="10" class="ch-wait"/>
+<text class="tb" x="375" y="42" text-anchor="middle">The Bridge: a world</text>
+<text class="ts" x="375" y="60" text-anchor="middle">picked on the star map (TC50)</text>
+<rect x="520" y="20" width="210" height="52" rx="10" class="ch-wait"/>
+<text class="tb" x="625" y="42" text-anchor="middle">The world’s map</text>
+<text class="ts" x="625" y="60" text-anchor="middle">a chapter or a side job (TC8)</text>
+<rect x="770" y="20" width="210" height="52" rx="10" class="ch-wait"/>
+<text class="tb" x="875" y="42" text-anchor="middle">A scene (≤ 3 min)</text>
+<text class="ts" x="875" y="60" text-anchor="middle">auto, skip and a log (TC36)</text>
+<rect x="770" y="136" width="210" height="52" rx="10" class="ch-wait"/>
+<text class="tb" x="875" y="158" text-anchor="middle">Loadout</text>
+<text class="ts" x="875" y="176" text-anchor="middle">saved rigs, from the Hangar (TC18)</text>
+<rect x="520" y="136" width="210" height="52" rx="10" class="op-ff"/>
+<text class="tb" x="625" y="158" text-anchor="middle">The battle (~10 min)</text>
+<text class="ts" x="625" y="176" text-anchor="middle">the grid, the rigs, the cut-in</text>
+<rect x="270" y="136" width="210" height="52" rx="10" style="fill:var(--success-wash);stroke:var(--success);stroke-width:1.5"/>
+<text class="tb" x="375" y="158" text-anchor="middle">Rewards</text>
+<text class="ts" x="375" y="176" text-anchor="middle">Leads, parts, a new member (TC45)</text>
+<rect x="20" y="136" width="210" height="52" rx="10" class="op-last"/>
+<text class="tb" x="125" y="158" text-anchor="middle">Aboard</text>
+<text class="ts" x="125" y="176" text-anchor="middle">the Hangar, the Log, the Call</text>
+<path d="M232 46 H266" class="ln" marker-end="url(#ah)"/>
+<path d="M268 162 H234" class="ln" marker-end="url(#ah)"/>
+<path d="M482 46 H516" class="ln" marker-end="url(#ah)"/>
+<path d="M518 162 H484" class="ln" marker-end="url(#ah)"/>
+<path d="M732 46 H766" class="ln" marker-end="url(#ah)"/>
+<path d="M768 162 H734" class="ln" marker-end="url(#ah)"/>
+<path d="M875 74 V132" class="ln" marker-end="url(#ah)"/>
+<path d="M125 134 V76" class="ln-acc" marker-end="url(#ah-acc)" style="stroke-width:2.5"/>
+<text class="ts" x="500" y="108" text-anchor="middle">A lead’s Chapter 1 ends with her coming aboard; then the ship travels on (TC51)</text>
+<text class="tacc" x="140" y="108">back aboard</text>
+</svg></div>
     <div class="grid2 block">
-      <div class="tile"><h3>The structure <span class="tag">TC8</span><span class="tag amend">amended D3</span></h3><p><b>Acts → two tracks → chapters → missions.</b> Story missions move the plot; <b>contracts</b> are repeatable missions for credits and parts, led by any Uma. The map starts as the Ring's layers and becomes a map of the Lanes in Act III.</p></div>
-      <div class="tile"><h3>The world bible <span class="tag">TC31</span></h3><p>It's the <a href="world.html">world page</a> (<a href="../world.md">world.md</a>): the Tithe in five layers (WD1–WD24).</p></div>
+      <div class="tile"><h3>The structure <span class="tag">TC8</span><span class="tag amend d4">amended D4</span></h3>
+        <p><b>Worlds → chapters → missions.</b></p>
+        <ul>
+          <li>A <b>chapter</b> is a short arc led by one Uma: scenes and two to four missions, about three sessions.</li>
+          <li><b>Story missions</b> move a chapter. <b>Side jobs</b> are repeatable missions on a world's map, for credits and parts, led by any Uma (D3's contracts).</li>
+          <li>Worlds ship as content waves (TC15). How many worlds, leads and chapters is the story session's (TC53).</li>
+        </ul></div>
+      <div class="tile"><h3>Story tools <span class="tag">TC32</span><span class="tag amend d4">amended D4</span></h3>
+        <p>13 Sentinels' devices stay, as features the story can use, no longer a fixed act shape:</p>
+        <ul>
+          <li>a <b>flash-forward:</b> any mission can fix its squad and loadouts and play ahead of its chapter;</li>
+          <li><b>gates:</b> a chapter can wait on another chapter, a mission or a File, and says so.</li>
+        </ul>
+        <p>D3's Operations-and-Routes acts are dropped as a fixed form. <b>TC33</b> <span class="tag amend d4">amended D4</span> folds into TC51: D3's route
+          leads are the lead Umas, and their genre lenses (WD19) are the story session's.</p></div>
     </div>
 
     <div class="block">
-      <h3>Two tracks that gate each other <span class="tag">TC32</span></h3>
-      <p>13 Sentinels' modes, made explicit. <b>Operations</b> are the act's spine: the Gate incursions, rising in difficulty,
-        light on story. The act's first battle is a <b>flash-forward</b> to its last Operation, with a fixed squad (WD17).
-        <b>Routes</b> are chapters led by one Uma. An Operation opens at a share of route progress; a route chapter can wait
-        for an Operation; the act's last Operation needs every route finished.</p>
-      <div class="scroll"><svg class="d wide" viewBox="0 0 1000 404" role="img" aria-label="Operations and Routes gating each other across an act: the flash-forward first, Operations opening at shares of route progress, route chapters waiting for Operations, and the last Operation needing every route">
-<path d="M165 60 C 165 8, 920 8, 920 56" class="ln-neon dash" marker-end="url(#ah-neon)"/>
-<text class="ts" x="540" y="40" text-anchor="middle">the act's first battle is a flash-forward to its last Operation, with a fixed squad (WD17)</text>
-<text class="tb" x="14" y="82">Operations</text>
-<text class="tf" x="14" y="98">the act's spine</text>
-<text class="tb" x="14" y="140">Routes</text>
-<rect x="110" y="60" width="110" height="50" rx="10" class="op-ff"/>
-<text class="tb" x="165" y="80" text-anchor="middle">Flash-forward</text>
-<text class="tf" x="165" y="98" text-anchor="middle">fixed squad</text>
-<rect x="250" y="60" width="90" height="50" rx="10" class="op"/>
-<text class="tb" x="295" y="80" text-anchor="middle">Op 1</text>
-<rect x="262" y="92" width="66" height="7" rx="3.5" class="hpt"/>
-<rect x="262" y="92" width="6.6" height="7" rx="3.5" class="hpf"/>
-<path d="M295 110 V378" class="gate"/>
-<rect x="400" y="60" width="90" height="50" rx="10" class="op"/>
-<text class="tb" x="445" y="80" text-anchor="middle">Op 2</text>
-<rect x="412" y="92" width="66" height="7" rx="3.5" class="hpt"/>
-<rect x="412" y="92" width="19.8" height="7" rx="3.5" class="hpf"/>
-<path d="M445 110 V378" class="gate"/>
-<rect x="550" y="60" width="90" height="50" rx="10" class="op"/>
-<text class="tb" x="595" y="80" text-anchor="middle">Op 3</text>
-<rect x="562" y="92" width="66" height="7" rx="3.5" class="hpt"/>
-<rect x="562" y="92" width="33" height="7" rx="3.5" class="hpf"/>
-<path d="M595 110 V378" class="gate"/>
-<rect x="700" y="60" width="90" height="50" rx="10" class="op"/>
-<text class="tb" x="745" y="80" text-anchor="middle">Op 4</text>
-<rect x="712" y="92" width="66" height="7" rx="3.5" class="hpt"/>
-<rect x="712" y="92" width="49.5" height="7" rx="3.5" class="hpf"/>
-<path d="M745 110 V378" class="gate"/>
-<rect x="850" y="60" width="140" height="50" rx="10" class="op-last"/>
-<text class="tb" x="920" y="80" text-anchor="middle">Last Operation</text>
-<rect x="862" y="92" width="116" height="7" rx="3.5" class="hpt"/>
-<rect x="862" y="92" width="116" height="7" rx="3.5" class="hpf"/>
-<text class="ts" x="14" y="164">Route 1</text>
-<path d="M542 160 H920" class="ln-acc" style="stroke-width:1.5;opacity:.7"/>
-<path d="M222 160 H348" class="ln" style="stroke-width:1"/>
-<rect x="178" y="148" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="200" y="164" text-anchor="middle">ch 1</text>
-<path d="M392 160 H498" class="ln" style="stroke-width:1"/>
-<rect x="348" y="148" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="370" y="164" text-anchor="middle">ch 2</text>
-<rect x="498" y="148" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="520" y="164" text-anchor="middle">ch 3</text>
-<text class="ts" x="14" y="204">Route 2</text>
-<path d="M682 200 H920" class="ln-acc" style="stroke-width:1.5;opacity:.7"/>
-<path d="M252 200 H368" class="ln" style="stroke-width:1"/>
-<rect x="208" y="188" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="230" y="204" text-anchor="middle">ch 1</text>
-<path d="M412 200 H638" class="ln" style="stroke-width:1"/>
-<rect x="368" y="188" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="390" y="204" text-anchor="middle">ch 2</text>
-<rect x="638" y="188" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="660" y="204" text-anchor="middle">ch 3</text>
-<text class="ts" x="14" y="244">Route 3</text>
-<path d="M702 240 H920" class="ln-acc" style="stroke-width:1.5;opacity:.7"/>
-<path d="M362 240 H498" class="ln" style="stroke-width:1"/>
-<rect x="318" y="228" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="340" y="244" text-anchor="middle">ch 1</text>
-<path d="M542 240 H658" class="ln" style="stroke-width:1"/>
-<rect x="498" y="228" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="520" y="244" text-anchor="middle">ch 2</text>
-<rect x="658" y="228" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="680" y="244" text-anchor="middle">ch 3</text>
-<text class="ts" x="14" y="284">Route 4</text>
-<path d="M822 280 H920" class="ln-acc" style="stroke-width:1.5;opacity:.7"/>
-<path d="M502 280 H618" class="ln" style="stroke-width:1"/>
-<path d="M445 280 H456" class="ln-info"/>
-<circle cx="445" cy="280" r="4" style="fill:var(--info)"/>
-<rect x="458" y="268" width="44" height="24" rx="6" class="ch-wait"/>
-<text class="tg" x="480" y="284" text-anchor="middle">ch 1</text>
-<path d="M662 280 H778" class="ln" style="stroke-width:1"/>
-<rect x="618" y="268" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="640" y="284" text-anchor="middle">ch 2</text>
-<rect x="778" y="268" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="800" y="284" text-anchor="middle">ch 3</text>
-<text class="ts" x="14" y="324">Route 5</text>
-<path d="M842 320 H920" class="ln-acc" style="stroke-width:1.5;opacity:.7"/>
-<path d="M652 320 H678" class="ln" style="stroke-width:1"/>
-<path d="M595 320 H606" class="ln-info"/>
-<circle cx="595" cy="320" r="4" style="fill:var(--info)"/>
-<rect x="608" y="308" width="44" height="24" rx="6" class="ch-wait"/>
-<text class="tg" x="630" y="324" text-anchor="middle">ch 1</text>
-<path d="M722 320 H798" class="ln" style="stroke-width:1"/>
-<rect x="678" y="308" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="700" y="324" text-anchor="middle">ch 2</text>
-<rect x="798" y="308" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="820" y="324" text-anchor="middle">ch 3</text>
-<text class="ts" x="14" y="364">Route 6</text>
-<path d="M852 360 H920" class="ln-acc" style="stroke-width:1.5;opacity:.7"/>
-<path d="M542 360 H658" class="ln" style="stroke-width:1"/>
-<rect x="498" y="348" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="520" y="364" text-anchor="middle">ch 1</text>
-<path d="M702 360 H808" class="ln" style="stroke-width:1"/>
-<rect x="658" y="348" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="680" y="364" text-anchor="middle">ch 2</text>
-<rect x="808" y="348" width="44" height="24" rx="6" class="ch"/>
-<text class="tg" x="830" y="364" text-anchor="middle">ch 3</text>
-<path d="M920 362 V114" class="ln-acc" marker-end="url(#ah-acc)" style="stroke-width:3"/>
-<circle cx="920" cy="160" r="3.5" style="fill:var(--accent)"/>
-<circle cx="920" cy="200" r="3.5" style="fill:var(--accent)"/>
-<circle cx="920" cy="240" r="3.5" style="fill:var(--accent)"/>
-<circle cx="920" cy="280" r="3.5" style="fill:var(--accent)"/>
-<circle cx="920" cy="320" r="3.5" style="fill:var(--accent)"/>
-<circle cx="920" cy="360" r="3.5" style="fill:var(--accent)"/>
-<text class="tacc" x="920" y="396" text-anchor="middle">needs every route finished</text>
+      <h3>Lead Umas and their chapters <span class="tag">TC51</span><span class="tag new d4">new D4</span></h3>
+      <p><i>Octopath Traveler</i>'s structure, with its sequel's fixes (<a href="story-brief.html">the story brief</a> §5,
+        <a href="../story-brief.md#5-what-octopath-traveler-teaches-sb5">story-brief.md</a>). Each lead Uma has her own chapters.</p>
+      <div class="scroll"><svg class="d wide" viewBox="0 28 1000 356" role="img" aria-label="Lead Umas and their chapters: a main thread of the ship’s own chapters and four leads, each joining through her Chapter 1 on her home world, with crossed paths for two leads, danger levels under each chapter, and a signposted finale with the whole crew">
+<path d="M120 64 H900" class="ln-acc" style="stroke-width:1.5;opacity:.6"/>
+<path d="M120 124 H142" class="ln dash" style="stroke-width:1;opacity:.6"/>
+<path d="M198 124 H900" class="ln" style="stroke-width:1.2"/>
+<path d="M120 184 H290" class="ln dash" style="stroke-width:1;opacity:.6"/>
+<path d="M346 184 H900" class="ln" style="stroke-width:1.2"/>
+<path d="M120 244 H512" class="ln dash" style="stroke-width:1;opacity:.6"/>
+<path d="M568 244 H900" class="ln" style="stroke-width:1.2"/>
+<path d="M120 304 H660" class="ln dash" style="stroke-width:1;opacity:.6"/>
+<path d="M716 304 H900" class="ln" style="stroke-width:1.2"/>
+<text class="tb" x="14" y="62">Main thread</text>
+<text class="tf" x="14" y="77">the ship’s own chapters</text>
+<text class="tb" x="14" y="122">Lead A</text>
+<text class="tf" x="14" y="137">home: World 1</text>
+<text class="tb" x="14" y="182">Lead B</text>
+<text class="tf" x="14" y="197">home: World 2</text>
+<text class="tb" x="14" y="242">Lead C</text>
+<text class="tf" x="14" y="257">home: World 3</text>
+<text class="tb" x="14" y="302">Lead D</text>
+<text class="tf" x="14" y="317">home: World 1</text>
+<rect x="142" y="110" width="56" height="28" rx="6" class="op-ff"/>
+<text class="tg" x="170" y="128" text-anchor="middle">Ch 1</text>
+<text class="tf" x="170" y="151" text-anchor="middle">Lv 1 · opens the game</text>
+<rect x="216" y="110" width="56" height="28" rx="6" class="ch"/>
+<text class="tg" x="244" y="128" text-anchor="middle">Ch 2</text>
+<text class="tf" x="244" y="151" text-anchor="middle">Lv 3</text>
+<rect x="290" y="170" width="56" height="28" rx="6" class="op-ff"/>
+<text class="tg" x="318" y="188" text-anchor="middle">Ch 1</text>
+<text class="tf" x="318" y="211" text-anchor="middle">Lv 4 · aboard</text>
+<rect x="364" y="50" width="56" height="28" rx="6" style="fill:var(--accent-wash);stroke:var(--accent);stroke-width:1.5"/>
+<text class="tg" x="392" y="68" text-anchor="middle">Ship 1</text>
+<text class="tf" x="392" y="91" text-anchor="middle">Lv 5</text>
+<rect x="438" y="110" width="56" height="88" rx="6" class="ch-wait"/>
+<text class="tg" x="466" y="146" text-anchor="middle">Crossed</text>
+<text class="tg" x="466" y="158" text-anchor="middle">path</text>
+<text class="tg" x="466" y="172" text-anchor="middle">A + B</text>
+<text class="tf" x="466" y="211" text-anchor="middle">Lv 6</text>
+<rect x="512" y="230" width="56" height="28" rx="6" class="op-ff"/>
+<text class="tg" x="540" y="248" text-anchor="middle">Ch 1</text>
+<text class="tf" x="540" y="271" text-anchor="middle">Lv 7 · aboard</text>
+<rect x="586" y="170" width="56" height="28" rx="6" class="ch"/>
+<text class="tg" x="614" y="188" text-anchor="middle">Ch 2</text>
+<text class="tf" x="614" y="211" text-anchor="middle">Lv 8</text>
+<rect x="660" y="290" width="56" height="28" rx="6" class="op-ff"/>
+<text class="tg" x="688" y="308" text-anchor="middle">Ch 1</text>
+<text class="tf" x="688" y="331" text-anchor="middle">Lv 9 · aboard</text>
+<rect x="734" y="230" width="56" height="88" rx="6" class="ch-wait"/>
+<text class="tg" x="762" y="266" text-anchor="middle">Crossed</text>
+<text class="tg" x="762" y="278" text-anchor="middle">path</text>
+<text class="tg" x="762" y="290" text-anchor="middle">C + D</text>
+<text class="tf" x="762" y="331" text-anchor="middle">Lv 10</text>
+<rect x="808" y="50" width="56" height="28" rx="6" style="fill:var(--accent-wash);stroke:var(--accent);stroke-width:1.5"/>
+<text class="tg" x="836" y="68" text-anchor="middle">Ship 2</text>
+<text class="tf" x="836" y="91" text-anchor="middle">Lv 12</text>
+<text class="tf" x="876" y="68" text-anchor="middle">…</text>
+<text class="tf" x="876" y="128" text-anchor="middle">…</text>
+<text class="tf" x="876" y="188" text-anchor="middle">…</text>
+<text class="tf" x="876" y="248" text-anchor="middle">…</text>
+<text class="tf" x="876" y="308" text-anchor="middle">…</text>
+<rect x="900" y="40" width="88" height="288" rx="10" class="op-last"/>
+<text class="tb" x="944" y="150" text-anchor="middle">Finale</text>
+<text class="ts" x="944" y="168" text-anchor="middle">signposted:</text>
+<text class="ts" x="944" y="184" text-anchor="middle">conditions</text>
+<text class="ts" x="944" y="200" text-anchor="middle">listed; the</text>
+<text class="ts" x="944" y="216" text-anchor="middle">whole crew,</text>
+<text class="ts" x="944" y="232" text-anchor="middle">two squads</text>
+<text class="ts" x="944" y="248" text-anchor="middle">in turn</text>
+<text class="ts" x="120" y="354">Chapter 1 pickups never run back to back: a later chapter or a crossed path sits between them.</text>
+<text class="tf" x="120" y="372">Left to right is one order the ship’s route can play them; the number under each is its danger level, in small steps.</text>
 </svg></div>
       <div class="legend">
-        <span><i style="background:var(--neon-wash);border:1px solid var(--neon)"></i>The flash-forward, the act's first battle</span>
-        <span><i style="background:var(--success)"></i>The share of route progress an Operation opens at</span>
-        <span><i style="background:var(--info-wash);border:1px solid var(--info)"></i>A route chapter that waits for an Operation</span>
-        <span><i style="background:var(--accent)"></i>The last Operation needs every route</span>
+        <span><i style="background:var(--neon-wash);border:1px solid var(--neon)"></i>A lead's Chapter 1, on her home world; it ends with her aboard</span>
+        <span><i style="background:var(--panel);border:1px solid var(--ink-faint)"></i>A later chapter, on any world</span>
+        <span><i style="background:var(--info-wash);border:1px solid var(--info)"></i>A crossed path: two leads, both fixed</span>
+        <span><i style="background:var(--accent-wash);border:1px solid var(--accent)"></i>The main thread and its finale</span>
       </div>
-      <p class="note">Which chapter sits where, and the shares, are an example.</p>
+      <p class="note">An example of one route through the first stretch: which leads, which worlds and which order are the
+        story session's and the player's.</p>
+      <ul class="ux two block">
+        <li><b>Her Chapter 1 plays on her home world</b> and ends with her coming aboard, at the squad's level, never level 1.</li>
+        <li><b>The first Chapter 1 opens the game</b> on the first world. Whether the player picks a starter, as Octopath does,
+          is the story session's call; the game supports both. Octopath locks its starter in the party; this game doesn't,
+          because Strain rotates the cast (TC27).</li>
+        <li><b>She's fixed in her own chapters;</b> the player picks the other three and the guest.</li>
+        <li><b>Chapter 1s stay short</b> (one or two battles) and never run back to back: the ship's route puts a later
+          chapter or a crossed path between pickups.</li>
+        <li><b>Later chapters</b> can play on any world. Each shows a <b>danger level</b> (a recommended squad level, in small
+          steps) and names its keys on the world's map (TC34). Leads vary in shape: three to five chapters, some with a
+          branch, and objectives other than "beat the boss".</li>
+        <li><b>The crew is in the cutscenes.</b> Each scene has one to three short <b>interjection slots,</b> filled by
+          whichever leads are in the squad, with a fallback line, and each chapter ends with a <b>debrief aboard,</b>
+          replayable from the Log. Octopath's most cited flaw was leads absent from each other's stories.
+          <div class="scene"><span>Her scene</span><span class="slot">Slot<small>a lead in the squad</small></span><span class="slot">Slot<small>or the fallback line</small></span><span>…</span><span class="deb">Debrief aboard<small>replayable from the Log</small></span></div></li>
+        <li><b>Crossed paths:</b> a chapter can name two leads, both fixed. Every lead appears in at least two. <b>One main
+          thread</b> runs through the ship's own chapters, ties the leads' stories together, and ends in a <b>signposted
+          finale</b> whose conditions are listed, with the whole crew in it (two squads in turn).</li>
+        <li>Her <b>signature</b> (TC22) unlocks at the end of her last chapter.</li>
+      </ul>
+    </div>
+
+    <div class="block">
+      <h3>Talents <span class="tag">TC52</span><span class="tag new d4">new D4</span></h3>
+      <p>Octopath's path actions, kept small. Each lead brings one talent, used on a world's map, never in battle. The game
+        defines six, so with more than six leads some share one; the story session gives each lead hers:</p>
+      <div class="talents">
+        <div class="tile"><h3><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="3"/><path d="M2 12c3-5 6.5-7 10-7s7 2 10 7c-3 5-6.5 7-10 7s-7-2-10-7z"/></svg>Scout</h3><p>Shows a location's enemies and hidden side objective before you go.</p></div>
+        <div class="tile"><h3><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.8-.9-1.9-1.3-3-1.3-1.8 0-3 .9-3 2.3 0 3.2 6 1.8 6 5 0 1.4-1.3 2.3-3 2.3-1.3 0-2.5-.5-3.2-1.4M12 5.5v13"/></svg>Bargain</h3><p>Opens a better stock at a world's market.</p></div>
+        <div class="tile"><h3><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M8 6l-5 6 5 6M16 6l5 6-5 6M14 4l-4 16"/></svg>Hack</h3><p>Opens a locked location or a redacted line in the Log.</p></div>
+        <div class="tile"><h3><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><circle cx="10" cy="8" r="4"/><path d="M3 20c0-4 3-6 7-6s7 2 7 6M19 8v6M16 11h6"/></svg>Recruit</h3><p>Talks a crew Uma aboard after her side job.</p></div>
+        <div class="tile"><h3><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M4 4l10 10M20 4L10 14M7 17l-3 3M17 17l3 3M6 14l4 4M18 14l-4 4"/></svg>Duel</h3><p>Challenges a named rival to a one-on-one on a 6 × 6 map, for a rare part.</p></div>
+        <div class="tile"><h3><svg viewBox="0 0 24 24" aria-hidden="true" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 21s-8-4.8-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 6.2-8 11-8 11z"/><path d="M12 9v6M9 12h6"/></svg>Mend</h3><p>Clears one Uma's Strain, once a world visit.</p></div>
+      </div>
     </div>
 
     <div class="grid2 block">
-      <div class="tile"><h3>Routes <span class="tag">TC33</span></h3>
-        <p>Six route leads an act, three or four open at a time, three chapters each. A route chapter fixes its lead; the player picks the other three and the guest. Each route has its own genre lens and ends on the shared beat: her signature unlocks and she joins the last Operation (WD19).</p></div>
-      <div class="tile"><h3>Leads and the Archive <span class="tag">TC34</span></h3>
+      <div class="tile"><h3>Leads and the Log <span class="tag">TC34</span><span class="tag amend d4">amended D4</span></h3>
         <ul>
-          <li><b>Leads</b> come from scenes and battle side objectives (hack that terminal, save that civilian, free a heroine with a given Uma). A scene offers the Leads that apply as one-tap choices; used in another Uma's route, one opens a branch or a File. No hunting for hidden spots, and no rewinds.</li>
-          <li><b>The Archive</b> in the Hideout: <b>Files</b> on people, districts, factions and Gate-worlds, with redacted lines that fill in; a <b>Timeline</b> of every scene, by place and date, replayable; <b>Anomalies</b>, the contradictions the player has seen, open until explained (WD18).</li>
-          <li><b>Every lock names its key</b> on the route board: which chapter, Operation or File opens it.</li>
-          <li><b>Freed heroines</b> open their File and a short log from their side (WD12).</li>
+          <li><b>Leads</b> come from scenes and battle side objectives (hack that terminal, save that civilian, free a heroine with a given Uma). A scene offers the Leads that apply as one-tap choices; used in another lead's chapter, one opens a branch or a File. No hunting for hidden spots, and no rewinds.</li>
+          <li><b>The Log</b> aboard the ship (D3's Archive): <b>Files</b> on people, places, factions and worlds, with redacted lines that fill in; a <b>Timeline</b> of every scene, by world and date, replayable; <b>Anomalies</b>, the contradictions the player has seen, open until explained.</li>
+          <li><b>Every lock names its key</b> on the world's map: which chapter, mission or File opens it.</li>
+          <li><b>Freed heroines</b> open their File and a short log from their side.</li>
         </ul></div>
-      <div class="tile"><h3>The Call <span class="tag">TC35</span></h3>
+      <div class="tile"><h3>The Call <span class="tag">TC35</span><span class="tag rew">reworded D4</span></h3>
         <p>Triangle Strategy's vote, without hidden numbers.</p>
         <ul>
-          <li>At a big choice, the squad votes with tokens. Before the vote, one try to persuade each voter, with arguments that unlock through <b>Intel scenes</b> (a district diorama with four to six hotspots, about three minutes) and the matching conviction.</li>
+          <li>At a big choice, the crew votes with tokens. Before the vote, one try to persuade each voter, with arguments that unlock through <b>Intel scenes</b> (a diorama with four to six hotspots, about three minutes) and the matching conviction.</li>
           <li>Three convictions, <span class="chip">Code</span><span class="chip">Edge</span><span class="chip">Free</span>, move with choices and with how the squad fights. They're <b>visible</b>, and each voter shows her reasons.</li>
-          <li>A branch swaps the next one or two missions, then rejoins. The act's last vote shapes its ending, and conviction thresholds decide which guests join.</li>
+          <li>A branch swaps the next one or two missions, then rejoins. Conviction thresholds decide which guests join.</li>
         </ul></div>
-      <div class="tile"><h3>The session <span class="tag">TC36</span></h3>
+      <div class="tile"><h3>The session <span class="tag">TC36</span><span class="tag rew">reworded D4</span></h3>
         <div class="session">
           <div style="flex:3;background:var(--info-wash)">Scene<small>≤ 3 min</small></div>
           <div style="flex:10;background:var(--neon-wash)">Battle<small>~10 min</small></div>
-          <div style="flex:2;background:var(--accent-wash)">Hideout<small>~2</small></div>
+          <div style="flex:2;background:var(--accent-wash)">Aboard<small>~2</small></div>
         </div>
-        <p>A scene of three minutes at most, with auto, skip and a log; a battle of about ten minutes; about two in the Hideout. A new game reaches its first battle within two minutes. Optional scenes live in the Crew station.</p></div>
+        <p>A scene of three minutes at most, with auto, skip and a log; a battle of about ten minutes; about two aboard the ship. A new game reaches its first battle within two minutes. Optional scenes live in the Quarters.</p></div>
     </div>
 
     <div class="kpis block">
-      <div class="kpi"><b>6 × 3</b><span>route chapters an act</span></div>
-      <div class="kpi"><b>5</b><span>Operations an act</span></div>
-      <div class="kpi"><b>~23</b><span>story battles an act, plus contracts</span></div>
-      <div class="kpi"><b>~115</b><span>story battles over five acts</span></div>
+      <div class="kpi"><b>2–4</b><span>battles a chapter</span></div>
+      <div class="kpi"><b>8 × 4</b><span>leads × chapters, as an example</span></div>
+      <div class="kpi"><b>~110</b><span>story battles with the main thread, close to D3's five acts</span></div>
+      <div class="kpi"><b>+</b><span>side jobs on top</span></div>
     </div>
-    <p class="note">Acts ship as content waves (TC15).</p>
+    <p class="note">The story session sets the real counts; worlds ship as content waves (TC15).</p>
   </section>
 
-  <!-- ============ 6. The Hideout ============ -->
-  <section class="card" id="hideout">
-    <h2><span class="num">6</span>The Hideout and progression <span class="tag">TC9</span><span class="tag">TC39</span><span class="tag">TC42–TC44</span></h2>
+  <!-- ============ 6. The ship ============ -->
+  <section class="card" id="ship">
+    <h2><span class="num">6</span>The ship and progression <span class="tag">TC9</span><span class="tag">TC39</span><span class="tag">TC42–TC44</span><span class="tag">TC49</span><span class="tag">TC50</span></h2>
     <div class="grid2">
-      <div class="tile"><h3>The hub <span class="tag">TC9</span><span class="tag amend">amended D3</span></h3><p>The Hideout is the hub between battles, on uma-kit's shell and screens where they fit. There's no gacha: Umas join through the story (TC45), guests through their chapters (TC47), and parts through salvage and the shop.</p></div>
-      <div class="tile"><h3>The double life <span class="tag">TC39</span></h3><p>The Hideout sits behind a front business in the Markets, kept by a civilian who knows. Scenes by day, missions by night. <b>Suit-up</b> (the rig's parts snapping on in her colour) opens each battle, skippable, and big story moments (WD7).</p></div>
+      <div class="tile"><h3>The hub <span class="tag">TC9</span><span class="tag amend d4">amended D4</span></h3><p><b>The ship is the hub</b> between battles and the squad's stronghold, on uma-kit's shell and screens where they fit. There's no gacha: Umas join through the story (TC45), guests through their chapters (TC47), and parts through salvage and the market.</p></div>
+      <div class="tile"><h3>The ship grows with its crew <span class="tag">TC49</span><span class="tag new d4">new D4</span></h3><p>It starts with the rooms the first chapter needs. Each lead who comes aboard opens a room or upgrades one, as Triangle Strategy's Encampment grows. The room plan is the game's; which lead opens which is the story session's.</p></div>
     </div>
-    <h3 class="block">The stations <span class="tag">TC42</span> <span class="note">Triangle Strategy's Encampment</span></h3>
-    <div class="stations">
-      <div class="tile"><h3>Workshop</h3><p>Loadouts; parts and their remodel ranks 1–3 (each rank opens 2–3 upgrades), for credits and scrap; dismantle; repaint (free).</p></div>
-      <div class="tile"><h3>Shop</h3><p>Parts and items; its stock grows by chapter; shows what's owned.</p></div>
-      <div class="tile"><h3>Fixer</h3><p>Rep buys Overrides and licences (TC44); contracts are taken here.</p></div>
-      <div class="tile"><h3>Sim Pod</h3><p>Replays story maps with new enemies, including a five-minute variant; XP for the whole squad even on a loss; one new sim a chapter; the <b>Arena</b> (TC43).</p></div>
-      <div class="tile"><h3>Crew</h3><p>Optional scenes with the cast, bench status (TC27).</p></div>
-      <div class="tile"><h3>Archive</h3><p>Files, the Timeline and Anomalies (TC34).</p></div>
+
+    <h3 class="block">The rooms <span class="tag">TC42</span><span class="tag amend d4">amended D4</span> <span class="note">Triangle Strategy's Encampment, aboard a ship</span></h3>
+    <div class="scroll"><svg class="d wide" viewBox="0 0 1000 222" role="img" aria-label="The ship in cross-section with its seven rooms: the Hangar, Quarters, the Log and the Bridge from the start; the Store, the Sim Pod and Comms open with a lead">
+<text class="ts" x="500" y="32" text-anchor="middle">Each lead who comes aboard opens a room or upgrades one (TC49); which lead opens which is the story session’s</text>
+<path d="M40 48 H820 L968 120 L820 192 H40 Q22 120 40 48 Z" class="frame"/>
+<rect x="56" y="68" width="126" height="104" rx="8" class="part"/>
+<text class="tb" x="119" y="92" text-anchor="middle">Hangar</text>
+<text class="ts" x="119" y="111" text-anchor="middle">loadouts, parts,</text>
+<text class="ts" x="119" y="126" text-anchor="middle">remodels, repaint</text>
+<text class="tok" x="119" y="160" text-anchor="middle">from the start</text>
+<rect x="192" y="68" width="100" height="104" rx="8" class="slot"/>
+<text class="tb" x="242" y="92" text-anchor="middle">Store</text>
+<text class="ts" x="242" y="111" text-anchor="middle">parts and items;</text>
+<text class="ts" x="242" y="126" text-anchor="middle">worlds’ markets</text>
+<text class="tf" x="242" y="160" text-anchor="middle">with a lead</text>
+<rect x="302" y="68" width="100" height="104" rx="8" class="slot"/>
+<text class="tb" x="352" y="92" text-anchor="middle">Sim Pod</text>
+<text class="ts" x="352" y="111" text-anchor="middle">replays and</text>
+<text class="ts" x="352" y="126" text-anchor="middle">the Arena</text>
+<text class="tf" x="352" y="160" text-anchor="middle">with a lead</text>
+<rect x="412" y="68" width="100" height="104" rx="8" class="part"/>
+<text class="tb" x="462" y="92" text-anchor="middle">Quarters</text>
+<text class="ts" x="462" y="111" text-anchor="middle">crew scenes,</text>
+<text class="ts" x="462" y="126" text-anchor="middle">bench status</text>
+<text class="tok" x="462" y="160" text-anchor="middle">from the start</text>
+<rect x="522" y="68" width="100" height="104" rx="8" class="slot"/>
+<text class="tb" x="572" y="92" text-anchor="middle">Comms</text>
+<text class="ts" x="572" y="111" text-anchor="middle">Rep, licences,</text>
+<text class="ts" x="572" y="126" text-anchor="middle">side jobs</text>
+<text class="tf" x="572" y="160" text-anchor="middle">with a lead</text>
+<rect x="632" y="68" width="100" height="104" rx="8" class="part"/>
+<text class="tb" x="682" y="92" text-anchor="middle">Log</text>
+<text class="ts" x="682" y="111" text-anchor="middle">Files, Timeline,</text>
+<text class="ts" x="682" y="126" text-anchor="middle">Anomalies</text>
+<text class="tok" x="682" y="160" text-anchor="middle">from the start</text>
+<rect x="742" y="76" width="124" height="88" rx="8" class="part"/>
+<text class="tb" x="804" y="100" text-anchor="middle">Bridge</text>
+<text class="ts" x="804" y="119" text-anchor="middle">star map, travel,</text>
+<text class="ts" x="804" y="134" text-anchor="middle">the Call</text>
+<text class="tok" x="804" y="152" text-anchor="middle">from the start</text>
+<text class="tf" x="40" y="214">← stern</text>
+<text class="tf" x="968" y="214" text-anchor="end">bow →</text>
+</svg></div>
+    <div class="legend">
+      <span><i style="background:var(--info-wash);border:1px solid var(--info)"></i>From the start</span>
+      <span><i style="background:var(--raised);border:1px dashed var(--ink-faint)"></i>Opens with a lead</span>
     </div>
+    <div class="scroll block"><table class="wide">
+      <tr><th>Room</th><th>What it does</th><th>Opens</th></tr>
+      <tr><td><b>Bridge</b></td><td>The star map and travel (TC50); the Call is held here (TC35)</td><td><span class="pill start">From the start</span></td></tr>
+      <tr><td><b>Hangar</b></td><td>Loadouts; parts and their remodel ranks 1–3 (each rank opens 2–3 upgrades), for credits and scrap; dismantle; repaint (free)</td><td><span class="pill start">From the start</span></td></tr>
+      <tr><td><b>Quarters</b></td><td>Optional scenes with the crew; bench status (TC27)</td><td><span class="pill start">From the start</span></td></tr>
+      <tr><td><b>Log</b></td><td>Files, the Timeline and Anomalies (TC34)</td><td><span class="pill start">From the start</span></td></tr>
+      <tr><td><b>Store</b></td><td>Parts and items; its stock grows by chapter and by world; shows what's owned. Each world's market sells there too</td><td><span class="pill lead">With a lead</span></td></tr>
+      <tr><td><b>Comms</b></td><td>Rep buys Overrides and licences (TC44); side jobs from every visited world</td><td><span class="pill lead">With a lead</span></td></tr>
+      <tr><td><b>Sim Pod</b></td><td>Replays story maps with new enemies, including a five-minute variant; XP for the whole squad even on a loss; one new sim a chapter; the <b>Arena</b> (TC43)</td><td><span class="pill lead">With a lead</span></td></tr>
+    </table></div>
+
+    <h3 class="block">The Bridge and the star map <span class="tag">TC50</span><span class="tag new d4">new D4</span></h3>
+    <div class="scroll"><svg class="d wide" viewBox="0 0 1000 262" role="img" aria-label="The Bridge’s star map of known worlds, and a world’s node map: the ship’s dock, the market, a chapter with its danger level, a side job, a waiting scene and a locked chapter that names its key">
+<rect x="16" y="30" width="360" height="226" rx="12" style="fill:var(--raised);stroke:var(--hairline-strong)"/>
+<text class="tb" x="32" y="54">The Bridge: the star map</text>
+<path d="M108 160 L198 108" class="ln dash"/>
+<path d="M216 112 L294 180" class="ln dash"/>
+<path d="M110 172 L288 188" class="ln dash"/>
+<path d="M220 96 L310 92" class="ln dash" style="opacity:.5"/>
+<circle cx="96" cy="170" r="14" style="fill:var(--neon-wash);stroke:var(--neon);stroke-width:2"/>
+<text class="ts" x="96" y="202" text-anchor="middle">World 1</text>
+<circle cx="210" cy="100" r="12" style="fill:var(--info-wash);stroke:var(--info);stroke-width:1.5"/>
+<text class="ts" x="210" y="80" text-anchor="middle">World 2</text>
+<circle cx="300" cy="190" r="12" style="fill:var(--info-wash);stroke:var(--info);stroke-width:1.5"/>
+<text class="ts" x="300" y="220" text-anchor="middle">World 3</text>
+<circle cx="320" cy="92" r="10" style="fill:none;stroke:var(--ink-faint);stroke-width:1.5;stroke-dasharray:4 3"/>
+<text class="tf" x="320" y="120" text-anchor="middle">not yet known</text>
+<path d="M56 134 H78 L88 141 L78 148 H56 Z" class="op-last"/>
+<text class="tf" x="72" y="126" text-anchor="middle">the ship</text>
+<text class="tf" x="32" y="244">Travel: a tap and a jump scene; no fuel, no clock</text>
+<path d="M380 143 H460" class="ln" marker-end="url(#ah)"/>
+<text class="tf" x="420" y="134" text-anchor="middle">a world</text>
+<rect x="466" y="30" width="518" height="226" rx="12" style="fill:var(--raised);stroke:var(--hairline-strong)"/>
+<text class="tb" x="482" y="54">A world: its node map of locations</text>
+<path d="M544 142 L638 98" class="ln"/>
+<path d="M546 156 L650 172" class="ln"/>
+<path d="M714 182 L770 200" class="ln"/>
+<path d="M712 166 L790 102" class="ln"/>
+<path d="M811 100 L888 142" class="ln"/>
+<path d="M834 200 L888 160" class="ln"/>
+<circle cx="530" cy="150" r="16" style="fill:var(--accent-wash);stroke:var(--accent);stroke-width:2"/>
+<text class="ts" x="530" y="186" text-anchor="middle">the ship’s dock</text>
+<circle cx="650" cy="90" r="13" style="fill:var(--accent-wash);stroke:var(--accent);stroke-width:1.5"/>
+<text class="ts" x="650" y="120" text-anchor="middle">the market</text>
+<rect x="650" y="160" width="64" height="30" rx="6" class="ch-wait"/>
+<text class="tg" x="682" y="179" text-anchor="middle">Ch 2</text>
+<text class="ts" x="682" y="206" text-anchor="middle">Lead A · Lv 6</text>
+<circle cx="800" cy="95" r="11" style="fill:var(--neon-wash);stroke:var(--neon);stroke-width:1.5"/>
+<text class="ts" x="800" y="76" text-anchor="middle">a waiting scene</text>
+<rect x="770" y="190" width="64" height="30" rx="6" style="fill:var(--success-wash);stroke:var(--success);stroke-width:1.5"/>
+<text class="tg" x="802" y="209" text-anchor="middle">side job</text>
+<text class="ts" x="802" y="238" text-anchor="middle">any lead · Lv 5</text>
+<rect x="888" y="135" width="64" height="30" rx="6" class="slot"/>
+<text class="tg" x="920" y="154" text-anchor="middle">Ch 3</text>
+<text class="ts" x="920" y="184" text-anchor="middle">locked; key:</text>
+<text class="tf" x="920" y="199" text-anchor="middle">Lead B’s Ch 2</text>
+</svg></div>
+    <ul class="tight">
+      <li>The Bridge shows the known worlds as a <b>star map.</b> Travel is a tap and a short jump scene, with no fuel and no clock.</li>
+      <li>A world opens on a <b>node map</b> of its locations, Triangle Strategy's world map: chapters, side jobs, the market and waiting scenes, each with its danger level and any lock's key.</li>
+      <li>A world never closes. Side jobs and the Sim Pod keep every visited world useful.</li>
+    </ul>
+
+    <div class="tile block"><h3>Suit-up <span class="tag">TC39</span><span class="tag amend d4">amended D4</span></h3><p>The rig's parts snap on in her colour at the start of each battle (skippable) and at big story moments. D3's double life (a hideout behind a front business) is the story session's to keep, perhaps for the first world only (WD7).</p></div>
+
     <div class="split block">
       <div>
         <h3>The economy <span class="tag">TC43</span></h3>
         <table>
-          <tr><td><b>Credits</b></td><td>From missions and bonus goals; spent at the Shop, on Core repairs and remodels.</td></tr>
+          <tr><td><b>Credits</b></td><td>From missions and bonus goals; spent at the Store and the worlds' markets, on Core repairs and remodels.</td></tr>
           <tr><td><b>Salvage</b></td><td>Intact enemy parts, kept (TC26). <b>Scrap</b> from dismantled parts feeds remodels.</td></tr>
           <tr><td><b>Makers</b></td><td>Three parts from one maker give a small bonus and unlock that maker's paint.</td></tr>
           <tr><td><b>The Arena</b></td><td>A two-minute one-against-one on a 6 × 6 map, with odds and a payout cap each chapter.</td></tr>
-          <tr><td><b>Items</b></td><td>One squad stock with six loadout slots, restocked in the Hideout; using one costs the action, not Charge.</td></tr>
+          <tr><td><b>Items</b></td><td>One squad stock with six loadout slots, restocked aboard; using one costs the action, not Charge.</td></tr>
         </table>
       </div>
       <div>
@@ -1646,52 +1913,126 @@
 
   <!-- ============ 7. How it's built ============ -->
   <section class="card" id="built">
-    <h2><span class="num">7</span>How it's built <span class="tag">TC10</span><span class="tag">TC11</span><span class="tag">TC14</span><span class="tag">TC48</span></h2>
-    <p><b>The battle view</b> <span class="tag">TC10</span><span class="tag amend">amended D3</span>: an HD-2D diorama on
-      <code>@luismlorenzana/uma-stage</code> (0.2.0, uma-platform P142), in Triangle Strategy's look.</p>
+    <h2><span class="num">7</span>How it's built <span class="tag">TC10</span><span class="tag">TC11</span><span class="tag">TC14</span><span class="tag">TC48</span><span class="tag">TC54</span></h2>
+    <p>The full plan, with every reused part and the packets, is <a href="build-plan.html">the build plan</a>
+      (<a href="../build-plan.md">build-plan.md</a>).</p>
+    <p><b>The battle view</b> <span class="tag">TC10</span><span class="tag amend d4">amended D4</span>: an HD-2D diorama on
+      <code>@luismlorenzana/uma-stage</code> (<b>0.3.0</b>, uma-platform P142, P145, P146), in Triangle Strategy's look:
+      <b>a game-owned battle scene built from the stage's parts,</b> as uma-quest's fights already are.</p>
+    <div class="split">
+      <div class="tile reuse"><h3>From the stage's parts</h3>
+        <p>The stage's two finished scenes don't fit a grid: <code>StageEngine</code> is uma-quest's field (a leader, four
+          followers, a follow camera) and <code>BandStage</code> is uma-farm's (a farm design, a vertical pan), and both keep
+          their three.js scene private. The parts do fit:</p>
+        <p><span class="chip">the terrain builder<small><code>roomGeometry</code>: cells and heights up to 16 × 16</small></span><span class="chip"><code>SpriteActor</code> and <code>Standee</code></span><span class="chip">the camera and pixel maths</span><span class="chip">pure picking<small><code>rayAt</code>, <code>hitQuad</code>, <code>tileQuad</code></small></span><span class="chip">the fade functions</span><span class="chip"><code>Effects</code></span><span class="chip">the frame pacer</span><span class="chip">the grade maths</span><span class="chip">the sprite-set cap of eight</span></p></div>
+      <div class="tile own"><h3>This game's own</h3>
+        <p><span class="chip">the map parser, movement and ranges<small>in the battle package, TC54</small></span><span class="chip">tile picking over every tile's top</span><span class="chip">the range overlays<small>one merged mesh on the tile tops</small></span><span class="chip">a two-axis pan</span><span class="chip">the facing wedge</span><span class="chip">the timeline</span><span class="chip">the cut-in<small>copying uma-quest's <code>FightStage</code>, on the borrowed renderer</small></span></p>
+        <p>Lasting UI is DOM over the canvas.</p></div>
+    </div>
+    <div class="kpis block">
+      <div class="kpi"><b>43 × 24 pt</b><span>a tile, on a 3× iPhone in landscape</span></div>
+      <div class="kpi"><b>~20 × 16</b><span>tiles fit across and deep</span></div>
+      <div class="kpi"><b>14 × 14</b><span>a flat board fits; a board with height pans</span></div>
+      <div class="kpi"><b>56 of 112 MB</b><span>sprite budget for about thirteen figures</span></div>
+    </div>
     <div class="grid3">
-      <div class="tile"><h3>A game-owned battle scene</h3><p>Built from the stage's parts, as uma-quest's fights already are: its grid builder, tile picking, A*, sprite actor, camera maths, tilt-shift and bloom. The range overlays, the timeline and the cut-ins are this game's own (DOM over the canvas for lasting UI).</p></div>
-      <div class="tile"><h3>A fixed camera</h3><p>Orthographic, pitched 35°, one texel per device pixel, <b>no rotation in v1</b> (rotation was Triangle Strategy's biggest cost, and the stage builds south faces only). Anything between the camera and the acting or target unit fades. Terrain rises toward the back of a map so heights hide little.</p></div>
+      <div class="tile"><h3>A fixed camera</h3><p>Orthographic, pitched 35°, one texel per device pixel, <b>no rotation in v1</b> (rotation was Triangle Strategy's biggest cost, and the stage builds south faces only). A tile is about 43 × 24 pt on a 3× iPhone in landscape, so about 20 tiles fit across and 16 deep: a flat 14 × 14 board fits, and a board with height pans. Anything between the camera and the acting or target unit fades. Terrain rises toward the back of a map so heights hide little.</p></div>
       <div class="tile"><h3>The look</h3><p>Night by default (a dark blue-violet ambient, a cool key light, a grade per map); neon signs as glowing textures with their light painted on the ground; the stage's four live lights on the acting unit, the ability flash and two hero signs; bloom only on neon, flashes and holograms; a wide sharp band of tilt-shift in battle, a stronger one in story shots; no motion blur, chromatic aberration only as a pulse on a hit or a hack.</p></div>
       <div class="tile"><h3>Rain</h3><p>One scrolling streak layer, small splashes, and wet-tile kit variants with reflections painted in. Rain makes open tiles Wet (TC24).</p></div>
-      <div class="tile"><h3>The diorama edge</h3><p>The board is a cut slab over far parallax layers (the city, the Ring's arc), with the Underlevels' layers on its front face.</p></div>
-      <div class="tile"><h3>CY4 is a spike</h3><p>It proves it on the phone before anything builds on it:</p>
+      <div class="tile"><h3>The diorama edge</h3><p>The board is a cut slab over far parallax layers (the world's skyline), with the lower layers on its front face.</p></div>
+      <div class="tile"><h3>It renders only when something moves</h3><p>uma-farm's wake-and-sleep loop, which suits a turn-based game and the battery.</p></div>
+      <div class="tile"><h3>CY7 proves it on the phone</h3><p>Before the app builds on it:</p>
         <ul>
           <li>a 14 × 14 grid with heights at 35° in landscape;</li>
           <li>tile picking at about 24 pt tile depth;</li>
           <li>tilt-shift and bloom with battery saver off;</li>
-          <li>about thirteen figures live (four Umas' chibi sets, and standees for the guest and eight enemies);</li>
+          <li>about thirteen figures live (four Umas and nine standees, about 56 MB of the 112 MB sprite budget);</li>
           <li>how much heights hide.</li>
         </ul>
         <p>If it fails, the fallback is a Phaser 4 isometric board, the platform's baseline for 2D scenes.</p></div>
     </div>
-    <div class="split block">
-      <div>
-        <h3>The stage requests <span class="tag">TC48</span></h3>
-        <p>CY4 files with uma-platform only what the spike shows is needed, as requests, never a fork:</p>
-        <ol class="steps">
-          <li>A grid stage: figures, picking and grade over a room-format grid, with a free two-axis pan.</li>
-          <li>Heights 0–3 in the format, and a jump step.</li>
-          <li>Tile overlays and highlights (ranges, a cursor), if drawing them game-side costs too much.</li>
-          <li>A tactical camera: a steeper pitch or a zoom, with the pixel rule relaxed.</li>
-          <li>Glowing kit frames and tunable bloom and tilt-shift.</li>
-          <li>Rain particles.</li>
-          <li>A lighter tier of effects that stays on under battery saver, which is on by default on phones.</li>
-        </ol>
-        <p class="note">Rotation in 90° steps stays deferred (TC16). Attacks in more facings aren't needed: the cut-in carries the attack.</p>
-      </div>
-      <div class="grid3" style="grid-template-columns:1fr">
-        <div class="tile"><h3>The stack <span class="tag">TC11</span></h3><p>uma-rpg's: React, Vite, Tailwind, Zustand and Dexie on the web, NestJS on Cloud Run, Firebase Hosting and Auth, a PWA. It installs uma-data, uma-kit, uma-work, uma-server, uma-art and uma-stage.</p></div>
-        <div class="tile"><h3>The cloud <span class="tag">TC11</span></h3><p>In the <code>uma-rpg</code> GCP project like uma-quest's and uma-farm's (uma-platform P88), every piece its own: site <code>uma-cyberpunk</code>, Cloud Run <code>cyber-api</code>, Firestore database <code>cyber</code>. CY2 creates it on the owner's go, with a free-tier cost table.</p></div>
-        <div class="tile"><h3>It stands alone <span class="tag">TC14</span></h3><p>Its own save, rules and economy, and no parcels from uma-farm at the start. Parcels can come later the way uma-quest takes them (uma-platform P89), on the owner's word.</p></div>
-      </div>
+
+    <div class="block">
+      <h3>The stage requests <span class="tag">TC48</span><span class="tag amend d4">amended D4</span></h3>
+      <p>CY7 files with uma-platform only what it shows is needed, one piece at a time, as requests, never a fork. The audit
+        sorts them:</p>
+      <div class="scroll"><table class="wide">
+        <tr><th>Request</th><th>Why</th><th>Likely</th></tr>
+        <tr><td><b>Tunable bloom and tilt-shift</b></td><td>Bloom's threshold is fixed at 0.86 on luminance, so saturated neon never blooms (magenta is about 0.28); tilt-shift is fixed, and story shots want it stronger</td><td><span class="pill need">Needed</span></td></tr>
+        <tr><td><b>Glowing kit frames</b></td><td>A kit frame can make a live light but can't glow</td><td><span class="pill need">Needed</span></td></tr>
+        <tr><td><b>A tactics kit kind, cached by kit id</b></td><td>A biome kit must carry dungeon frames to parse, and the loader keeps one page per kind for the session, so a second map gets the first map's kit</td><td><span class="pill need">Needed</span></td></tr>
+        <tr><td><b>A lighter tier of effects under battery saver</b></td><td>Saver is on by default on phones and turns every effect off</td><td><span class="pill need">Needed</span></td></tr>
+        <tr><td><b>Heights 0–3</b></td><td><code>MAX_LEVEL</code> is 2 in the format; the builder may already raise level 3 from a design built directly, which CY7 tests first</td><td><span class="pill if">If the test fails</span></td></tr>
+        <tr><td><b>A tactical zoom</b></td><td>A 2× phone fits about 10 tiles each way; the owner's 3× iPhone fits a 14 × 14 board</td><td><span class="pill if">If the phone needs it</span></td></tr>
+        <tr><td><b>Rain particles</b></td><td>Missing</td><td><span class="pill only">Only if the game-side layer costs too much</span></td></tr>
+        <tr><td><b>Overlays in the stage</b></td><td>The game draws them in its own scene</td><td><span class="pill only">Only if that costs too much</span></td></tr>
+      </table></div>
+      <p class="note">Rotation in 90° steps stays deferred (TC16). Attacks in more facings aren't needed: the cut-in carries the attack.</p>
+    </div>
+
+    <div class="block">
+      <h3>Combat testing, three ways <span class="tag">TC54</span><span class="tag new d4">new D4</span></h3>
+      <p>Before any content depends on the battle.</p>
+      <div class="scroll"><svg class="d wide" viewBox="0 24 1000 272" role="img" aria-label="Combat testing: a frozen input and a list of actions go into the pure battle reducer, which returns the new state and cues and also runs the forecast on a copy; it is tested three ways: unit tests and golden replays, a sandbox on the phone, and a headless simulator">
+<rect x="20" y="40" width="230" height="58" rx="10" class="ch"/>
+<text class="tb" x="34" y="63">Frozen input</text>
+<text class="ts" x="34" y="82">map, units, loadouts, seed</text>
+<rect x="20" y="118" width="230" height="58" rx="10" class="ch"/>
+<text class="tb" x="34" y="141">A list of actions</text>
+<text class="ts" x="34" y="160">each one a player or AI move</text>
+<path d="M252 69 L366 92" class="ln" marker-end="url(#ah)"/>
+<path d="M252 147 L366 124" class="ln" marker-end="url(#ah)"/>
+<rect x="370" y="40" width="260" height="136" rx="10" class="op-last"/>
+<text class="tb" x="500" y="66" text-anchor="middle">@cyber/battle</text>
+<text class="ts" x="500" y="88" text-anchor="middle">a deterministic reducer,</text>
+<text class="ts" x="500" y="103" text-anchor="middle">uma-rpg’s pattern</text>
+<text class="ts" x="500" y="126" text-anchor="middle">randomness: a seeded hash,</text>
+<text class="ts" x="500" y="141" text-anchor="middle">never Math.random</text>
+<text class="tf" x="500" y="164" text-anchor="middle">rules carry a version</text>
+<path d="M632 92 L746 69" class="ln" marker-end="url(#ah)"/>
+<path d="M632 124 L746 147" class="ln" marker-end="url(#ah)"/>
+<rect x="750" y="40" width="230" height="58" rx="10" class="ch"/>
+<text class="tb" x="764" y="63">The new state and cues</text>
+<text class="ts" x="764" y="82">cues: what happened, for the scene</text>
+<rect x="750" y="118" width="230" height="58" rx="10" class="ch"/>
+<text class="tb" x="764" y="141">The forecast card (TC29)</text>
+<text class="ts" x="764" y="160">same functions, chances only</text>
+<path d="M450 178 L190 210" class="ln" marker-end="url(#ah)"/>
+<path d="M500 178 V210" class="ln" marker-end="url(#ah)"/>
+<path d="M550 178 L810 210" class="ln" marker-end="url(#ah)"/>
+<rect x="20" y="214" width="300" height="74" rx="10" class="ch-wait"/>
+<text class="tb" x="36" y="236">1 · The rules, tested</text>
+<text class="ts" x="36" y="255">a unit test for every rule; golden replays:</text>
+<text class="ts" x="36" y="271">an input, its actions and the exact cues</text>
+<rect x="350" y="214" width="300" height="74" rx="10" class="ch-wait"/>
+<text class="tb" x="366" y="236">2 · A sandbox on the phone</text>
+<text class="ts" x="366" y="255">any skirmish: map, squad, loadouts, enemies,</text>
+<text class="ts" x="366" y="271">seed; saved as a scenario file to replay</text>
+<rect x="680" y="214" width="300" height="74" rx="10" class="ch-wait"/>
+<text class="tb" x="696" y="236">3 · A headless simulator</text>
+<text class="ts" x="696" y="255">AI against AI over many seeds; win rates,</text>
+<text class="ts" x="696" y="271">length, damage; one tuning table to edit</text>
+</svg></div>
+      <ol class="steps block">
+        <li><b>The rules as a pure package,</b> <code>@cyber/battle</code>: a deterministic reducer, uma-rpg's pattern. A battle is a frozen input (map, units, loadouts, seed) plus a list of actions; each action returns the new state and <b>cues</b> (what happened, for the scene to play back). Randomness is a seeded hash, never <code>Math.random</code>. The forecast calls the same pure functions the resolution uses and shows chances and ranges, never the seeded roll, so the card never lies and never spoils (TC29). Every rule has unit tests, and <b>golden replays</b> (an input, its actions and the exact cues) catch any change in behaviour. Rules carry a version, so an old save's battle still replays.</li>
+        <li><b>A sandbox on the phone,</b> uma-quest's test room grown up: a route that sets up any skirmish (map, squad, loadouts, enemies, seed), plays it with the full battle UI, and saves the setup as a <b>scenario file</b> to replay or share. The owner's play tests run here before any chapter exists.</li>
+        <li><b>A headless simulator,</b> uma-racer's <code>pnpm sim</code> and uma-rpg's balance plays: scenarios played AI against AI over many seeds, reporting win rates, battle length in turns and minutes, damage by band and type, parts broken, Charge spent, counters and Crossfires. The tuning numbers (bands, part HP, Capacity, damage) live in one table, so a balance pass is a table edit and a rerun.</li>
+      </ol>
+    </div>
+
+    <div class="grid3 block">
+      <div class="tile"><h3>The stack <span class="tag">TC11</span></h3><p>uma-rpg's: React, Vite, Tailwind, Zustand and Dexie on the web, NestJS on Cloud Run, Firebase Hosting and Auth, a PWA. It installs uma-data, uma-kit, uma-work, uma-server, uma-art and uma-stage, and copies uma-quest's wiring, save sync and PWA set-up (<a href="build-plan.html">the build plan</a>).</p></div>
+      <div class="tile"><h3>The cloud <span class="tag">TC11</span></h3><p>In the <code>uma-rpg</code> GCP project like uma-quest's and uma-farm's (uma-platform P88), every piece its own: site <code>uma-cyberpunk</code>, Cloud Run <code>cyber-api</code>, Firestore database <code>cyber</code>. CY2 creates it on the owner's go, with a free-tier cost table.</p></div>
+      <div class="tile"><h3>It stands alone <span class="tag">TC14</span></h3><p>Its own save, rules and economy, and no parcels from uma-farm at the start. Parcels can come later the way uma-quest takes them (uma-platform P89), on the owner's word.</p></div>
     </div>
   </section>
 
   <!-- ============ 8. Art and story ============ -->
   <section class="card" id="art">
-    <h2><span class="num">8</span>Art and story <span class="tag">TC12</span><span class="tag">TC13</span><span class="tag">TC41</span></h2>
-    <p><b>Art by kind</b> <span class="tag">TC12</span><span class="tag amend">amended D3</span>, cheapest that looks fine first. Nothing here blocks Phases 2 and 3:</p>
+    <h2><span class="num">8</span>Art and story <span class="tag">TC12</span><span class="tag">TC13</span><span class="tag">TC41</span><span class="tag">TC53</span></h2>
+    <p><b>Art by kind</b> <span class="tag">TC12</span><span class="tag amend d4">amended D4</span>, cheapest that looks fine first. Since uma-platform P147,
+      ChatGPT draws character art only (enemies included) and Claude draws everything else in code. Nothing here blocks
+      Phases 2 and 3:</p>
     <div class="scroll"><table class="wide">
       <tr><th>What</th><th>Stand-in first</th><th>The real art</th><th>Who</th><th>Where</th></tr>
       <tr><td><b>Umas on the map</b></td><td>—</td><td>Their <b>chibi sets</b> from master data, which already walk in four facings</td><td>—</td><td>Master data's private release</td></tr>
@@ -1699,101 +2040,174 @@
       <tr><td><b>Heroines on the map</b></td><td><b>Standees</b> from the Ranker's figure images</td><td>Drawn map sprites, wave by wave, bosses first</td><td>ChatGPT</td><td>Private</td></tr>
       <tr><td><b>Heroines in the cut-in</b></td><td>The Ranker's figure and splash images</td><td>Combat keys, side-on, facing right</td><td>ChatGPT</td><td>Private</td></tr>
       <tr><td><b>Faction hardware and the Authority's machines</b></td><td>Code-drawn blocks</td><td>Original sprites</td><td>ChatGPT (P126: enemies are character art)</td><td>uma-art</td></tr>
-      <tr><td><b>Map kits</b> (the Ring's layers, the Lanes, the moons)</td><td>uma-stage's code-drawn stand-in kits</td><td>Painted kits</td><td>ChatGPT, after its character work</td><td>uma-art</td></tr>
+      <tr><td><b>Map kits,</b> one set per world, and the ship's rooms</td><td>uma-stage's code-drawn stand-in kits</td><td>Full-colour kits drawn in code (<code>scripts/kit-art</code>, uma-platform P147)</td><td>Claude, in a uma-platform session</td><td>uma-art</td></tr>
       <tr><td><b>Part icons, the paper doll, glyphs, tile states, UI marks</b></td><td>—</td><td>Code-drawn pixel art</td><td>Claude (<code>scripts/pixel-art</code>)</td><td>uma-art</td></tr>
     </table></div>
     <p class="note">The rig itself shows on the cut-in keys, on the paper doll and as her colour on the map; the chibi sets stay as they are.</p>
 
-    <h3 class="block">Visual identity <span class="tag">TC41</span> <span class="note">Star Guardian's colour coding, made cheap</span></h3>
+    <h3 class="block">Visual identity <span class="tag">TC41</span><span class="tag rew">reworded D4</span> <span class="note">Star Guardian's colour coding, made cheap</span></h3>
     <div class="grid3">
       <div class="tile"><h3>One hue per Uma</h3><p>On a shared graphite-and-white rig base: a three-tone ramp and one glow colour, carried into her timeline icon, move tint, damage numbers and suit-up.</p>
         <p><i class="sw" style="background:var(--u1)"></i><i class="sw" style="background:var(--u2)"></i><i class="sw" style="background:var(--u3)"></i><i class="sw" style="background:var(--neon)"></i><i class="sw" style="background:var(--info)"></i></p></div>
-      <div class="tile"><h3>A glyph per faction</h3><p>And per Gate-world, and the squad's own: a ring with a gap.</p>
-        <svg class="d" viewBox="0 0 120 50" style="width:120px" aria-label="A ring with a gap"><path d="M 49.4 10.2 A 18 18 0 1 0 70.6 10.2" style="fill:none;stroke:var(--neon);stroke-width:6;stroke-linecap:round"/></svg></div>
+      <div class="tile"><h3>A glyph per faction</h3><p>And per world, and the squad's own.</p></div>
       <div class="tile"><h3>Corruption is a palette swap</h3><p>One shared ramp and a one-pixel scanline flicker, no extra art; freeing swaps it back mid-fight.</p></div>
       <div class="tile"><h3>Sparkle</h3><p>Small cross glints in her hue and neon trails on moves; the bloom does the rest.</p></div>
       <div class="tile"><h3>A companion drone</h3><p>Per Uma, 8–12 px with a two-frame bob, standing in for Star Guardian's familiars.</p></div>
       <div class="tile"><h3>Busts</h3><p>Swap from a plain frame to a neon frame once she's suited up.</p></div>
     </div>
 
-    <div class="tile block"><h3>The story <span class="tag">TC13</span><span class="tag amend">amended D3</span></h3>
-      <p>The <a href="world.html">world page</a> (<a href="../world.md">world.md</a>) is in git: it's original and names no
-        character (WD22). Who plays which part, the chapters and every line of dialogue are private, in the ignored
-        <code>content/</code> and a private bucket once the cloud exists. When the owner wants it readable beside the other
-        games' stories, it becomes a fourth book in the platform's Story App (uma-platform P141), which needs its own
-        uma-platform decision, its own format and validator, and a home for the heroines' profiles, since the Cast book
-        holds Umas only.</p></div>
+    <div class="grid2 block">
+      <div class="tile"><h3>The story <span class="tag">TC13</span><span class="tag amend d4">amended D4</span></h3>
+        <p>The story session writes it (TC53). Its world doc is in git, original and nameless, as the
+          <a href="world.html">world page</a> (<a href="../world.md">world.md</a>) is. Who plays which part, the chapters and
+          every line of dialogue are private, in the ignored <code>content/</code> and a private bucket once the cloud exists.
+          When the owner wants it readable beside the other games' stories, it becomes a fourth book in the platform's Story
+          App (uma-platform P141), which needs its own uma-platform decision, its own format and validator, and a home for
+          the heroines' profiles, since the Cast book holds Umas only.</p></div>
+      <div class="tile"><h3>The story session and the content contract <span class="tag">TC53</span><span class="tag new d4">new D4</span></h3>
+        <ul>
+          <li><b>A separate session authors the world and the story</b> from <a href="story-brief.html">the story brief</a>
+            (<a href="../story-brief.md">story-brief.md</a>, SB1–SB11). This page keeps the game: the battle, the systems,
+            the ship's rooms, the talents and the faction mechanics.</li>
+          <li><b>They meet at a content contract:</b> worlds, chapters, scenes, missions and casting as files in
+            <code>content/stories/</code>, keyed by master data's stable ids, checked by the content package's validator
+            (CY9). Until CY9, the brief's sketch is the contract.</li>
+          <li><b>A story need the game doesn't meet</b> (a new mechanic, hook, room, talent or Hold) is a story request, a row
+            in the handoff, answered in the game's next packet.</li>
+        </ul></div>
+    </div>
+    <div class="scroll block"><svg class="d wide" viewBox="0 0 1000 244" role="img" aria-label="The story session delivers worlds, chapters, scenes, missions and casting into the content contract, which the game reads; a story need the game does not meet goes back as a story request in the handoff">
+<rect x="20" y="30" width="270" height="120" rx="12" style="fill:var(--neon-wash);stroke:var(--neon);stroke-width:1.5"/>
+<text class="tb" x="155" y="56" text-anchor="middle">The story session</text>
+<text class="ts" x="155" y="78" text-anchor="middle">authors the world and the story</text>
+<text class="ts" x="155" y="94" text-anchor="middle">from the story brief (SB1–SB11)</text>
+<text class="tf" x="155" y="120" text-anchor="middle">casting, chapters and lines: private</text>
+<rect x="365" y="30" width="270" height="120" rx="12" class="op-last"/>
+<text class="tb" x="500" y="56" text-anchor="middle">The content contract</text>
+<text class="ts" x="500" y="78" text-anchor="middle">worlds, chapters, scenes, missions</text>
+<text class="ts" x="500" y="94" text-anchor="middle">and casting, in content/stories/,</text>
+<text class="ts" x="500" y="110" text-anchor="middle">keyed by master data’s stable ids,</text>
+<text class="tacc" x="500" y="128" text-anchor="middle">checked by the validator (CY9)</text>
+<rect x="710" y="30" width="270" height="120" rx="12" class="part"/>
+<text class="tb" x="845" y="56" text-anchor="middle">This game</text>
+<text class="ts" x="845" y="78" text-anchor="middle">the battle, the systems,</text>
+<text class="ts" x="845" y="94" text-anchor="middle">the ship’s rooms, the talents</text>
+<text class="ts" x="845" y="110" text-anchor="middle">and the faction mechanics</text>
+<path d="M292 90 H361" class="ln" marker-end="url(#ah)"/>
+<text class="tf" x="327" y="82" text-anchor="middle">delivers</text>
+<path d="M637 90 H706" class="ln" marker-end="url(#ah)"/>
+<text class="tf" x="672" y="82" text-anchor="middle">reads</text>
+<path d="M155 152 C 155 260, 845 260, 845 156" class="ln-acc dash" marker-end="url(#ah-acc)"/>
+<text class="tacc" x="500" y="176" text-anchor="middle">a story need the game doesn’t meet is a story request:</text>
+<text class="tacc" x="500" y="191" text-anchor="middle">a row in the handoff, answered in the game’s next packet</text>
+</svg></div>
   </section>
 
   <!-- ============ 9. Phases ============ -->
   <section class="card" id="phases">
-    <h2><span class="num">9</span>Phases <span class="tag">TC15</span><span class="tag amend">amended D3</span></h2>
-    <div class="scroll"><div class="phases">
-      <div class="phase done"><b>0 · D1–D3</b><h3>The repo</h3><p>The repo, the concept, the references, the world and the guard</p><small>Done 2026-11-12</small></div>
+    <h2><span class="num">9</span>Phases <span class="tag">TC15</span><span class="tag amend d4">amended D4</span></h2>
+    <p>The app and the combat come first, on test content, so the story plugs into a finished game. Phase 2 starts as soon
+      as CY1 is in, beside the cloud.</p>
+    <div class="scroll"><svg class="d wide" viewBox="0 0 1000 130" role="img" aria-label="The seven phases as a flow: 0 done; 1 the foundation and 2 the combat in parallel once CY1 is in; 3 the app; 4 the first worlds when the story session delivers; 5 progression; 6 worlds as waves">
+<rect x="10" y="44" width="80" height="32" rx="8" style="fill:var(--success-wash);stroke:var(--success);stroke-width:1.5"/>
+<text class="t" x="50" y="64" text-anchor="middle">0 · done</text>
+<rect x="110" y="18" width="170" height="32" rx="8" class="ch-wait"/>
+<text class="t" x="195" y="38" text-anchor="middle">1 · the foundation</text>
+<rect x="150" y="70" width="250" height="32" rx="8" style="fill:var(--info-wash);stroke:var(--info);stroke-width:1.5;stroke-dasharray:6 4"/>
+<text class="t" x="275" y="90" text-anchor="middle">2 · the combat, three ways</text>
+<path d="M150 50 V68" class="ln-acc" style="stroke-width:2"/>
+<rect x="420" y="44" width="150" height="32" rx="8" class="op"/>
+<text class="t" x="495" y="64" text-anchor="middle">3 · the app</text>
+<rect x="590" y="44" width="140" height="32" rx="8" class="op-ff"/>
+<text class="t" x="660" y="64" text-anchor="middle">4 · first worlds</text>
+<rect x="750" y="44" width="120" height="32" rx="8" class="op"/>
+<text class="t" x="810" y="64" text-anchor="middle">5 · progression</text>
+<rect x="890" y="44" width="100" height="32" rx="8" class="op"/>
+<text class="t" x="940" y="64" text-anchor="middle">6 · waves</text>
+<path d="M90 54 C 100 54, 100 34, 106 34" class="ln" marker-end="url(#ah)"/>
+<path d="M282 34 C 350 34, 380 56, 416 58" class="ln" marker-end="url(#ah)"/>
+<path d="M402 86 C 410 86, 410 64, 416 64" class="ln" marker-end="url(#ah)"/>
+<path d="M572 60 H586" class="ln" marker-end="url(#ah)"/>
+<path d="M732 60 H746" class="ln" marker-end="url(#ah)"/>
+<path d="M872 60 H886" class="ln" marker-end="url(#ah)"/>
+<path d="M660 2 V40" class="ln-neon dash" marker-end="url(#ah-neon)"/>
+<text class="ts" x="668" y="14">the story session delivers</text>
+<text class="tacc" x="150" y="122">Phase 2 starts as soon as CY1 is in, beside the cloud</text>
+</svg></div>
+    <div class="scroll block"><div class="phases">
+      <div class="phase done"><b>0 · D1–D4</b><h3>The repo</h3><p>The repo, the concept, the references, the first-pass world, the story brief and the build plan</p><small>Done 2026-11-12</small></div>
       <div class="phase next"><b>1 · CY1–CY3</b><h3>The foundation</h3><p>The workspace, the cloud and the hello app</p><small>Exit: signed in on the phone, with the save synced</small></div>
-      <div class="phase"><b>2 · CY4–CY6</b><h3>The battle prototype</h3><p>The stage spike (TC10, TC48); the battle rules as a pure, tested domain package (the rig, Charge, the timeline, counters, Crossfire, facing, height, terrain, Rig Break, Jack-Out); one Underlevels map, four against the Steel Muster, on stand-ins</p><small>Exit: a full battle plays on the phone, start to win or loss, in about ten minutes</small></div>
-      <div class="phase"><b>3 · later</b><h3>Act I's opening</h3><p>The flash-forward, the first Operation and the first route chapter; the Hideout's Workshop and Archive; the story runner; the first batch from master data; chibi sets, renders and standees</p><small>Packets written when Phase 2 ends. Exit: the opening plays end to end</small></div>
-      <div class="phase"><b>4 · later</b><h3>Progression and the map</h3><p>Levels, roles, licences, the Shop, salvage and remodels, contracts, the Sim Pod, the Call, the Ring's map</p><small>Packets written when Phase 3 ends. Exit: Act I plays end to end and needs the progression to win</small></div>
-      <div class="phase"><b>5 · waves</b><h3>Content waves</h3><p>Acts II–V, one at a time, with their factions, batches and guests</p><small>One wave at a time. Exit: each act plays end to end</small></div>
+      <div class="phase par"><b>2 · CY4–CY8</b><h3>The combat, tested three ways</h3><p>The battle rules as a pure, seeded package with tests; the AI and the headless simulator; the board on uma-stage; the sandbox on the phone, on stand-ins</p><small>Starts once CY1 is in. Exit: any skirmish set up in the sandbox plays on the phone, start to win or loss, in about ten minutes; the simulator runs a thousand battles and reports</small></div>
+      <div class="phase"><b>3 · CY9–CY12</b><h3>The app</h3><p>The content contract and the story runner; the ship, the star map and the mission flow; the crew and the Hangar; the Chapter 1 loop, on test content</p><small>Exit: a test lead's Chapter 1 plays from the ship to her world and back, brings her aboard, and resumes after iOS closes the app</small></div>
+      <div class="phase story"><b>4 · the story's</b><h3>The first worlds</h3><p>The story session's first world and its Chapter 1, and a second world's, with chibi sets, renders and standees</p><small>Packets written when the story delivers. Exit: the opening and the first pickup play end to end</small></div>
+      <div class="phase"><b>5 · later</b><h3>Progression</h3><p>Levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents</p><small>Packets written when Phase 4 ends. Exit: the first two worlds play end to end and need the progression to win</small></div>
+      <div class="phase"><b>6 · waves</b><h3>Worlds as content waves</h3><p>Each with its leads, factions and guests</p><small>One wave at a time. Exit: each world plays end to end</small></div>
     </div></div>
-    <div class="legend"><span><i style="background:var(--success-wash);border:1px solid var(--success)"></i>Done</span><span><i style="background:var(--info-wash);border:1px solid var(--info)"></i>Next</span></div>
+    <div class="legend"><span><i style="background:var(--success-wash);border:1px solid var(--success)"></i>Done</span><span><i style="background:var(--info-wash);border:1px solid var(--info)"></i>Next</span><span><i style="background:var(--info-wash);border:1px dashed var(--info)"></i>Beside Phase 1, once CY1 is in</span><span><i style="background:var(--neon-wash);border:1px solid var(--neon)"></i>Waits on the story session</span></div>
   </section>
 
   <!-- ============ 10. The calls ============ -->
   <section class="card" id="calls">
-    <h2><span class="num">10</span>The calls: TC1–TC48</h2>
-    <p>All 48. <span class="tag amend">amended D3</span> marks a kept call the revision changed; <span class="tag new">new</span> marks
-      one the revision added; the rest are kept as D1 set them.</p>
+    <h2><span class="num">10</span>The calls: TC1–TC54</h2>
+    <p>All 54. <span class="tag amend d4">amended D4</span> and <span class="tag new d4">new D4</span> mark what D4 changed and added; <span class="tag rew">reworded D4</span> marks a call whose rule
+      stands but whose words now say the ship, the crew or the lead; <span class="tag amend">amended D3</span> and
+      <span class="tag new">new D3</span> mark what D3 changed and added; the rest are kept as D1 set them.</p>
     <div class="scroll"><table class="wide">
       <tr><th>#</th><th></th><th>Call</th><th>Section</th></tr>
       <tr><td class="id"><span class="tag">TC1</span></td><td class="id"></td><td>Personal, private and never distributed; an iPhone Home Screen web app, landscape only</td><td><a href="#game">1</a></td></tr>
       <tr><td class="id"><span class="tag">TC2</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Grid tactics on 10 × 10 to 14 × 14 tiles with up to four heights, facing, one objective per map; four Umas plus a guest against five to eight enemies; battles of about ten minutes</td><td><a href="#board">4.1</a></td></tr>
       <tr><td class="id"><span class="tag">TC3</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Turn order by Speed on a visible eight-turn timeline, not phases; a turn is move, one action, face; Wait brings the next turn sooner and banks Charge</td><td><a href="#charge">4.2</a></td></tr>
-      <tr><td class="id"><span class="tag">TC4</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>The five Uma stats at 5★ become five bands; each does one job in combat and one on the rig; levelling is this game's own</td><td><a href="#stats">4.3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC5</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Five roles as jobs, each with a signature Back unit; the default from an authored per-Uma tag, running style as the fallback; swapped in the Hideout</td><td><a href="#roles">4.8</a></td></tr>
-      <tr><td class="id"><span class="tag">TC6</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>An original setting: the Ring, the Lanes and the Gates, with the world bible in world.md</td><td><a href="#world">2</a></td></tr>
+      <tr><td class="id"><span class="tag">TC4</span></td><td class="id"><span class="tag amend">amended D3</span><span class="tag rew">reworded D4</span></td><td>The five Uma stats at 5★ become five bands; each does one job in combat and one on the rig; levelling is this game's own</td><td><a href="#stats">4.3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC5</span></td><td class="id"><span class="tag amend">amended D3</span><span class="tag rew">reworded D4</span></td><td>Five roles as jobs, each with a signature Back unit; the default from an authored per-Uma tag, running style as the fallback; swapped aboard the ship</td><td><a href="#roles">4.8</a></td></tr>
+      <tr><td class="id"><span class="tag">TC6</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Interplanetary: worlds reached by the ship, each with its maps, factions and a lead's Chapter 1; the first world is D3's Ring; the story session writes the world</td><td><a href="#world">2</a></td></tr>
       <tr><td class="id"><span class="tag">TC7</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Umas are the squad; heroines from eight franchises (NIKKE added) are the enemy factions; none of it in git</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC8</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Acts, two tracks, chapters and missions; story missions and repeatable contracts; the map grows from the Ring's layers to the Lanes</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC9</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>The Hideout is the hub between battles, on uma-kit's shell; no gacha</td><td><a href="#hideout">6</a></td></tr>
-      <tr><td class="id"><span class="tag">TC10</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Battles are an HD-2D diorama in Triangle Strategy's look, a game-owned scene from uma-stage's parts at a fixed 35°, night and neon by default; proved by the CY4 spike; the fallback is a Phaser 4 isometric board</td><td><a href="#built">7</a></td></tr>
+      <tr><td class="id"><span class="tag">TC8</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Worlds, chapters and missions; a chapter is a lead's short arc of two to four battles; side jobs repeat on a world's map</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC9</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>The ship is the hub and the squad's stronghold, on uma-kit's shell; no gacha</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC10</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Battles are an HD-2D diorama in Triangle Strategy's look, a game-owned scene from uma-stage 0.3.0's parts at a fixed 35°, night and neon, rendered only when something moves; proved by CY7; the fallback is a Phaser 4 isometric board</td><td><a href="#built">7</a></td></tr>
       <tr><td class="id"><span class="tag">TC11</span></td><td class="id"></td><td>uma-rpg's stack and the six platform packages; the cloud in the <code>uma-rpg</code> project with every piece its own, created on the owner's go</td><td><a href="#built">7</a></td></tr>
-      <tr><td class="id"><span class="tag">TC12</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Art by kind with stand-ins first: chibi sets and renders for the Umas, the Ranker's images as standees for the heroines, Combat Adult keys from ChatGPT in a private pack, hardware and kits in uma-art, Claude's code-drawn marks</td><td><a href="#art">8</a></td></tr>
-      <tr><td class="id"><span class="tag">TC13</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>The world bible is in git, original and nameless; casting, chapters and dialogue are private; a fourth Story App book later</td><td><a href="#art">8</a></td></tr>
+      <tr><td class="id"><span class="tag">TC12</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Art by kind with stand-ins first: chibi sets and renders for the Umas, the Ranker's images as standees for the heroines, Combat Adult keys and enemies from ChatGPT, map kits and marks drawn in code by Claude (P147)</td><td><a href="#art">8</a></td></tr>
+      <tr><td class="id"><span class="tag">TC13</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>The story session writes the story; its world doc is in git, nameless; casting, chapters and dialogue are private; a fourth Story App book later</td><td><a href="#art">8</a></td></tr>
       <tr><td class="id"><span class="tag">TC14</span></td><td class="id"></td><td>It stands alone: its own save, rules and economy; no parcels at the start</td><td><a href="#built">7</a></td></tr>
-      <tr><td class="id"><span class="tag">TC15</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Six phases: the repo, the foundation, the battle prototype with rigs, Act I's opening, progression, acts as content waves</td><td><a href="#phases">9</a></td></tr>
+      <tr><td class="id"><span class="tag">TC15</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Seven phases: the repo; the foundation; the combat tested three ways; the app on test content; the first worlds; progression; worlds as waves</td><td><a href="#phases">9</a></td></tr>
       <tr><td class="id"><span class="tag">TC16</span></td><td class="id"><span class="tag amend">amended D3</span></td><td>Deferred, for discussion only: ship battles, permadeath, camera rotation, difficulty modes, recruiting beyond the story, franchise monsters as summons. Never: multiplayer</td><td><a href="#deferred">Deferred</a></td></tr>
-      <tr><td class="id"><span class="tag">TC17</span></td><td class="id"><span class="tag new">new</span></td><td>The rig: Core, two arms and Legs take damage and break; the Visor and Back unit can't be hit; hits on a broken part go to the Core</td><td><a href="#rig">4.4</a></td></tr>
-      <tr><td class="id"><span class="tag">TC18</span></td><td class="id"><span class="tag new">new</span></td><td>The loadout: eight slots and a Coat; Capacity from Power, the Core and the Back unit; a light rig gets +1 Move; saved loadouts from day one</td><td><a href="#rig">4.4</a></td></tr>
-      <tr><td class="id"><span class="tag">TC19</span></td><td class="id"><span class="tag new">new</span></td><td>Weapons in four bands (Melee, Short, Long, Tech); damage types P, I and F against a Coat; the weapon sets where hits land; Aim picks a part at −25%</td><td><a href="#weapons">4.5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC20</span></td><td class="id"><span class="tag new">new</span></td><td>Charge: one pip bar; +1 a turn, cap 3 to 5; skills cost it, counters and support need it, Wait banks it</td><td><a href="#charge">4.2</a></td></tr>
-      <tr><td class="id"><span class="tag">TC21</span></td><td class="id"><span class="tag new">new</span></td><td>Automatic counters from the front and side; Crossfire (up to two allies join, by pincer or line of fire); Cover; one link toggle</td><td><a href="#counters">4.6</a></td></tr>
-      <tr><td class="id"><span class="tag">TC22</span></td><td class="id"><span class="tag new">new</span></td><td>Parts teach skills by mastery into Visor slots; five chance skills with the % shown; a signature ability per route lead</td><td><a href="#skills">4.9</a></td></tr>
-      <tr><td class="id"><span class="tag">TC23</span></td><td class="id"><span class="tag new">new</span></td><td>Side +25%, back +50% past shield and counter; ±10% a height level; Long +1 range from two up; every perch has an answer</td><td><a href="#facing">4.7</a></td></tr>
-      <tr><td class="id"><span class="tag">TC24</span></td><td class="id"><span class="tag new">new</span></td><td>Five terrain states (Wet, Oil, Fire, Live, Smoke) plus terminals, and one more per faction at most; the terrain card</td><td><a href="#facing">4.7</a></td></tr>
-      <tr><td class="id"><span class="tag">TC25</span></td><td class="id"><span class="tag new">new</span></td><td>Rig Break at Core 0: out of the battle, never hurt; a Medic can reboot her in time; limbs mended free, a Core costs credits; XP kept on a loss</td><td><a href="#rigbreak">4.10</a></td></tr>
-      <tr><td class="id"><span class="tag">TC26</span></td><td class="id"><span class="tag new">new</span></td><td>Heroines are freed, never killed: break her Anchor or Collar, or Jack-Out; only those freed that way join as guests and leave their parts whole</td><td><a href="#rigbreak">4.10</a></td></tr>
-      <tr><td class="id"><span class="tag">TC27</span></td><td class="id"><span class="tag new">new</span></td><td>Strain: three missions in a row bench an Uma for one; the bench earns half XP and gives one support call a battle</td><td><a href="#rigbreak">4.10</a></td></tr>
-      <tr><td class="id"><span class="tag">TC28</span></td><td class="id"><span class="tag new">new</span></td><td>The side-view cut-in at three speeds (Full, Quick, Off), with part damage always on the map</td><td><a href="#screen">4.11</a></td></tr>
-      <tr><td class="id"><span class="tag">TC29</span></td><td class="id"><span class="tag new">new</span></td><td>The phone UX: two-tap move with undo, the forecast card, Triangle Strategy's range colours, the timeline, one-thumb commands, an autosave after every action</td><td><a href="#screen">4.11</a></td></tr>
-      <tr><td class="id"><span class="tag">TC30</span></td><td class="id"><span class="tag new">new</span></td><td>Ten-minute guard rails: at most eight enemies and 14 × 14 tiles, fast enemy turns, no idle AI, no objective that needs every Uma</td><td><a href="#board">4.1</a></td></tr>
-      <tr><td class="id"><span class="tag">TC31</span></td><td class="id"><span class="tag new">new</span></td><td>The world bible is world.md: the Tithe in five layers (WD1–WD24)</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC32</span></td><td class="id"><span class="tag new">new</span></td><td>Each act opens on a flash-forward; Operations and Routes gate each other; the last Operation needs every route</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC33</span></td><td class="id"><span class="tag new">new</span></td><td>Six route leads an act, three chapters each, the lead fixed and three picked, each with its genre lens, ending on her signature</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC34</span></td><td class="id"><span class="tag new">new</span></td><td>Leads as one-tap choices; the Archive's Files, Timeline and Anomalies; every lock names its key; freed heroines' logs</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC35</span></td><td class="id"><span class="tag new">new</span></td><td>The Call: the squad votes with tokens; visible convictions Code, Edge and Free; Intel scenes unlock arguments; branches rejoin; thresholds pick guests</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC36</span></td><td class="id"><span class="tag new">new</span></td><td>A session of about fifteen minutes: a scene of three at most, a battle of ten, two in the Hideout; the first battle within two minutes</td><td><a href="#story">5</a></td></tr>
-      <tr><td class="id"><span class="tag">TC37</span></td><td class="id"><span class="tag new">new</span></td><td>Eight factions, one per franchise, with original names and one new mechanic each (world.md WD10–WD14)</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC38</span></td><td class="id"><span class="tag new">new</span></td><td>Every enemy character is a heroine from the Boss, Key and Regular boards, in slots filled from pools; each faction adds original hardware</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC39</span></td><td class="id"><span class="tag new">new</span></td><td>The double life: the Hideout behind a front business, a civilian keeper; suit-up opens each battle</td><td><a href="#hideout">6</a></td></tr>
-      <tr><td class="id"><span class="tag">TC40</span></td><td class="id"><span class="tag new">new</span></td><td>The rival squad: the Authority's licensed heroes, Umas from the NPC board; rivals, then allies</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC41</span></td><td class="id"><span class="tag new">new</span></td><td>Visual identity: a hue per Uma, a glyph per faction, corruption as a palette swap, a companion drone, neon busts</td><td><a href="#art">8</a></td></tr>
-      <tr><td class="id"><span class="tag">TC42</span></td><td class="id"><span class="tag new">new</span></td><td>The Hideout's six stations: Workshop, Shop, Fixer, Sim Pod, Crew and Archive</td><td><a href="#hideout">6</a></td></tr>
-      <tr><td class="id"><span class="tag">TC43</span></td><td class="id"><span class="tag new">new</span></td><td>The economy: credits, salvage, scrap and remodels; maker bonuses; the capped Arena; one item stock</td><td><a href="#hideout">6</a></td></tr>
-      <tr><td class="id"><span class="tag">TC44</span></td><td class="id"><span class="tag new">new</span></td><td>Progression: levels 1–50, role ranks, licences that raise the Charge cap, Rep, and once-a-battle Overrides</td><td><a href="#hideout">6</a></td></tr>
-      <tr><td class="id"><span class="tag">TC45</span></td><td class="id"><span class="tag new">new</span></td><td>The cast is the Ranker's 100 by outfit, joining two batches an act through the story</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC46</span></td><td class="id"><span class="tag new">new</span></td><td>Stride: her running style colours her movement (Break, Draft, Surge, Kick)</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC47</span></td><td class="id"><span class="tag new">new</span></td><td>Guests: freed heroines in the guest slot, with hand-set stats, a job from her archetype and her own salvaged parts</td><td><a href="#cast">3</a></td></tr>
-      <tr><td class="id"><span class="tag">TC48</span></td><td class="id"><span class="tag new">new</span></td><td>CY4 files with uma-platform only the stage requests the spike shows are needed, from a list of seven</td><td><a href="#built">7</a></td></tr>
+      <tr><td class="id"><span class="tag">TC17</span></td><td class="id"><span class="tag new">new D3</span></td><td>The rig: Core, two arms and Legs take damage and break; the Visor and Back unit can't be hit; hits on a broken part go to the Core</td><td><a href="#rig">4.4</a></td></tr>
+      <tr><td class="id"><span class="tag">TC18</span></td><td class="id"><span class="tag new">new D3</span></td><td>The loadout: eight slots and a Coat; Capacity from Power, the Core and the Back unit; a light rig gets +1 Move; saved loadouts from day one</td><td><a href="#rig">4.4</a></td></tr>
+      <tr><td class="id"><span class="tag">TC19</span></td><td class="id"><span class="tag new">new D3</span></td><td>Weapons in four bands (Melee, Short, Long, Tech); damage types P, I and F against a Coat; the weapon sets where hits land; Aim picks a part at −25%</td><td><a href="#weapons">4.5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC20</span></td><td class="id"><span class="tag new">new D3</span></td><td>Charge: one pip bar; +1 a turn, cap 3 to 5; skills cost it, counters and support need it, Wait banks it</td><td><a href="#charge">4.2</a></td></tr>
+      <tr><td class="id"><span class="tag">TC21</span></td><td class="id"><span class="tag new">new D3</span></td><td>Automatic counters from the front and side; Crossfire (up to two allies join, by pincer or line of fire); Cover; one link toggle</td><td><a href="#counters">4.6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC22</span></td><td class="id"><span class="tag new">new D3</span><span class="tag rew">reworded D4</span></td><td>Parts teach skills by mastery into Visor slots; five chance skills with the % shown; a signature ability per lead Uma</td><td><a href="#skills">4.9</a></td></tr>
+      <tr><td class="id"><span class="tag">TC23</span></td><td class="id"><span class="tag new">new D3</span></td><td>Side +25%, back +50% past shield and counter; ±10% a height level; Long +1 range from two up; every perch has an answer</td><td><a href="#facing">4.7</a></td></tr>
+      <tr><td class="id"><span class="tag">TC24</span></td><td class="id"><span class="tag new">new D3</span></td><td>Five terrain states (Wet, Oil, Fire, Live, Smoke) plus terminals, and one more per faction at most; the terrain card</td><td><a href="#facing">4.7</a></td></tr>
+      <tr><td class="id"><span class="tag">TC25</span></td><td class="id"><span class="tag new">new D3</span></td><td>Rig Break at Core 0: out of the battle, never hurt; a Medic can reboot her in time; limbs mended free, a Core costs credits; XP kept on a loss</td><td><a href="#rigbreak">4.10</a></td></tr>
+      <tr><td class="id"><span class="tag">TC26</span></td><td class="id"><span class="tag new">new D3</span></td><td>Heroines are freed, never killed: break her Anchor or Collar, or Jack-Out; only those freed that way join as guests and leave their parts whole</td><td><a href="#rigbreak">4.10</a></td></tr>
+      <tr><td class="id"><span class="tag">TC27</span></td><td class="id"><span class="tag new">new D3</span></td><td>Strain: three missions in a row bench an Uma for one; the bench earns half XP and gives one support call a battle</td><td><a href="#rigbreak">4.10</a></td></tr>
+      <tr><td class="id"><span class="tag">TC28</span></td><td class="id"><span class="tag new">new D3</span></td><td>The side-view cut-in at three speeds (Full, Quick, Off), with part damage always on the map</td><td><a href="#screen">4.11</a></td></tr>
+      <tr><td class="id"><span class="tag">TC29</span></td><td class="id"><span class="tag new">new D3</span></td><td>The phone UX: two-tap move with undo, the forecast card, Triangle Strategy's range colours, the timeline, one-thumb commands, an autosave after every action</td><td><a href="#screen">4.11</a></td></tr>
+      <tr><td class="id"><span class="tag">TC30</span></td><td class="id"><span class="tag new">new D3</span></td><td>Ten-minute guard rails: at most eight enemies and 14 × 14 tiles, fast enemy turns, no idle AI, no objective that needs every Uma</td><td><a href="#board">4.1</a></td></tr>
+      <tr><td class="id"><span class="tag">TC31</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>world.md (WD1–WD24) is the story session's first pass, its single-city structure superseded</td><td><a href="#world">2</a></td></tr>
+      <tr><td class="id"><span class="tag">TC32</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Story tools, not a fixed shape: flash-forwards with fixed squads, and gates that wait on a chapter, mission or File</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC33</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Folded into TC51: route leads are the lead Umas; genre lenses are the story session's</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC34</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Leads as one-tap choices; the Log's Files, Timeline and Anomalies; every lock names its key on the world's map; freed heroines' logs</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC35</span></td><td class="id"><span class="tag new">new D3</span><span class="tag rew">reworded D4</span></td><td>The Call: the crew votes with tokens; visible convictions Code, Edge and Free; Intel scenes unlock arguments; branches rejoin; thresholds pick guests</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC36</span></td><td class="id"><span class="tag new">new D3</span><span class="tag rew">reworded D4</span></td><td>A session of about fifteen minutes: a scene of three at most, a battle of ten, two aboard; the first battle within two minutes</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC37</span></td><td class="id"><span class="tag new">new D3</span></td><td>Eight factions, one per franchise, with original names and one new mechanic each (world.md WD10–WD14)</td><td><a href="#cast">3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC38</span></td><td class="id"><span class="tag new">new D3</span><span class="tag rew">reworded D4</span></td><td>Every enemy character is a heroine from the Boss, Key and Regular boards, in slots filled from pools; each faction adds original hardware</td><td><a href="#cast">3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC39</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>Suit-up opens each battle and big moments; D3's double life is the story session's</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC40</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>A rival squad of Umas from the NPC board, with the squad's own rigs, who can join later, if the story keeps one</td><td><a href="#cast">3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC41</span></td><td class="id"><span class="tag new">new D3</span><span class="tag rew">reworded D4</span></td><td>Visual identity: a hue per Uma, a glyph per faction and per world, corruption as a palette swap, a companion drone, neon busts</td><td><a href="#art">8</a></td></tr>
+      <tr><td class="id"><span class="tag">TC42</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>The ship's seven rooms: Bridge, Hangar, Quarters and Log from the start; Store, Comms and Sim Pod with leads</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC43</span></td><td class="id"><span class="tag new">new D3</span><span class="tag rew">reworded D4</span></td><td>The economy: credits, salvage, scrap and remodels; maker bonuses; the capped Arena; one item stock</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC44</span></td><td class="id"><span class="tag new">new D3</span></td><td>Progression: levels 1–50, role ranks, licences that raise the Charge cap, Rep, and once-a-battle Overrides</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC45</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>The crew is the Ranker's 100 by outfit: lead Umas join through their own Chapter 1, crew Umas through chapters and side jobs, in batch order as a guide</td><td><a href="#cast">3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC46</span></td><td class="id"><span class="tag new">new D3</span></td><td>Stride: her running style colours her movement (Break, Draft, Surge, Kick)</td><td><a href="#cast">3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC47</span></td><td class="id"><span class="tag new">new D3</span></td><td>Guests: freed heroines in the guest slot, with hand-set stats, a job from her archetype and her own salvaged parts</td><td><a href="#cast">3</a></td></tr>
+      <tr><td class="id"><span class="tag">TC48</span></td><td class="id"><span class="tag amend d4">amended D4</span></td><td>CY7 files the stage requests it shows are needed, one at a time: tunable bloom and tilt-shift, glowing frames, a tactics kit kind, a saver tier; heights 0–3, zoom, rain and overlays only if needed</td><td><a href="#built">7</a></td></tr>
+      <tr><td class="id"><span class="tag">TC49</span></td><td class="id"><span class="tag new d4">new D4</span></td><td>The ship grows with its crew: each lead who comes aboard opens or upgrades a room</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC50</span></td><td class="id"><span class="tag new d4">new D4</span></td><td>The Bridge's star map of worlds, travel with no fuel or clock; each world a node map of locations with danger levels and named keys; no world closes</td><td><a href="#ship">6</a></td></tr>
+      <tr><td class="id"><span class="tag">TC51</span></td><td class="id"><span class="tag new d4">new D4</span></td><td>Lead Umas, Octopath's way: her Chapter 1 on her home world brings her aboard at the squad's level; fixed in her chapters; short Chapter 1s never back to back; interjection slots and debriefs; crossed paths; a main thread and a signposted finale</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC52</span></td><td class="id"><span class="tag new d4">new D4</span></td><td>Talents, Octopath's path actions kept small: six (Scout, Bargain, Hack, Recruit, Duel, Mend), one per lead (leads may share), used on a world's map</td><td><a href="#story">5</a></td></tr>
+      <tr><td class="id"><span class="tag">TC53</span></td><td class="id"><span class="tag new d4">new D4</span></td><td>A separate story session writes the world and the story from the story brief; the two meet at a content contract checked by a validator; story requests go in the handoff</td><td><a href="#art">8</a></td></tr>
+      <tr><td class="id"><span class="tag">TC54</span></td><td class="id"><span class="tag new d4">new D4</span></td><td>Combat testing three ways: a pure seeded rules package with golden replays, a sandbox on the phone with scenario files, a headless simulator with one tuning table</td><td><a href="#built">7</a></td></tr>
     </table></div>
   </section>
 
@@ -1801,15 +2215,15 @@
     <h2>Deferred</h2>
     <p>Discussion only, not planned (TC16, amended D3):</p>
     <ul class="tight">
-      <li><b>Ship battles</b> along the Lanes, as a second battle mode.</li>
+      <li><b>Ship battles</b> between worlds, as a second battle mode; the ship as hub (TC49) makes them a natural later add.</li>
       <li><b>Permadeath,</b> as an option; Rig Break is the rule (TC25).</li>
       <li><b>Camera rotation</b> in 90° steps, if a map ever needs it (TC48).</li>
       <li><b>Difficulty modes.</b></li>
-      <li><b>Recruiting beyond the story,</b> such as contracts that unlock extra Umas.</li>
+      <li><b>Recruiting beyond the story,</b> past what chapters, side jobs and the Recruit talent already bring aboard.</li>
       <li><b>Franchise monsters,</b> as a boss's summons (WD14).</li>
       <li><b>Multiplayer</b> is never planned: the game is personal (TC1).</li>
     </ul>
-    <p class="note">Source: <a href="../concept.md">docs/design/concept.md</a> · the world: <a href="world.html">world page</a> · the research: <a href="references.html">references page</a>.</p>
+    <p class="note">Source: <a href="../concept.md">docs/design/concept.md</a> · the story brief: <a href="story-brief.html">story brief page</a> · the build plan: <a href="build-plan.html">build plan page</a> · the world: <a href="world.html">world page</a> · the research: <a href="references.html">references page</a>.</p>
   </section>
 </main>
 </body>

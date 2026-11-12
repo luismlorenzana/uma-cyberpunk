@@ -1,0 +1,1111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uma Cyberpunk Build Plan</title>
+<!-- uma-cyberpunk's build plan (docs/design/build-plan.md): what's reused from uma-platform and the sibling games and how
+     (import, copy, pattern, request), the workspace, the HD-2D board as a game-owned scene on uma-stage's parts, the
+     battle package, combat testing three ways with the simulator's targets, the app on test content, where the story
+     plugs in, the twelve packets and their dependency graph, the budgets and the calls BP1–BP9. Self-contained, uma-kit's
+     tokens, light and dark, no external requests. Every diagram is original inline SVG; it names no character. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #d39a2b; --accent-wash: #fbf1dd; --info: #2f6fe0; --info-wash: #e3ecfc; --success: #2f7a4f;
+    --success-wash: #e1f1e7; --danger: #c23b33; --danger-wash: #fbe5e3; --neon: #b03fd8; --neon-wash: #f4e4fb;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16);
+    --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+      --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+      --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+      --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+    --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+    --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+    --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  /* Page-only tokens. The phases take uma-kit's accent, neon and info. The four ways of reuse have their own hues,
+     checked for colour-blind separation on both surfaces, so the dark theme steps them down rather than flipping them. */
+  :root {
+    --ph1: var(--accent); --ph2: var(--neon); --ph3: var(--info);
+    --how-import: #2f6fe0; --how-copy: #d39a2b; --how-pattern: #2f7a4f; --how-request: #b03fd8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --how-import: #4f86ea; --how-copy: #b3812b; --how-pattern: #3d9e66; --how-request: #d27cf2; }
+  }
+  :root[data-theme="dark"] { --how-import: #4f86ea; --how-copy: #b3812b; --how-pattern: #3d9e66; --how-request: #d27cf2; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Inter', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font: 700 24px/1.2 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; margin: 0 0 6px; }
+  h2 { font: 700 17px/1.25 ui-rounded, system-ui, sans-serif; margin: 0 0 8px; }
+  h3 { font: 700 14px/1.25 system-ui; margin: 0 0 6px; }
+  p, li { color: var(--ink-soft); max-width: 82ch; }
+  a { color: var(--info); }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 5px; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 14px; position: sticky; top: 0; z-index: 10;
+    background: var(--page); padding: 10px 0; box-shadow: 0 1px 0 var(--hairline); }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  nav a.ext { background: transparent; color: var(--info); box-shadow: inset 0 0 0 1px var(--hairline-strong); }
+  section[id] { scroll-margin-top: 110px; }
+  .card { background: var(--panel); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .note { font-size: 12px; color: var(--ink-faint); }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; }
+  .tag { display: inline-block; font: 700 11px ui-monospace, Menlo, monospace; padding: 1px 7px; border-radius: 999px; background: var(--neon-wash); color: var(--neon); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 12px; }
+  .grid4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 10px; }
+  .tile { background: var(--raised); border-radius: 10px; padding: 12px 14px; }
+  .tile p { margin: 4px 0 0; font-size: 13px; }
+  .tile ul { margin: 6px 0 0; padding-left: 18px; font-size: 13px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight: 600; }
+  td b { color: var(--ink); }
+  td { color: var(--ink-soft); }
+  td.need { color: var(--ink); }
+  td.nowrap { white-space: nowrap; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+
+  /* flows (as the concept's loop) */
+  .loop { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .loop span { font: 600 12px system-ui; padding: 8px 12px; border-radius: 10px; background: var(--info-wash); color: var(--ink); max-width: 260px; }
+  .loop span.hot { background: var(--neon-wash); }
+  .loop span.gold { background: var(--accent-wash); }
+  .loop i { color: var(--ink-faint); font-style: normal; }
+
+  /* status */
+  .status { border-left: 4px solid var(--accent); }
+  .status p { margin: 6px 0; }
+  .status blockquote { margin: 8px 0; padding: 8px 12px; border-radius: 8px; background: var(--accent-wash); color: var(--ink); font-size: 13px; }
+
+  /* callouts */
+  .callout { border-left: 4px solid var(--info); background: var(--info-wash); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--ink-soft); margin-top: 12px; }
+  .callout b { color: var(--ink); }
+  .callout.neon { border-left-color: var(--neon); background: var(--neon-wash); }
+  .callout.gold { border-left-color: var(--accent); background: var(--accent-wash); }
+
+  /* stat tiles */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 10px; }
+  .stat { background: var(--raised); border-radius: 10px; padding: 10px 12px; }
+  .stat .v { font: 800 22px/1.1 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; color: var(--ink); }
+  .stat .v small { font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .stat .k { font: 600 10.5px system-ui; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-faint); margin-top: 4px; }
+  .stat p { margin: 3px 0 0; font-size: 12px; }
+
+  /* how chips: Import, Copy, Pattern, Request */
+  .how { display: inline-flex; align-items: center; gap: 5px; font: 700 11px system-ui; padding: 2px 8px 2px 6px; border-radius: 999px;
+    color: var(--ink); background: color-mix(in srgb, var(--hc) 16%, var(--panel)); border: 1px solid color-mix(in srgb, var(--hc) 55%, transparent);
+    white-space: nowrap; margin: 1px 4px 1px 0; }
+  .how::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--hc); flex: none; }
+  .how.import { --hc: var(--how-import); }
+  .how.copy { --hc: var(--how-copy); }
+  .how.pattern { --hc: var(--how-pattern); }
+  .how.request { --hc: var(--how-request); }
+  .how.none { --hc: var(--ink-faint); }
+  .hownote { display: block; font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+  .ways .tile { border-top: 4px solid var(--hc); }
+  .ways .tile.import { --hc: var(--how-import); }
+  .ways .tile.copy { --hc: var(--how-copy); }
+  .ways .tile.pattern { --hc: var(--how-pattern); }
+  .ways .tile.request { --hc: var(--how-request); }
+
+  /* packet chips, edged by phase */
+  .cy { display: inline-block; font: 700 11px ui-monospace, Menlo, monospace; padding: 1px 7px 1px 8px; border-radius: 6px; background: var(--sunken);
+    color: var(--ink); margin: 1px 3px 1px 0; white-space: nowrap; box-shadow: inset 3px 0 0 var(--ink-faint); }
+  .cy.p1 { box-shadow: inset 3px 0 0 var(--ph1); }
+  .cy.p2 { box-shadow: inset 3px 0 0 var(--ph2); }
+  .cy.p3 { box-shadow: inset 3px 0 0 var(--ph3); }
+  .cy.p4 { box-shadow: inset 3px 0 0 var(--ink-faint); font-family: system-ui; }
+  .ph { display: inline-block; font: 700 11px system-ui; padding: 1px 8px; border-radius: 999px; color: var(--ink); white-space: nowrap; }
+  .ph.p1 { background: color-mix(in srgb, var(--ph1) 22%, var(--panel)); }
+  .ph.p2 { background: color-mix(in srgb, var(--ph2) 18%, var(--panel)); }
+  .ph.p3 { background: color-mix(in srgb, var(--ph3) 18%, var(--panel)); }
+  .sz { display: inline-grid; place-items: center; width: 22px; height: 20px; font: 800 11px ui-monospace, Menlo, monospace; border-radius: 6px;
+    background: var(--panel); color: var(--ink); border: 1px solid var(--hairline-strong); }
+
+  /* the workspace tree */
+  .tree { display: grid; gap: 4px; }
+  .tr { display: grid; grid-template-columns: 150px 130px minmax(0, 1fr) auto; gap: 4px 12px; align-items: baseline; padding: 8px 10px;
+    border-radius: 8px; background: var(--raised); }
+  .tr .p { font: 700 12.5px ui-monospace, Menlo, monospace; background: none; padding: 0; color: var(--ink); }
+  .tr .pk { font: 700 12px ui-monospace, Menlo, monospace; color: var(--neon); }
+  .tr .d { font-size: 13px; color: var(--ink-soft); }
+  .tr .w { text-align: right; white-space: nowrap; }
+  .tr.dir .pk { color: var(--ink-faint); font-weight: 600; }
+  .tr.ign { background: transparent; border: 1px dashed var(--hairline-strong); }
+  .tr.hero { background: color-mix(in srgb, var(--neon) 9%, var(--raised)); }
+  @media (max-width: 760px) { .tr { grid-template-columns: 1fr; } .tr .w { text-align: left; } }
+
+  /* battle package files */
+  .files { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 8px; }
+  .file { background: var(--raised); border-radius: 8px; padding: 8px 10px; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 2px 10px; align-items: baseline; }
+  .file code { background: none; padding: 0; font-weight: 700; color: var(--ink); }
+  .file span { font-size: 12.5px; color: var(--ink-soft); }
+  .file.later { background: color-mix(in srgb, var(--neon) 8%, var(--raised)); }
+  .file .cy { margin-left: 4px; font-size: 10.5px; background: var(--panel); color: var(--ink); }
+  .cue { display: inline-block; font: 600 12px system-ui; padding: 3px 9px; border-radius: 6px; background: var(--neon-wash); color: var(--ink); margin: 2px 4px 2px 0; }
+
+  /* checks */
+  .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr)); gap: 8px; }
+  .check { background: var(--raised); border-radius: 10px; padding: 10px 12px; display: flex; gap: 10px; align-items: flex-start; }
+  .check .n { font: 800 24px/1 ui-rounded, system-ui, sans-serif; color: var(--neon); flex: none; }
+  .check p { margin: 0; font-size: 13px; }
+  .check p b { color: var(--ink); }
+
+  /* working order */
+  .order { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .order > i { color: var(--ink-faint); font-style: normal; }
+  .order .grp { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 5px 8px; border-radius: 10px; background: var(--raised);
+    border: 1px dashed var(--hairline-strong); }
+  .order .grp small { flex-basis: 100%; font-size: 11px; color: var(--ink-faint); }
+  .order .cy { font-size: 12px; padding: 3px 8px 3px 9px; }
+
+  /* svg text and shapes, so every diagram reads in both themes */
+  svg text { font-family: system-ui, -apple-system, 'Inter', sans-serif; }
+  .scroll > svg.wide { min-width: 900px; }
+  .t-h { font-size: 14px; font-weight: 800; fill: var(--ink); }
+  .t-b { font-size: 12px; fill: var(--ink); }
+  .t-s { font-size: 11px; fill: var(--ink-soft); }
+  .t-f { font-size: 10.5px; fill: var(--ink-faint); }
+  .t-m { font: 700 11.5px ui-monospace, Menlo, monospace; fill: var(--ink); }
+  .t-ms { font: 11px ui-monospace, Menlo, monospace; fill: var(--ink-soft); }
+  .t-pill { font-size: 11.5px; font-weight: 700; fill: var(--ink); }
+  .ln { fill: none; stroke: var(--ink-faint); stroke-width: 1.8; }
+  .ln-dash { fill: none; stroke: var(--ink-faint); stroke-width: 1.6; stroke-dasharray: 5 4; }
+  .ln-info { fill: none; stroke: var(--info); stroke-width: 1.8; }
+  .ln-neon { fill: none; stroke: var(--neon); stroke-width: 2; }
+  .m-faint { fill: var(--ink-faint); } .m-info { fill: var(--info); } .m-neon { fill: var(--neon); }
+  .b-box { fill: var(--raised); stroke: var(--hairline-strong); stroke-width: 1.5; }
+  .b-row { fill: var(--panel); stroke: var(--hairline-strong); stroke-width: 1; }
+  .b-neon { fill: color-mix(in srgb, var(--neon) 7%, var(--raised)); stroke: var(--neon); stroke-width: 2; }
+  .b-acc { fill: var(--accent-wash); stroke: var(--accent); stroke-width: 2; }
+  .b-info { fill: var(--info-wash); stroke: var(--info); stroke-width: 1.5; }
+  .b-ok { fill: var(--success-wash); stroke: var(--success); stroke-width: 1.5; }
+  .b-dom { fill: var(--sunken); stroke: var(--ink-faint); stroke-width: 1.5; }
+  .b-pill { fill: var(--neon-wash); stroke: color-mix(in srgb, var(--neon) 50%, transparent); stroke-width: 1; }
+  .b-ghost { fill: none; stroke: var(--ink-faint); stroke-width: 1.4; stroke-dasharray: 5 4; }
+  .b-lock { fill: var(--sunken); stroke: var(--ink-faint); stroke-width: 1.4; stroke-dasharray: 5 4; }
+
+  /* the packet graph */
+  .pn rect.box { stroke-width: 2; }
+  .pn.p1 rect.box { fill: color-mix(in srgb, var(--ph1) 15%, var(--panel)); stroke: var(--ph1); }
+  .pn.p2 rect.box { fill: color-mix(in srgb, var(--ph2) 11%, var(--panel)); stroke: var(--ph2); }
+  .pn.p3 rect.box { fill: color-mix(in srgb, var(--ph3) 11%, var(--panel)); stroke: var(--ph3); }
+  .pn rect.szb { fill: var(--panel); stroke: var(--hairline-strong); stroke-width: 1; }
+  .pn .id { font: 800 14px ui-monospace, Menlo, monospace; fill: var(--ink); }
+  .pn .lb { font-size: 12px; font-weight: 600; fill: var(--ink); }
+  .pn .ow { font-size: 10px; fill: var(--ink-soft); }
+  .pn .szt { font: 800 11px ui-monospace, Menlo, monospace; fill: var(--ink); }
+
+  /* the reuse mix chart */
+  .t-import { fill: color-mix(in srgb, var(--how-import) 34%, var(--panel)); }
+  .t-copy { fill: color-mix(in srgb, var(--how-copy) 38%, var(--panel)); }
+  .t-pattern { fill: color-mix(in srgb, var(--how-pattern) 34%, var(--panel)); }
+  .s-import { fill: var(--how-import); } .s-copy { fill: var(--how-copy); } .s-pattern { fill: var(--how-pattern); }
+  .t-none { fill: var(--sunken); }
+  .seg:hover { filter: brightness(1.06); }
+  .bar-n { font-size: 12px; font-weight: 800; fill: var(--ink); }
+  .bar-l { font-size: 12.5px; font-weight: 700; fill: var(--ink); }
+  .bar-sub { font-size: 11px; fill: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<!-- Shared defs: arrowheads in three tones, the two-way stripes for the reuse chart, and the phone grids. -->
+<svg aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="m-faint"/></marker>
+    <marker id="ah-info" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="m-info"/></marker>
+    <marker id="ah-neon" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" class="m-neon"/></marker>
+    <pattern id="st-ci" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="5" height="10" class="t-copy"/><rect x="5" width="5" height="10" class="t-import"/>
+    </pattern>
+    <pattern id="st-pi" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="5" height="10" class="t-pattern"/><rect x="5" width="5" height="10" class="t-import"/>
+    </pattern>
+    <pattern id="grid3x" x="40" y="70" width="21" height="12" patternUnits="userSpaceOnUse">
+      <path d="M21 0V12M0 12H21" fill="none" style="stroke:var(--ink-faint);stroke-width:0.7;opacity:0.55"/>
+    </pattern>
+    <pattern id="grid2x" x="560" y="70" width="33.6" height="19.2" patternUnits="userSpaceOnUse">
+      <path d="M33.6 0V19.2M0 19.2H33.6" fill="none" style="stroke:var(--ink-faint);stroke-width:0.8;opacity:0.55"/>
+    </pattern>
+    <clipPath id="clip3x"><rect x="40" y="40" width="420" height="222"/></clipPath>
+    <clipPath id="clip2xs"><rect x="560" y="70" width="336" height="192"/></clipPath>
+  </defs>
+</svg>
+
+<main>
+  <h1>Uma Cyberpunk: the build plan</h1>
+  <p>How the game gets built: what's reused from uma-platform and the sibling games and how, the shape of the code, how the
+    combat is tested, the app's screens and the packets in order. Nine calls, BP1–BP9, each a recommendation, adopted until
+    the owner changes one. Source: <code>docs/design/build-plan.md</code>.</p>
+  <nav>
+    <a href="#status">Status</a><a href="#short">The short answer</a><a href="#workspace">1. Workspace</a>
+    <a href="#reuse">2. Reuse</a><a href="#board">3. The board</a><a href="#battle">4. Battle package</a>
+    <a href="#testing">5. Testing</a><a href="#app">6. The app</a><a href="#story">7. The story</a>
+    <a href="#packets">8. Packets</a><a href="#budgets">9. Budgets</a><a href="#calls">10. The calls</a>
+    <a class="ext" href="concept.html">The concept ↗</a><a class="ext" href="world.html">The world ↗</a>
+    <a class="ext" href="references.html">The references ↗</a><a class="ext" href="story-brief.html">The story brief ↗</a>
+    <a class="ext" href="../build-plan.md">build-plan.md ↗</a>
+  </nav>
+
+  <!-- ───────────────────────── Status ───────────────────────── -->
+  <section class="card status" id="status">
+    <h2>Status <span class="tag">D4</span></h2>
+    <p><b>2026-11-12.</b> The owner asked for the work here to start with</p>
+    <blockquote>"the full app buildout and some of the combat testing side of things", and to "see what we can reuse from the
+      uma-platform HD-2D engine and so on".</blockquote>
+    <p>This page answers both: what's reused and how, the shape of the code, how the combat is tested, the app's screens, and
+      the packets in order. Two read-only audits back it: one of <code>uma-stage</code> 0.3.0, one of the sibling games' app
+      shells, battle code and story pipelines. Its calls are <b>BP1–BP9</b>, each a recommendation, adopted until the owner
+      changes one. The game it builds is <a href="concept.html">the concept</a> (<a href="../concept.md">concept.md</a>);
+      the story's side is <a href="story-brief.html">the story brief</a> (<a href="../story-brief.md">story-brief.md</a>).</p>
+  </section>
+
+  <!-- ───────────────────────── Short answer ───────────────────────── -->
+  <section class="card" id="short">
+    <h2>The short answer</h2>
+    <div class="grid3">
+      <div class="tile"><h3>Reuse first, in three ways <span class="tag">BP2</span></h3>
+        <p><b>Import</b> the platform packages (uma-kit's sign-in, update prompt, shell and roster tiles; uma-data's master
+          data; uma-server's guard and proxies; uma-stage's parts; uma-art's atlases); <b>copy</b> what each sibling game copies (uma-quest's wiring, save sync and PWA set-up; uma-farm's
+          story delivery; uma-rpg's place registry and star chart); and follow <b>patterns</b> where the code can't be shared
+          (uma-rpg's battle reducer and autosave-by-replay, uma-racer's simulator).</p></div>
+      <div class="tile"><h3>The HD-2D engine fits as parts, not as a finished stage <span class="tag">BP3</span></h3>
+        <p><code>uma-stage</code> 0.3.0's two scenes are uma-quest's field and uma-farm's band, and neither suits a grid. Its
+          terrain builder, figures, picking, camera, fade, effects and frame pacer do, so the board is a game-owned scene, as
+          uma-quest's fights already are. Four stage requests are likely (tunable bloom, glowing frames, a tactics kit kind, a
+          saver tier), filed one at a time by CY7.</p></div>
+      <div class="tile"><h3>No sibling has grid battle code <span class="tag">BP4</span></h3>
+        <p>So the rules are new: a pure, seeded package, <code>@cyber/battle</code>, on uma-rpg's reducer pattern.</p></div>
+      <div class="tile"><h3>The combat is tested three ways <span class="tag">BP5</span></h3>
+        <p>Before any story depends on it: unit tests and golden replays, a sandbox on the phone, and a headless simulator.</p></div>
+      <div class="tile"><h3>The whole app is built on test content <span class="tag">BP6</span><span class="tag">BP7</span></h3>
+        <p>The ship and its rooms, the Bridge's star map, a world's map, the mission flow with resume, the crew, the Hangar and
+          the story runner. The story session's files then drop in.</p></div>
+      <div class="tile"><h3>Two tracks after CY1 <span class="tag">BP8</span></h3>
+        <p>The foundation (the cloud and the hello app) and the combat (the rules, the AI and simulator, the board). They meet
+          at the sandbox, CY8, and the app follows in CY9–CY12.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 1. The workspace ───────────────────────── -->
+  <section class="card" id="workspace">
+    <h2>1. The workspace <span class="tag">BP1</span></h2>
+    <p>The layout every sibling uses, with the battle rules in a package of their own:</p>
+    <div class="tree">
+      <div class="tr"><code class="p">apps/web</code><span class="pk">@cyber/web</span><span class="d">React 19, Vite 7, Tailwind 4, Zustand 5, Dexie 4, the PWA</span><span class="w"><span class="cy p1">CY1</span><span class="cy p1">CY3</span></span></div>
+      <div class="tr"><code class="p">apps/api</code><span class="pk">@cyber/api</span><span class="d">NestJS 11 on Cloud Run: health, save, master data, private packs</span><span class="w"><span class="cy p1">CY1</span><span class="cy p1">CY3</span><span class="cy p3">CY9</span></span></div>
+      <div class="tr hero"><code class="p">packages/battle</code><span class="pk">@cyber/battle</span><span class="d">the battle rules: pure TypeScript, seeded, no DOM, no master data</span><span class="w"><span class="cy p2">CY4</span></span></div>
+      <div class="tr"><code class="p">packages/domain</code><span class="pk">@cyber/domain</span><span class="d">the save, the crew, the ship, progression, the story format; the one adapter from master data's stats to battle numbers</span><span class="w"><span class="cy p1">CY1</span><span class="cy p1">CY3</span><span class="cy p3">CY9</span></span></div>
+      <div class="tr dir"><code class="p">scenarios/</code><span class="pk">in git</span><span class="d">skirmish files for the sandbox and the simulator, in git, nameless</span><span class="w"><span class="cy p2">CY6</span></span></div>
+      <div class="tr dir ign"><code class="p">sim/out/</code><span class="pk">ignored</span><span class="d">the simulator's reports</span><span class="w"><span class="cy p2">CY6</span></span></div>
+      <div class="tr dir"><code class="p">scripts/</code><span class="pk">checks, tools</span><span class="d">size check, private-content guard, hosting check, icons, sim, story check</span><span class="w"></span></div>
+      <div class="tr dir ign"><code class="p">content/</code><span class="pk">ignored</span><span class="d">the story session's files and private art</span><span class="w"></span></div>
+    </div>
+
+    <h3 style="margin-top:16px">Where master data stops</h3>
+    <div class="loop">
+      <span>master data's stats</span><i>→</i>
+      <span class="gold"><code>@cyber/domain</code>'s one adapter</span><i>→</i>
+      <span>plain numbers: bands, part HP, weapon stats</span><i>→</i>
+      <span class="hot"><code>@cyber/battle</code>, which depends on nothing</span>
+    </div>
+    <div class="grid3" style="margin-top:12px">
+      <div class="tile"><h3><code>@cyber/battle</code> depends on nothing</h3>
+        <p>It takes plain numbers (bands, part HP, weapon stats), so the simulator and its tests run anywhere, and master
+          data's shape never leaks into the rules. <code>@cyber/domain</code> holds the adapter (uma-platform's architecture
+          §2.4: one adapter module per game).</p></div>
+      <div class="tile"><h3>ESM for the web, CommonJS for the API</h3>
+        <p>The web reads the packages' ESM source; the API reads a CommonJS build, as in uma-quest. Heavy code (the board,
+          three.js, the story runner) loads lazily, and the main bundle stays under <b>180 KB gzip</b>
+          (<code>check-size.mjs</code> and its <code>LAZY_MODULES</code>).</p></div>
+      <div class="tile"><h3>Ports <span class="tag">D2</span></h3>
+        <div class="stats" style="margin-top:6px">
+          <div class="stat"><div class="v">8121</div><div class="k">API</div></div>
+          <div class="stat"><div class="v">5214</div><div class="k">Web</div></div>
+        </div></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 2. Reuse ───────────────────────── -->
+  <section class="card" id="reuse">
+    <h2>2. What's reused, and how <span class="tag">BP2</span></h2>
+    <div class="grid4 ways">
+      <div class="tile import"><h3><span class="how import">Import</span></h3><p>Installing the package and calling it.</p></div>
+      <div class="tile copy"><h3><span class="how copy">Copy</span></h3><p>Taking a sibling's file into this repo and owning it
+        from then on, as uma-quest and uma-farm both copied uma-rpg's.</p></div>
+      <div class="tile pattern"><h3><span class="how pattern">Pattern</span></h3><p>Writing new code the same way.</p></div>
+      <div class="tile request"><h3><span class="how request">Request</span></h3><p>A change to a shared package, filed with
+        uma-platform one at a time (the change protocol; its ST rows), each with the evidence. The board's are in
+        <a href="#board">§3</a>.</p></div>
+    </div>
+    <div class="callout"><b>Games never import each other</b> (uma-platform P2, P3).</div>
+
+    <h3 style="margin-top:16px">The reuse mix</h3>
+    <p class="note" style="margin-top:0">Rows of §2.1–§2.3 by how they're reused. Three rows name two ways; they get their own
+      striped segment. Hover a segment for its rows.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1080 262" role="img" aria-label="Stacked bars of the reuse tables. 2.1 The foundation, 10 rows: Import 4, Copy 6. 2.2 The combat, 18 rows: Import 7, Copy 3, Pattern 8. 2.3 The app, 11 rows: Copy 2, Pattern 6, Copy and import 2, Pattern and import 1. All of section 2, 39 rows: Import 11, Copy 11, Pattern 14, Copy and import 2, Pattern and import 1. Not reused, section 2.4: 4.">
+        <!-- scale: 20 px a row, bars start at x=230 -->
+        <g>
+          <line x1="230" y1="10" x2="230" y2="250" style="stroke:var(--hairline-strong);stroke-width:1"/>
+        </g>
+        <!-- 2.1 -->
+        <text x="218" y="32" text-anchor="end" class="bar-l">2.1 The foundation</text>
+        <text x="218" y="46" text-anchor="end" class="bar-sub">10 rows</text>
+        <g class="seg"><title>2.1 The foundation · Import: 4 rows (sign-in, boot gates and the update prompt, master data, the app shell)</title>
+          <rect x="230" y="16" width="78" height="30" rx="4" class="t-import"/><rect x="230" y="42" width="78" height="4" class="s-import"/>
+          <text x="269" y="36" text-anchor="middle" class="bar-n">4</text></g>
+        <g class="seg"><title>2.1 The foundation · Copy: 6 rows (workspace root, CI, the cloud, the PWA, save sync, icons)</title>
+          <rect x="310" y="16" width="118" height="30" rx="4" class="t-copy"/><rect x="310" y="42" width="118" height="4" class="s-copy"/>
+          <text x="369" y="36" text-anchor="middle" class="bar-n">6</text></g>
+
+        <!-- 2.2 -->
+        <text x="218" y="78" text-anchor="end" class="bar-l">2.2 The combat</text>
+        <text x="218" y="92" text-anchor="end" class="bar-sub">18 rows</text>
+        <g class="seg"><title>2.2 The combat · Import: 7 rows (terrain meshes, figures, tile picking, camera and pixel rules, the landscape mount, effects and the frame pacer, occluder fade)</title>
+          <rect x="230" y="62" width="138" height="30" rx="4" class="t-import"/><rect x="230" y="88" width="138" height="4" class="s-import"/>
+          <text x="299" y="82" text-anchor="middle" class="bar-n">7</text></g>
+        <g class="seg"><title>2.2 The combat · Copy: 3 rows (the night grade, render only on change, the cut-in)</title>
+          <rect x="370" y="62" width="58" height="30" rx="4" class="t-copy"/><rect x="370" y="88" width="58" height="4" class="s-copy"/>
+          <text x="399" y="82" text-anchor="middle" class="bar-n">3</text></g>
+        <g class="seg"><title>2.2 The combat · Pattern: 8 rows (the rules as a reducer, the forecast, golden replays, enemy AI and ally Auto, the simulator, ?debug, the sandbox, autosave and resume)</title>
+          <rect x="430" y="62" width="158" height="30" rx="4" class="t-pattern"/><rect x="430" y="88" width="158" height="4" class="s-pattern"/>
+          <text x="509" y="82" text-anchor="middle" class="bar-n">8</text></g>
+
+        <!-- 2.3 -->
+        <text x="218" y="124" text-anchor="end" class="bar-l">2.3 The app</text>
+        <text x="218" y="138" text-anchor="end" class="bar-sub">11 rows</text>
+        <g class="seg"><title>2.3 The app · Copy: 2 rows (the scene runner, the star map)</title>
+          <rect x="230" y="108" width="38" height="30" rx="4" class="t-copy"/><rect x="230" y="134" width="38" height="4" class="s-copy"/>
+          <text x="249" y="128" text-anchor="middle" class="bar-n">2</text></g>
+        <g class="seg"><title>2.3 The app · Pattern: 6 rows (the story format, the stand-in story, the check report, a world's node map, the mission flow, loadouts and presets)</title>
+          <rect x="270" y="108" width="118" height="30" rx="4" class="t-pattern"/><rect x="270" y="134" width="118" height="4" class="s-pattern"/>
+          <text x="329" y="128" text-anchor="middle" class="bar-n">6</text></g>
+        <g class="seg"><title>2.3 The app · Copy and import: 2 rows (private delivery, the crew roster)</title>
+          <rect x="390" y="108" width="38" height="30" rx="4" style="fill:url(#st-ci)"/><rect x="390" y="134" width="19" height="4" class="s-copy"/><rect x="409" y="134" width="19" height="4" class="s-import"/>
+          <text x="409" y="128" text-anchor="middle" class="bar-n">2</text></g>
+        <g class="seg"><title>2.3 The app · Pattern and import: 1 row (the ship's rooms)</title>
+          <rect x="430" y="108" width="18" height="30" rx="4" style="fill:url(#st-pi)"/><rect x="430" y="134" width="9" height="4" class="s-pattern"/><rect x="439" y="134" width="9" height="4" class="s-import"/>
+          <text x="439" y="128" text-anchor="middle" class="bar-n">1</text></g>
+
+        <!-- total -->
+        <line x1="16" y1="156" x2="1064" y2="156" style="stroke:var(--hairline);stroke-width:1"/>
+        <text x="218" y="182" text-anchor="end" class="bar-l">All of §2</text>
+        <text x="218" y="196" text-anchor="end" class="bar-sub">39 rows</text>
+        <g class="seg"><title>All of §2 · Import: 11 rows</title>
+          <rect x="230" y="166" width="218" height="30" rx="4" class="t-import"/><rect x="230" y="192" width="218" height="4" class="s-import"/>
+          <text x="339" y="186" text-anchor="middle" class="bar-n">Import 11</text></g>
+        <g class="seg"><title>All of §2 · Copy: 11 rows</title>
+          <rect x="450" y="166" width="218" height="30" rx="4" class="t-copy"/><rect x="450" y="192" width="218" height="4" class="s-copy"/>
+          <text x="559" y="186" text-anchor="middle" class="bar-n">Copy 11</text></g>
+        <g class="seg"><title>All of §2 · Pattern: 14 rows</title>
+          <rect x="670" y="166" width="278" height="30" rx="4" class="t-pattern"/><rect x="670" y="192" width="278" height="4" class="s-pattern"/>
+          <text x="809" y="186" text-anchor="middle" class="bar-n">Pattern 14</text></g>
+        <g class="seg"><title>All of §2 · Copy and import: 2 rows</title>
+          <rect x="950" y="166" width="38" height="30" rx="4" style="fill:url(#st-ci)"/><rect x="950" y="192" width="19" height="4" class="s-copy"/><rect x="969" y="192" width="19" height="4" class="s-import"/>
+          <text x="969" y="186" text-anchor="middle" class="bar-n">2</text></g>
+        <g class="seg"><title>All of §2 · Pattern and import: 1 row</title>
+          <rect x="990" y="166" width="18" height="30" rx="4" style="fill:url(#st-pi)"/><rect x="990" y="192" width="9" height="4" class="s-pattern"/><rect x="999" y="192" width="9" height="4" class="s-import"/>
+          <text x="999" y="186" text-anchor="middle" class="bar-n">1</text></g>
+
+        <!-- not reused -->
+        <text x="218" y="232" text-anchor="end" class="bar-l">Not reused, §2.4</text>
+        <text x="218" y="246" text-anchor="end" class="bar-sub">4 items</text>
+        <g class="seg"><title>Not reused: StageEngine and BandStage, uma-kit/hub's HubMap, uma-work, any sibling's battle rules</title>
+          <rect x="230" y="216" width="78" height="30" rx="4" class="t-none" style="stroke:var(--ink-faint);stroke-dasharray:4 3"/>
+          <text x="269" y="236" text-anchor="middle" class="bar-n">4</text></g>
+        <text x="320" y="236" class="bar-sub">Counting a two-way row once in each way: Import 14, Copy 13, Pattern 15.</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--how-import)"></i>Import</span>
+      <span><i style="background:var(--how-copy)"></i>Copy</span>
+      <span><i style="background:var(--how-pattern)"></i>Pattern</span>
+      <span><i style="background:repeating-linear-gradient(45deg,var(--how-copy) 0 4px,var(--how-import) 4px 8px)"></i>Copy and import</span>
+      <span><i style="background:repeating-linear-gradient(45deg,var(--how-pattern) 0 4px,var(--how-import) 4px 8px)"></i>Pattern and import</span>
+      <span><i style="background:var(--sunken);box-shadow:inset 0 0 0 1px var(--ink-faint)"></i>Not reused</span>
+    </div>
+
+    <!-- 2.1 -->
+    <h3 style="margin-top:18px">2.1 The foundation</h3>
+    <div class="scroll">
+      <table style="min-width:860px">
+        <tr><th style="width:28%">Need</th><th>From</th><th style="width:12%">How</th><th style="width:11%">Packet</th></tr>
+        <tr><td class="need">The workspace root, turbo, tsconfig, the size check, the guard</td><td>uma-quest</td><td><span class="how copy">Copy</span></td><td><span class="cy p1">CY1</span></td></tr>
+        <tr><td class="need">CI's verify job; the deploy job gated on <code>DEPLOY_ENABLED</code></td><td>uma-quest's <code>deploy.yml</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p1">CY1</span><span class="cy p1">CY2</span></td></tr>
+        <tr><td class="need">The cloud: Hosting site, Cloud Run, Firestore database, runtime account, images</td><td>uma-quest's <code>infra/bootstrap.sh</code>, <code>firebase.json</code>, <code>Dockerfile</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p1">CY2</span></td></tr>
+        <tr><td class="need">Sign-in</td><td><code>uma-kit/auth</code> (<code>AuthProvider</code>, <code>idToken</code>); <code>uma-server/auth</code> (<code>AuthModule</code>, <code>@Public</code>, <code>CurrentUid</code>)</td><td><span class="how import">Import</span></td><td><span class="cy p1">CY3</span></td></tr>
+        <tr><td class="need">Boot gates and the update prompt</td><td><code>uma-kit/places</code> (<code>BootGates</code>, <code>UpdateNotice</code>, <code>watchAppUpdates</code>)</td><td><span class="how import">Import</span></td><td><span class="cy p1">CY3</span></td></tr>
+        <tr><td class="need">The PWA: manifest, Workbox, the prompt, iOS meta tags</td><td>uma-quest's <code>vite.config.ts</code>, <code>index.html</code>, <code>installed-app.test.ts</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p1">CY3</span></td></tr>
+        <tr><td class="need"><b>Save sync:</b> Dexie with five safety copies, a revision envelope, 409 with the server's copy, rescues and backups</td><td>uma-quest's <code>save/</code> (web, domain, API); its D11 and uma-farm's D9</td><td><span class="how copy">Copy</span></td><td><span class="cy p1">CY3</span></td></tr>
+        <tr><td class="need">Master data</td><td><code>uma-data</code>'s release client; <code>uma-server/content</code>'s <code>ReleaseProxyModule</code> (<code>/api/master/…</code>)</td><td><span class="how import">Import</span></td><td><span class="cy p1">CY3</span></td></tr>
+        <tr><td class="need">The app shell</td><td><code>uma-kit/shell</code> (<code>AppFrame</code>, <code>AccountBar</code>, <code>BottomBar</code>, <code>PlaceMenu</code>, <code>PeekPanel</code>), as uma-farm wires it</td><td><span class="how import">Import</span></td><td><span class="cy p1">CY3</span></td></tr>
+        <tr><td class="need">Icons</td><td>uma-quest's <code>make-icons.mjs</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p1">CY3</span></td></tr>
+      </table>
+    </div>
+
+    <!-- 2.2 -->
+    <h3 style="margin-top:18px">2.2 The combat</h3>
+    <div class="scroll">
+      <table style="min-width:860px">
+        <tr><th style="width:28%">Need</th><th>From</th><th style="width:12%">How</th><th style="width:11%">Packet</th></tr>
+        <tr><td class="need"><b>The rules as a reducer:</b> a frozen input plus actions, each returning state and cues; a seeded hash for randomness; a rules version</td><td>uma-rpg's battle engine (<code>createBattle</code>, <code>applyBattleAction</code>), copied by uma-quest</td><td><span class="how pattern">Pattern</span><span class="hownote">the grid rules are new</span></td><td><span class="cy p2">CY4</span></td></tr>
+        <tr><td class="need">The forecast, from the same pure functions the resolution uses</td><td>uma-rpg's <code>previewTarget</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY4</span></td></tr>
+        <tr><td class="need">Golden replays</td><td>uma-quest's replay fixtures</td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY4</span></td></tr>
+        <tr><td class="need">Enemy AI and ally Auto</td><td>uma-rpg's <code>intentFor</code>, <code>chooseTarget</code>, <code>autoAction</code> scoring</td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY6</span></td></tr>
+        <tr><td class="need">The simulator</td><td>uma-racer's <code>scripts/sim</code> (<code>pnpm sim:balance</code>), uma-rpg's <code>balance-play</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY6</span></td></tr>
+        <tr><td class="need">Terrain meshes</td><td><code>uma-stage</code>'s <code>roomGeometry</code>, <code>buildWorld</code>, <code>buildWorldParts</code>, <code>pixelTexture</code></td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">Figures</td><td><code>SpriteActor</code>, <code>Standee</code>, <code>standInSet</code>, <code>liveSets</code> (cap 8), <code>loadSpriteSet</code>, <code>SetCache</code></td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">Tile picking</td><td><code>rayAt</code>, <code>hitQuad</code>, <code>tileQuad</code></td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">Camera and pixel rules</td><td><code>camera.ts</code>: 35°, 128 texels a tile, <code>snapToGrid</code>, <code>cameraOffset</code>, DPR cap 3</td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">The landscape mount</td><td><code>TurnedStage</code> (and <code>uma-kit</code>'s <code>KitStage</code>)</td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">Effects, the frame pacer, battery saver</td><td><code>Effects</code>, <code>FramePacer</code>, <code>FpsRecorder</code>, <code>initialSaver</code></td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">Occluder fade</td><td><code>fade.ts</code>'s pure functions over <code>buildWorldParts</code></td><td><span class="how import">Import</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">The night grade</td><td><code>BandStage</code>'s <code>applyGrade</code> (six lines)</td><td><span class="how copy">Copy</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need">Render only when something moves; DOM chips placed with <code>project()</code></td><td>uma-farm's <code>FarmStage.tsx</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p2">CY7</span></td></tr>
+        <tr><td class="need"><code>?debug</code> puts the scene on <code>window</code> with a <code>step()</code>, for headless checks</td><td>uma-quest's <code>TestRoom</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY7</span><span class="cy p2">CY8</span></td></tr>
+        <tr><td class="need">The cut-in: a side-view scene on the borrowed renderer, cues timed by impact and release</td><td>uma-quest's <code>fight/stage.ts</code>, <code>playback.ts</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p2">CY8</span></td></tr>
+        <tr><td class="need">The sandbox</td><td>uma-quest's <code>/test-room</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY8</span></td></tr>
+        <tr><td class="need"><b>Autosave after every action, resume after iOS closes</b></td><td>uma-rpg's run state (<code>input</code> + <code>actions[]</code>, <code>replayBattle</code>, <code>ResumeFight</code>), its D52</td><td><span class="how pattern">Pattern</span></td><td><span class="cy p2">CY8</span></td></tr>
+      </table>
+    </div>
+
+    <!-- 2.3 -->
+    <h3 style="margin-top:18px">2.3 The app</h3>
+    <div class="scroll">
+      <table style="min-width:860px">
+        <tr><th style="width:28%">Need</th><th>From</th><th style="width:12%">How</th><th style="width:11%">Packet</th></tr>
+        <tr><td class="need">The story format and its strict parser</td><td>uma-quest's <code>story/script.ts</code> (<code>parseChapter</code>); uma-farm's <code>authored.ts</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p3">CY9</span></td></tr>
+        <tr><td class="need">The scene runner, headless and tested</td><td>uma-quest's <code>story/runner.ts</code></td><td><span class="how copy">Copy</span></td><td><span class="cy p3">CY9</span></td></tr>
+        <tr><td class="need">The stand-in story in git, with invented ids</td><td>uma-farm's <code>story/stand-in/</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p3">CY9</span></td></tr>
+        <tr><td class="need">Private delivery: hashed files and an index, served behind the owner guard</td><td>uma-farm's <code>pack.ts</code>, <code>release.ts</code>, <code>scripts/story/release.mjs</code>; <code>uma-server</code>'s <code>PrivatePackModule</code>; <code>uma-kit/content</code></td><td><span class="how copy">Copy</span><span class="how import">Import</span></td><td><span class="cy p3">CY9</span> <span class="note">(local)</span><br><span class="cy p4">Phase 4</span> <span class="note">(bucket)</span></td></tr>
+        <tr><td class="need">The check report</td><td>Uma Story's <code>checks.json</code> shape (uma-platform P141)</td><td><span class="how pattern">Pattern</span></td><td><span class="cy p3">CY9</span></td></tr>
+        <tr><td class="need"><b>The ship's rooms</b></td><td>uma-rpg's place registry (a lazy Peek, Page and Counter per place) on <code>uma-kit/shell</code></td><td><span class="how pattern">Pattern</span><span class="how import">Import</span></td><td><span class="cy p3">CY10</span></td></tr>
+        <tr><td class="need">The star map</td><td>uma-rpg's observatory star chart (SVG, 44 pt buttons, tested geometry)</td><td><span class="how copy">Copy</span></td><td><span class="cy p3">CY10</span></td></tr>
+        <tr><td class="need">A world's node map</td><td>uma-quest's <code>WorldMap</code>; uma-rpg's region map topology and node states</td><td><span class="how pattern">Pattern</span></td><td><span class="cy p3">CY10</span></td></tr>
+        <tr><td class="need">The mission flow</td><td>uma-quest's dungeon director (pure glue, tested headless)</td><td><span class="how pattern">Pattern</span></td><td><span class="cy p3">CY10</span></td></tr>
+        <tr><td class="need">The crew roster</td><td><code>uma-kit/roster</code> and <code>/album</code> (<code>FaceTile</code>, <code>UmaBust</code>, <code>UmaChibi</code>, <code>AlbumGrid</code>, <code>UmaPicker</code>); uma-farm's <code>RosterPage</code></td><td><span class="how import">Import</span><span class="how copy">Copy</span></td><td><span class="cy p3">CY11</span></td></tr>
+        <tr><td class="need">Loadouts and presets</td><td>uma-rpg's <code>GearTab</code>, <code>gear-equip.ts</code>, <code>presets.ts</code></td><td><span class="how pattern">Pattern</span></td><td><span class="cy p3">CY11</span></td></tr>
+      </table>
+    </div>
+
+    <!-- 2.4 -->
+    <h3 style="margin-top:18px">2.4 What's not reused</h3>
+    <div class="grid4">
+      <div class="tile"><h3><span class="how none">Not reused</span> <code>StageEngine</code> and <code>BandStage</code></h3><p>uma-quest's field and uma-farm's band; their scenes are private and their cameras don't fit a grid.</p></div>
+      <div class="tile"><h3><span class="how none">Not reused</span> <code>uma-kit/hub</code>'s <code>HubMap</code></h3><p>A Phaser top-down town on a 16 px grid. The ship is rooms, not a walkable town.</p></div>
+      <div class="tile"><h3><span class="how none">Not reused</span> <code>uma-work</code></h3><p>Timed jobs; installed (D2) but unused until a room needs a timer.</p></div>
+      <div class="tile"><h3><span class="how none">Not reused</span> Any sibling's battle rules</h3><p>They're round-based with no grid, facing or height.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 3. The board ───────────────────────── -->
+  <section class="card" id="board">
+    <h2>3. The HD-2D board on uma-stage <span class="tag">BP3</span></h2>
+    <p><b>The scene CY7 builds,</b> in <code>apps/web/src/board/</code>. The battle state sends cues; a game-owned three.js scene
+      draws them from <code>uma-stage</code>'s parts; the DOM sits over the canvas.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1120 470" role="img" aria-label="The board scene. On the left, the battle state sends its cues into the board scene. The board scene is three.js and game-owned, in six layers: terrain, figures, overlays, picking, camera and look. On the right, uma-stage 0.3.0's parts feed each layer: roomGeometry and buildWorldParts into terrain, SpriteActor and Standee into figures, nothing into overlays (drawn game-side), rayAt and hitQuad into picking, camera.ts and snapToGrid into the camera, Effects and fade into the look. Below, the DOM over the canvas: timeline, forecast card, commands and paper dolls, placed with project().">
+        <!-- battle state -->
+        <rect x="16" y="146" width="210" height="128" rx="12" class="b-acc"/>
+        <text x="121" y="180" text-anchor="middle" class="t-h">battle state</text>
+        <text x="121" y="199" text-anchor="middle" class="t-m">@cyber/battle</text>
+        <text x="121" y="224" text-anchor="middle" class="t-s">sends cues: moved, faced, hit,</text>
+        <text x="121" y="240" text-anchor="middle" class="t-s">countered, joined, broke, freed,</text>
+        <text x="121" y="256" text-anchor="middle" class="t-s">terrain changed</text>
+        <path d="M226 210 H284" class="ln" marker-end="url(#ah)"/>
+        <text x="256" y="202" text-anchor="middle" class="t-f">cues</text>
+
+        <!-- the board scene -->
+        <rect x="290" y="16" width="510" height="360" rx="14" class="b-neon"/>
+        <text x="306" y="42" class="t-h">board scene</text>
+        <text x="402" y="42" class="t-s">three.js, game-owned · apps/web/src/board/</text>
+
+        <rect x="306" y="60" width="478" height="42" rx="8" class="b-row"/>
+        <rect x="314" y="69" width="82" height="24" rx="12" class="b-pill"/><text x="355" y="85" text-anchor="middle" class="t-pill">terrain</text>
+        <text x="406" y="86" class="t-b">roomGeometry from our map, buildWorldParts for fading</text>
+
+        <rect x="306" y="111" width="478" height="42" rx="8" class="b-row"/>
+        <rect x="314" y="120" width="82" height="24" rx="12" class="b-pill"/><text x="355" y="136" text-anchor="middle" class="t-pill">figures</text>
+        <text x="406" y="137" class="t-b">SpriteActor (Umas), Standee (heroines), facing wedge, hue ring</text>
+
+        <rect x="306" y="162" width="478" height="42" rx="8" class="b-row"/>
+        <rect x="314" y="171" width="82" height="24" rx="12" class="b-pill"/><text x="355" y="187" text-anchor="middle" class="t-pill">overlays</text>
+        <text x="406" y="188" class="t-b">one merged quad mesh on tile tops (ranges, cursor, area)</text>
+
+        <rect x="306" y="213" width="478" height="42" rx="8" class="b-row"/>
+        <rect x="314" y="222" width="82" height="24" rx="12" class="b-pill"/><text x="355" y="238" text-anchor="middle" class="t-pill">picking</text>
+        <text x="406" y="239" class="t-b">rayAt + hitQuad over every tile top</text>
+
+        <rect x="306" y="264" width="478" height="42" rx="8" class="b-row"/>
+        <rect x="314" y="273" width="82" height="24" rx="12" class="b-pill"/><text x="355" y="289" text-anchor="middle" class="t-pill">camera</text>
+        <text x="406" y="290" class="t-b">35°, two-axis pan, snapToGrid; render only on change</text>
+
+        <rect x="306" y="315" width="478" height="42" rx="8" class="b-row"/>
+        <rect x="314" y="324" width="82" height="24" rx="12" class="b-pill"/><text x="355" y="340" text-anchor="middle" class="t-pill">look</text>
+        <text x="406" y="341" class="t-b">night grade, 4 live lights, Effects (bloom, tilt-shift), fade</text>
+
+        <!-- uma-stage parts -->
+        <text x="982" y="42" text-anchor="middle" class="t-h">uma-stage 0.3.0 parts</text>
+        <rect x="860" y="66" width="244" height="30" rx="15" class="b-info"/><text x="982" y="86" text-anchor="middle" class="t-m">roomGeometry · buildWorldParts</text>
+        <path d="M860 81 H806" class="ln-info" marker-end="url(#ah-info)"/>
+        <rect x="860" y="117" width="244" height="30" rx="15" class="b-info"/><text x="982" y="137" text-anchor="middle" class="t-m">SpriteActor · Standee</text>
+        <path d="M860 132 H806" class="ln-info" marker-end="url(#ah-info)"/>
+        <rect x="860" y="168" width="244" height="30" rx="15" class="b-ghost"/><text x="982" y="188" text-anchor="middle" class="t-s">drawn game-side, no stage part</text>
+        <rect x="860" y="219" width="244" height="30" rx="15" class="b-info"/><text x="982" y="239" text-anchor="middle" class="t-m">rayAt · hitQuad</text>
+        <path d="M860 234 H806" class="ln-info" marker-end="url(#ah-info)"/>
+        <rect x="860" y="270" width="244" height="30" rx="15" class="b-info"/><text x="982" y="290" text-anchor="middle" class="t-m">camera.ts · snapToGrid</text>
+        <path d="M860 285 H806" class="ln-info" marker-end="url(#ah-info)"/>
+        <rect x="860" y="321" width="244" height="30" rx="15" class="b-info"/><text x="982" y="341" text-anchor="middle" class="t-m">Effects · fade.ts</text>
+        <path d="M860 336 H806" class="ln-info" marker-end="url(#ah-info)"/>
+
+        <!-- DOM -->
+        <path d="M545 376 V400" class="ln" marker-end="url(#ah)"/>
+        <rect x="290" y="404" width="510" height="56" rx="12" class="b-dom"/>
+        <text x="545" y="427" text-anchor="middle" class="t-h">DOM over the canvas</text>
+        <text x="545" y="447" text-anchor="middle" class="t-s">timeline · forecast card · commands · paper dolls, placed with project()</text>
+        <text x="860" y="427" class="t-f">the night grade is copied from</text>
+        <text x="860" y="442" class="t-f">BandStage's applyGrade (six lines)</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--accent-wash);box-shadow:inset 0 0 0 2px var(--accent)"></i>The rules: <code>@cyber/battle</code>, decides everything</span>
+      <span><i style="background:var(--neon-wash);box-shadow:inset 0 0 0 2px var(--neon)"></i>Game-owned scene</span>
+      <span><i style="background:var(--info-wash);box-shadow:inset 0 0 0 2px var(--info)"></i>Imported from <code>uma-stage</code></span>
+      <span><i style="background:var(--sunken);box-shadow:inset 0 0 0 2px var(--ink-faint)"></i>DOM</span>
+    </div>
+
+    <h3 style="margin-top:18px">What fits on a phone</h3>
+    <p>One texel per device pixel makes a tile 128 px wide and about 73 px deep. On the owner's 3× iPhone in landscape that's
+      about 20 tiles across and 16 deep: a flat 14 × 14 board fits, and heights at the back overflow, so the board pans. A 2×
+      phone fits about 10 tiles each way and would need a zoom (a request, only if needed).</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1000 326" role="img" aria-label="Two phones in landscape at the same physical size. The 3x iPhone shows about 20 by 16 tiles, and a 14 by 14 board fits inside, with heights at the back overflowing the top so the board pans. The 2x phone shows about 10 by 10 tiles, and the 14 by 14 board overflows on every side, so it would need a zoom.">
+        <!-- 3x phone -->
+        <text x="250" y="18" text-anchor="middle" class="t-h">The owner's 3× iPhone, landscape</text>
+        <rect x="24" y="56" width="452" height="220" rx="30" class="b-box"/>
+        <rect x="40" y="70" width="420" height="192" rx="4" style="fill:var(--panel)"/>
+        <rect x="40" y="70" width="420" height="192" style="fill:url(#grid3x)"/>
+        <g clip-path="url(#clip3x)">
+          <rect x="103" y="44" width="294" height="38" class="b-ghost" style="stroke:var(--neon)"/>
+        </g>
+        <rect x="103" y="82" width="294" height="168" style="fill:color-mix(in srgb, var(--neon) 18%, transparent);stroke:var(--neon);stroke-width:2"/>
+        <text x="250" y="160" text-anchor="middle" style="font-size:22px;font-weight:800;fill:var(--ink)">14 × 14</text>
+        <text x="250" y="180" text-anchor="middle" class="t-s">fits flat</text>
+        <text x="250" y="206" text-anchor="middle" class="t-f">heights at the back overflow: the board pans</text>
+        <text x="250" y="318" text-anchor="middle" class="t-b">about 20 tiles across × 16 deep</text>
+
+        <!-- 2x phone -->
+        <text x="728" y="18" text-anchor="middle" class="t-h">A 2× phone</text>
+        <rect x="493" y="31.5" width="470" height="269" rx="3" style="fill:color-mix(in srgb, var(--neon) 7%, transparent);stroke:var(--neon);stroke-width:1.6;stroke-dasharray:6 4"/>
+        <text x="500" y="46" class="t-f">the rest of the 14 × 14 board</text>
+        <rect x="544" y="56" width="368" height="220" rx="30" class="b-box"/>
+        <rect x="560" y="70" width="336" height="192" rx="4" style="fill:var(--panel)"/>
+        <rect x="560" y="70" width="336" height="192" style="fill:url(#grid2x)"/>
+        <rect x="560" y="70" width="336" height="192" clip-path="url(#clip2xs)" style="fill:color-mix(in srgb, var(--neon) 18%, transparent)"/>
+        <text x="728" y="160" text-anchor="middle" style="font-size:22px;font-weight:800;fill:var(--ink)">10 × 10</text>
+        <text x="728" y="180" text-anchor="middle" class="t-s">of the 14 × 14 board</text>
+        <text x="728" y="318" text-anchor="middle" class="t-b">about 10 tiles each way: a zoom, only if needed</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:color-mix(in srgb, var(--neon) 18%, transparent);box-shadow:inset 0 0 0 2px var(--neon)"></i>A 14 × 14 board on screen</span>
+      <span><i style="background:transparent;border:2px dashed var(--neon)"></i>Off screen: the board pans, or needs a zoom</span>
+      <span>One tile: 128 × about 73 device pixels, at 35°</span>
+    </div>
+
+    <h3 style="margin-top:18px">What CY7 checks before anything builds on it</h3>
+    <div class="checks">
+      <div class="check"><span class="n">1</span><p>A map built directly into <code>roomGeometry</code>'s design object, <b>with a level-3 tile:</b> if it builds, heights 0–3 need no request.</p></div>
+      <div class="check"><span class="n">2</span><p>Picking on every tile top at about 24 pt deep, with heights.</p></div>
+      <div class="check"><span class="n">3</span><p>Thirteen figures live (four sprite sets and nine standees, about 56 MB of the 112 MB budget).</p></div>
+      <div class="check"><span class="n">4</span><p>Frame rate with the saver on and off (<code>FpsRecorder</code>: mean, 1% low), against 60 fps with a 30 fps floor.</p></div>
+      <div class="check"><span class="n">5</span><p>How much heights hide, with the fade on.</p></div>
+    </div>
+
+    <h3 style="margin-top:18px">The stage requests</h3>
+    <p style="margin-top:0">Filed with uma-platform one at a time (the change protocol; its ST rows), each with the evidence:</p>
+    <div class="scroll">
+      <table style="min-width:760px">
+        <tr><th style="width:26%">Request</th><th>Evidence</th><th style="width:22%">Likely</th></tr>
+        <tr><td class="need">Tunable bloom and tilt-shift</td><td>Threshold fixed at 0.86 on luminance: magenta (about 0.28) and cyan (about 0.79) never bloom</td><td><span class="how request">Needed</span></td></tr>
+        <tr><td class="need">Glowing kit frames</td><td><code>KitFrame.light</code> makes a light but nothing glows</td><td><span class="how request">Needed</span></td></tr>
+        <tr><td class="need">A tactics kit kind, cached by kit id</td><td>A biome kit must carry dungeon frames; one page per kind for the whole session</td><td><span class="how request">Needed</span></td></tr>
+        <tr><td class="need">A lighter saver tier</td><td>The saver is on by default on phones and turns every effect off</td><td><span class="how request">Needed</span></td></tr>
+        <tr><td class="need">Heights 0–3</td><td><code>MAX_LEVEL</code> 2 in the format</td><td><span class="how none">If check 1 fails</span></td></tr>
+        <tr><td class="need">A tactical zoom</td><td>2× phones</td><td><span class="how none">If needed</span></td></tr>
+        <tr><td class="need">Rain; overlays in the stage</td><td>Both drawn game-side first</td><td><span class="how none">Only if game-side costs too much</span></td></tr>
+      </table>
+    </div>
+    <div class="callout neon"><b>Until a request ships, the board runs without it:</b> neon reads by colour, the saver tier is
+      off, and the kit loads by hand (<code>pixelTexture</code>, then <code>buildWorld</code> with an array of pages).</div>
+  </section>
+
+  <!-- ───────────────────────── 4. The battle package ───────────────────────── -->
+  <section class="card" id="battle">
+    <h2>4. The battle package <span class="tag">BP4</span></h2>
+    <p><b>A battle is a frozen input plus a list of actions.</b> The save keeps exactly that, so an autosave after every action
+      is a few bytes, and a resume replays to the same state.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1080 270" role="img" aria-label="The reducer. A frozen input, with its rules version, goes into createBattle, which returns a state. applyBattleAction takes the state and an action, from legal.ts's list chosen by the player, ally Auto or the AI, and a number from rng.ts's seeded hash, and returns state, cues and error. The new state loops back for the next action. The cues go to the board and the cut-in, which never decide anything. forecast.ts runs the same code on a copy for the card's numbers. The save keeps the input and the actions, so a resume replays to the same state.">
+        <!-- inputs above -->
+        <rect x="330" y="10" width="290" height="46" rx="10" class="b-box"/>
+        <text x="345" y="30" class="t-h" style="font-size:13px">action</text>
+        <text x="345" y="47" class="t-s">from legal.ts: the player, ally Auto or the AI</text>
+        <rect x="640" y="10" width="320" height="46" rx="10" class="b-box"/>
+        <text x="655" y="30" class="t-m">rng.ts</text>
+        <text x="655" y="47" class="t-s">(seed, turn, actor, roll) → number; never Math.random</text>
+        <path d="M475 56 C475 80 580 74 580 96" class="ln" marker-end="url(#ah)"/>
+        <path d="M790 56 C790 80 730 74 730 96" class="ln" marker-end="url(#ah)"/>
+
+        <!-- the main chain -->
+        <rect x="16" y="100" width="140" height="48" rx="10" class="b-acc"/>
+        <text x="86" y="121" text-anchor="middle" class="t-h" style="font-size:13px">frozen input</text>
+        <text x="86" y="138" text-anchor="middle" class="t-s">with its rules version</text>
+        <path d="M156 124 H186" class="ln" marker-end="url(#ah)"/>
+        <rect x="190" y="100" width="170" height="48" rx="10" class="b-row"/>
+        <text x="275" y="129" text-anchor="middle" class="t-m">createBattle(input)</text>
+        <path d="M360 124 H390" class="ln" marker-end="url(#ah)"/>
+        <rect x="394" y="100" width="100" height="48" rx="10" class="b-neon"/>
+        <text x="444" y="129" text-anchor="middle" class="t-h" style="font-size:13px">state</text>
+        <path d="M494 124 H524" class="ln" marker-end="url(#ah)"/>
+        <rect x="528" y="100" width="250" height="48" rx="10" class="b-row"/>
+        <text x="653" y="129" text-anchor="middle" class="t-m">applyBattleAction(state, action)</text>
+        <path d="M778 124 H808" class="ln" marker-end="url(#ah)"/>
+        <rect x="812" y="100" width="252" height="48" rx="10" class="b-neon"/>
+        <text x="938" y="129" text-anchor="middle" class="t-m">{ state, cues, error }</text>
+
+        <!-- loop back -->
+        <path d="M900 148 V164 Q900 176 888 176 H456 Q444 176 444 164 V152" class="ln-neon" marker-end="url(#ah-neon)"/>
+        <text x="672" y="193" text-anchor="middle" class="t-s">the new state takes the next action</text>
+
+        <!-- cues out -->
+        <path d="M1030 148 V200" class="ln" marker-end="url(#ah)"/>
+        <rect x="820" y="204" width="244" height="54" rx="10" class="b-dom"/>
+        <text x="942" y="226" text-anchor="middle" class="t-b" style="font-weight:700">the board and the cut-in play them</text>
+        <text x="942" y="244" text-anchor="middle" class="t-s">the scene never decides anything</text>
+        <text x="1040" y="182" class="t-f">cues</text>
+
+        <!-- forecast -->
+        <path d="M414 148 C414 186 330 180 330 200" class="ln-dash" marker-end="url(#ah)"/>
+        <rect x="16" y="204" width="340" height="54" rx="10" class="b-ghost"/>
+        <text x="30" y="226" class="t-m">forecast.ts</text>
+        <text x="30" y="244" class="t-s">the resolution's own functions, as chances, never the roll (TC29)</text>
+
+        <!-- the save -->
+        <text x="600" y="226" text-anchor="middle" class="t-b" style="font-weight:700">the save keeps the input + actions[]</text>
+        <text x="600" y="244" text-anchor="middle" class="t-s">an autosave is a few bytes; a resume replays to the same state</text>
+      </svg>
+    </div>
+
+    <h3 style="margin-top:16px"><code>packages/battle/src/</code></h3>
+    <div class="files">
+      <div class="file"><code>types.ts</code><span>Map, Tile, Unit, Rig, Part, Loadout, Weapon, Action, Cue, Objective</span></div>
+      <div class="file"><code>tuning.ts</code><span>every number in one table: bands, part HP, Capacity, damage, hit, Charge (TC4, TC17–TC20)</span></div>
+      <div class="file"><code>rng.ts</code><span>a seeded hash: (seed, turn, actor, roll) → number; never <code>Math.random</code></span></div>
+      <div class="file"><code>battle.ts</code><span><code>createBattle(input)</code> → state; <code>applyBattleAction(state, action)</code> → <code>{ state, cues, error }</code></span></div>
+      <div class="file"><code>legal.ts</code><span>the legal actions for the unit whose turn it is</span></div>
+      <div class="file"><code>move.ts</code><span>reachable tiles: Move, height, jump, Stride, broken Legs, zones of control</span></div>
+      <div class="file"><code>sight.ts</code><span>line of fire and the pincer test for Crossfire</span></div>
+      <div class="file"><code>attack.ts</code><span>hits, parts, damage types, Coat, facing, height, counters, Crossfire, Cover</span></div>
+      <div class="file"><code>timeline.ts</code><span>clocks filled by Speed; the next eight turns; Wait</span></div>
+      <div class="file"><code>forecast.ts</code><span>the resolution's own functions, as chances and ranges, never the seeded roll (TC29)</span></div>
+      <div class="file later"><code>terrain.ts</code><span>Wet, Oil, Fire, Live, Smoke, terminals <span class="cy p2">CY5</span></span></div>
+      <div class="file later"><code>tech.ts</code><span>Stun, Jam, Jack-Out, the Holds <span class="cy p2">CY5</span></span></div>
+      <div class="file later"><code>ai.ts</code><span>enemy AI and ally Auto <span class="cy p2">CY6</span></span></div>
+      <div class="file"><code>version.ts</code><span>the rules version; an old battle replays on its own version</span></div>
+    </div>
+
+    <div class="grid2" style="margin-top:14px">
+      <div class="tile"><h3>Cues</h3>
+        <p>What the board and the cut-in play. The scene never decides anything.</p>
+        <div style="margin-top:6px"><span class="cue">moved</span><span class="cue">faced</span><span class="cue">hit (part, amount, broke)</span><span class="cue">countered</span><span class="cue">joined</span><span class="cue">broke</span><span class="cue">freed</span><span class="cue">terrain changed</span></div></div>
+      <div class="tile"><h3>Factions' mechanics</h3>
+        <p>They arrive one at a time with their worlds; Phase 2 builds the Steel Muster's cover and volley as the first, since
+          the test map fights the Muster (<a href="world.html#factions">the factions</a>).</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 5. Testing ───────────────────────── -->
+  <section class="card" id="testing">
+    <h2>5. Combat testing, three ways <span class="tag">BP5</span></h2>
+    <div class="scroll">
+      <table style="min-width:820px">
+        <tr><th style="width:18%">Way</th><th>What it is</th><th style="width:22%">Run by</th><th style="width:22%">Catches</th></tr>
+        <tr><td class="need"><b>1. Tests and golden replays</b></td><td>Vitest per rule; golden files hold an input, its actions and the exact cues</td><td><code>pnpm test</code>, in CI</td><td>A rule that changed by accident</td></tr>
+        <tr><td class="need"><b>2. The sandbox</b></td><td>A route in the app: pick a map, squad, loadouts, enemies and seed; play with the full battle UI; save the setup as a scenario</td><td>The owner, on the phone; Claude headless through <code>?debug</code></td><td>How it feels: readability, taps, the ten-minute target</td></tr>
+        <tr><td class="need"><b>3. The simulator</b></td><td><code>pnpm sim</code> plays scenarios AI against AI over many seeds and writes a report</td><td>Claude, after any tuning change</td><td>Balance: win rates, battle length, what dominates</td></tr>
+      </table>
+    </div>
+    <div class="callout"><b>Scenarios</b> are small JSON files in <code>scenarios/</code>, shared by the sandbox and the
+      simulator, nameless (stand-in units, test maps, generic enemies), so they belong in git.</div>
+
+    <h3 style="margin-top:18px">The simulator's report</h3>
+    <p style="margin-top:0"><code>pnpm sim all --seeds 500</code>, written to the ignored <code>sim/out/</code>:</p>
+    <div class="scroll">
+      <table style="min-width:640px">
+        <tr><th style="width:44%">Measure</th><th>Target</th></tr>
+        <tr><td class="need">Win rate in an even scenario</td><td><b>45–55%</b></td></tr>
+        <tr><td class="need">Battle length</td><td><b>8–14 player turns</b>, about ten minutes at the sandbox's measured pace</td></tr>
+        <tr><td class="need">A full-HP Core broken in one hit, at equal bands</td><td><b>Never</b>, except a boss's signature</td></tr>
+        <tr><td class="need">Each weapon band's share of damage</td><td><b>No band above 40%</b> in a mixed squad</td></tr>
+        <tr><td class="need">Counters, Crossfires and Covers a battle</td><td><b>At least one each</b>, on average</td></tr>
+        <tr><td class="need">Parts broken before the Core</td><td><b>More than half</b> the Rig Breaks</td></tr>
+        <tr><td class="need">Charge left unspent at the end</td><td><b>Low</b>, or Charge is too cheap</td></tr>
+      </table>
+    </div>
+    <h3 style="margin-top:16px">A balance pass</h3>
+    <div class="loop">
+      <span class="gold">edit <code>tuning.ts</code></span><i>→</i>
+      <span>rerun <code>pnpm sim all --seeds 500</code></span><i>→</i>
+      <span>the report in <code>sim/out/</code></span><i>→</i>
+      <span class="hot">the report's diff goes in the packet's decision</span>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 6. The app ───────────────────────── -->
+  <section class="card" id="app">
+    <h2>6. The app on test content <span class="tag">BP6</span></h2>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1100 446" role="img" aria-label="The app flow. Boot leads to the ship. The ship's rooms are the Bridge, the Hangar (loadouts, parts), Quarters (the crew, Strain, optional scenes), the Log (Files, Timeline, Anomalies) and the Store, Comms and Sim Pod, locked until a lead opens them. From the Bridge: the star map, a world's map, a chapter or side job, then the briefing, deploy, battle and results, and back aboard to the Hangar.">
+        <!-- boot and the ship -->
+        <rect x="16" y="20" width="96" height="44" rx="10" class="b-dom"/>
+        <text x="64" y="47" text-anchor="middle" class="t-h">boot</text>
+        <path d="M112 42 H146" class="ln" marker-end="url(#ah)"/>
+        <rect x="150" y="20" width="250" height="44" rx="10" class="b-acc"/>
+        <text x="166" y="39" class="t-h">the ship</text>
+        <text x="166" y="55" class="t-s">a 2D cutaway; the rooms are places</text>
+
+        <!-- trunk -->
+        <path d="M176 64 V406" class="ln" style="stroke-width:2.4"/>
+        <path d="M176 120 H196" class="ln" marker-end="url(#ah)"/>
+        <path d="M176 190 H196" class="ln" marker-end="url(#ah)"/>
+        <path d="M176 260 H196" class="ln" marker-end="url(#ah)"/>
+        <path d="M176 330 H196" class="ln" marker-end="url(#ah)"/>
+        <path d="M176 406 H196" class="ln" marker-end="url(#ah)"/>
+
+        <!-- rooms -->
+        <rect x="200" y="96" width="200" height="48" rx="10" class="b-row" style="stroke:var(--ph3);stroke-width:2"/>
+        <text x="214" y="125" class="t-h" style="font-size:13px">Bridge</text>
+        <rect x="200" y="166" width="200" height="48" rx="10" class="b-row" style="stroke:var(--ph3);stroke-width:2"/>
+        <text x="214" y="186" class="t-h" style="font-size:13px">Hangar</text>
+        <text x="214" y="203" class="t-s">loadouts, parts</text>
+        <rect x="200" y="236" width="200" height="48" rx="10" class="b-row" style="stroke:var(--ph3);stroke-width:2"/>
+        <text x="214" y="256" class="t-h" style="font-size:13px">Quarters</text>
+        <text x="214" y="273" class="t-s">the crew, Strain, optional scenes</text>
+        <rect x="200" y="306" width="200" height="48" rx="10" class="b-row" style="stroke:var(--ph3);stroke-width:2"/>
+        <text x="214" y="326" class="t-h" style="font-size:13px">Log</text>
+        <text x="214" y="343" class="t-s">Files, Timeline, Anomalies</text>
+        <rect x="200" y="376" width="200" height="60" rx="10" class="b-lock"/>
+        <text x="214" y="396" class="t-h" style="font-size:13px;fill:var(--ink-soft)">Store, Comms, Sim Pod</text>
+        <text x="214" y="413" class="t-s">locked until a lead opens</text>
+        <text x="214" y="428" class="t-s">them (TC49)</text>
+        <g transform="translate(378 384)" style="fill:none;stroke:var(--ink-faint);stroke-width:1.6">
+          <rect x="0" y="7" width="14" height="10" rx="2"/><path d="M3 7V4a4 4 0 0 1 8 0v3"/>
+        </g>
+
+        <!-- row 1: Bridge → star map → a world's map → chapter or side job -->
+        <path d="M400 120 H466" class="ln" marker-end="url(#ah)"/>
+        <rect x="470" y="96" width="136" height="48" rx="10" class="b-info"/>
+        <text x="482" y="116" class="t-h" style="font-size:13px">star map</text>
+        <text x="482" y="133" class="t-s">a node per world</text>
+        <path d="M606 120 H626" class="ln" marker-end="url(#ah)"/>
+        <rect x="630" y="96" width="136" height="48" rx="10" class="b-info"/>
+        <text x="642" y="116" class="t-h" style="font-size:13px">a world's map</text>
+        <text x="642" y="133" class="t-s">a node per location</text>
+        <path d="M766 120 H786" class="ln" marker-end="url(#ah)"/>
+        <rect x="790" y="96" width="150" height="48" rx="10" class="b-info"/>
+        <text x="802" y="125" class="t-h" style="font-size:13px">chapter or side job</text>
+
+        <!-- down to row 2 -->
+        <path d="M940 120 H1010 Q1022 120 1022 132 V162" class="ln" marker-end="url(#ah)"/>
+
+        <!-- row 2, right to left: briefing → deploy → battle → results -->
+        <rect x="960" y="166" width="124" height="48" rx="10" class="b-info"/>
+        <text x="972" y="195" class="t-h" style="font-size:13px">briefing</text>
+        <path d="M960 190 H944" class="ln" marker-end="url(#ah)"/>
+        <rect x="800" y="166" width="140" height="48" rx="10" class="b-info"/>
+        <text x="812" y="195" class="t-h" style="font-size:13px">deploy</text>
+        <path d="M800 190 H784" class="ln" marker-end="url(#ah)"/>
+        <rect x="630" y="166" width="150" height="48" rx="10" class="b-neon"/>
+        <text x="642" y="186" class="t-h" style="font-size:13px">battle</text>
+        <text x="642" y="203" class="t-s">the board and the cut-in</text>
+        <path d="M630 190 H610" class="ln" marker-end="url(#ah)"/>
+        <rect x="470" y="166" width="136" height="48" rx="10" class="b-info"/>
+        <text x="482" y="195" class="t-h" style="font-size:13px">results</text>
+
+        <!-- back aboard -->
+        <path d="M470 190 H404" class="ln-neon" marker-end="url(#ah-neon)"/>
+        <text x="437" y="208" text-anchor="middle" class="t-f" style="fill:var(--neon);font-weight:700">back aboard</text>
+
+        <!-- notes -->
+        <rect x="470" y="246" width="614" height="178" rx="12" class="b-box" style="fill:var(--panel)"/>
+        <text x="488" y="272" class="t-b" style="font-weight:700">Which packet builds what</text>
+        <g class="t-s">
+          <text x="488" y="296"><tspan class="t-m" style="font-size:11px">CY8 </tspan> the sandbox: the battle screen on the phone, the cut-in, autosave and resume</text>
+          <text x="488" y="320"><tspan class="t-m" style="font-size:11px">CY10</tspan> the ship, the star map, a world's map and the mission flow; save v3</text>
+          <text x="488" y="344"><tspan class="t-m" style="font-size:11px">CY11</tspan> the crew and the Hangar: roster, profiles, loadouts, parts, roles, the bench</text>
+          <text x="488" y="368"><tspan class="t-m" style="font-size:11px">CY12</tspan> the Chapter 1 loop on the stand-in: two worlds, two pickups, rooms opening, debriefs</text>
+          <text x="488" y="392"><tspan class="t-m" style="font-size:11px">CY9 </tspan> the story format, its check, the stand-in story, the loader and the scene player; save v2</text>
+        </g>
+        <text x="488" y="414" class="t-f">Star map and world map: SVG, 44 pt targets, each node showing its danger level and any lock's key.</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--panel);box-shadow:inset 0 0 0 2px var(--ph3)"></i>A room: a place on <code>uma-kit/shell</code></span>
+      <span><i style="background:var(--info-wash);box-shadow:inset 0 0 0 2px var(--info)"></i>The mission flow</span>
+      <span><i style="background:var(--neon-wash);box-shadow:inset 0 0 0 2px var(--neon)"></i>The battle, and the way back aboard</span>
+      <span><i style="background:var(--sunken);border:1px dashed var(--ink-faint)"></i>Locked</span>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div class="tile"><h3>The ship starts as a 2D cutaway</h3><p>DOM and SVG, uma-kit's shell, the rooms as places: the
+        cheapest view that looks fine. An HD-2D deck on the stage can come later with a kit.</p></div>
+      <div class="tile"><h3>The star map and a world's map are SVG</h3><p>From uma-rpg's star chart, with 44 pt targets: a node
+        per world, a node per location, each showing its danger level and any lock's key.</p></div>
+      <div class="tile"><h3>The save grows from CY3's v1</h3><p>Through CY9's v2 (the story state) to CY10's v3: the crew (by outfit id), parts and loadouts, the ship's rooms,
+        each world's progress, story flags, Leads and Files, and the battle in progress as its input and actions.</p></div>
+      <div class="tile"><h3>Stand-ins everywhere</h3><p><code>uma-stage</code>'s stand-in sprite sets and kits, test maps, an
+        invented world with two invented leads. Master data's chibi sets, renders and the Ranker's images swap in during
+        Phase 4.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 7. The story ───────────────────────── -->
+  <section class="card" id="story">
+    <h2>7. Where the story plugs in <span class="tag">BP7</span></h2>
+    <p>The contract is in the story brief §8, the content contract (<a href="story-brief.html">page</a>,
+      <a href="../story-brief.md#8-the-content-contract-sb8">story-brief.md §8</a>). CY9 makes it real:</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1080 236" role="img" aria-label="The story's loader seam. Three sources: content/stories on the dev server; the stand-in story in git, which the dev server falls back to when content is empty; and in production a private pack through uma-server's PrivatePackModule, once the bucket exists in Phase 4. All three go through one loader seam into the strict parser in @cyber/domain, which names the path of any error, and on to the scene player. pnpm story:check runs the same parser over every file in content/stories and writes Uma Story's checks.json.">
+        <!-- sources -->
+        <rect x="16" y="16" width="320" height="50" rx="10" class="b-acc"/>
+        <text x="30" y="37" class="t-m">content/stories/</text>
+        <text x="30" y="55" class="t-s">the dev server reads the story session's files</text>
+        <rect x="16" y="90" width="320" height="50" rx="10" class="b-box"/>
+        <text x="30" y="111" class="t-h" style="font-size:13px">the stand-in story</text>
+        <text x="30" y="129" class="t-s">in git, invented ids; used when content/ is empty</text>
+        <rect x="16" y="164" width="320" height="56" rx="10" class="b-ghost"/>
+        <text x="30" y="185" class="t-h" style="font-size:13px">a private pack, in production</text>
+        <text x="30" y="203" class="t-s">uma-server's PrivatePackModule, once the bucket exists</text>
+        <text x="30" y="216" class="t-f">Phase 4, with its cost table</text>
+
+        <path d="M336 41 C370 41 370 106 396 110" class="ln" marker-end="url(#ah)"/>
+        <path d="M336 115 H396" class="ln" marker-end="url(#ah)"/>
+        <path d="M336 192 C370 192 370 124 396 120" class="ln-dash" marker-end="url(#ah)"/>
+
+        <!-- seam -->
+        <rect x="400" y="90" width="170" height="50" rx="10" class="b-neon"/>
+        <text x="485" y="111" text-anchor="middle" class="t-h" style="font-size:13px">one loader seam</text>
+        <text x="485" y="129" text-anchor="middle" class="t-s">dev, fallback or pack</text>
+        <path d="M570 115 H604" class="ln" marker-end="url(#ah)"/>
+
+        <!-- parser -->
+        <rect x="608" y="90" width="248" height="50" rx="10" class="b-row" style="stroke:var(--neon);stroke-width:1.5"/>
+        <text x="622" y="111" class="t-h" style="font-size:13px">a strict parser</text>
+        <text x="622" y="129" class="t-s">@cyber/domain; names the path of any error</text>
+        <path d="M856 115 H878" class="ln" marker-end="url(#ah)"/>
+
+        <!-- scene player -->
+        <rect x="882" y="78" width="182" height="74" rx="10" class="b-info"/>
+        <text x="896" y="99" class="t-h" style="font-size:13px">the scene player</text>
+        <text x="896" y="117" class="t-s">lines with busts, interjection</text>
+        <text x="896" y="131" class="t-s">slots, choices and Leads,</text>
+        <text x="896" y="145" class="t-s">auto, skip and a log</text>
+
+        <!-- story:check -->
+        <path d="M726 140 V166" class="ln" marker-end="url(#ah)"/>
+        <rect x="608" y="170" width="456" height="50" rx="10" class="b-ok"/>
+        <text x="622" y="191" class="t-m">pnpm story:check</text>
+        <text x="622" y="209" class="t-s">validates every file in content/stories/ and writes Uma Story's checks.json</text>
+      </svg>
+    </div>
+    <div class="grid4" style="margin-top:12px">
+      <div class="tile"><h3>The format and its parser</h3><p>The format's types and a strict parser that names the path of
+        any error, in <code>@cyber/domain</code>.</p></div>
+      <div class="tile"><h3><code>pnpm story:check</code></h3><p>Validates every file in <code>content/stories/</code> and writes
+        Uma Story's <code>checks.json</code>.</p></div>
+      <div class="tile"><h3>One loader seam</h3><p>The dev server reads <code>content/stories/</code> and falls back to the
+        stand-in when it's empty; production reads a private pack through <code>uma-server</code>'s
+        <code>PrivatePackModule</code> once the bucket exists (Phase 4, with its cost table).</p></div>
+      <div class="tile"><h3>The scene player</h3><p>Lines with busts, interjection slots, choices and Leads, auto, skip and a
+        log.</p></div>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 8. The packets ───────────────────────── -->
+  <section class="card" id="packets">
+    <h2>8. The packets <span class="tag">BP8</span></h2>
+    <p>Twelve packets in three phases. After CY1 the foundation and the combat run as two tracks; they meet at the sandbox,
+      CY8.</p>
+    <div class="scroll">
+      <svg class="wide" viewBox="0 0 1116 400" role="img" aria-label="The packet dependency graph. CY1, the workspace, leads to CY2, the cloud, then CY3, the hello app. CY1 also leads to CY4, the core rules, then CY5, the rest, then CY6, the AI and simulator, then CY8, the sandbox. CY1 also leads to CY7, the board, which leads to CY8. CY3 leads to CY8 and to CY9, the story. CY8 and CY9 lead to CY10, the ship, then CY11, the crew, then CY12, the loop. Phase 1 is CY1 to CY3, phase 2 is CY4 to CY8, phase 3 is CY9 to CY12.">
+        <!-- edges -->
+        <g>
+          <path d="M68 170 V96 Q68 71 93 71 H150" class="ln" marker-end="url(#ah)"/>
+          <path d="M122 201 H150" class="ln" marker-end="url(#ah)"/>
+          <path d="M68 232 V306 Q68 331 93 331 H150" class="ln" marker-end="url(#ah)"/>
+          <path d="M262 71 H290" class="ln" marker-end="url(#ah)"/>
+          <path d="M262 201 H290" class="ln" marker-end="url(#ah)"/>
+          <path d="M402 201 H430" class="ln" marker-end="url(#ah)"/>
+          <path d="M542 201 H570" class="ln" marker-end="url(#ah)"/>
+          <path d="M402 71 H430" class="ln" marker-end="url(#ah)"/>
+          <path d="M348 102 C348 140 608 132 608 166" class="ln" marker-end="url(#ah)"/>
+          <path d="M488 102 C488 140 748 132 748 166" class="ln" marker-end="url(#ah)"/>
+          <path d="M262 331 H588 Q628 331 628 291 V236" class="ln" marker-end="url(#ah)"/>
+          <path d="M682 201 H710" class="ln" marker-end="url(#ah)"/>
+          <path d="M822 201 H850" class="ln" marker-end="url(#ah)"/>
+          <path d="M962 201 H990" class="ln" marker-end="url(#ah)"/>
+        </g>
+
+        <!-- nodes: x = 14 + col*140, w 108, h 62 -->
+        <g class="pn p1"><rect class="box" x="14" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="24" y="192">CY1</text><rect class="szb" x="92" y="178" width="22" height="18" rx="5"/><text class="szt" x="103" y="191" text-anchor="middle">S</text>
+          <text class="lb" x="24" y="210">workspace</text><text class="ow" x="24" y="225">owner: CI access</text></g>
+        <g class="pn p1"><rect class="box" x="154" y="40" width="108" height="62" rx="10"/>
+          <text class="id" x="164" y="62">CY2</text><rect class="szb" x="232" y="48" width="22" height="18" rx="5"/><text class="szt" x="243" y="61" text-anchor="middle">M</text>
+          <text class="lb" x="164" y="80">cloud</text><text class="ow" x="164" y="95">owner: the go</text></g>
+        <g class="pn p1"><rect class="box" x="294" y="40" width="108" height="62" rx="10"/>
+          <text class="id" x="304" y="62">CY3</text><rect class="szb" x="372" y="48" width="22" height="18" rx="5"/><text class="szt" x="383" y="61" text-anchor="middle">M</text>
+          <text class="lb" x="304" y="80">hello app</text><text class="ow" x="304" y="95">owner: sign-in</text></g>
+        <g class="pn p2"><rect class="box" x="154" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="164" y="192">CY4</text><rect class="szb" x="232" y="178" width="22" height="18" rx="5"/><text class="szt" x="243" y="191" text-anchor="middle">L</text>
+          <text class="lb" x="164" y="210">rules</text><text class="ow" x="164" y="225">the core</text></g>
+        <g class="pn p2"><rect class="box" x="294" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="304" y="192">CY5</text><rect class="szb" x="372" y="178" width="22" height="18" rx="5"/><text class="szt" x="383" y="191" text-anchor="middle">L</text>
+          <text class="lb" x="304" y="210">the rest</text><text class="ow" x="304" y="225">terrain, Tech</text></g>
+        <g class="pn p2"><rect class="box" x="434" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="444" y="192">CY6</text><rect class="szb" x="512" y="178" width="22" height="18" rx="5"/><text class="szt" x="523" y="191" text-anchor="middle">M</text>
+          <text class="lb" x="444" y="210">AI, sim</text><text class="ow" x="444" y="225">balance pass</text></g>
+        <g class="pn p2"><rect class="box" x="154" y="300" width="108" height="62" rx="10"/>
+          <text class="id" x="164" y="322">CY7</text><rect class="szb" x="232" y="308" width="22" height="18" rx="5"/><text class="szt" x="243" y="321" text-anchor="middle">M</text>
+          <text class="lb" x="164" y="340">the board</text><text class="ow" x="164" y="355">five checks</text></g>
+        <g class="pn p2"><rect class="box" x="574" y="170" width="108" height="62" rx="10" style="stroke-width:3"/>
+          <text class="id" x="584" y="192">CY8</text><rect class="szb" x="652" y="178" width="22" height="18" rx="5"/><text class="szt" x="663" y="191" text-anchor="middle">L</text>
+          <text class="lb" x="584" y="210">sandbox</text><text class="ow" x="584" y="225">the tracks meet</text></g>
+        <g class="pn p3"><rect class="box" x="434" y="40" width="108" height="62" rx="10"/>
+          <text class="id" x="444" y="62">CY9</text><rect class="szb" x="512" y="48" width="22" height="18" rx="5"/><text class="szt" x="523" y="61" text-anchor="middle">M</text>
+          <text class="lb" x="444" y="80">story</text><text class="ow" x="444" y="95">format, player</text></g>
+        <g class="pn p3"><rect class="box" x="714" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="724" y="192">CY10</text><rect class="szb" x="792" y="178" width="22" height="18" rx="5"/><text class="szt" x="803" y="191" text-anchor="middle">L</text>
+          <text class="lb" x="724" y="210">ship</text><text class="ow" x="724" y="225">maps, missions</text></g>
+        <g class="pn p3"><rect class="box" x="854" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="864" y="192">CY11</text><rect class="szb" x="932" y="178" width="22" height="18" rx="5"/><text class="szt" x="943" y="191" text-anchor="middle">M</text>
+          <text class="lb" x="864" y="210">crew</text><text class="ow" x="864" y="225">and the Hangar</text></g>
+        <g class="pn p3"><rect class="box" x="994" y="170" width="108" height="62" rx="10"/>
+          <text class="id" x="1004" y="192">CY12</text><rect class="szb" x="1072" y="178" width="22" height="18" rx="5"/><text class="szt" x="1083" y="191" text-anchor="middle">M</text>
+          <text class="lb" x="1004" y="210">loop</text><text class="ow" x="1004" y="225">Chapter 1</text></g>
+
+        <!-- track labels -->
+        <text x="154" y="26" class="t-f" style="font-weight:700;letter-spacing:.06em">FOUNDATION TRACK</text>
+        <text x="154" y="388" class="t-f" style="font-weight:700;letter-spacing:.06em">COMBAT TRACK: THE BOARD</text>
+        <text x="154" y="160" class="t-f" style="font-weight:700;letter-spacing:.06em">COMBAT TRACK: THE RULES</text>
+        <text x="758" y="160" class="t-f" style="font-weight:700;letter-spacing:.06em">THE APP</text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:color-mix(in srgb, var(--ph1) 15%, var(--panel));box-shadow:inset 0 0 0 2px var(--ph1)"></i>Phase 1: the foundation</span>
+      <span><i style="background:color-mix(in srgb, var(--ph2) 11%, var(--panel));box-shadow:inset 0 0 0 2px var(--ph2)"></i>Phase 2: the combat, tested three ways</span>
+      <span><i style="background:color-mix(in srgb, var(--ph3) 11%, var(--panel));box-shadow:inset 0 0 0 2px var(--ph3)"></i>Phase 3: the app</span>
+      <span><span class="sz">S</span> <span class="sz">M</span> <span class="sz">L</span> size</span>
+      <span>"owner:" the owner's step it needs</span>
+    </div>
+
+    <div class="scroll" style="margin-top:14px">
+      <table style="min-width:880px">
+        <tr><th style="width:6%">Id</th><th style="width:8%">Phase</th><th>What</th><th style="width:5%">Size</th><th style="width:24%">Needs</th></tr>
+        <tr><td><span class="cy p1">CY1</span></td><td><span class="ph p1">1</span></td><td class="need">The workspace and its checks</td><td><span class="sz">S</span></td><td>The owner's six package-access entries, for CI</td></tr>
+        <tr><td><span class="cy p1">CY2</span></td><td><span class="ph p1">1</span></td><td class="need">The cloud in the <code>uma-rpg</code> project, with its cost table</td><td><span class="sz">M</span></td><td>CY1; the owner's go</td></tr>
+        <tr><td><span class="cy p1">CY3</span></td><td><span class="ph p1">1</span></td><td class="need">The hello app: sign-in, save v1 synced, the update prompt, the Home Screen, master data</td><td><span class="sz">M</span></td><td>CY2; the owner's two sign-in entries</td></tr>
+        <tr><td><span class="cy p2">CY4</span></td><td><span class="ph p2">2</span></td><td class="need">The battle rules, core: the rig, loadout, timeline, Charge, movement, attacks, counters, Crossfire, Cover, Rig Break, objectives, the forecast; golden replays</td><td><span class="sz">L</span></td><td>CY1</td></tr>
+        <tr><td><span class="cy p2">CY5</span></td><td><span class="ph p2">2</span></td><td class="need">The battle rules, the rest: terrain states and terminals, Tech and the Holds, Back units, chance skills, items, Stride, the Steel Muster's mechanic</td><td><span class="sz">L</span></td><td>CY4</td></tr>
+        <tr><td><span class="cy p2">CY6</span></td><td><span class="ph p2">2</span></td><td class="need">The enemy AI, ally Auto, scenarios and the simulator; the first balance pass</td><td><span class="sz">M</span></td><td>CY5</td></tr>
+        <tr><td><span class="cy p2">CY7</span></td><td><span class="ph p2">2</span></td><td class="need">The board on uma-stage: the game-owned scene, its five checks, and the stage requests</td><td><span class="sz">M</span></td><td>CY1</td></tr>
+        <tr><td><span class="cy p2">CY8</span></td><td><span class="ph p2">2</span></td><td class="need">The sandbox: the battle screen on the phone, the cut-in, autosave and resume, scenario files</td><td><span class="sz">L</span></td><td>CY3, CY6, CY7</td></tr>
+        <tr><td><span class="cy p3">CY9</span></td><td><span class="ph p3">3</span></td><td class="need">The story format, its check, the stand-in story, the loader and the scene player; save v2</td><td><span class="sz">M</span></td><td>CY3</td></tr>
+        <tr><td><span class="cy p3">CY10</span></td><td><span class="ph p3">3</span></td><td class="need">The ship, the star map, a world's map and the mission flow; save v3</td><td><span class="sz">L</span></td><td>CY8, CY9</td></tr>
+        <tr><td><span class="cy p3">CY11</span></td><td><span class="ph p3">3</span></td><td class="need">The crew and the Hangar: roster, profiles, loadouts, parts, roles, the bench</td><td><span class="sz">M</span></td><td>CY10</td></tr>
+        <tr><td><span class="cy p3">CY12</span></td><td><span class="ph p3">3</span></td><td class="need">The Chapter 1 loop on the stand-in: two worlds, two pickups, rooms opening, debriefs</td><td><span class="sz">M</span></td><td>CY10, CY11</td></tr>
+      </table>
+    </div>
+
+    <h3 style="margin-top:18px">The working order for one worker</h3>
+    <div class="order">
+      <span class="cy p1">CY1</span><i>→</i>
+      <span class="grp"><span class="cy p2">CY4</span><span class="cy p2">CY5</span><span class="cy p2">CY7</span><small>while the owner's go and sign-in entries come in</small></span><i>→</i>
+      <span class="grp"><span class="cy p1">CY2</span><span class="cy p1">CY3</span><small>as soon as they do</small></span><i>→</i>
+      <span class="cy p2">CY6</span><i>→</i><span class="cy p2">CY8</span><i>→</i><span class="cy p3">CY9</span><i>→</i>
+      <span class="cy p3">CY10</span><i>→</i><span class="cy p3">CY11</span><i>→</i><span class="cy p3">CY12</span>
+    </div>
+    <p class="note">Phase 4's packets are written when the story session delivers its first world.</p>
+  </section>
+
+  <!-- ───────────────────────── 9. Budgets ───────────────────────── -->
+  <section class="card" id="budgets">
+    <h2>9. Budgets <span class="tag">BP9</span></h2>
+    <div class="stats">
+      <div class="stat"><div class="v">180 <small>KB gzip</small></div><div class="k">Main JS</div></div>
+      <div class="stat"><div class="v">60 <small>/ 30 fps</small></div><div class="k">Target / floor</div></div>
+      <div class="stat"><div class="v">8 <small>sets</small></div><div class="k">Sprite sets live</div></div>
+      <div class="stat"><div class="v">4</div><div class="k">Live lights</div></div>
+      <div class="stat"><div class="v">3<small>×</small></div><div class="k">DPR cap</div></div>
+      <div class="stat"><div class="v">~10 <small>min</small></div><div class="k">A battle</div></div>
+      <div class="stat"><div class="v">2 <small>min</small></div><div class="k">To the first battle</div></div>
+    </div>
+    <div class="scroll" style="margin-top:12px">
+      <table style="min-width:720px">
+        <tr><th style="width:24%">Budget</th><th>Value</th><th style="width:30%">From</th></tr>
+        <tr><td class="need">Main JS</td><td>180 KB gzip, three.js and the stage lazy</td><td><code>check-size.mjs</code>, as every sibling</td></tr>
+        <tr><td class="need">Frame rate</td><td>60 fps target, 30 fps floor; paused when hidden; render only on change</td><td>uma-quest's HD-2D notes</td></tr>
+        <tr><td class="need">Sprite sets live</td><td>8 (about 112 MB GPU)</td><td><code>uma-stage</code>'s cap</td></tr>
+        <tr><td class="need">Live lights</td><td>4</td><td><code>uma-stage</code></td></tr>
+        <tr><td class="need">Device-pixel ratio</td><td>Capped at 3</td><td><code>uma-stage</code></td></tr>
+        <tr><td class="need">A battle</td><td>About ten minutes; at most eight enemies and 14 × 14 tiles</td><td>TC2, TC30</td></tr>
+        <tr><td class="need">A new game to its first battle</td><td>Two minutes</td><td>TC36</td></tr>
+        <tr><td class="need">A save</td><td>Small: a battle is its input and actions</td><td>BP4</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <!-- ───────────────────────── 10. The calls ───────────────────────── -->
+  <section class="card" id="calls">
+    <h2>10. The calls</h2>
+    <div class="scroll">
+      <table style="min-width:620px">
+        <tr><th>#</th><th>Call</th><th>Section</th></tr>
+        <tr><td><span class="tag">BP1</span></td><td>The workspace: web, API, a pure <code>@cyber/battle</code> that depends on nothing, and <code>@cyber/domain</code> with the one master-data adapter; scenarios in git</td><td><a href="#workspace">1</a></td></tr>
+        <tr><td><span class="tag">BP2</span></td><td>Reuse first: import the six packages, copy what the siblings copy, follow patterns where code can't be shared; games never import each other</td><td><a href="#reuse">2</a></td></tr>
+        <tr><td><span class="tag">BP3</span></td><td>The board is a game-owned scene from <code>uma-stage</code> 0.3.0's parts; CY7 runs five checks and files the stage requests one at a time, with evidence</td><td><a href="#board">3</a></td></tr>
+        <tr><td><span class="tag">BP4</span></td><td>The battle rules: a seeded reducer, a frozen input plus actions, cues for the scene, a forecast from the same functions, one tuning table, a rules version</td><td><a href="#battle">4</a></td></tr>
+        <tr><td><span class="tag">BP5</span></td><td>Combat testing three ways: tests and golden replays, the sandbox with scenario files, the simulator with targets</td><td><a href="#testing">5</a></td></tr>
+        <tr><td><span class="tag">BP6</span></td><td>The whole app on test content: a 2D ship cutaway, SVG star and world maps, the save growing to v3, stand-ins everywhere</td><td><a href="#app">6</a></td></tr>
+        <tr><td><span class="tag">BP7</span></td><td>The story plugs in through CY9: a strict parser, <code>pnpm story:check</code>, one loader seam, the scene player</td><td><a href="#story">7</a></td></tr>
+        <tr><td><span class="tag">BP8</span></td><td>Twelve packets in three phases; the combat track starts beside the cloud</td><td><a href="#packets">8</a></td></tr>
+        <tr><td><span class="tag">BP9</span></td><td>Budgets: 180 KB, 60 fps with a 30 floor, eight sprite sets, four lights, ten-minute battles</td><td><a href="#budgets">9</a></td></tr>
+      </table>
+    </div>
+    <p class="note">Source: <a href="../build-plan.md">docs/design/build-plan.md</a>. The game it builds:
+      <a href="concept.html">the concept</a>. The world: <a href="world.html">the world bible</a>. Research:
+      <a href="references.html">references</a>. The story's side: <a href="story-brief.html">the story brief</a>.</p>
+  </section>
+</main>
+</body>
+</html>
