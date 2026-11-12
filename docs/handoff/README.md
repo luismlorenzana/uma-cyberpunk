@@ -24,7 +24,7 @@ Packet ids run CY1–CY12; decision numbers continue from D5.
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY1 | [The workspace and its checks](tasks/CY1-workspace.md): placeholders installing the six platform packages, CI, ports 8121 and 5214 | Claude | S | The owner's six package-access entries, for CI | **Ready** |
+| CY1 | [The workspace and its checks](tasks/CY1-workspace.md): placeholders installing the six platform packages, CI, ports 8121 and 5214 | Claude | S | The owner's six package-access entries, for CI | **Built** (`f2cc71b`), green locally; CI's install gets 403 until the owner's entries are in, then a rerun closes it |
 | CY2 | [The cloud](tasks/CY2-cloud.md) in the `uma-rpg` project: site `uma-cyberpunk`, Cloud Run `cyber-api`, Firestore `cyber`, the deploy job, with its cost table | Claude | M | CY1; the owner's go | Written |
 | CY3 | [The hello app](tasks/CY3-hello-app.md): uma-quest's wiring, Google sign-in, save v1 synced, the update prompt, master data, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | Written |
 
@@ -92,7 +92,7 @@ packet, or says why not.
 | When | What |
 |---|---|
 | Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
-| For CY1's CI | On GitHub, for `uma-data`, `uma-kit`, `uma-work`, `uma-server`, `uma-art` and `uma-stage`: Package settings → **Manage Actions access** → add `uma-cyberpunk` with **Read** |
+| **Now, for CY1's CI** (it fails with 403 until then) | On GitHub, for `uma-data`, `uma-kit`, `uma-work`, `uma-server`, `uma-art` and `uma-stage`: Package settings → **Manage Actions access** → add `uma-cyberpunk` with **Read** |
 | CY2 | The go for the cloud, on its cost table |
 | CY3 | The two sign-in entries for `uma-cyberpunk.web.app` (the packet names the pages); then the phone check: install, sign in, see the save sync |
 | CY8 | One play of the sandbox on the phone |
