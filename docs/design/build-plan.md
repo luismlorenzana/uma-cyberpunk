@@ -273,9 +273,9 @@ The contract is in [the story brief §8](story-brief.md#8-the-content-contract-s
 | CY11 | 3 | The crew and the Hangar: roster, profiles, loadouts, parts, roles, the bench | M | CY10 |
 | CY12 | 3 | The Chapter 1 loop on the stand-in: two worlds, two pickups, rooms opening, debriefs | M | CY10, CY11 |
 
-**The working order for one worker:** CY1, then CY4, CY5 and CY7 while the owner's go and sign-in entries come in,
-then CY2 and CY3 as soon as they do, then CY6, CY8, CY9, CY10, CY11 and CY12. Phase 4's packets are written when the
-story session delivers its first world.
+**The working order:** number order, CY1 to CY12 (the owner, D5), so the cloud and the hello app come first and every
+later packet can be checked on the phone. Phase 4's packets are written when the story session delivers its first
+world.
 
 ## 9. Budgets (BP9)
 
