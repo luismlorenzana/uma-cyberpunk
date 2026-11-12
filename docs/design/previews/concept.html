@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uma Cyberpunk Concept</title>
+<!-- uma-cyberpunk's concept (docs/design/concept.md): the game, the battle, the cast, the stack, the phases and the
+     calls TC1–TC16. Self-contained, uma-kit's tokens, light and dark. No character art, no franchise names beyond the
+     boards' titles. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #d39a2b; --accent-wash: #fbf1dd; --info: #2f6fe0; --info-wash: #e3ecfc; --success: #2f7a4f;
+    --success-wash: #e1f1e7; --danger: #c23b33; --danger-wash: #fbe5e3; --neon: #b03fd8; --neon-wash: #f4e4fb;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16);
+    --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+      --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+      --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+      --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0f1620; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+    --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+    --accent: #d6a23e; --accent-wash: #2b2312; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+    --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2e1614; --neon: #d27cf2; --neon-wash: #2a1633;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Inter', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font: 700 24px/1.2 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; margin: 0 0 6px; }
+  h2 { font: 700 17px/1.25 ui-rounded, system-ui, sans-serif; margin: 0 0 8px; }
+  h3 { font: 700 14px/1.25 system-ui; margin: 0 0 6px; }
+  p, li { color: var(--ink-soft); max-width: 82ch; }
+  a { color: var(--info); }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 5px; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 20px; }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  .card { background: var(--panel); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .note { font-size: 12px; color: var(--ink-faint); }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; }
+  .tag { display: inline-block; font: 700 11px ui-monospace, Menlo, monospace; padding: 1px 7px; border-radius: 999px; background: var(--neon-wash); color: var(--neon); }
+
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .tile { background: var(--raised); border-radius: 10px; padding: 12px 14px; }
+  .tile p { margin: 4px 0 0; font-size: 13px; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 7px 8px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+  th { color: var(--ink-soft); font-weight: 600; }
+  td b { color: var(--ink); }
+
+  /* the loop */
+  .loop { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .loop span { font: 600 12px system-ui; padding: 8px 12px; border-radius: 10px; background: var(--info-wash); color: var(--ink); }
+  .loop span.battle { background: var(--neon-wash); }
+  .loop i { color: var(--ink-faint); font-style: normal; }
+
+  /* phases */
+  .phases { display: grid; grid-template-columns: repeat(6, minmax(150px, 1fr)); gap: 8px; min-width: 940px; }
+  .phase { border-radius: 10px; padding: 10px 12px; background: var(--raised); border: 1px solid var(--hairline-strong); }
+  .phase b { font: 700 12px ui-monospace, Menlo, monospace; color: var(--ink-faint); }
+  .phase h3 { margin: 2px 0 4px; }
+  .phase p { margin: 0; font-size: 12px; }
+  .phase small { display: block; margin-top: 6px; font-size: 11px; color: var(--ink-faint); }
+  .phase.done { background: var(--success-wash); border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+  .phase.next { background: var(--info-wash); border-color: color-mix(in srgb, var(--info) 40%, transparent); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--ink-soft); margin-top: 10px; }
+  .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 5px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Uma Cyberpunk: the concept</h1>
+  <p>A personal sci-fi tactics RPG on the owner's iPhone: a squad of Umas on HD-2D grid maps, in a neon city on an orbital
+    ring, against heroines pulled in from other mobile RPG worlds. The starting doc, 2026-11-12; sixteen calls, TC1–TC16,
+    adopted until the owner changes one. Source: <code>docs/design/concept.md</code>.</p>
+  <nav>
+    <a href="#short">The short answer</a><a href="#battle">The battle</a><a href="#cast">The cast</a>
+    <a href="#loop">The loop</a><a href="#built">How it's built</a><a href="#art">Art and story</a>
+    <a href="#phases">Phases</a><a href="#calls">The calls</a>
+  </nav>
+
+  <section class="card" id="short">
+    <h2>The short answer</h2>
+    <div class="grid3">
+      <div class="tile"><h3>Grid tactics <span class="tag">TC2</span></h3><p>Four Umas plus a guest slot, 10×10 to 14×14 tiles, four heights, facing; about ten minutes a battle.</p></div>
+      <div class="tile"><h3>Speed decides <span class="tag">TC3</span></h3><p>Each unit's clock fills by Speed; the timeline shows the next eight turns. Move, act, face.</p></div>
+      <div class="tile"><h3>Uma stats matter <span class="tag">TC4</span><span class="tag">TC5</span></h3><p>The five stats become battle stats; five roles start from the running-style aptitude.</p></div>
+      <div class="tile"><h3>An original setting <span class="tag">TC6</span></h3><p>A megacity on an orbital ring, the Lanes between worlds, and Gates that bring heroines through.</p></div>
+      <div class="tile"><h3>The crossover <span class="tag">TC7</span></h3><p>Guests from the platform's seven franchise boards: rivals and bosses first, some join. None in git.</p></div>
+      <div class="tile"><h3>Built on what exists <span class="tag">TC10</span><span class="tag">TC11</span></h3><p><code>uma-stage</code> for the maps, the shared packages for the rest, its own cloud in <code>uma-rpg</code>.</p></div>
+    </div>
+  </section>
+
+  <section class="card" id="battle">
+    <h2>The battle <span class="tag">TC2–TC5</span></h2>
+    <p>A sketch of one turn: the timeline on top, the board below. Blue is the squad, red the enemy, purple the guest
+      slot. Darker tiles stand higher. Stand-ins only; the real view is the HD-2D stage (TC10).</p>
+    <div class="scroll"><svg id="board" viewBox="0 0 960 470" role="img" aria-label="A sample battle board with a turn timeline"></svg></div>
+    <div class="legend">
+      <span><i style="background:var(--info)"></i>Squad</span>
+      <span><i style="background:var(--danger)"></i>Enemy</span>
+      <span><i style="background:var(--neon)"></i>Guest</span>
+      <span><i style="background:var(--accent)"></i>The unit acting now, and its move range</span>
+    </div>
+    <div class="grid2" style="margin-top:16px">
+      <div>
+        <h3>The stats <span class="tag">TC4</span></h3>
+        <table>
+          <tr><th>Uma stat</th><th>Battle stat</th><th>What it does</th></tr>
+          <tr><td><b>Speed</b></td><td>Initiative, Move</td><td>How often it acts and how far it moves</td></tr>
+          <tr><td><b>Stamina</b></td><td>HP</td><td>Damage before it's down</td></tr>
+          <tr><td><b>Power</b></td><td>Kinetic</td><td>Melee and gun damage</td></tr>
+          <tr><td><b>Guts</b></td><td>Armor, Last stand</td><td>Damage taken; survive once at 1 HP</td></tr>
+          <tr><td><b>Wit</b></td><td>Tech</td><td>Tech damage, hacking, healing, accuracy</td></tr>
+        </table>
+      </div>
+      <div>
+        <h3>The roles <span class="tag">TC5</span></h3>
+        <table>
+          <tr><th>Role</th><th>Plays like</th><th>Default from</th></tr>
+          <tr><td><b>Vanguard</b></td><td>Guards, taunts, holds a choke point</td><td>Front Runner</td></tr>
+          <tr><td><b>Striker</b></td><td>Dashes, flanks, hits from behind</td><td>Pace Chaser</td></tr>
+          <tr><td><b>Gunner</b></td><td>Height bonus, overwatch, suppression</td><td>Late Surger</td></tr>
+          <tr><td><b>Netrunner</b></td><td>Hacks turrets and drones, slows the clock</td><td>End Closer</td></tr>
+          <tr><td><b>Medic</b></td><td>Heals, shields, revives</td><td>Any Uma, by choice</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" id="cast">
+    <h2>The cast and the crossover <span class="tag">TC6</span><span class="tag">TC7</span></h2>
+    <table>
+      <tr><th>Who</th><th>Where from</th><th>Role in the game</th><th>Where it lives</th></tr>
+      <tr><td><b>Umas</b></td><td>Master data (the private release)</td><td>The playable squad, levelled here</td><td>By stable id; never in git</td></tr>
+      <tr><td><b>Guest heroines</b></td><td>The Uma Ranker's franchise boards: Azur Lane, Genshin Impact, Wuthering Waves, Honkai: Star Rail, Zenless Zone Zero, Honkai Impact 3rd, Punishing: Gray Raven</td><td>Rivals and bosses first; some join after their chapter, with hand-set stats</td><td>By stable id through the platform; never in git</td></tr>
+      <tr><td><b>Original foes</b></td><td>This game</td><td>Drones, mechs, security squads, gangs</td><td>Original art, in uma-art</td></tr>
+    </table>
+    <p class="note">The setting's frame (the Ring, the Lanes, the Gates) is original. Plot, names and dialogue are the private story (TC13).</p>
+  </section>
+
+  <section class="card" id="loop">
+    <h2>The loop <span class="tag">TC8</span><span class="tag">TC9</span></h2>
+    <div class="loop">
+      <span>The map</span><i>→</i><span>A mission</span><i>→</i><span>Loadout</span><i>→</i>
+      <span class="battle">The battle</span><i>→</i><span>Rewards</span><i>→</i><span>The Hideout</span><i>→</i>
+      <span>The story</span><i>↺</i>
+    </div>
+    <div class="grid3" style="margin-top:12px">
+      <div class="tile"><h3>Acts, chapters, missions</h3><p>Act 1 is the Ring. Later acts open stations, moons and planets along the Lanes. Contracts repeat for levels and gear.</p></div>
+      <div class="tile"><h3>The Hideout</h3><p>Squad, roles, gear (weapons and implants), levels and the story log, on uma-kit's shell.</p></div>
+      <div class="tile"><h3>Rewards</h3><p>Experience, credits and parts; parts build gear. No gacha: Umas join through the story, guests through their chapters.</p></div>
+    </div>
+  </section>
+
+  <section class="card" id="built">
+    <h2>How it's built <span class="tag">TC10</span><span class="tag">TC11</span><span class="tag">TC14</span></h2>
+    <div class="grid3">
+      <div class="tile"><h3>The battle view</h3><p>An HD-2D diorama on <code>@luismlorenzana/uma-stage</code> (P142), with a grid overlay, height, tile picking and a tactical camera. CY4 proves it; the fallback is a Phaser 4 isometric board.</p></div>
+      <div class="tile"><h3>The stack</h3><p>uma-rpg's: React, Vite, Tailwind, Zustand and Dexie, NestJS on Cloud Run, Firebase Hosting and Auth, a PWA. Six platform packages.</p></div>
+      <div class="tile"><h3>The cloud</h3><p>In the <code>uma-rpg</code> project, every piece its own: site <code>uma-cyberpunk</code>, <code>cyber-api</code>, Firestore <code>cyber</code>. CY2, on the owner's go with a cost table.</p></div>
+      <div class="tile"><h3>It stands alone</h3><p>Its own save, rules and economy. No parcels from uma-farm at the start; they can come later (P89).</p></div>
+    </div>
+  </section>
+
+  <section class="card" id="art">
+    <h2>Art and story <span class="tag">TC12</span><span class="tag">TC13</span></h2>
+    <table>
+      <tr><th>What</th><th>Who</th><th>Where</th></tr>
+      <tr><td><b>Uma sprites, busts, keys</b></td><td>ChatGPT, from the Character Art Studio's "Uma Cyberpunk: Combat Adult Character" category (P143)</td><td>Master data's private release</td></tr>
+      <tr><td><b>Guest heroines</b></td><td>ChatGPT</td><td>Private, like the Umas</td></tr>
+      <tr><td><b>Original foes</b></td><td>ChatGPT</td><td>uma-art</td></tr>
+      <tr><td><b>Map kits</b></td><td>ChatGPT, after its character work</td><td>uma-art</td></tr>
+      <tr><td><b>Items, UI marks, crests, tile marks</b></td><td>Claude (<code>scripts/pixel-art</code>)</td><td>uma-art</td></tr>
+    </table>
+    <p class="note">Battles start on stand-ins, so no art blocks Phase 2. The story is private, in <code>content/</code> and a private bucket; it can become a fourth book in the Story App (P141).</p>
+  </section>
+
+  <section class="card" id="phases">
+    <h2>Phases <span class="tag">TC15</span></h2>
+    <div class="scroll"><div class="phases">
+      <div class="phase done"><b>0</b><h3>The repo</h3><p>The concept and the guard</p><small>Done 2026-11-12</small></div>
+      <div class="phase next"><b>1 · CY1–CY3</b><h3>The foundation</h3><p>Workspace, cloud, hello app</p><small>Exit: signed in on the phone, save synced</small></div>
+      <div class="phase"><b>2 · CY4–CY6</b><h3>The battle prototype</h3><p>Stage spike, battle rules, one map 4 v 4 on stand-ins</p><small>Exit: a full battle on the phone</small></div>
+      <div class="phase"><b>3</b><h3>The first chapter</h3><p>Hideout, three missions, story runner, first squad, first art</p><small>Exit: chapter 1 end to end</small></div>
+      <div class="phase"><b>4</b><h3>Progression</h3><p>Levels, gear, contracts, districts, the star map</p><small>Exit: chapter 2 needs it to win</small></div>
+      <div class="phase"><b>5</b><h3>Content waves</h3><p>Acts along the Lanes, guests joining</p><small>Exit: each wave end to end</small></div>
+    </div></div>
+  </section>
+
+  <section class="card" id="calls">
+    <h2>The calls</h2>
+    <table>
+      <tr><th>#</th><th>Call</th></tr>
+      <tr><td><span class="tag">TC1</span></td><td>Personal, private, never distributed; an iPhone Home Screen web app, landscape only</td></tr>
+      <tr><td><span class="tag">TC2</span></td><td>Grid tactics: 10×10 to 14×14 tiles, four heights, facing, one objective per map; four Umas plus a guest slot; about ten minutes</td></tr>
+      <tr><td><span class="tag">TC3</span></td><td>Turn order by Speed on an eight-turn timeline, not phases; move, one action, face</td></tr>
+      <tr><td><span class="tag">TC4</span></td><td>The five Uma stats become battle stats through one adapter; levelling is this game's own</td></tr>
+      <tr><td><span class="tag">TC5</span></td><td>Five roles, the default from the running-style aptitude, swapped in the Hideout</td></tr>
+      <tr><td><span class="tag">TC6</span></td><td>An original setting: the Ring, the Lanes and the Gates</td></tr>
+      <tr><td><span class="tag">TC7</span></td><td>Umas are the squad; guests from seven franchise boards as rivals, bosses and some guest units; original foes; none in git</td></tr>
+      <tr><td><span class="tag">TC8</span></td><td>Acts, chapters, missions; story missions and contracts; the map grows from districts to a star map</td></tr>
+      <tr><td><span class="tag">TC9</span></td><td>The Hideout is the hub between battles, on uma-kit's shell; no gacha</td></tr>
+      <tr><td><span class="tag">TC10</span></td><td>An HD-2D diorama on <code>uma-stage</code>, proved by CY4; fallback Phaser 4 isometric</td></tr>
+      <tr><td><span class="tag">TC11</span></td><td>uma-rpg's stack, six packages; the cloud in <code>uma-rpg</code>, every piece its own, on the owner's go</td></tr>
+      <tr><td><span class="tag">TC12</span></td><td>Art split by kind (P126); stand-ins first</td></tr>
+      <tr><td><span class="tag">TC13</span></td><td>The story is private; a fourth Story App book later</td></tr>
+      <tr><td><span class="tag">TC14</span></td><td>It stands alone; no parcels at the start</td></tr>
+      <tr><td><span class="tag">TC15</span></td><td>Six phases, from the repo to content waves</td></tr>
+      <tr><td><span class="tag">TC16</span></td><td>Deferred: ship battles, permadeath, recruiting beyond the story, difficulty modes. Never: multiplayer</td></tr>
+    </table>
+  </section>
+</main>
+<script>
+  // The sample board: a 12 × 8 grid with heights, the squad, the enemy, a guest and the acting unit's move range.
+  const svg = document.getElementById('board')
+  const NS = 'http://www.w3.org/2000/svg'
+  const el = (name, attrs, text) => {
+    const node = document.createElementNS(NS, name)
+    for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v)
+    if (text) node.textContent = text
+    svg.appendChild(node)
+    return node
+  }
+  // Timeline: the next eight turns.
+  const order = [['S1', 'var(--accent)'], ['E1', 'var(--danger)'], ['S3', 'var(--info)'], ['G', 'var(--neon)'],
+    ['E2', 'var(--danger)'], ['S2', 'var(--info)'], ['S4', 'var(--info)'], ['E3', 'var(--danger)']]
+  el('text', { x: 20, y: 26, fill: 'var(--ink-soft)', 'font-size': 12, 'font-weight': 600 }, 'Next turns')
+  order.forEach(([label, color], i) => {
+    const x = 110 + i * 64
+    el('rect', { x, y: 10, width: 54, height: 26, rx: 7, fill: color, opacity: i === 0 ? 1 : 0.85 })
+    el('text', { x: x + 27, y: 28, 'text-anchor': 'middle', fill: '#fff', 'font-size': 12, 'font-weight': 700 }, label)
+  })
+  // Board.
+  const cols = 12, rows = 8, size = 46, ox = 20, oy = 60
+  const height = (c, r) => (c >= 4 && c <= 6 && r >= 2 && r <= 4) ? 2 : (c >= 8 && r <= 2) ? 3 : (c === 3 || c === 7) && r >= 2 && r <= 4 ? 1 : 0
+  const shades = ['var(--raised)', 'var(--sunken)', 'color-mix(in srgb, var(--ink-faint) 35%, var(--sunken))', 'color-mix(in srgb, var(--ink-faint) 60%, var(--sunken))']
+  const acting = [1, 5]
+  const inRange = (c, r) => Math.abs(c - acting[0]) + Math.abs(r - acting[1]) <= 3
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    const x = ox + c * size, y = oy + r * size
+    el('rect', { x, y, width: size - 2, height: size - 2, rx: 4, fill: shades[height(c, r)] })
+    if (inRange(c, r)) el('rect', { x, y, width: size - 2, height: size - 2, rx: 4, fill: 'var(--accent)', opacity: 0.22 })
+    const h = height(c, r)
+    if (h) el('text', { x: x + size - 8, y: y + 13, 'text-anchor': 'end', fill: 'var(--ink-faint)', 'font-size': 10 }, `h${h}`)
+  }
+  const unit = (c, r, label, color, shape) => {
+    const cx = ox + c * size + size / 2 - 1, cy = oy + r * size + size / 2 - 1
+    if (shape === 'diamond') el('path', { d: `M${cx} ${cy - 16} L${cx + 16} ${cy} L${cx} ${cy + 16} L${cx - 16} ${cy} Z`, fill: color })
+    else el('circle', { cx, cy, r: 15, fill: color })
+    el('text', { x: cx, y: cy + 4, 'text-anchor': 'middle', fill: '#fff', 'font-size': 11, 'font-weight': 700 }, label)
+  }
+  unit(1, 5, 'S1', 'var(--accent)'); unit(0, 3, 'S2', 'var(--info)'); unit(2, 6, 'S3', 'var(--info)'); unit(0, 6, 'S4', 'var(--info)')
+  unit(5, 3, 'G', 'var(--neon)')
+  unit(9, 1, 'E1', 'var(--danger)', 'diamond'); unit(10, 5, 'E2', 'var(--danger)', 'diamond'); unit(8, 6, 'E3', 'var(--danger)', 'diamond')
+  // Notes beside the board.
+  const nx = ox + cols * size + 24
+  const notes = [
+    ['S1 acts now.', 'Speed filled its clock first.'],
+    ['Move, act, face.', 'Gold tiles: its move range.'],
+    ['Height matters.', 'Gunners hit harder from above;'],
+    ['', 'h1–h3 mark the levels.'],
+    ['Facing matters.', 'Side and back hits land harder.'],
+    ['The guest (G)', 'joined after its chapter.'],
+  ]
+  notes.forEach(([a, b], i) => {
+    if (a) el('text', { x: nx, y: oy + 18 + i * 54, fill: 'var(--ink)', 'font-size': 13, 'font-weight': 700 }, a)
+    el('text', { x: nx, y: oy + 36 + i * 54 - (a ? 0 : 18), fill: 'var(--ink-soft)', 'font-size': 12 }, b)
+  })
+</script>
+</body>
+</html>
