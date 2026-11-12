@@ -18,13 +18,12 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D5.
+Packet ids run CY1–CY12; decision numbers continue from D6.
 
 ## Phase 1: the foundation
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY1 | [The workspace and its checks](tasks/CY1-workspace.md): placeholders installing the six platform packages, CI, ports 8121 and 5214 | Claude | S | The owner's six package-access entries, for CI | **Built** (`f2cc71b`), green locally; CI's install gets 403 until the owner's entries are in, then a rerun closes it |
 | CY2 | [The cloud](tasks/CY2-cloud.md) in the `uma-rpg` project: site `uma-cyberpunk`, Cloud Run `cyber-api`, Firestore `cyber`, the deploy job, with its cost table | Claude | M | CY1; the owner's go | Written |
 | CY3 | [The hello app](tasks/CY3-hello-app.md): uma-quest's wiring, Google sign-in, save v1 synced, the update prompt, master data, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | Written |
 
@@ -49,8 +48,8 @@ Starts as soon as CY1 is in, beside the cloud.
 | CY11 | [The crew and the Hangar](tasks/CY11-crew-and-hangar.md): roster, profiles, loadouts, parts, roles, the bench | Claude | M | CY10 | Written |
 | CY12 | [The Chapter 1 loop](tasks/CY12-chapter-one-loop.md): two stand-in worlds, two pickups, rooms opening, debriefs | Claude | M | CY10, CY11 | Written |
 
-**Order for one worker:** CY1; then CY4, CY5 and CY7 while the owner's go and sign-in entries come in; CY2 and CY3 as
-soon as they do; then CY6, CY8, CY9, CY10, CY11 and CY12 ([the build plan §8](../design/build-plan.md#8-the-packets-bp8)).
+**Order:** the packets in number order, CY2 to CY12 (the owner, 2026-11-12, D5), so the cloud and the hello app come
+first and every later packet can be checked on the phone ([the build plan §8](../design/build-plan.md#8-the-packets-bp8)).
 
 ## Later phases
 
@@ -92,7 +91,6 @@ packet, or says why not.
 | When | What |
 |---|---|
 | Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
-| **Now, for CY1's CI** (it fails with 403 until then) | On GitHub, for `uma-data`, `uma-kit`, `uma-work`, `uma-server`, `uma-art` and `uma-stage`: Package settings → **Manage Actions access** → add `uma-cyberpunk` with **Read** |
 | CY2 | The go for the cloud, on its cost table |
 | CY3 | The two sign-in entries for `uma-cyberpunk.web.app` (the packet names the pages); then the phone check: install, sign in, see the save sync |
 | CY8 | One play of the sandbox on the phone |
@@ -104,6 +102,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY1 | The workspace and its checks (D5): pnpm 10.33.0 and turbo; `@cyber/web`, `@cyber/api` and `@cyber/domain`, installing uma-data 1.5.0, uma-kit 0.19.0, uma-work 0.1.0, uma-server 0.2.0, uma-art 2.27.0 and uma-stage 0.3.0 with three 0.187.0; lint, tests, build, the 180 KB size check (69.4 KB, three.js marked lazy) and the private-content guard; CI's verify job. Locally with the guard on: health 200, save 401; the page and its proxied health on :5214 | `f2cc71b` |
 
 ## How a packet reads
 

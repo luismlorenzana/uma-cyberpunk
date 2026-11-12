@@ -7,7 +7,7 @@
   steps. The concept is [docs/design/concept.md](docs/design/concept.md) ([page](docs/design/previews/concept.html));
   its calls are TC1–TC54. The build plan is [docs/design/build-plan.md](docs/design/build-plan.md) (BP1–BP9): what's
   reused and how the packets build it. The research is [docs/design/references.md](docs/design/references.md). New
-  decisions go in `docs/decisions.md` from D5 (fetch `main` first). Packets are CY-numbered from CY1.
+  decisions go in `docs/decisions.md` from D6 (fetch `main` first). Packets are CY-numbered from CY1.
 - **The story has its own session (D4).** It writes the world and the story from
   [docs/design/story-brief.md](docs/design/story-brief.md) (SB1–SB11); [docs/design/world.md](docs/design/world.md)
   (WD1–WD24) is its first pass. This session builds the game, keeps the brief current when a hook changes, and answers
