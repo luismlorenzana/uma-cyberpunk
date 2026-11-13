@@ -9,9 +9,17 @@ export interface BoardDesign {
   spots: { kind: 'prop'; x: number; z: number }[]
 }
 
-/** The map's tiles as room cells: `#` stays a wall, everything else is floor. */
-export function toRoomDesign(map: Pick<BattleMap, 'tiles' | 'heights'>): BoardDesign {
-  return { cells: map.tiles.map((row) => row.replace(/[^#]/g, '.')), heights: [...map.heights], spots: [] }
+/** The map's tiles as room cells: `#` stays a wall, everything else is floor. Barrels, pipes and terminals stand as the
+ * kit's decorations (CY8), and a shut door's tiles are walls. */
+export function toRoomDesign(map: Pick<BattleMap, 'tiles' | 'heights' | 'props'>, opts: { shut?: readonly string[]; burst?: readonly string[] } = {}): BoardDesign {
+  const cells = map.tiles.map((row) => row.replace(/[^#]/g, '.').split(''))
+  const spots: BoardDesign['spots'] = []
+  for (const p of map.props ?? []) {
+    if ((p.kind === 'barrel' || p.kind === 'pipe') && !opts.burst?.includes(p.id)) spots.push({ kind: 'prop', x: p.tile[0], z: p.tile[1] })
+    if (p.kind === 'terminal') spots.push({ kind: 'prop', x: p.tile[0], z: p.tile[1] })
+    if (p.kind === 'door' && opts.shut?.includes(p.id)) for (const [x, z] of p.tiles) cells[z]![x] = '#'
+  }
+  return { cells: cells.map((r) => r.join('')), heights: [...map.heights], spots }
 }
 
 /** A tile's level on the map. */

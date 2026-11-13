@@ -1,6 +1,6 @@
 # The battle
 
-> **Status: 2026-11-12, CY6 (D10).** The rules as `@cyber/battle` plays them, **rules version 2**: CY4's core and CY5's
+> **Status: 2026-11-12, CY8 (D12).** The rules as `@cyber/battle` plays them, **rules version 2**: CY4's core and CY5's
 > roles, Tech, chance skills, items, Stride, the bench call and three more objectives, with CY6's first balance pass
 > (see [Balance](#balance)); how enemies choose is on [enemy-ai.md](enemy-ai.md). Terrain, props and terminals are
 > on [terrain.md](terrain.md); the Holds and the Steel Muster on [factions.md](factions.md). The board arrives in CY7.
@@ -292,6 +292,27 @@ action** (her turn goes on), with fixed numbers and no rolls:
 
 The result lists each enemy as **freed**, **broken** or **standing**, with her **salvage**: her unbroken parts, freed
 or broken alike. A guest joins only when freed, so breaking her parts against keeping them whole is a real choice.
+
+## The battle screen
+
+The battle as the sandbox (CY8) and the missions (CY10) show it: DOM over the [board](board.md), in `apps/web/src/battle/`.
+
+| Piece | Where | What it does |
+|---|---|---|
+| **The timeline** | Across the top | The next eight turns as chips in each side's colour; tap one to inspect her. With a forecast open, the turns after the planned one are ghosted underneath (TC3) |
+| **Two-tap move** | On the board | Her reach painted blue (safe) and magenta (inside an enemy's reach); the first tap on a tile shows her path in yellow, the second walks her there. The move stays undoable until the turn is sent |
+| **The commands arc** | Bottom right | Moving: **Act here**, **Wait**, **Dash** (a Thruster's), **Link on/off**, a **Call** for each bench role. Acting: **Attack**, **Aim at Hold** (a heroine in reach), **More** (Tech, hacks, barriers, Mend, Reboot, items), **Wait**, **Done**, **Undo**. Facing: four arrows preset toward the last target, then **Confirm** |
+| **Targets** | On the board | What she can strike from where she stands, in red; tap one for the forecast card |
+| **The forecast card** | Bottom right | The attack (or who covers it), each Crossfire and the counter, each with hit %, hits, damage and crit, the Guard, side or back, the likely parts and those that will or may break; Tech %, chance skills, the Charge each unit spends, the volley's marks. **Confirm** goes on to the facing, **Back** to the arc |
+| **Reach** | Top left | Paints every enemy's reach for the next turn |
+| **The terrain card** | A long press | The tile's height, ground, state and rounds left, whether it's Live, what it does and what could change it |
+| **Paper dolls** | Above a hit unit | The damage and her four parts, coloured by what's left, for a second and a half |
+| **The cut-in** | Across the middle | Full the first time each weapon is seen and always for a leader, Quick after, or Off (**Cut-in** cycles auto, quick, off): the enemy on the left facing right, the Uma on the right facing left, the band, and the numbers as they land. Stand-in cards until master data's renders |
+| **Enemy turns** | — | At double speed; **Skip** jumps to the next player turn |
+| **Setup, Saver** | Top left | Back to the sandbox's setup; the battery saver |
+
+A kneeling unit is dimmed with a grey ring; an extracted or freed one leaves the board; a turned turret takes her new
+side's colour; Wet, Oil, Fire, Smoke and Live tiles are tinted under the overlays.
 
 ## The forecast
 

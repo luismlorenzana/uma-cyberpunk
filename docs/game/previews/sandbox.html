@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The sandbox</title>
+<!-- Generated from docs/game/sandbox.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The sandbox</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#setup">Setup</a><a class="h2" href="#autosave-and-resume">Autosave and Resume</a><a class="h2" href="#results">Results</a><a class="h2" href="#the-test-scenario">The test scenario</a><a class="h2" href="#debug">?debug</a></nav>
+<main id="top">
+<h1 id="the-sandbox">The sandbox</h1>
+<blockquote><p><b>Status: 2026-11-12, CY8 (D12).</b> The second of the three ways the combat is tested (TC54): any skirmish set up and played with the full battle screen, on the phone, at <code>/sandbox</code>. The battle screen itself is on <a href="battle.html#the-battle-screen">battle.md</a>.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>Set up</b> a battle from a scenario (CY6's format): the scenarios in git, or ones saved on this phone. Pick the seed (typed or rolled), who plays each side (player or AI) and each squad slot's rig.</li><li><b>Play</b> it on the board with the full battle screen.</li><li><b>It autosaves</b> after every action, to a local row, and <b>Resume</b> picks it up after iOS closes the app.</li><li><b>The results</b> give the minutes and turns, which feed the simulator's pace.</li></ul>
+<pre class="mermaid">flowchart LR
+  setup[Setup: scenario, seed, control, rigs] --&gt;|Start| battle[The battle screen]
+  battle --&gt;|every action, and when the page hides| row[(Local row: scenario, input, actions)]
+  row --&gt;|Resume| battle
+  row --&gt;|Replays no more| restart[Restart from the scenario]
+  battle --&gt;|the end| results[Results] --&gt;|Retry, New seed| battle
+  results --&gt;|Back to setup| setup</pre>
+<h2 id="setup">Setup</h2>
+<div class="scroll"><table><tr><th>Piece</th><th>What it does</th></tr><tr><td><b>Scenario</b></td><td>Every scenario in <code>scenarios/</code> (the test scenario first), then those saved on this phone</td></tr><tr><td><b>Seed</b></td><td>Typed, or <b>Roll</b> for a new one; the battle's seed is <code>&lt;scenario&gt;:&lt;seed&gt;</code></td></tr><tr><td><b>Squad, Enemy</b></td><td>Who plays each side: <b>Player</b> or <b>AI</b></td></tr><tr><td><b>Squad slots</b></td><td>Each slot's rig, from the stand-in rigs in git's scenarios (Vanguard, Striker, Gunner, Netrunner, Flamer, Medic)</td></tr><tr><td><b>Start</b></td><td>Begins the battle</td></tr><tr><td><b>Copy, Paste</b></td><td>The scenario as edited (seed and control included) to the clipboard as JSON, and back; Paste checks it with <code>parseScenario</code></td></tr><tr><td><b>Save</b></td><td>Keeps the scenario as edited on this phone</td></tr></table></div>
+<p>Scenarios in git name stand-ins only. A slot holding a real Uma by outfit id comes with the crew (CY11), when master data's names load.</p>
+<h2 id="autosave-and-resume">Autosave and Resume</h2>
+<ul><li>After every committed action, and again when the page hides, the sandbox writes one row: the scenario, the frozen battle input, the actions, the rules version, when it started and when it changed.</li><li><b>The row is local,</b> in its own small database (<code>uma-cyberpunk-sandbox</code>), never the synced save: a sandbox battle is a test, not progress, so it bumps no save version, sends no sync traffic, and can't touch <code>account.updatedAt</code>.</li><li><b>Opening the sandbox with a row</b> offers <b>Resume</b> (the actions replayed on the stored input, landing on exactly the state they left) and <b>Restart</b> (the same scenario and seed from the start). If the actions no longer replay (the rules changed under them), it says so and offers Restart.</li><li>CY10 moves mission battles into the save in the same shape.</li></ul>
+<h2 id="results">Results</h2>
+<p>Won or lost; player turns; the wall-clock minutes since the battle started; parts broken, counters, Crossfires and Covers; how many enemies were beaten and freed. <b>Retry</b> plays the same seed again, <b>New seed</b> a fresh one, <b>Back to setup</b> returns.</p>
+<h2 id="the-test-scenario">The test scenario</h2>
+<p><b>The sandbox: the Steel Muster and its Key</b> (<code>sandbox-muster</code>), on <code>underlevels-14</code>: 14 × 14, heights 0–3 with the high ground at the back corners, cover tiles, a grating run, a Wet area beside it, an Oil slick under the enemy line, a pipe beside a live cable, and a door on a terminal.</p>
+<div class="scroll"><table><tr><th>Side</th><th>Units</th></tr><tr><td>Squad</td><td>Vanguard A, Striker A (Break Stride), Gunner A, Netrunner A; two repair kits and a smoke charge; a Medic on the bench</td></tr><tr><td>Enemy</td><td>The Key, the leader, on the high ground; five android troopers; all Steel Muster (cover, reload, the volley, pinning fire)</td></tr><tr><td>Objective</td><td>Defeat the leader</td></tr></table></div>
+<p>Played AI against AI over 300 seeds it's even (the squad wins 47.7%, in 27 player turns); a player usually does better.</p>
+<h2 id="debug"><code>?debug</code></h2>
+<p><code>window.__sandbox</code> drives a battle headless: <code>state</code>, <code>act(action)</code>, <code>tap(x, z)</code> (a tap through the screen's own handler), <code>step(ms)</code> and <code>auto()</code> (both sides on the AI, to the end; it resolves with the result).</p>
+<p class="foot">From <a href="../sandbox.md">docs/game/sandbox.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

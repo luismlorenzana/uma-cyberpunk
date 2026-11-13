@@ -67,7 +67,10 @@ export function newField(state: Pick<BattleState, 'input'>): FieldState {
   }
   const items: Record<ItemKind, number> = { repair: 0, patch: 0, smoke: 0, cell: 0 }
   for (const [k, v] of Object.entries(state.input.items ?? {})) items[k as ItemKind] = v ?? 0
-  return { states: {}, doors, lifts, burst: [], barriers: [], nextBarrier: 1, lightsOutUntil: 0, hacked: [], volley: { meter: 0, marked: [], at: 0 }, items, benchUsed: false }
+  const states: Record<string, TileState> = {}
+  for (const t of state.input.map.states?.wet ?? []) states[keyOf(t[0], t[1])] = { kind: 'wet', until: 0 }
+  for (const t of state.input.map.states?.oil ?? []) states[keyOf(t[0], t[1])] = { kind: 'oil', until: 0 }
+  return { states, doors, lifts, burst: [], barriers: [], nextBarrier: 1, lightsOutUntil: 0, hacked: [], volley: { meter: 0, marked: [], at: 0 }, items, benchUsed: false }
 }
 
 const isGrating = (state: Pick<BattleState, 'input'>, x: number, y: number) => tileAt(state.input.map, x, y) === '='

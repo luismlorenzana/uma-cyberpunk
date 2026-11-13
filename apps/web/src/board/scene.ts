@@ -33,6 +33,10 @@ export const OVERLAY = {
 } as const
 export type OverlayKind = keyof typeof OVERLAY
 
+/** The terrain states' colours (TC24): drawn under the overlays. */
+export const STATE_COLOUR = { wet: '#4fa3ff', oil: '#3a2a4a', fire: '#ff7a1a', smoke: '#9aa3b5', live: '#f5f070' } as const
+export type StateKind = keyof typeof STATE_COLOUR
+
 export interface BoardFigure {
   id: string
   /** A sprite (an Uma) from a stand-in set, or a standee card (an enemy, a guest). */
@@ -76,10 +80,12 @@ interface Live {
   z: number
   facing: Dir
   path: { x: number; z: number }[]
+  speed: number
   done: (() => void) | null
   body: Standee | SpriteActor
   base: Group
   wedge: Mesh
+  down: boolean
 }
 
 /** A flat ring and a facing wedge, lying on a tile (TC23, TC41). */
@@ -116,6 +122,7 @@ export class BoardScene {
   private world: { shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
   private readonly figures = new Map<string, Live>()
   private overlay: Mesh | null = null
+  private states: Mesh | null = null
   private cursor: LineLoop | null = null
   private focus = new Set<string>()
   private look = { x: 0, z: 0 }
@@ -148,14 +155,16 @@ export class BoardScene {
   // --- The world -----------------------------------------------------------------------------------------------------
 
   /** Builds the board from a battle map on the stand-in biome kit. High ground (level 2 and up) is kept apart, so it can
-   * fade while it stands in front of a unit in focus. */
-  setMap(map: BattleMap): void {
+   * fade while it stands in front of a unit in focus. A rebuild of the same map (a lift moved, a door shut) keeps the
+   * camera. */
+  setMap(map: BattleMap, opts: { shut?: readonly string[]; burst?: readonly string[] } = {}): void {
+    const same = this.map?.id === map.id
     this.dropWorld()
     this.map = map
     const kit = standInKitAtlas('biome')
     const page = pixelTexture(new CanvasTexture(drawStandInKit(kit)))
     page.colorSpace = SRGBColorSpace
-    const geo = roomGeometry(toRoomDesign(map), kit)
+    const geo = roomGeometry(toRoomDesign(map, opts), kit)
     const tileOfFace = (corners: readonly { x: number; z: number }[]): string => {
       const x = Math.floor(Math.min(...corners.map((c) => c.x)) + 0.01), z = Math.floor(Math.max(...corners.map((c) => c.z)) - 0.01)
       return `${x},${z}`
@@ -178,7 +187,7 @@ export class BoardScene {
       parts.set(id, { group, alpha: 1, order: Math.round((z + 1) * 100) })
     }
     this.world = { shared: split.shared, parts, occluders, lights: geo.lights.map((l) => ({ x: l.at.x, y: l.at.y, z: l.at.z, color: l.color, radius: l.radius })) }
-    this.look = { x: map.width / 2, z: map.depth / 2 }
+    if (!same) this.look = { x: map.width / 2, z: map.depth / 2 }
     for (const f of this.figures.values()) this.stand(f)
     this.wake()
   }
@@ -277,7 +286,7 @@ export class BoardScene {
     const body = spec.look.kind === 'sprite' ? new SpriteActor(standInSet(spec.look.set)) : new Standee(spec.look.face)
     const { group, wedge } = baseRing(spec.hue)
     this.scene.add(body.group, body.shadowMesh, group)
-    const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], done: null, body, base: group, wedge }
+    const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], speed: 1, done: null, body, base: group, wedge, down: false }
     this.figures.set(spec.id, f)
     this.stand(f)
     this.wake()
@@ -317,14 +326,71 @@ export class BoardScene {
     this.wake()
   }
 
-  /** Walks a figure along a path of tiles (the battle's, start included); resolves on arrival. */
-  walk(id: string, path: readonly Tile[]): Promise<void> {
+  /** Walks a figure along a path of tiles (the battle's, start included), `speed` times as fast; resolves on arrival. */
+  walk(id: string, path: readonly Tile[], speed = 1): Promise<void> {
     const f = this.figures.get(id)
     if (!f || path.length < 2) return Promise.resolve()
     f.done?.()
+    f.speed = speed
     f.path = path.slice(1).map((t) => ({ x: t[0] + 0.5, z: t[1] + 0.5 }))
     this.wake()
     return new Promise((resolve) => { f.done = resolve })
+  }
+
+  /** A kneeling unit (Rig Break): dimmed, her ring grey. */
+  setDown(id: string, down: boolean): void {
+    const f = this.figures.get(id)
+    if (!f || f.down === down) return
+    f.down = down
+    this.paintRing(f, down ? '#6b7280' : f.spec.hue)
+    this.wake()
+  }
+
+  /** A new side's colour (a turret turned). */
+  setHue(id: string, hue: string): void {
+    const f = this.figures.get(id)
+    if (!f) return
+    f.spec = { ...f.spec, hue }
+    if (!f.down) this.paintRing(f, hue)
+    this.wake()
+  }
+
+  private paintRing(f: Live, colour: string): void {
+    f.base.traverse((o) => { const m = (o as Mesh).material as MeshBasicMaterial | undefined; m?.color?.set(colour) })
+  }
+
+  /** The tile states under the overlays: Wet, Oil, Fire, Smoke and Live (TC24). */
+  setStates(tiles: readonly { tile: Tile; kind: StateKind }[]): void {
+    if (this.states) {
+      this.scene.remove(this.states)
+      this.states.geometry.dispose()
+      ;(this.states.material as MeshBasicMaterial).dispose()
+      this.states = null
+    }
+    if (tiles.length > 0 && this.map) {
+      this.states = this.tileMesh(tiles.map((t) => ({ tile: t.tile, colour: STATE_COLOUR[t.kind] })), 0.008, 0.5, 0)
+      this.states.renderOrder = 1
+      this.scene.add(this.states)
+    }
+    this.wake()
+  }
+
+  /** One mesh of tile tops in given colours. */
+  private tileMesh(tiles: readonly { tile: Tile; colour: string }[], lift: number, opacity: number, inset: number): Mesh {
+    const pos = new Float32Array(tiles.length * 18), col = new Float32Array(tiles.length * 18)
+    tiles.forEach(({ tile: [x, z], colour }, i) => {
+      const y = levelOf(this.map!, x, z) + lift
+      const c = new Color(colour)
+      const quad = [[x + inset, z + inset], [x + 1 - inset, z + inset], [x + 1 - inset, z + 1 - inset], [x + inset, z + inset], [x + 1 - inset, z + 1 - inset], [x + inset, z + 1 - inset]]
+      quad.forEach(([qx, qz], k) => {
+        pos.set([qx!, y, qz!], i * 18 + k * 3)
+        col.set([c.r, c.g, c.b], i * 18 + k * 3)
+      })
+    })
+    const g = new BufferGeometry()
+    g.setAttribute('position', new BufferAttribute(pos, 3))
+    g.setAttribute('color', new BufferAttribute(col, 3))
+    return new Mesh(g, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity, depthWrite: false, side: DoubleSide }))
   }
 
   /** The units the fade keeps in view (the one acting and her target). */
@@ -351,21 +417,7 @@ export class BoardScene {
       this.overlay = null
     }
     if (tiles.length > 0 && this.map) {
-      const pos = new Float32Array(tiles.length * 18), col = new Float32Array(tiles.length * 18)
-      const inset = 0.06
-      tiles.forEach(({ tile: [x, z], kind }, i) => {
-        const y = levelOf(this.map!, x, z) + 0.015
-        const c = new Color(OVERLAY[kind])
-        const quad = [[x + inset, z + inset], [x + 1 - inset, z + inset], [x + 1 - inset, z + 1 - inset], [x + inset, z + inset], [x + 1 - inset, z + 1 - inset], [x + inset, z + 1 - inset]]
-        quad.forEach(([qx, qz], k) => {
-          pos.set([qx!, y, qz!], i * 18 + k * 3)
-          col.set([c.r, c.g, c.b], i * 18 + k * 3)
-        })
-      })
-      const g = new BufferGeometry()
-      g.setAttribute('position', new BufferAttribute(pos, 3))
-      g.setAttribute('color', new BufferAttribute(col, 3))
-      this.overlay = new Mesh(g, new MeshBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.42, depthWrite: false, side: DoubleSide }))
+      this.overlay = this.tileMesh(tiles.map((t) => ({ tile: t.tile, colour: OVERLAY[t.kind] })), 0.015, 0.42, 0.06)
       this.overlay.renderOrder = 2
       this.scene.add(this.overlay)
     }
@@ -441,7 +493,7 @@ export class BoardScene {
       const p = f.path[0]
       let moving = false
       if (p) {
-        const dx = p.x - f.x, dz = p.z - f.z, d = Math.hypot(dx, dz), step = WALK_SPEED * dt
+        const dx = p.x - f.x, dz = p.z - f.z, d = Math.hypot(dx, dz), step = WALK_SPEED * f.speed * dt
         if (d <= Math.max(step, 1e-6)) { f.x = p.x; f.z = p.z; f.path.shift() }
         else { f.x += (dx / d) * step; f.z += (dz / d) * step }
         f.facing = Math.abs(dx) > Math.abs(dz) ? (dx > 0 ? 'E' : 'W') : dz > 0 ? 'S' : 'N'
@@ -503,7 +555,8 @@ export class BoardScene {
       const ground = new Vector3(fig.x, this.groundAt(fig.x, fig.z), fig.z), rel = ground.clone().sub(snapped)
       const placed = snapped.clone().add(RIGHT.clone().multiplyScalar(snapToGrid(rel.dot(RIGHT), f.left, per)))
         .add(UP.clone().multiplyScalar(snapToGrid(rel.dot(UP), f.bottom, per))).add(FORWARD.clone().multiplyScalar(rel.dot(FORWARD)))
-      fig.body.stand(placed.x, placed.y, placed.z, Math.round(fig.z * 100), tintAt(ground, base, lights))
+      const tint = tintAt(ground, base, lights)
+      fig.body.stand(placed.x, placed.y, placed.z, Math.round(fig.z * 100), fig.down ? [tint[0] * 0.4, tint[1] * 0.4, tint[2] * 0.45] : tint)
     }
     this.renderer.info.reset()
     const effects = this.effectsOn()
@@ -544,6 +597,7 @@ export class BoardScene {
     this.effects?.dispose()
     for (const id of [...this.figures.keys()]) this.removeFigure(id)
     this.setOverlay([])
+    this.setStates([])
     this.setCursor(null)
     this.dropWorld()
     this.renderer.dispose()

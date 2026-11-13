@@ -1,0 +1,477 @@
+// The battle screen (CY8, TC29): the board with the battle's DOM over it. The player's turn is two-tap move (the first tap
+// shows her path, the second moves her; undoable until the action commits), then an action from the commands arc, the
+// forecast card for an attack, and the facing, all sent as one turn. Enemy turns play at double speed, with Skip. Every
+// committed action is handed to `onCommit` (the sandbox's autosave); the board follows the cues, then the state.
+import {
+  boardOf, chooseTurn, dirTo, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
+  type Cue, type Dir, type Forecast, type Reach, type Role, type TerrainCard, type Tile, type TurnAction,
+} from '@cyber/battle'
+import { initialSaver, toStage, type StageLayout } from '@luismlorenzana/uma-stage'
+import { useEffect, useRef, useState } from 'react'
+import { BoardScene, type StateKind } from '../board/scene'
+import { CutIn, ForecastCard, labelOf, PaperDoll, SIDE_HUE, TerrainPanel, Timeline, UnitCard, type CutInView, type Doll } from './parts'
+import { CUT_IN_MS, cutInSpeed, speedOf, stepMs, type CutInSetting } from './playback'
+import { targetsFrom, threatTiles, tileKey, turnReach } from './reach'
+import { act as applyAct, type Session } from './session'
+
+export type Control = { squad: 'player' | 'ai'; enemy: 'player' | 'ai' }
+
+type Ui =
+  | { phase: 'watch' }
+  | { phase: 'move'; dash: boolean; moves: Reach[]; danger: Set<string>; ghost: Reach | null }
+  | { phase: 'act'; reach: Reach; dash: boolean }
+  | { phase: 'target'; reach: Reach; dash: boolean; aim: boolean }
+  | { phase: 'more'; reach: Reach; dash: boolean }
+  | { phase: 'forecast'; reach: Reach; dash: boolean; act: Act; f: Forecast }
+  | { phase: 'face'; reach: Reach; dash: boolean; act: Act; face: Dir }
+  | { phase: 'bench'; role: Role }
+
+export interface SandboxHandle {
+  readonly state: BattleState
+  act: (action: BattleAction) => string | null
+  /** A tap on a tile, as a finger's would land. */
+  tap: (x: number, z: number) => void
+  step: (ms?: number) => void
+  auto: () => Promise<BattleState['result']>
+}
+declare global { interface Window { __sandbox?: SandboxHandle } }
+
+const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+const DIRS: Dir[] = ['N', 'E', 'S', 'W']
+const ARROW: Record<Dir, string> = { N: '↑', E: '→', S: '↓', W: '←' }
+
+/** The act's words on the arc and the card. */
+function actWords(state: BattleState, a: Act): string {
+  if (a.kind === 'tech') return `${a.tech} ${labelOf(state, a.target)}`
+  if (a.kind === 'hack') return `Hack ${a.terminal}`
+  if (a.kind === 'barrier') return `Barrier ${a.at[0]},${a.at[1]}`
+  if (a.kind === 'mend') return `Mend ${labelOf(state, a.target)} ${a.part}`
+  if (a.kind === 'reboot') return `Reboot ${labelOf(state, a.target)}`
+  if (a.kind === 'item') return `${a.item}${a.target ? ` ${labelOf(state, a.target)}` : ''}${a.part ? ` ${a.part}` : ''}${a.at ? ` ${a.at[0]},${a.at[1]}` : ''}`
+  if (a.kind === 'attack') return `Attack ${labelOf(state, a.target)}`
+  return a.kind
+}
+
+export function BattleView({ layout, session: first, control, debug, onCommit, onEnd, onQuit }: {
+  layout: StageLayout
+  session: Session
+  control: Control
+  debug: boolean
+  onCommit: (s: Session) => void
+  onEnd: (s: Session) => void
+  onQuit: () => void
+}) {
+  const canvas = useRef<HTMLCanvasElement>(null)
+  const scene = useRef<BoardScene | null>(null)
+  const session = useRef(first)
+  const controlRef = useRef(control)
+  const busy = useRef(false)
+  const skipping = useRef(false)
+  const seen = useRef(new Set<string>())
+  const lastTarget = useRef<Tile | null>(null)
+  const terrainKey = useRef('')
+  const press = useRef<{ timer: number; fired: boolean; x: number; y: number } | null>(null)
+  const [state, setState] = useState(first.state)
+  const [ui, setUi] = useState<Ui>({ phase: 'watch' })
+  const [inspect, setInspect] = useState<string | null>(null)
+  const [terrain, setTerrain] = useState<TerrainCard | null>(null)
+  const [dolls, setDolls] = useState<Doll[]>([])
+  const [cutIn, setCutIn] = useState<CutInView | null>(null)
+  const [cutInSetting, setCutInSetting] = useState<CutInSetting>('auto')
+  const [reachAll, setReachAll] = useState(false)
+  const [toast, setToast] = useState<string | null>(null)
+  const [saver, setSaver] = useState(initialSaver)
+  const settingRef = useRef(cutInSetting)
+  settingRef.current = cutInSetting
+  const tapRef = useRef<(t: Tile) => void>(() => {})
+
+  const sideOf = (id: string | null) => session.current.state.units.find((u) => u.id === id)?.side ?? 'squad'
+  const isPlayer = (s: BattleState) => !!s.active && controlRef.current[sideOf(s.active)] === 'player'
+
+  // --- The board follows the state -----------------------------------------------------------------------------------
+
+  /** Places every figure as the state has her, rebuilds the terrain if lifts, doors or props changed, paints the states. */
+  const sync = (s: BattleState) => {
+    const sc = scene.current
+    if (!sc) return
+    const field = s.field
+    const key = field ? JSON.stringify([field.lifts, field.doors, field.burst]) : ''
+    if (key !== terrainKey.current) {
+      terrainKey.current = key
+      const board = boardOf(s)
+      const heights = s.input.map.heights.map((row, z) => row.split('').map((_, x) => String(board.height(x, z))).join(''))
+      const shut = (s.input.map.props ?? []).filter((p) => p.kind === 'door' && field && !field.doors[p.id]).map((p) => p.id)
+      sc.setMap({ ...s.input.map, heights }, { shut, burst: field?.burst ?? [] })
+    }
+    for (const u of s.units) {
+      if (u.status === 'out' || u.status === 'freed') { sc.removeFigure(u.id); continue }
+      sc.place(u.id, [u.x, u.y], u.facing)
+      sc.setDown(u.id, u.status === 'down')
+      sc.setHue(u.id, SIDE_HUE[u.side])
+    }
+    const states: { tile: Tile; kind: StateKind }[] = []
+    for (const [k, st] of Object.entries(field?.states ?? {})) { const [x, z] = k.split(',').map(Number) as [number, number]; states.push({ tile: [x, z], kind: st.kind }) }
+    for (const k of liveTiles(s)) { const [x, z] = k.split(',').map(Number) as [number, number]; states.push({ tile: [x, z], kind: 'live' }) }
+    sc.setStates(states)
+  }
+
+  /** The overlays for the phase (TC29). */
+  const paint = (u: Ui, s: BattleState) => {
+    const sc = scene.current
+    if (!sc) return
+    const over: { tile: Tile; kind: 'reach' | 'danger' | 'attack' | 'area' }[] = []
+    if (reachAll && s.active) for (const k of threatTiles(s, sideOf(s.active))) { const [x, z] = k.split(',').map(Number) as [number, number]; over.push({ tile: [x, z], kind: 'danger' }) }
+    if (u.phase === 'move') {
+      for (const r of u.moves) over.push({ tile: r.to, kind: u.danger.has(tileKey(r.to)) ? 'danger' : 'reach' })
+      if (u.ghost) for (const t of u.ghost.path.slice(1)) over.push({ tile: t, kind: 'area' })
+    }
+    if (u.phase === 'act' || u.phase === 'target') {
+      for (const t of targetsFrom(s, s.active!, u.reach.to)) {
+        const tile = targetTile(s, t.target)
+        if (tile) over.push({ tile, kind: 'attack' })
+      }
+    }
+    sc.setOverlay(over)
+    sc.setFocus(s.active ? [s.active, ...(u.phase === 'forecast' && u.act.kind === 'attack' ? [u.act.target] : [])] : [])
+  }
+
+  const show = (u: Ui) => { setUi(u); paint(u, session.current.state) }
+
+  // --- Playing cues --------------------------------------------------------------------------------------------------
+
+  const popDoll = (s: BattleState, unit: string, text: string) => {
+    const sc = scene.current, u = s.units.find((x) => x.id === unit)
+    const at = sc?.headOf(unit)
+    if (!u || !at) return
+    const d: Doll = { key: Math.random(), unit, at, text, side: u.side, parts: { core: [u.hp.core, u.maxHp.core], leftArm: [u.hp.leftArm, u.maxHp.leftArm], rightArm: [u.hp.rightArm, u.maxHp.rightArm], legs: [u.hp.legs, u.maxHp.legs] } }
+    setDolls((all) => [...all, d])
+    window.setTimeout(() => setDolls((all) => all.filter((x) => x.key !== d.key)), 1600)
+  }
+
+  /** Plays an action's cues on the board, then shows the state as it ended. */
+  const play = async (cues: readonly Cue[], before: BattleState, after: BattleState, side: 'squad' | 'enemy') => {
+    const sc = scene.current
+    if (!sc || skipping.current) return
+    const speed = speedOf(side)
+    let current: CutInView | null = null
+    for (const c of cues) {
+      if (c.kind === 'moved') await sc.walk(c.unit, c.path, speed)
+      else if (c.kind === 'attack') {
+        const sp = cutInSpeed(settingRef.current, seen.current, c, after)
+        seen.current.add(`${c.unit}:${c.with}`)
+        if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
+        current = sp === 'off' ? null : { attacker: c.unit, target: c.target, band: c.band, role: c.role, speed: sp, numbers: [], key: Math.random() }
+        setCutIn(current)
+        if (current) await wait(CUT_IN_MS[sp] / speed / 2)
+      } else if (c.kind === 'hit' || c.kind === 'miss' || c.kind === 'burn' || c.kind === 'holdHit' || c.kind === 'barrierHit') {
+        const text = c.kind === 'miss' ? 'Miss' : `${c.amount}${'crit' in c && c.crit ? '!' : ''}`
+        if (current) { const shown: CutInView = { ...(current as CutInView), numbers: [...(current as CutInView).numbers, text] }; current = shown; setCutIn(shown) }
+        const target = c.kind === 'burn' ? c.unit : c.kind === 'barrierHit' ? null : c.target
+        if (target) popDoll(after, target, text)
+      } else if (c.kind === 'rigBreak') sc.setDown(c.unit, true)
+      else if (c.kind === 'extracted' || c.kind === 'freed') sc.removeFigure(c.unit)
+      else if (c.kind === 'faced') sc.face(c.unit, c.facing)
+      else if (c.kind === 'terrain' || c.kind === 'door' || c.kind === 'heights' || c.kind === 'burst') sync(after)
+      else if (c.kind === 'turned') sc.setHue(c.unit, SIDE_HUE[c.side])
+      const ms = stepMs(c) / speed
+      if (ms) await wait(ms)
+    }
+    if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
+    void before
+  }
+
+  // --- The loop ------------------------------------------------------------------------------------------------------
+
+  const commit = async (action: BattleAction): Promise<string | null> => {
+    if (busy.current && !skipping.current) return 'busy'
+    const before = session.current.state
+    const r = applyAct(session.current, action)
+    if ('error' in r) { setToast(r.error); return r.error }
+    const side = sideOf(before.active)
+    session.current = r.session
+    onCommit(r.session)
+    busy.current = true
+    setUi({ phase: 'watch' })
+    scene.current?.setOverlay([])
+    await play(r.cues, before, r.session.state, side)
+    if (!skipping.current) sync(r.session.state)
+    setState(r.session.state)
+    busy.current = false
+    next()
+    return null
+  }
+
+  const next = () => {
+    const s = session.current.state
+    if (s.result) {
+      sync(s)
+      onEnd(session.current)
+      return
+    }
+    if (isPlayer(s)) {
+      if (skipping.current) { skipping.current = false; sync(s); setState(s) }
+      const reach = turnReach(s, s.active!)
+      show({ phase: 'move', dash: false, moves: reach.moves, danger: reach.danger, ghost: null })
+      return
+    }
+    // The AI's turn: at double speed, or at once while skipping.
+    window.setTimeout(() => void commit(chooseTurn(session.current.state)), skipping.current ? 0 : 250)
+  }
+
+  const skip = () => {
+    if (isPlayer(session.current.state)) return
+    skipping.current = true
+  }
+
+  // --- The board's mount ---------------------------------------------------------------------------------------------
+
+  useEffect(() => {
+    const el = canvas.current
+    if (!el) return
+    const sc = new BoardScene(el, { saver: initialSaver() })
+    scene.current = sc
+    sc.resize(layout.width, layout.height, window.devicePixelRatio || 1)
+    const s = session.current.state
+    terrainKey.current = ''
+    let sprite = 0
+    for (const u of s.units) {
+      const ref = s.input.units.find((i) => i.id === u.id)
+      const sprites = u.side === 'squad' && sprite < 4 && !/guest/i.test(ref?.label ?? '')
+      sc.addFigure({ id: u.id, tile: [u.x, u.y], facing: u.facing, hue: SIDE_HUE[u.side], look: sprites ? { kind: 'sprite', set: sprite++ } : { kind: 'standee', face: null } })
+    }
+    sync(s)
+    sc.step()
+    const onVisible = () => { if (document.visibilityState === 'visible') sc.wake() }
+    document.addEventListener('visibilitychange', onVisible)
+    next()
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      sc.dispose()
+      scene.current = null
+    }
+    // Made once a battle.
+  }, [])
+
+  useEffect(() => { scene.current?.resize(layout.width, layout.height, window.devicePixelRatio || 1) }, [layout.width, layout.height])
+  useEffect(() => { scene.current?.setSaver(saver) }, [saver])
+  useEffect(() => { controlRef.current = control }, [control])
+  useEffect(() => { paint(ui, session.current.state) }, [reachAll])
+
+  useEffect(() => {
+    if (!debug) return
+    window.__sandbox = {
+      get state() { return session.current.state },
+      act: (a) => { const r = applyAct(session.current, a); if ('error' in r) return r.error; session.current = r.session; onCommit(r.session); sync(r.session.state); setState(r.session.state); return null },
+      step: (ms) => scene.current?.step(ms),
+      tap: (x, z) => tapRef.current([x, z]),
+      auto: async () => {
+        controlRef.current = { squad: 'ai', enemy: 'ai' }
+        while (!session.current.state.result) {
+          const r = applyAct(session.current, chooseTurn(session.current.state))
+          if ('error' in r) throw new Error(r.error)
+          session.current = r.session
+          onCommit(r.session)
+        }
+        sync(session.current.state)
+        setState(session.current.state)
+        onEnd(session.current)
+        return session.current.state.result
+      },
+    }
+    return () => { delete window.__sandbox }
+  }, [debug])
+
+  // --- Taps ----------------------------------------------------------------------------------------------------------
+
+  const tap = (tile: Tile) => {
+    const s = session.current.state
+    setTerrain(null)
+    scene.current?.setCursor(tile)
+    const unit = s.units.find((u) => u.x === tile[0] && u.y === tile[1] && (u.status === 'active' || u.status === 'down'))
+    if (ui.phase === 'move') {
+      const r = ui.moves.find((m) => m.to[0] === tile[0] && m.to[1] === tile[1])
+      if (r) {
+        if (ui.ghost && ui.ghost.to[0] === r.to[0] && ui.ghost.to[1] === r.to[1]) {
+          // The second tap moves her (still undoable).
+          void scene.current?.walk(s.active!, r.path)
+          show({ phase: 'act', reach: r, dash: ui.dash })
+        } else show({ ...ui, ghost: r })
+        return
+      }
+      if (unit) setInspect(unit.id)
+      return
+    }
+    if (ui.phase === 'act' || ui.phase === 'target') {
+      const t = unit ? targetsFrom(s, s.active!, ui.reach.to).find((x) => x.target === unit.id) : null
+      const thing = !unit ? targetsFrom(s, s.active!, ui.reach.to).find((x) => { const t2 = targetTile(s, x.target); return !!t2 && t2[0] === tile[0] && t2[1] === tile[1] }) : null
+      const pick = t ?? thing
+      if (pick) {
+        const a: Act = { kind: 'attack', with: pick.mount, target: pick.target, ...(ui.phase === 'target' && ui.aim && unit?.holdHp ? { aim: 'hold' as const } : {}) }
+        const turn: TurnAction = { kind: 'turn', unit: s.active!, to: ui.reach.to, ...(ui.dash ? { dash: true } : {}), act: a, face: 'N' }
+        const f = forecast(s, turn)
+        if ('error' in f) { setToast(f.error); return }
+        lastTarget.current = tile
+        show({ phase: 'forecast', reach: ui.reach, dash: ui.dash, act: a, f })
+        return
+      }
+      if (unit) setInspect(unit.id)
+      return
+    }
+    if (ui.phase === 'bench') {
+      void commit({ kind: 'bench', unit: s.active!, role: ui.role, at: tile }).then((err) => { if (!err) setToast(null) })
+      return
+    }
+    if (unit) setInspect(unit.id)
+  }
+
+  tapRef.current = tap
+
+  const undo = () => {
+    const s = session.current.state
+    const me = s.units.find((u) => u.id === s.active)
+    if (!me) return
+    scene.current?.place(me.id, [me.x, me.y], me.facing)
+    const reach = turnReach(s, me.id)
+    show({ phase: 'move', dash: false, moves: reach.moves, danger: reach.danger, ghost: null })
+  }
+
+  const toFace = (reach: Reach, dash: boolean, a: Act) => {
+    const s = session.current.state
+    const foe = s.units.filter((u) => u.side !== sideOf(s.active) && u.status === 'active')
+      .sort((x, y) => Math.abs(x.x - reach.to[0]) + Math.abs(x.y - reach.to[1]) - (Math.abs(y.x - reach.to[0]) + Math.abs(y.y - reach.to[1])))[0]
+    const toward = lastTarget.current ?? (foe ? [foe.x, foe.y] as Tile : null)
+    const face: Dir = toward ? dirTo(reach.to, toward) : s.units.find((u) => u.id === s.active)!.facing
+    show({ phase: 'face', reach, dash, act: a, face })
+    scene.current?.face(s.active!, face)
+  }
+
+  const send = () => {
+    if (ui.phase !== 'face') return
+    const s = session.current.state
+    const me = s.units.find((u) => u.id === s.active)!
+    const moved = ui.reach.to[0] !== me.x || ui.reach.to[1] !== me.y
+    lastTarget.current = null
+    void commit({ kind: 'turn', unit: me.id, ...(moved ? { to: ui.reach.to } : {}), ...(ui.dash ? { dash: true } : {}), act: ui.act, face: ui.face })
+  }
+
+  // --- Pointer handling: tap, drag to pan, long press for the terrain card -------------------------------------------
+
+  const point = (e: React.PointerEvent) => toStage(layout, e.clientX, e.clientY)
+  const down = (e: React.PointerEvent) => {
+    const p = point(e)
+    ;(e.target as Element).setPointerCapture(e.pointerId)
+    scene.current?.pointerDown(p.x, p.y)
+    const timer = window.setTimeout(() => {
+      if (!press.current) return
+      press.current.fired = true
+      const tile = scene.current?.pick(press.current.x, press.current.y)
+      if (tile) setTerrain(terrainCard(session.current.state, tile))
+    }, 500)
+    press.current = { timer, fired: false, x: p.x, y: p.y }
+  }
+  const move = (e: React.PointerEvent) => {
+    const p = point(e)
+    if (press.current && Math.hypot(p.x - press.current.x, p.y - press.current.y) > 8) { window.clearTimeout(press.current.timer); press.current = null }
+    scene.current?.pointerMove(p.x, p.y)
+  }
+  const up = (e: React.PointerEvent) => {
+    const p = point(e)
+    const pr = press.current
+    if (pr) window.clearTimeout(pr.timer)
+    press.current = null
+    const tile = scene.current?.pointerUp(p.x, p.y)
+    if (tile && !pr?.fired) tap(tile)
+  }
+
+  // --- The commands arc ----------------------------------------------------------------------------------------------
+
+  const me = state.units.find((u) => u.id === state.active)
+  const playerTurn = !!me && ui.phase !== 'watch'
+  const btn = (label: string, onClick: () => void, primary = false, key = label) => (
+    <button key={key} type="button" onClick={onClick}
+      className={`pointer-events-auto min-h-11 min-w-24 rounded-full px-4 font-display text-[14px] font-bold shadow ${primary ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-[#141827]/90 text-[#e8ebf5] ring-1 ring-white/15'}`}>
+      {label}
+    </button>
+  )
+  const arc: React.ReactNode[] = []
+  if (playerTurn && me) {
+    if (ui.phase === 'move') {
+      arc.push(btn('Act here', () => { const r = ui.moves.find((m) => m.to[0] === me.x && m.to[1] === me.y)!; show({ phase: 'act', reach: r, dash: false }) }))
+      arc.push(btn('Wait', () => { const r = ui.moves.find((m) => m.to[0] === me.x && m.to[1] === me.y)!; toFace(r, false, { kind: 'wait' }) }))
+      const thruster = state.input.units.find((i) => i.id === me.id)?.loadout.back.kind === 'thruster'
+      if (thruster && me.charge >= 1 && state.input.rulesVersion >= 2) arc.push(btn(ui.dash ? 'Dash on' : 'Dash', () => { const r = turnReach(state, me.id, !ui.dash); show({ phase: 'move', dash: !ui.dash, moves: r.moves, danger: r.danger, ghost: null }) }))
+      arc.push(btn(me.link ? 'Link on' : 'Link off', () => void commit({ kind: 'link', unit: me.id, on: !me.link })))
+      if (me.side === 'squad' && state.field && !state.field.benchUsed && (state.input.bench ?? []).length > 0) {
+        for (const role of state.input.bench ?? []) arc.push(btn(`Call ${role}`, () => { show({ phase: 'bench', role }); setToast(`Tap a tile for the ${role}`) }, false, `bench-${role}`))
+      }
+    } else if (ui.phase === 'act' || ui.phase === 'target') {
+      const targets = targetsFrom(state, me.id, ui.reach.to)
+      if (targets.length > 0) arc.push(btn('Attack', () => show({ phase: 'target', reach: ui.reach, dash: ui.dash, aim: false }), ui.phase !== 'target'))
+      const canAimHold = targets.some((t) => state.units.find((u) => u.id === t.target)?.holdHp)
+      if (canAimHold) arc.push(btn('Aim at Hold', () => show({ phase: 'target', reach: ui.reach, dash: ui.dash, aim: true })))
+      const placed = { ...state, units: state.units.map((u) => (u.id === me.id ? { ...u, x: ui.reach.to[0], y: ui.reach.to[1] } : u)) }
+      if (supportFrom(placed, me.id, ui.reach.to).length > 0) arc.push(btn('More', () => show({ phase: 'more', reach: ui.reach, dash: ui.dash })))
+      arc.push(btn('Wait', () => toFace(ui.reach, ui.dash, { kind: 'wait' })))
+      arc.push(btn('Done', () => toFace(ui.reach, ui.dash, { kind: 'none' })))
+      arc.push(btn('Undo', undo))
+    } else if (ui.phase === 'more') {
+      const placed = { ...state, units: state.units.map((u) => (u.id === me.id ? { ...u, x: ui.reach.to[0], y: ui.reach.to[1] } : u)) }
+      supportFrom(placed, me.id, ui.reach.to).slice(0, 8).forEach((a, i) => arc.push(btn(actWords(state, a), () => {
+        const turn: TurnAction = { kind: 'turn', unit: me.id, to: ui.reach.to, ...(ui.dash ? { dash: true } : {}), act: a, face: 'N' }
+        const f = forecast(state, turn)
+        if ('error' in f) { setToast(f.error); return }
+        show({ phase: 'forecast', reach: ui.reach, dash: ui.dash, act: a, f })
+      }, false, `more-${i}`)))
+      arc.push(btn('Back', () => show({ phase: 'act', reach: ui.reach, dash: ui.dash })))
+    } else if (ui.phase === 'face') {
+      arc.push(
+        <div key="arrows" className="pointer-events-auto grid grid-cols-3 gap-1">
+          {(['', 'N', '', 'W', '', 'E', '', 'S', ''] as const).map((d, i) => d
+            ? <button key={i} type="button" aria-label={`Face ${d}`} onClick={() => { show({ ...ui, face: d }); scene.current?.face(me.id, d) }}
+              className={`min-h-11 min-w-11 rounded-md text-[18px] font-bold ${ui.face === d ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-[#141827]/90 text-white ring-1 ring-white/15'}`}>{ARROW[d]}</button>
+            : <span key={i} />)}
+        </div>,
+      )
+      arc.push(btn('Confirm', send, true))
+      arc.push(btn('Undo', undo))
+    } else if (ui.phase === 'bench') arc.push(btn('Cancel call', undo))
+  }
+
+  const timelineIds = timeline(state)
+  const ghost = ui.phase === 'forecast' ? ui.f.timeline : null
+  const inspected = inspect ? state.units.find((u) => u.id === inspect) : null
+  return (
+    <div className="absolute inset-0 select-none overflow-hidden">
+      <canvas ref={canvas} className="block h-full w-full" style={{ touchAction: 'none' }} onPointerDown={down} onPointerMove={move} onPointerUp={up}
+        onPointerCancel={() => { scene.current?.pointerCancel(); press.current = null }} />
+      <div className="pointer-events-none absolute inset-x-0 flex justify-center" style={{ top: 'calc(var(--inset-top) + 6px)' }}>
+        <Timeline state={state} ids={timelineIds} ghost={ghost} onInspect={setInspect} />
+      </div>
+      <div className="pointer-events-none absolute flex flex-col gap-2" style={{ top: 'calc(var(--inset-top) + 6px)', left: 'calc(var(--inset-left) + 6px)' }}>
+        <button type="button" onClick={onQuit} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Setup</button>
+        <button type="button" onClick={() => setReachAll((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Reach {reachAll ? 'on' : 'off'}</button>
+        <button type="button" onClick={() => setCutInSetting((v) => (v === 'auto' ? 'quick' : v === 'quick' ? 'off' : 'auto'))} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Cut-in {cutInSetting}</button>
+        <button type="button" onClick={() => setSaver((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Saver {saver ? 'on' : 'off'}</button>
+        {inspected && <UnitCard state={state} unit={inspected} onClose={() => setInspect(null)} />}
+        {terrain && <TerrainPanel card={terrain} onClose={() => setTerrain(null)} />}
+      </div>
+      {me && !isPlayer(state) && !state.result && (
+        <div className="absolute" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>{btn('Skip', skip, true)}</div>
+      )}
+      <div className="pointer-events-none absolute flex max-w-[46%] flex-wrap items-end justify-end gap-2" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
+        {ui.phase === 'forecast' && <ForecastCard state={state} f={ui.f} onCancel={() => show({ phase: 'act', reach: ui.reach, dash: ui.dash })} onConfirm={() => toFace(ui.reach, ui.dash, ui.act)} />}
+        {arc}
+      </div>
+      {me && playerTurn && (
+        <div className="pointer-events-none absolute text-[12px] font-semibold text-white/80 [text-shadow:0_1px_2px_#000]" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', left: 'calc(var(--inset-left) + 10px)' }}>
+          {labelOf(state, me.id)} · Charge {me.charge}{ui.phase === 'move' ? (ui.ghost ? ' · tap again to move' : ' · tap a tile') : ui.phase === 'target' ? ' · tap a target' : ''}
+        </div>
+      )}
+      {dolls.map((d) => <PaperDoll key={d.key} d={d} />)}
+      {cutIn && <CutIn key={cutIn.key} state={state} c={cutIn} />}
+      {toast && (
+        <button type="button" onClick={() => setToast(null)} className="pointer-events-auto absolute left-1/2 top-16 -translate-x-1/2 rounded-md bg-black/80 px-3 py-2 text-[13px] text-white">{toast}</button>
+      )}
+    </div>
+  )
+}

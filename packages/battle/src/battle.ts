@@ -29,6 +29,7 @@ function checkInput(input: BattleInput): void {
   const later = input.rulesVersion >= 2
   const needs2 = (path: string, present: unknown) => { if (present !== undefined && !later) throw new BattleInputError(path, 'needs rules version 2') }
   needs2('map.props', input.map.props)
+  needs2('map.states', input.map.states)
   needs2('items', input.items)
   needs2('bench', input.bench)
   needs2('factions', input.factions)

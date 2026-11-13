@@ -33,6 +33,8 @@ export interface BattleMap {
   spawns: { squad: readonly Tile[]; enemy: readonly Tile[] }
   /** Things on the map (CY5, rules version 2). */
   props?: readonly Prop[]
+  /** Tile states the battle starts with (CY8, rules version 2): Wet and Oil, lasting. */
+  states?: { wet?: readonly Tile[]; oil?: readonly Tile[] }
 }
 
 /** What a terminal does when hacked (CY5). */

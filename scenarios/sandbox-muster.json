@@ -1,0 +1,647 @@
+{
+ "schemaVersion": 1,
+ "id": "sandbox-muster",
+ "title": "The sandbox: the Steel Muster and its Key",
+ "map": "underlevels-14",
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "control": {
+  "squad": "player",
+  "enemy": "ai"
+ },
+ "input": {
+  "rulesVersion": 2,
+  "objective": {
+   "kind": "defeatLeader"
+  },
+  "factions": [
+   "steel-muster"
+  ],
+  "items": {
+   "repair": 2,
+   "smoke": 1
+  },
+  "bench": [
+   "medic"
+  ],
+  "units": [
+   {
+    "id": "vanguard-a",
+    "side": "squad",
+    "spawn": 0,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 5,
+      "capacity": 4
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 4
+     },
+     "back": {
+      "kind": "bulwark",
+      "load": 3,
+      "capacity": 4
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 40,
+      "load": 3
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "I",
+      "power": 5,
+      "accuracy": 70,
+      "range": [
+       1,
+       2
+      ],
+      "hits": 4,
+      "load": 3
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "vanguard-a"
+    },
+    "label": "Vanguard A"
+   },
+   {
+    "id": "striker-a",
+    "side": "squad",
+    "spawn": 1,
+    "bands": {
+     "speed": 4,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-a"
+    },
+    "label": "Striker A",
+    "stride": "break"
+   },
+   {
+    "id": "gunner-a",
+    "side": "squad",
+    "spawn": 2,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "launcher",
+      "load": 3,
+      "weapon": {
+       "kind": "weapon",
+       "band": "long",
+       "type": "F",
+       "power": 18,
+       "accuracy": 70,
+       "range": [
+        3,
+        6
+       ],
+       "hits": 1,
+       "load": 0
+      },
+      "ammo": 3
+     },
+     "visor": {
+      "load": 1,
+      "aim": true
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "F"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "gunner-a"
+    },
+    "label": "Gunner A"
+   },
+   {
+    "id": "netrunner-a",
+    "side": "squad",
+    "spawn": 3,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 4
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "deck",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "netrunner-a"
+    },
+    "label": "Netrunner A"
+   },
+   {
+    "id": "key-1",
+    "side": "enemy",
+    "spawn": 0,
+    "bands": {
+     "speed": 3,
+     "stamina": 4,
+     "power": 3,
+     "guts": 4,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3,
+      "hp": 12
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "none",
+      "load": 0
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 20,
+      "load": 1
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "I"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "key-1"
+    },
+    "label": "Key",
+    "leader": true,
+    "faction": "steel-muster"
+   },
+   {
+    "id": "android-1",
+    "side": "enemy",
+    "spawn": 1,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "none",
+      "load": 0
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 20,
+      "load": 1
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "I"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "android-1"
+    },
+    "label": "Android trooper 1",
+    "faction": "steel-muster"
+   },
+   {
+    "id": "android-2",
+    "side": "enemy",
+    "spawn": 2,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "none",
+      "load": 0
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 20,
+      "load": 1
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "I"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "android-2"
+    },
+    "label": "Android trooper 2",
+    "faction": "steel-muster"
+   },
+   {
+    "id": "android-3",
+    "side": "enemy",
+    "spawn": 3,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "none",
+      "load": 0
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 20,
+      "load": 1
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "I"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "android-3"
+    },
+    "label": "Android trooper 3",
+    "faction": "steel-muster"
+   },
+   {
+    "id": "android-4",
+    "side": "enemy",
+    "spawn": 4,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "none",
+      "load": 0
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 20,
+      "load": 1
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "I"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "android-4"
+    },
+    "label": "Android trooper 4",
+    "faction": "steel-muster"
+   },
+   {
+    "id": "android-5",
+    "side": "enemy",
+    "spawn": 5,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "none",
+      "load": 0
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": {
+      "kind": "shield",
+      "guard": 20,
+      "load": 1
+     },
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "I"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "android-5"
+    },
+    "label": "Android trooper 5",
+    "faction": "steel-muster"
+   }
+  ]
+ }
+}

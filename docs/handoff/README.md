@@ -19,7 +19,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D12.
+Packet ids run CY1–CY12; decision numbers continue from D13.
 
 ## Phase 1: the foundation
 
@@ -31,7 +31,6 @@ Starts as soon as CY1 is in, beside the cloud.
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY8 | [The sandbox](tasks/CY8-sandbox.md): the battle screen on the phone, the cut-in, autosave and resume, scenario files | Claude | L | CY3, CY6, CY7 | Written |
 
 ## Phase 3: the app, on test content
 
@@ -70,7 +69,8 @@ packet, or says why not.
   "Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief."
 - **uma-platform:** P144 logs this repo as Phase 10. Shared changes go there as requests, never forks here:
   - **`uma-stage`:** one request at a time, each proven by the board's checks (TC48). **Filed (CY7, D11):**
-    [tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md), sent to the uma-platform session.
+    [tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md), sent to the uma-platform session, which
+    queued it behind uma-quest's Q16 part A and the farm's ST4 (maybe one release with ST4) and will send the version.
     Queued behind it: glowing kit frames, a tactics kit kind cached by id, a lighter saver tier. Heights 0–3 aren't
     needed (level 3 builds);
   - **the map kits** are drawn in code by Claude in a uma-platform session (`scripts/kit-art`, P147), from the story
@@ -89,7 +89,7 @@ packet, or says why not.
 | Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | CY7 | Open [uma-cyberpunk.web.app/board](https://uma-cyberpunk.web.app/board) on the phone, pan around, tap a unit: does it read at a glance? |
 | CY3 | The two sign-in entries for `uma-cyberpunk.web.app`: in the [uma-rpg OAuth client](https://console.cloud.google.com/apis/credentials?project=uma-rpg) "Web client (auto created by Google Service)", add `https://uma-cyberpunk.web.app/__/auth/handler` (redirect URIs) and `https://uma-cyberpunk.web.app` (JavaScript origins); then the phone check: open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, sign in, see the save synced on Home |
-| CY8 | One play of the sandbox on the phone |
+| CY8 | One play of the sandbox on the phone: open [uma-cyberpunk.web.app/sandbox](https://uma-cyberpunk.web.app/sandbox) from the Home Screen, play the test scenario to the end, and say in a line what felt wrong. **Phase 2's exit** |
 | CY12 | One play-through of the Chapter 1 loop on the phone |
 
 ## Done
@@ -98,7 +98,8 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
-| CY7 | The board on uma-stage (D11): the scene from the stage's parts, sprites and standees with rings and wedges, TC29's overlays, picking, the pan, the fade, render on change; the bench at `/board` with `?debug`; the five checks (level 3 builds, 159 of 159 visible tops pick back, 13 figures at 41 draw calls, 120 and 30 fps on desktop, 9.2% hidden); the first stage request filed; [the board](../game/board.md) in the manual | `CY7SHA` |
+| CY8 | The sandbox (D12): setup from scenarios with Copy, Paste and Save; the battle screen (timeline, two-tap move, the arc, the forecast card, reach, the terrain card, paper dolls, a DOM cut-in, enemy turns at double speed with Skip); autosave in its own local database with Resume and Restart; results with Retry; the test scenario on `underlevels-14`; [the sandbox](../game/sandbox.md) and battle.md's battle screen in the manual. Phase 2's exit waits on the owner's play | `CY8SHA` |
+| CY7 | The board on uma-stage (D11): the scene from the stage's parts, sprites and standees with rings and wedges, TC29's overlays, picking, the pan, the fade, render on change; the bench at `/board` with `?debug`; the five checks (level 3 builds, 159 of 159 visible tops pick back, 13 figures at 41 draw calls, 120 and 30 fps on desktop, 9.2% hidden); the first stage request filed; [the board](../game/board.md) in the manual | `94a493a` |
 | CY6 | The AI and the simulator (D10): one scorer for enemies and ally Auto, never idle, 0.2 ms a decision; the scenario format with three maps and seven stand-in scenarios; `pnpm sim` with its report and targets; the first balance pass (the mirror 50.6%, the Muster fight 49.0%, stalemates 4 in 3,500); [how enemies choose](../game/enemy-ai.md) and battle.md's Balance section | `29179c8`, `1cfa508` |
 | CY5 | The battle rules, the rest (D9), as **rules version 2** with version 1 frozen: terrain and props, terminals, Tech and the Holds, the Back units' actions, chance skills, items, Stride, the bench call, escort, hack and free-the-leader, the Steel Muster; 112 tests; nine version-2 golden battles; [battle](../game/battle.md), [terrain](../game/terrain.md) and [factions](../game/factions.md) in the manual | `5460ca6` |
 | CY4 | The battle rules, core (D8): `@cyber/battle`, rules version 1, no dependencies; the map format (schema 1), the rig and loadout, the timeline and Charge, movement, line of fire, attacks, Guard, Cover, Crossfire, counters, Rig Break and Hold on, four objectives, the forecast; 60 tests and seven golden replays; [the manual's battle page](../game/battle.md) ([page](../game/previews/battle.html)) with the tuning tables live | `5683d30` |

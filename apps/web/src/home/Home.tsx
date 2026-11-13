@@ -1,6 +1,7 @@
 // Home (CY3): the game's name, the signed-in account, the save's sync state and revision, master data's release version,
 // and Sync now. Master data proves the path only: nothing from it is drawn yet. The ship replaces it in CY10.
 import { useAuth } from '@luismlorenzana/uma-kit/auth'
+import { Link } from 'react-router'
 import { Button, Panel } from '@luismlorenzana/uma-kit/ui'
 import type { ReactNode } from 'react'
 import { useMaster } from '../master/master'
@@ -33,6 +34,10 @@ export function Home() {
           <Row label="Master data">{master.status === 'ready' ? master.version : master.status === 'error' ? 'Unavailable' : 'Loading'}</Row>
         </Panel>
         <Button variant="secondary" disabled={game.sync === 'syncing'} onClick={() => void syncNow()}>Sync now</Button>
+        <div className="grid grid-cols-2 gap-3">
+          <Link to="/sandbox" className="flex min-h-12 items-center justify-center rounded-md bg-accent font-display font-bold text-accent-ink">Sandbox</Link>
+          <Link to="/board" className="flex min-h-12 items-center justify-center rounded-md bg-sunken font-display font-bold text-ink">Board bench</Link>
+        </div>
       </div>
     </main>
   )

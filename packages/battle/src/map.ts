@@ -66,10 +66,25 @@ export function parseMap(value: unknown, path = 'map'): BattleMap {
     if (seen.has(key)) throw new BattleInputError(`${path}.spawns`, `tile ${key} is used twice (spawn ${i})`)
     seen.add(key)
   }
-  const extra = Object.keys(o).filter((k) => !['schemaVersion', 'id', 'width', 'depth', 'heights', 'tiles', 'spawns', 'props'].includes(k))
+  const extra = Object.keys(o).filter((k) => !['schemaVersion', 'id', 'width', 'depth', 'heights', 'tiles', 'spawns', 'props', 'states'].includes(k))
   if (extra.length > 0) throw new BattleInputError(path, `unknown keys ${extra.join(', ')}`)
   const map: BattleMap = { schemaVersion: 1, id: o.id, width, depth, heights, tiles: tileRows, spawns: { squad: squadTiles, enemy: enemyTiles } }
   if (o.props !== undefined) map.props = props(o.props, `${path}.props`, map, seen)
+  if (o.states !== undefined) {
+    const st = object(o.states, `${path}.states`)
+    const extraStates = Object.keys(st).filter((k) => k !== 'wet' && k !== 'oil')
+    if (extraStates.length > 0) throw new BattleInputError(`${path}.states`, `unknown states ${extraStates.join(', ')}`)
+    const list = (v: unknown, p: string): Tile[] => {
+      if (!Array.isArray(v) || v.length > 64) throw new BattleInputError(p, 'expected up to 64 tiles')
+      return v.map((t, i) => {
+        if (!Array.isArray(t) || t.length !== 2) throw new BattleInputError(`${p}[${i}]`, 'expected [x, y]')
+        const x = int(t[0], `${p}[${i}][0]`, 0, width - 1), y = int(t[1], `${p}[${i}][1]`, 0, depth - 1)
+        if (tileRows[y]![x] === '#') throw new BattleInputError(`${p}[${i}]`, 'on a solid tile')
+        return [x, y] as const
+      })
+    }
+    map.states = { ...(st.wet !== undefined ? { wet: list(st.wet, `${path}.states.wet`) } : {}), ...(st.oil !== undefined ? { oil: list(st.oil, `${path}.states.oil`) } : {}) }
+  }
   return map
 }
 
