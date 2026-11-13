@@ -13,19 +13,23 @@ a Home Screen web app, in landscape (working title). It has:
 The world and the story are written in their own session, from [the story brief](docs/design/story-brief.md); this repo's
 game work starts with the app and the combat testing ([the build plan](docs/design/build-plan.md)).
 
-**Status (2026-11-12):** the workspace and its checks are in (CY1): a placeholder web page, an API behind the owner
-guard, and the domain package, installing all six platform packages. Next are CY4 and CY7 (the battle rules and the
-board) beside CY2, the cloud, which waits on the owner's go.
+**Status (2026-11-12):** live at [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) (CY2), with Google sign-in
+and a synced save (CY3). The battle rules are in (`@cyber/battle`, rules version 2: CY4, CY5), with an enemy AI, seven
+scenarios and a simulator (CY6). Next: the board on uma-stage (CY7), then the sandbox (CY8) and the app on test content
+(CY9–CY12). The packet queue is in [the handoff](docs/handoff/README.md).
 
 ## Layout
 
 | Path | What |
 |---|---|
-| `apps/web` | `@cyber/web`: Vite, React 19 and uma-kit's theme, with uma-stage installed but not rendered. A placeholder page until CY3 |
-| `apps/api` | `@cyber/api`: NestJS 11 behind uma-server's owner guard: `/api/health` and `/api/save` |
-| `packages/domain` | `@cyber/domain`: the game's rules, pure, no I/O |
-| `scripts/` | The 180 KB size check and the private-content guard, each with tests |
-| `.github/workflows/deploy.yml` | Verify on every push and pull request; the deploy job comes with CY2 |
+| `apps/web` | `@cyber/web`: the Home Screen PWA (Vite, React 19, uma-kit), its save synced through the API |
+| `apps/api` | `@cyber/api`: NestJS 11 behind uma-server's owner guard: `/api/health`, `/api/save`, `/api/master/…` |
+| `packages/domain` | `@cyber/domain`: the game's rules and contracts (the save), pure, no I/O |
+| `packages/battle` | `@cyber/battle`: the battle rules, a pure seeded reducer with no dependencies, the forecast, the AI, the scenario format and the golden replays |
+| `scenarios/` | The simulator's and the sandbox's scenarios and their maps, stand-ins only |
+| `scripts/` | The checks (size, private content, hosting site, icons, manual pages) with tests; `sim/battle.ts`, the simulator |
+| `infra/bootstrap.sh`, `firebase.json` | The cloud in the `uma-rpg` project and the site ([infrastructure](docs/technical/infrastructure.md)) |
+| `.github/workflows/deploy.yml` | Verify on every push and pull request; deploy on `main` |
 
 ## Where things are
 

@@ -55,8 +55,9 @@ describe('the rig and its loadout', () => {
     const hp = maxHpOf(light)
     expect(moveOf(light, { hp })).toBe(TUNING.move[3] + 1)
   })
-  it('sets part HP from Stamina: Core 30 + 10, arms 15 + 5, Legs 20 + 6 a band', () => {
-    expect(maxHpOf(unit('a', 'squad', 0, { bands: { ...unit('a', 'squad', 0).bands, stamina: 2 } }))).toEqual({ core: 50, leftArm: 25, rightArm: 25, legs: 32 })
+  it('sets part HP from Stamina: base + a band each, from the tuning table', () => {
+    const hp = (p: 'core' | 'leftArm' | 'legs') => TUNING.partHp[p].base + 2 * TUNING.partHp[p].perBand
+    expect(maxHpOf(unit('a', 'squad', 0, { bands: { ...unit('a', 'squad', 0).bands, stamina: 2 } }))).toEqual({ core: hp('core'), leftArm: hp('leftArm'), rightArm: hp('leftArm'), legs: hp('legs') })
   })
   it('takes away what each broken part carries (TC17)', () => {
     const u: UnitInput = unit('u', 'squad', 0, { loadout: RIG.brawler() })

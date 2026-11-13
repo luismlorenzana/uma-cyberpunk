@@ -22,10 +22,10 @@ export const TUNING = {
 
   /** Part HP (TC4, TC17): base + per Stamina band, before a part's own bonus. */
   partHp: {
-    core: { base: 30, perBand: 10 },
-    leftArm: { base: 15, perBand: 5 },
-    rightArm: { base: 15, perBand: 5 },
-    legs: { base: 20, perBand: 6 },
+    core: { base: 22, perBand: 6 },
+    leftArm: { base: 10, perBand: 4 },
+    rightArm: { base: 10, perBand: 4 },
+    legs: { base: 14, perBand: 5 },
   } as Record<PartId, { base: number; perBand: number }>,
 
   /** Capacity (TC18): base + per Power band, plus the Core's and the Back unit's bonus. */
@@ -47,7 +47,7 @@ export const TUNING = {
   /** A two-handed weapon with one arm broken fires at this share of its accuracy. */
   oneArmTwoHandedPct: 50,
   baseCrit: 5,
-  critPct: 150,
+  critPct: 140,
 
   /** Where hits land, by weapon band, out of 100 (TC19). An aimed hit goes where aimed; a hit on a broken part goes to
    * the Core. */
@@ -69,8 +69,9 @@ export const TUNING = {
   reachLevels: 2,
   longHeightBonus: { levels: 2, range: 1 },
 
-  /** Crossfire (TC21): how many allies join an attack at most. */
+  /** Crossfire (TC21): how many allies join an attack at most, and how many rounds a joiner's basic attack fires. */
   crossfireMax: 2,
+  crossfireRounds: 1,
 
   /** Rig Break (TC25): Guts at this band or more gives Hold on once a battle, surviving at `holdOnCore`. */
   holdOnBand: 4,
@@ -94,7 +95,7 @@ export const TUNING = {
   /** An Anchor or a Collar's HP unless the unit says. */
   holdHp: 30,
   /** The Back units (TC5). */
-  back: { barrier: 1, barrierHp: 40, dash: 1, dashMove: 2, thrusterClimb: 2, mend: 1, mendCore: 20, mendPartPct: 25, reboot: 2, rebootCorePct: 25 },
+  back: { barrier: 1, barrierHp: 40, dash: 1, dashMove: 2, thrusterClimb: 2, mend: 1, mendCore: 12, mendPartPct: 25, reboot: 2, rebootCorePct: 25 },
   /** Chance skills (TC22): +5% a Wit band, capped; Burst's extra rounds. */
   skills: { perWit: 5, cap: 95, burstRounds: 2 },
   /** Items: the stock's cap and what each does. */

@@ -125,6 +125,7 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   const crossfire = crossfireFor(placed, turn.unit, to, act.target).map((j) => {
     add(j.unit, TUNING.charge.crossfire)
     const s = strikeOf(placed, j.unit, j.mount, act.target, tileOf(unitById(placed, j.unit)))!
+    s.hits = Math.min(s.hits, TUNING.crossfireRounds)
     return { ...view(s, target), how: j.how }
   })
   let counter: StrikeForecast | null = null

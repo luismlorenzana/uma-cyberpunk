@@ -85,14 +85,14 @@ describe('line of fire and reach', () => {
 
 describe('damage', () => {
   const base = { power: 10, meleeBonus: 0, facing: 'front' as const, heightDiff: 0, coat: false, crit: false, guard: 0 }
-  it('multiplies by the side (+25%), the back (+50%), height (±10% a level), a Coat (×0.5) and a crit (×1.5)', () => {
+  it('multiplies by the side (+25%), the back (+50%), height (±10% a level), a Coat (×0.5) and a crit', () => {
     expect(damageOf(base)).toBe(10)
     expect(damageOf({ ...base, facing: 'side' })).toBe(12)
     expect(damageOf({ ...base, facing: 'back' })).toBe(15)
     expect(damageOf({ ...base, heightDiff: 2 })).toBe(12)
     expect(damageOf({ ...base, heightDiff: -1 })).toBe(9)
     expect(damageOf({ ...base, coat: true })).toBe(5)
-    expect(damageOf({ ...base, crit: true })).toBe(15)
+    expect(damageOf({ ...base, crit: true })).toBe(Math.floor(10 * TUNING.critPct / 100))
     expect(damageOf({ ...base, guard: 40 })).toBe(6)
     expect(damageOf({ ...base, power: 1, coat: true, guard: 40 })).toBe(1)
   })

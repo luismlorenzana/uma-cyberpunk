@@ -1,0 +1,136 @@
+{
+ "schemaVersion": 1,
+ "id": "arena",
+ "title": "The arena",
+ "map": "arena",
+ "input": {
+  "rulesVersion": 2,
+  "objective": {
+   "kind": "defeatAll"
+  },
+  "units": [
+   {
+    "id": "striker-a",
+    "side": "squad",
+    "spawn": 0,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-a"
+    },
+    "label": "Striker A"
+   },
+   {
+    "id": "striker-b",
+    "side": "enemy",
+    "spawn": 0,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-b"
+    },
+    "label": "Striker B"
+   }
+  ]
+ },
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "control": {
+  "squad": "player",
+  "enemy": "ai"
+ },
+ "even": true
+}

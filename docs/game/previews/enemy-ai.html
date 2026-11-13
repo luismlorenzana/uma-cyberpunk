@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How enemies choose</title>
+<!-- Generated from docs/game/enemy-ai.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>How enemies choose</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#where-she-stands">Where she stands</a><a class="h2" href="#what-she-does">What she does</a></nav>
+<main id="top">
+<h1 id="how-enemies-choose">How enemies choose</h1>
+<blockquote><p><b>Status: 2026-11-12, CY6 (D10).</b> The enemy AI and ally Auto as <code>packages/battle/src/ai.ts</code> plays them: one scorer for both sides. The simulator plays both sides with it; the app may offer ally Auto later.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>On her turn, an enemy scores every sensible turn</b> (where to stand, what to do there, which way to face) with the same numbers the forecast card shows, and takes the best.</li><li><b>She never idles</b> (TC30): with nothing worth doing, she closes on the nearest foe or the objective.</li><li><b>The same battle always plays the same way:</b> ties go to the seeded roll.</li><li><b>A decision takes well under a millisecond</b> on a laptop (the phone's budget is 50 ms; CI holds it to 5 ms).</li></ul>
+<pre class="mermaid">flowchart LR
+  reach[Every tile she can reach] --&gt; prune[Keep the best dozen by place, plus the two best to strike each foe from]
+  prune --&gt; acts[Every legal action from each]
+  acts --&gt; score[Score: the action + the place]
+  score --&gt; best[The best; ties to the seed]
+  best --&gt; idle{Only waiting where she stands?}
+  idle --&gt;|Yes| advance[Step toward the goal]
+  idle --&gt;|No| turn[Her turn]
+  advance --&gt; turn</pre>
+<h2 id="where-she-stands">Where she stands</h2>
+<p>Each tile she could end on is worth:</p>
+<div class="scroll"><table><tr><th></th><th>Worth</th></tr><tr><td><b>The threat there</b></td><td>Less 0.15 × every foe's best expected damage on her, for each foe that could reach the tile next round</td></tr><tr><td><b>A lethal spot</b></td><td>Less 12 and more when the foes in reach could break her Core</td></tr><tr><td><b>Being in reach</b></td><td>Plus 0.35 × her best expected damage on a foe she could strike from there next turn</td></tr><tr><td><b>Cover</b></td><td>Plus 2 (plus 5 for the Steel Muster) on a cover tile</td></tr><tr><td><b>Height</b></td><td>Plus 0.8 a level above the foes' average, for a ranged unit</td></tr><tr><td><b>Terrain</b></td><td>Less Fire's damage on a burning tile; less twice Live's on a Live one</td></tr><tr><td><b>The volley's marks</b></td><td>Less 20 on a tile the Steel Muster has marked (the squad leaves them)</td></tr><tr><td><b>Her Hold</b></td><td>A heroine with an Anchor or Collar keeps out of reach of a Netrunner's Deck</td></tr><tr><td><b>The goal</b></td><td>Less 0.7 a step from it: the objective's tile, a terminal to hack, else the nearest foe; a ranged unit keeps near her best range instead</td></tr></table></div>
+<p>Caution (the threat and the lethal spot) fades to nothing over 20 rounds, so a fight always closes.</p>
+<h2 id="what-she-does">What she does</h2>
+<div class="scroll"><table><tr><th>Action</th><th>Worth</th></tr><tr><td><b>An attack</b></td><td>Its expected damage; plus the chance to break the target's Core × (20 + her threat); plus each limb's break chance × what it carries (a weapon arm 6, Legs 4, a shield arm 4); plus a share for a hurt target (focus fire); plus each ally who'd join; less 0.7 × the counter she'd draw, and more if it could break her</td></tr><tr><td><b>The leader</b></td><td>×1.4 on the leader when the objective is to defeat her; when she's to be freed, breaking her is avoided and the squad aims at her Hold</td></tr><tr><td><b>A barrel or pipe</b></td><td>By who stands near: foes count for, allies against, more under fire</td></tr><tr><td><b>Tech</b></td><td>Its chance × the worth: Stun her threat × 1.5 + 3, Jam 3 if she has Charge, Jack-Out 35</td></tr><tr><td><b>A hack</b></td><td>A turret 14, the lights 4 against ranged foes, a lift 2, a door 1.5; plus 25 toward a hack objective</td></tr><tr><td><b>Mend, items</b></td><td>Core HP back, more the more hurt she is; a limb 5 or 6; Reboot 30</td></tr><tr><td><b>A barrier</b></td><td>Only under fire, and never beside another</td></tr><tr><td><b>Wait</b></td><td>0.8 below her Charge cap, 0.2 at it</td></tr></table></div>
+<p><b>Charge:</b> an action that would leave her below 1 Charge costs 1.5, to keep a counter, unless it's worth more.</p>
+<p><b>The Steel Muster</b> prizes cover, and when the volley is coming and every other Muster gun is reloading, a Muster unit holds her fire.</p>
+<p><b>Facing:</b> toward the most foes in her front quarter, the nearest breaking a tie.</p>
+<p class="foot">From <a href="../enemy-ai.md">docs/game/enemy-ai.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

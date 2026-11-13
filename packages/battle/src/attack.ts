@@ -398,6 +398,7 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
       spendCharge(u, TUNING.charge.crossfire, 'crossfire', cues)
       cues.push({ kind: 'crossfire', unit: j.unit, target: targetId, how: j.how })
       const s = strikeOf(state, j.unit, j.mount, targetId, tileOf(u))!
+      s.hits = Math.min(s.hits, TUNING.crossfireRounds)
       cues.push(attackCue(s, 'crossfire', targetId))
       resolveStrike(state, s, 'crossfire', cues)
       afterMusterAttack(state, j.unit, s.weapon.band, cues)

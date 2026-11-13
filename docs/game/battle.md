@@ -1,10 +1,10 @@
 # The battle
 
-> **Status: 2026-11-12, CY5 (D9).** The rules as `@cyber/battle` plays them, **rules version 2**: CY4's core and CY5's
-> roles, Tech, chance skills, items, Stride, the bench call and three more objectives. Terrain, props and terminals are
-> on [terrain.md](terrain.md); the Holds and the Steel Muster on [factions.md](factions.md). The enemy AI and the
-> simulator arrive in CY6, the board in CY7. Every number comes from `packages/battle/src/tuning.ts`, and the tables
-> marked live are rendered from it.
+> **Status: 2026-11-12, CY6 (D10).** The rules as `@cyber/battle` plays them, **rules version 2**: CY4's core and CY5's
+> roles, Tech, chance skills, items, Stride, the bench call and three more objectives, with CY6's first balance pass
+> (see [Balance](#balance)); how enemies choose is on [enemy-ai.md](enemy-ai.md). Terrain, props and terminals are
+> on [terrain.md](terrain.md); the Holds and the Steel Muster on [factions.md](factions.md). The board arrives in CY7.
+> Every number comes from `packages/battle/src/tuning.ts`, and the tables marked live are rendered from it.
 
 ## The short answer
 
@@ -146,7 +146,7 @@ else, diagonals included, the **side**.
 
 1. **Hit %** = the weapon's accuracy + 3 a Wit band − the target's evasion (2 a Speed band, 0 with broken Legs), − 25
    when aimed, clamped to 5–95%.
-2. **Crit:** the weapon's crit % (5 unless it says) for ×1.5 damage.
+2. **Crit:** the weapon's crit % (5 unless it says) for ×1.4 damage.
 3. **The part:** aimed, or rolled on the band's weights; a hit on a broken part goes to the Core.
 4. **Damage** = the weapon's power (+2 a Power band for Melee) × facing (side ×1.25, back ×1.5) × height (+10% a level
    above the target, −10% a level below) × Coat (×0.5 when it matches) × crit × (100% − the Guard), rounded down, at
@@ -178,7 +178,7 @@ flowchart TD
 - **Cover:** when the target's own shield doesn't guard the attack (she has none, or it comes from behind), the first
   adjacent ally in timeline order with a whole shield arm, her link on and 1 Charge steps in. She takes the main strike
   from the front, so her Guard applies. A covered attack draws no counter.
-- **Crossfire:** up to two of the attacker's allies join with a free basic attack, 1 Charge each, in timeline order, if
+- **Crossfire:** up to two of the attacker's allies join with a free basic attack of one round (CY6's balance pass), 1 Charge each, in timeline order, if
   their link is on and either they stand on the target's far side with a Melee or Short weapon in reach (a **pincer**),
   or they have a Short or Long weapon in reach with a line of fire (a **link**). Enemies do it too.
 - **Counters** are automatic: the defender answers with a Melee or Short weapon in reach of the attacker, for 1 Charge,
@@ -219,7 +219,7 @@ happens, mid-turn included.
 | **Thruster** | Striker | Climbs **two levels a step**; **Dash** (1 Charge, part of the move): +2 Move and no zones of control this turn |
 | **Launcher** | Gunner | Carries the Long weapon (rules version 1) and lets her **Aim** |
 | **Deck** | Netrunner | **Tech** (below) and **hacking terminals** ([terrain.md](terrain.md#terminals)) |
-| **Med** | Medic | **Mend** (1 Charge, adjacent or herself): +20 Core HP, or a broken arm or Legs back at 25%. **Reboot** (2 Charge, adjacent): a kneeling ally inside her window stands at 25% Core, limbs still broken |
+| **Med** | Medic | **Mend** (1 Charge, adjacent or herself): +12 Core HP, or a broken arm or Legs back at 25%. **Reboot** (2 Charge, adjacent): a kneeling ally inside her window stands at 25% Core, limbs still broken |
 
 A turn's action is one of: attack, Wait, nothing, Tech, hack, barrier, Mend, Reboot or an item.
 
@@ -336,6 +336,39 @@ The board and the cut-in play cues; they decide nothing. Each action returns its
   for each version-2 battle the cue that proves its rule. Any change to a rule or a number fails the test and names the
   battle; `UPDATE_GOLDEN=1` rewrites them, and the commit says why.
 
+## Balance
+
+Combat is tested three ways (BP5): the tests and golden replays, the sandbox (CY8), and the **simulator**, which plays
+the scenarios in `scenarios/` AI against AI over many seeds (`pnpm sim all --seeds 500`, a report in the ignored
+`sim/out/`). A balance pass edits `tuning.ts` and reruns.
+
+**The first pass (CY6, D10):** Core 30 + 10 → 22 + 6 a Stamina band, arms 15 + 5 → 10 + 4, Legs 20 + 6 → 14 + 5; crit
+×1.5 → ×1.4; Mend +20 → +12 Core; a Crossfire joiner fires one round. With the AI's own fixes, the report at 500 seeds a
+scenario:
+
+| Scenario | Squad wins | Player turns | Stalemates | Top weapon band | Counters, Crossfires, Covers a battle |
+|---|---|---|---|---|---|
+| The mirror (even) | 50.6% | 27.5 | 3 of 500 | Short 67% | 8, 15, 1.3 |
+| Four against the Steel Muster | 49.0% | 29.0 | 0 | Short 79% | 5, 36, 2.6 |
+| Melee against ranged | 74.8% | 17.9 | 0 | Melee 55% | 4, 8, 0 |
+| The high ground | 61.8% | 24.7 | 1 | Short 59% | 6, 16, 1 |
+| The chain | 81.0% | 26.9 | 0 | Short 80% | 8, 17, 2 |
+| A heroine to free | 85.0% | 21.6 | 0 | Short 55% | 6, 12, 0.7 |
+| The arena (even, one against one) | 50.6% | 5.3 | 0 | Melee | 2, 0, 0 |
+
+**The targets** (the build plan's §5), met or missed:
+
+| Target | Result | Why it's missed, where it is |
+|---|---|---|
+| An even scenario wins 45–55% | Met (mirror 50.6%, arena 50.6%) | — |
+| 8–14 player turns | **Missed:** 18–29 four against four | Rig Break, Hold on, Mend and Reboot keep a four-against-four fight to six to eight rounds; twice the lethality would break the next target. The 40 seconds a turn is a guess until the sandbox (CY8) measures the pace |
+| No full-HP Core broken in one hit at equal bands | Met on level ground; **9 of 500** on the high ground | A Long shot from two levels up, from behind, with a crit: equal bands, unequal ground. Accepted as the high ground's edge |
+| No weapon band above 40% of a mixed squad's damage | **Missed:** Short 55–80% | Most stand-in rigs carry a Short weapon, and Crossfire's links favour Short and Long. Revisited with real role mixes |
+| A counter, a Crossfire and a Cover a battle | Met where shields exist | Scenarios without shields can't Cover |
+| Over half the Rig Breaks after a part | Met (51–61%) except the arena (38%) | One against one, the Core takes the Melee weights |
+| Little Charge left | **Missed:** 5–6 a battle | Units sit at their cap with only reactions to spend on; chance skills and signatures (Phase 5) are the sink |
+| No stalemates | 4 in 3,500 | The AI's caution fades over 20 rounds |
+
 ## The tuning table
 
 ### Rules version 1
@@ -345,11 +378,11 @@ The board and the cut-in play cues; they decide nothing. Each action returns its
 
 | Band | Stat at 5★ | Speed: a turn every | Speed: Move | Speed: evasion | Stamina: Core / arm / Legs HP | Power: Capacity | Power: Melee bonus | Wit: accuracy |
 |---|---|---|---|---|---|---|---|---|
-| 1 | under 90 | 125 ticks | 3 | 2% | 40 / 20 / 26 | 12 | +2 | +3% |
-| 2 | 90–109 | 112 ticks | 3 | 4% | 50 / 25 / 32 | 14 | +4 | +6% |
-| 3 | 110–129 | 100 ticks | 4 | 6% | 60 / 30 / 38 | 16 | +6 | +9% |
-| 4 | 130–149 | 91 ticks | 4 | 8% | 70 / 35 / 44 | 18 | +8 | +12% |
-| 5 | 150+ | 84 ticks | 5 | 10% | 80 / 40 / 50 | 20 | +10 | +15% |
+| 1 | under 90 | 125 ticks | 3 | 2% | 28 / 14 / 19 | 12 | +2 | +3% |
+| 2 | 90–109 | 112 ticks | 3 | 4% | 34 / 18 / 24 | 14 | +4 | +6% |
+| 3 | 110–129 | 100 ticks | 4 | 6% | 40 / 22 / 29 | 16 | +6 | +9% |
+| 4 | 130–149 | 91 ticks | 4 | 8% | 46 / 26 / 34 | 18 | +8 | +12% |
+| 5 | 150+ | 84 ticks | 5 | 10% | 52 / 30 / 39 | 20 | +10 | +15% |
 
 **The rest of the table:**
 
@@ -362,7 +395,7 @@ The board and the cut-in play cues; they decide nothing. Each action returns its
 | Broken Legs | Move 1, no level changes, evasion 0 |
 | A step | Climbs or drops 1 level at most |
 | Hit % | Accuracy + Wit − evasion − 25 when aimed, clamped to 5–95%; a two-handed weapon with one arm broken fires at 50% accuracy |
-| Crit | 5% unless the weapon says, ×1.5 damage |
+| Crit | 5% unless the weapon says, ×1.4 damage |
 | Facing | Side ×1.25, back ×1.5 (past shield and counter) |
 | Height | ±10% damage a level; Melee and Short reach 2 levels up or down; Long +1 range from 2 levels up |
 | Coat | ×0.5 against its damage type |
@@ -397,7 +430,7 @@ The board and the cut-in play cues; they decide nothing. Each action returns its
 | A Hold | 30 HP unless the unit says |
 | Bulwark | Barrier: 1 Charge, 40 HP |
 | Thruster | 2 levels a step; Dash: 1 Charge, +2 Move, no zones of control |
-| Med | Mend: 1 Charge, +20 Core or a limb at 25%; Reboot: 2 Charge, stands at 25% Core |
+| Med | Mend: 1 Charge, +12 Core or a limb at 25%; Reboot: 2 Charge, stands at 25% Core |
 | Chance skills | Base + 5% a Wit band, capped at 95%; Burst adds 2 rounds |
 | Items | 6 at most; repair +20 Core; patch mends a limb at 25%; smoke in range 3; cell +1 Charge |
 | Stride | Break +1, Draft +1, Surge +1, Kick +2 Move |

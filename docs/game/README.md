@@ -6,6 +6,7 @@ What the game **is**, as built. Every packet that ships a rule writes or updates
 |---|---|---|
 | [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
 | [The battle](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break; the roles' Back units, Tech, chance skills, items, Stride, the bench call; objectives, the forecast, and the tuning tables, live (CY4, CY5) | [battle.html](previews/battle.html) |
+| [How enemies choose](enemy-ai.md) | The enemy AI and ally Auto: where she stands, what she does, never idling (CY6) | [enemy-ai.html](previews/enemy-ai.html) |
 | [Terrain, props and terminals](terrain.md) | The five tile states and how they spread, props, cover and grating, terminals, the terrain card (CY5) | [terrain.html](previews/terrain.html) |
 | [The Holds and the factions](factions.md) | How heroines are freed, and the Steel Muster's reload, volley and pinning fire (CY5) | [factions.html](previews/factions.html) |
 

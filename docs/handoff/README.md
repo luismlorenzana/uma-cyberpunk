@@ -19,7 +19,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D10.
+Packet ids run CY1–CY12; decision numbers continue from D11.
 
 ## Phase 1: the foundation
 
@@ -31,7 +31,6 @@ Starts as soon as CY1 is in, beside the cloud.
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY6 | [The AI and the simulator](tasks/CY6-ai-and-simulator.md): enemy AI, ally Auto, the scenario format, `pnpm sim`, the first balance pass | Claude | M | CY5 | Written |
 | CY7 | [The board on uma-stage](tasks/CY7-board.md): the game-owned scene from the stage's parts, its five checks, the stage requests | Claude | M | CY1 | Written |
 | CY8 | [The sandbox](tasks/CY8-sandbox.md): the battle screen on the phone, the cut-in, autosave and resume, scenario files | Claude | L | CY3, CY6, CY7 | Written |
 
@@ -97,7 +96,8 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
-| CY5 | The battle rules, the rest (D9), as **rules version 2** with version 1 frozen: terrain and props, terminals, Tech and the Holds, the Back units' actions, chance skills, items, Stride, the bench call, escort, hack and free-the-leader, the Steel Muster; 112 tests; nine version-2 golden battles; [battle](../game/battle.md), [terrain](../game/terrain.md) and [factions](../game/factions.md) in the manual | `CY5SHA` |
+| CY6 | The AI and the simulator (D10): one scorer for enemies and ally Auto, never idle, 0.2 ms a decision; the scenario format with three maps and seven stand-in scenarios; `pnpm sim` with its report and targets; the first balance pass (the mirror 50.6%, the Muster fight 49.0%, stalemates 4 in 3,500); [how enemies choose](../game/enemy-ai.md) and battle.md's Balance section | `CY6SHA` |
+| CY5 | The battle rules, the rest (D9), as **rules version 2** with version 1 frozen: terrain and props, terminals, Tech and the Holds, the Back units' actions, chance skills, items, Stride, the bench call, escort, hack and free-the-leader, the Steel Muster; 112 tests; nine version-2 golden battles; [battle](../game/battle.md), [terrain](../game/terrain.md) and [factions](../game/factions.md) in the manual | `5460ca6` |
 | CY4 | The battle rules, core (D8): `@cyber/battle`, rules version 1, no dependencies; the map format (schema 1), the rig and loadout, the timeline and Charge, movement, line of fire, attacks, Guard, Cover, Crossfire, counters, Rig Break and Hold on, four objectives, the forecast; 60 tests and seven golden replays; [the manual's battle page](../game/battle.md) ([page](../game/previews/battle.html)) with the tuning tables live | `5683d30` |
 | CY3 | The hello app (D7): uma-quest's hello-app wiring (cc42fd1) with uma-farm's shell at the night tint; Google sign-in through "Uma Cyberpunk web"; save v1 synced to `cyber` with five safety copies and a Restore; master data through `/api/master`; the update prompt, the PWA and a neon ring icon; [the manual's first page](../game/architecture.md) ([page](../game/previews/architecture.html)). Main JS 134 KB of 180 | `1a06650` |
 | CY2 | The cloud (D6): database `cyber`, `cyber-api-runtime`, images `cyber`, Cloud Run `cyber-api`, `cyber-deploy`, the provider `uma-cyberpunk`, site [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app), the web app and its sign-in domain, all in `uma-rpg`; the variables and the deploy job on; isolation checked in every cell; [infrastructure](../technical/infrastructure.md). First green deploy: [run 43337938264](https://github.com/luismlorenzana/uma-cyberpunk/actions/runs/43337938264) | `ae47a91` |

@@ -1,0 +1,531 @@
+{
+ "schemaVersion": 1,
+ "id": "melee-ranged",
+ "title": "Melee against ranged",
+ "map": "yard",
+ "input": {
+  "rulesVersion": 2,
+  "objective": {
+   "kind": "defeatAll"
+  },
+  "units": [
+   {
+    "id": "striker-a",
+    "side": "squad",
+    "spawn": 0,
+    "bands": {
+     "speed": 4,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-a"
+    },
+    "label": "Striker A"
+   },
+   {
+    "id": "striker-b",
+    "side": "squad",
+    "spawn": 1,
+    "bands": {
+     "speed": 4,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-b"
+    },
+    "label": "Striker B"
+   },
+   {
+    "id": "striker-c",
+    "side": "squad",
+    "spawn": 2,
+    "bands": {
+     "speed": 4,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-c"
+    },
+    "label": "Striker C"
+   },
+   {
+    "id": "striker-d",
+    "side": "squad",
+    "spawn": 3,
+    "bands": {
+     "speed": 4,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "N",
+    "loadout": {
+     "core": {
+      "load": 2
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "thruster",
+      "load": 2
+     },
+     "visor": {
+      "load": 1
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "melee",
+      "type": "P",
+      "power": 12,
+      "accuracy": 85,
+      "range": [
+       1,
+       1
+      ],
+      "hits": 1,
+      "load": 2
+     },
+     "coat": "P"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "striker-d"
+    },
+    "label": "Striker D"
+   },
+   {
+    "id": "gunner-a",
+    "side": "enemy",
+    "spawn": 0,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "launcher",
+      "load": 3,
+      "weapon": {
+       "kind": "weapon",
+       "band": "long",
+       "type": "F",
+       "power": 18,
+       "accuracy": 70,
+       "range": [
+        3,
+        6
+       ],
+       "hits": 1,
+       "load": 0
+      },
+      "ammo": 3
+     },
+     "visor": {
+      "load": 1,
+      "aim": true
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "F"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "gunner-a"
+    },
+    "label": "Gunner A"
+   },
+   {
+    "id": "gunner-b",
+    "side": "enemy",
+    "spawn": 1,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "launcher",
+      "load": 3,
+      "weapon": {
+       "kind": "weapon",
+       "band": "long",
+       "type": "F",
+       "power": 18,
+       "accuracy": 70,
+       "range": [
+        3,
+        6
+       ],
+       "hits": 1,
+       "load": 0
+      },
+      "ammo": 3
+     },
+     "visor": {
+      "load": 1,
+      "aim": true
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "F"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "gunner-b"
+    },
+    "label": "Gunner B"
+   },
+   {
+    "id": "gunner-c",
+    "side": "enemy",
+    "spawn": 2,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "launcher",
+      "load": 3,
+      "weapon": {
+       "kind": "weapon",
+       "band": "long",
+       "type": "F",
+       "power": 18,
+       "accuracy": 70,
+       "range": [
+        3,
+        6
+       ],
+       "hits": 1,
+       "load": 0
+      },
+      "ammo": 3
+     },
+     "visor": {
+      "load": 1,
+      "aim": true
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "F"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "gunner-c"
+    },
+    "label": "Gunner C"
+   },
+   {
+    "id": "gunner-d",
+    "side": "enemy",
+    "spawn": 3,
+    "bands": {
+     "speed": 3,
+     "stamina": 3,
+     "power": 3,
+     "guts": 3,
+     "wit": 3
+    },
+    "chargeCap": 3,
+    "link": true,
+    "facing": "S",
+    "loadout": {
+     "core": {
+      "load": 3
+     },
+     "leftArm": {
+      "load": 2
+     },
+     "rightArm": {
+      "load": 2
+     },
+     "legs": {
+      "load": 2
+     },
+     "back": {
+      "kind": "launcher",
+      "load": 3,
+      "weapon": {
+       "kind": "weapon",
+       "band": "long",
+       "type": "F",
+       "power": 18,
+       "accuracy": 70,
+       "range": [
+        3,
+        6
+       ],
+       "hits": 1,
+       "load": 0
+      },
+      "ammo": 3
+     },
+     "visor": {
+      "load": 1,
+      "aim": true
+     },
+     "leftHand": null,
+     "rightHand": {
+      "kind": "weapon",
+      "band": "short",
+      "type": "P",
+      "power": 6,
+      "accuracy": 75,
+      "range": [
+       1,
+       3
+      ],
+      "hits": 3,
+      "load": 3
+     },
+     "coat": "F"
+    },
+    "ref": {
+     "kind": "standin",
+     "id": "gunner-d"
+    },
+    "label": "Gunner D"
+   }
+  ]
+ },
+ "seeds": [
+  1,
+  2,
+  3
+ ],
+ "control": {
+  "squad": "player",
+  "enemy": "ai"
+ }
+}

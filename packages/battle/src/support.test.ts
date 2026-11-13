@@ -45,16 +45,16 @@ describe('the Med unit', () => {
   it('Mend restores Core HP or mends a broken limb at 25%', () => {
     const s = edit(setup([{ id: 'm', at: [3, 6], opts: { bands: fast, loadout: RIG2.medic() } }, { id: 'b', at: [3, 5] }], [{ id: 'e', at: [7, 0], opts: { bands: slow } }], { version: 2 }), 'b', (u) => { u.hp.core = 20; u.hp.legs = 0 })
     const core = applyBattleAction(s, { kind: 'turn', unit: 'm', act: { kind: 'mend', target: 'b', part: 'core' }, face: 'N' })
-    expect(core.cues).toContainEqual({ kind: 'mended', unit: 'm', target: 'b', part: 'core', hp: 40 })
+    expect(core.cues).toContainEqual({ kind: 'mended', unit: 'm', target: 'b', part: 'core', hp: Math.min(unitOf(s, 'b').maxHp.core, 20 + TUNING.back.mendCore) })
     const legs = applyBattleAction(s, { kind: 'turn', unit: 'm', act: { kind: 'mend', target: 'b', part: 'legs' }, face: 'N' })
-    expect(unitOf(legs.state, 'b').hp.legs).toBe(Math.floor(38 * 0.25))
+    expect(unitOf(legs.state, 'b').hp.legs).toBe(Math.floor(unitOf(s, 'b').maxHp.legs * TUNING.back.mendPartPct / 100))
   })
   it('Reboot stands a kneeling ally inside her window at 25% Core; outside it she has extracted', () => {
     const s = edit(setup([{ id: 'm', at: [3, 6], opts: { bands: fast, loadout: RIG2.medic() } }, { id: 'b', at: [3, 5], opts: { bands: slow } }], [{ id: 'e', at: [7, 0], opts: { bands: slow } }], { version: 2 }), 'b', (u) => { u.hp.core = 0; u.hp.leftArm = 0; u.status = 'down' })
     const charged = edit(s, 'm', (u) => { u.charge = 3 })
     const r = applyBattleAction(charged, { kind: 'turn', unit: 'm', act: { kind: 'reboot', target: 'b' }, face: 'N' })
     expect(r.cues).toContainEqual({ kind: 'rebooted', unit: 'm', target: 'b' })
-    expect(unitOf(r.state, 'b')).toMatchObject({ status: 'active', hp: { core: 15, leftArm: 0 } })
+    expect(unitOf(r.state, 'b')).toMatchObject({ status: 'active', hp: { core: Math.floor(unitOf(s, 'b').maxHp.core * TUNING.back.rebootCorePct / 100), leftArm: 0 } })
     let late = s
     while (unitOf(late, 'b').status === 'down') late = none(late).state
     expect(unitOf(late, 'b').status).toBe('out')
@@ -66,10 +66,10 @@ describe('items', () => {
   it('uses the squad stock: repair, patch, cell and smoke, costing no Charge', () => {
     const s = edit(setup([{ id: 'a', at: [3, 6], opts: { bands: fast } }, { id: 'b', at: [3, 5] }], [{ id: 'e', at: [3, 2], opts: { bands: slow } }], { version: 2, items: { repair: 1, patch: 1, cell: 1, smoke: 1 } }), 'b', (u) => { u.hp.core = 10; u.hp.rightArm = 0 })
     const repair = applyBattleAction(s, { kind: 'turn', unit: 'a', act: { kind: 'item', item: 'repair', target: 'b' }, face: 'N' })
-    expect(unitOf(repair.state, 'b').hp.core).toBe(30)
+    expect(unitOf(repair.state, 'b').hp.core).toBe(10 + TUNING.items.repairCore)
     expect(repair.state.field!.items.repair).toBe(0)
     const patch = applyBattleAction(s, { kind: 'turn', unit: 'a', act: { kind: 'item', item: 'patch', target: 'b', part: 'rightArm' }, face: 'N' })
-    expect(unitOf(patch.state, 'b').hp.rightArm).toBe(7)
+    expect(unitOf(patch.state, 'b').hp.rightArm).toBe(Math.floor(unitOf(s, 'b').maxHp.rightArm * TUNING.items.patchPct / 100))
     const cell = applyBattleAction(s, { kind: 'turn', unit: 'a', act: { kind: 'item', item: 'cell' }, face: 'N' })
     expect(cell.cues).toContainEqual({ kind: 'charge', unit: 'a', from: 2, to: 3, why: 'item' })
     const smoke = applyBattleAction(s, { kind: 'turn', unit: 'a', act: { kind: 'item', item: 'smoke', at: [3, 3] }, face: 'N' })
@@ -96,7 +96,7 @@ describe('Stride', () => {
     expect(move('surge')).toBe(plain)
     expect(move('surge', (s) => edit(s, 'a', (u) => { u.waited = true }))).toBe(plain + 1)
     expect(move('kick')).toBe(plain)
-    expect(move('kick', (s) => edit(s, 'a', (u) => { u.hp.core = 30 }))).toBe(plain + 2)
+    expect(move('kick', (s) => edit(s, 'a', (u) => { u.hp.core = Math.floor(u.maxHp.core / 2) }))).toBe(plain + 2)
   })
 })
 
