@@ -20,7 +20,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D17; Phase 4's packets start at CY13.
+Packet ids run CY1–CY12; decision numbers continue from D18; Phase 4's packets start at CY13.
 
 ## Phase 1: the foundation
 
@@ -63,10 +63,9 @@ packet, or says why not.
   [Cyberpunk Story Sandbox](../design/story-sandbox.md) on :4322, where the owner reads each layer and leaves verdicts. It starts with one line:
   "Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief."
 - **uma-platform:** P144 logs this repo as Phase 10. Shared changes go there as requests, never forks here:
-  - **`uma-stage`:** one request at a time, each proven by the board's checks (TC48). **Filed (CY7, D11):**
-    [tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md), sent to the uma-platform session, which
-    queued it behind uma-quest's Q16 part A and the farm's ST4 (maybe one release with ST4) and will send the version.
-    Queued behind it: glowing kit frames, a tactics kit kind cached by id, a lighter saver tier. Heights 0–3 aren't
+  - **`uma-stage`:** one request at a time, each proven by the board's checks (TC48). **The first,**
+    [tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md), shipped in uma-stage 0.5.0 (ST5, P156) and
+    is pinned with the board's own values (D17). Queued behind it: glowing kit frames, a tactics kit kind cached by id, a lighter saver tier. Heights 0–3 aren't
     needed (level 3 builds);
   - **the map kits** are drawn in code by Claude in a uma-platform session (`scripts/kit-art`, P147), from the story
     session's world outline, in Phase 4;

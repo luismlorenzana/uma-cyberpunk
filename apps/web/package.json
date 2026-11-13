@@ -16,7 +16,7 @@
     "@cyber/domain": "workspace:*",
     "@luismlorenzana/uma-data": "1.5.0",
     "@luismlorenzana/uma-kit": "0.19.0",
-    "@luismlorenzana/uma-stage": "0.3.0",
+    "@luismlorenzana/uma-stage": "0.5.0",
     "dexie": "^4.4.7",
     "firebase": "^12.19.0",
     "motion": "^12.43.0",

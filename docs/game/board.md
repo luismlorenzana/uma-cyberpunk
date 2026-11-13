@@ -1,7 +1,7 @@
 # The board
 
-> **Status: 2026-11-12, CY7 (D11).** The battle board as `apps/web/src/board/` draws it, on uma-stage 0.3.0's parts, and
-> its test bench at `/board`. The sandbox (CY8) plays battles on it. The kit is uma-stage's stand-in forest under a night
+> **Status: 2026-11-13, CY7 (D11), the post layer tuned (D17).** The battle board as `apps/web/src/board/` draws it, on
+> uma-stage 0.5.0's parts, and its test bench at `/board`. The sandbox (CY8) plays battles on it. The kit is uma-stage's stand-in forest under a night
 > grade until the first world's kit (Phase 4).
 
 ## The short answer
@@ -67,7 +67,19 @@ never fades for her.
 - **Render on change:** a tap, a pan, a walk, a fade or a resize wakes the loop; it sleeps three frames after the last
   change. A hidden page draws nothing.
 - **The battery saver** (on by default on phones, `initialSaver()`): 30 fps through `FramePacer`, and no tilt-shift or
-  bloom. With it off, uma-stage's `Effects` draws both, unchanged until the first stage request ships.
+  bloom. With it off, uma-stage's `Effects` draws both with the board's own values (`BOARD_EFFECTS`, D17), which the
+  first stage request made possible:
+
+  | Pass | Value | uma-stage's default | Why |
+  |---|---|---|---|
+  | Bloom threshold | **0.22** | 0.86 | Measured on the rendered night frame: the cyan ring reads about 0.49 luminance, the red and magenta rings and the danger overlay about 0.28–0.30, the lamps about 0.24, and 96% of the board under 0.1. At 0.22 all the neon blooms and the terrain stays dark |
+  | Bloom strength | **0.5** | 0.35 | The figures' cards (about 0.45) glow a little at any useful threshold, so the glow stays modest |
+  | Bloom radius | **0.5** | 0.4 | A slightly wider halo for the rings |
+  | Tilt-shift strength | **0.8** | 1.6 | A 14 × 14 board fills the screen; at 1.6 the front and back rows, where units stand, blurred |
+  | Tilt-shift focus | 0.5 | 0.5 | The middle of the screen |
+
+  Bloom never touches the blue reach overlay (about 0.08 as drawn): only what should glow does. With the layer on, the
+  bench draws in 108 calls.
 
 ## The test bench
 
@@ -96,8 +108,8 @@ Filed one at a time, each only once the checks prove it ([BP3](../design/build-p
 
 | # | Request | State |
 |---|---|---|
-| 1 | [Tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md): bloom's threshold of 0.86 means no neon colour ever blooms (the squad's cyan is 0.587) | **Filed** to the uma-platform session |
-| 2 | Glowing kit frames | Queued, after 1 ships |
+| 1 | [Tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md): bloom's threshold of 0.86 means no neon colour ever blooms (the squad's cyan is 0.587) | **Shipped** in uma-stage 0.5.0 (ST5, P156); pinned, with the values above (D17) |
+| 2 | Glowing kit frames | Queued: filed when the first world's kit (Phase 4) needs lit signs and windows |
 | 3 | A tactics kit kind cached by kit id | Queued |
 | 4 | A lighter saver tier | Queued |
 | — | Heights 0–3 | **Not needed:** check 1 passes |

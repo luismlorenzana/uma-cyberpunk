@@ -7,8 +7,8 @@ import type { BattleMap, Dir } from '@cyber/battle'
 import {
   boxOf, buildWorldParts, CAMERA_PITCH, cameraOffset, cardQuad, coveringOccluders, deviceSize, drawStandInKit, Effects, figureTarget, FpsRecorder,
   FramePacer, frustum, liveSets, pickAt, pixelTexture, project, roomGeometry, SAVER_FPS, snapToGrid, SpriteActor, spriteStretch, Standee, STANDEE,
-  standInKitAtlas, standInSet, stepFade, TEXELS_PER_UNIT, tileQuad, tintAt, type Facing, type FadeTarget, type Occluder, type PickTarget, type StageGrade,
-  type View,
+  standInKitAtlas, standInSet, stepFade, TEXELS_PER_UNIT, tileQuad, tintAt, type EffectsOptions, type Facing, type FadeTarget, type Occluder, type PickTarget,
+  type StageGrade, type View,
 } from '@luismlorenzana/uma-stage'
 import {
   BufferAttribute, BufferGeometry, CanvasTexture, Color, DirectionalLight, DoubleSide, Group, HemisphereLight, LineBasicMaterial, LineLoop, Mesh,
@@ -23,6 +23,13 @@ export type Tile = readonly [x: number, z: number]
 export const NIGHT_GRADE: StageGrade = {
   sky: '#5a6cc8', ground: '#1a1030', skyLight: 1.1, sun: '#b8c8ff', sunLight: 0.8, tint: '#c9d2ff', background: '#0b0d17', lamps: 1,
 }
+
+/** The post layer (uma-stage 0.5.0's ST5, our first stage request; D17). Measured on the rendered night frame, not the
+ * nominal colours: the cyan ring reads about 0.49 luminance, the red and magenta rings and the danger overlay about
+ * 0.28–0.30, the lamps about 0.24, and 96% of the board under 0.1. A threshold of 0.22 blooms all the neon and leaves the
+ * terrain dark (the figures' cards, about 0.45, glow a little at any useful threshold, hence the modest strength). The
+ * tilt-shift is softened so the board's front and back rows, where units stand, stay sharp. */
+export const BOARD_EFFECTS = { bloom: { threshold: 0.22, strength: 0.5, radius: 0.5 }, tiltShift: { strength: 0.8 } } as const satisfies EffectsOptions
 
 /** The overlay colours (TC29). */
 export const OVERLAY = {
@@ -456,9 +463,11 @@ export class BoardScene {
 
   /** Battery saver: 30 fps and no tilt-shift or bloom. */
   setSaver(saver: boolean): void { this.saver = saver; this.pacer.setFps(saver ? SAVER_FPS : null); this.wake() }
+  /** The post layer's values in use (null under the saver, or before its first frame). */
+  get effectsSettings() { return this.saver ? null : this.effects?.settings ?? null }
   private effectsOn(): Effects | null {
     if (this.saver) return null
-    if (!this.effects) { this.effects = new Effects(this.renderer, this.scene, this.camera); this.effects.setSize(this.css.width, this.css.height, this.device.ratio) }
+    if (!this.effects) { this.effects = new Effects(this.renderer, this.scene, this.camera, BOARD_EFFECTS); this.effects.setSize(this.css.width, this.css.height, this.device.ratio) }
     return this.effects
   }
 
