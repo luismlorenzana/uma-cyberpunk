@@ -19,7 +19,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D13.
+Packet ids run CY1–CY12; decision numbers continue from D14.
 
 ## Phase 1: the foundation
 
@@ -36,7 +36,6 @@ Starts as soon as CY1 is in, beside the cloud.
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY9 | [The story format and runner](tasks/CY9-story-runner.md): the parser, `pnpm story:check`, the stand-in, the loader, the scene player, save v2 | Claude | M | CY3 | Written |
 | CY10 | [The ship and the mission flow](tasks/CY10-ship-and-flow.md): the rooms, the star map, a world's map, briefing to results, save v3 | Claude | L | CY8, CY9 | Written |
 | CY11 | [The crew and the Hangar](tasks/CY11-crew-and-hangar.md): roster, profiles, loadouts, parts, roles, the bench | Claude | M | CY10 | Written |
 | CY12 | [The Chapter 1 loop](tasks/CY12-chapter-one-loop.md): two stand-in worlds, two pickups, rooms opening, debriefs | Claude | M | CY10, CY11 | Written |
@@ -65,7 +64,8 @@ packet, or says why not.
 
 ## Across the repos
 
-- **The story session** works in this repo from [the story brief](../design/story-brief.md). It starts with one line:
+- **The story session** works in this repo from [the story brief](../design/story-brief.md). **Its check is live (CY9):**
+  `pnpm story:check` validates `content/stories/`. It starts with one line:
   "Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief."
 - **uma-platform:** P144 logs this repo as Phase 10. Shared changes go there as requests, never forks here:
   - **`uma-stage`:** one request at a time, each proven by the board's checks (TC48). **Filed (CY7, D11):**
@@ -98,7 +98,8 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
-| CY8 | The sandbox (D12): setup from scenarios with Copy, Paste and Save; the battle screen (timeline, two-tap move, the arc, the forecast card, reach, the terrain card, paper dolls, a DOM cut-in, enemy turns at double speed with Skip); autosave in its own local database with Resume and Restart; results with Retry; the test scenario on `underlevels-14`; [the sandbox](../game/sandbox.md) and battle.md's battle screen in the manual. Phase 2's exit waits on the owner's play | `CY8SHA` |
+| CY9 | The story format and runner (D13): the strict parser, `pnpm story:check` (Uma Story's `checks.json`) and `pnpm story:pack`, the API's private pack and the web's loader with the stand-in, the runner and the scene player, `/story`, save v2 with the story state; [the story](../game/story.md) in the manual; the brief's §8 says the check is live | `CY9SHA` |
+| CY8 | The sandbox (D12): setup from scenarios with Copy, Paste and Save; the battle screen (timeline, two-tap move, the arc, the forecast card, reach, the terrain card, paper dolls, a DOM cut-in, enemy turns at double speed with Skip); autosave in its own local database with Resume and Restart; results with Retry; the test scenario on `underlevels-14`; [the sandbox](../game/sandbox.md) and battle.md's battle screen in the manual. Phase 2's exit waits on the owner's play | `1ed6a40` |
 | CY7 | The board on uma-stage (D11): the scene from the stage's parts, sprites and standees with rings and wedges, TC29's overlays, picking, the pan, the fade, render on change; the bench at `/board` with `?debug`; the five checks (level 3 builds, 159 of 159 visible tops pick back, 13 figures at 41 draw calls, 120 and 30 fps on desktop, 9.2% hidden); the first stage request filed; [the board](../game/board.md) in the manual | `94a493a` |
 | CY6 | The AI and the simulator (D10): one scorer for enemies and ally Auto, never idle, 0.2 ms a decision; the scenario format with three maps and seven stand-in scenarios; `pnpm sim` with its report and targets; the first balance pass (the mirror 50.6%, the Muster fight 49.0%, stalemates 4 in 3,500); [how enemies choose](../game/enemy-ai.md) and battle.md's Balance section | `29179c8`, `1cfa508` |
 | CY5 | The battle rules, the rest (D9), as **rules version 2** with version 1 frozen: terrain and props, terminals, Tech and the Holds, the Back units' actions, chance skills, items, Stride, the bench call, escort, hack and free-the-leader, the Steel Muster; 112 tests; nine version-2 golden battles; [battle](../game/battle.md), [terrain](../game/terrain.md) and [factions](../game/factions.md) in the manual | `5460ca6` |

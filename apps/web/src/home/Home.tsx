@@ -34,9 +34,10 @@ export function Home() {
           <Row label="Master data">{master.status === 'ready' ? master.version : master.status === 'error' ? 'Unavailable' : 'Loading'}</Row>
         </Panel>
         <Button variant="secondary" disabled={game.sync === 'syncing'} onClick={() => void syncNow()}>Sync now</Button>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <Link to="/sandbox" className="flex min-h-12 items-center justify-center rounded-md bg-accent font-display font-bold text-accent-ink">Sandbox</Link>
           <Link to="/board" className="flex min-h-12 items-center justify-center rounded-md bg-sunken font-display font-bold text-ink">Board bench</Link>
+          <Link to="/story" className="flex min-h-12 items-center justify-center rounded-md bg-sunken font-display font-bold text-ink">Story</Link>
         </div>
       </div>
     </main>

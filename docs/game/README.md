@@ -6,6 +6,7 @@ What the game **is**, as built. Every packet that ships a rule writes or updates
 |---|---|---|
 | [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
 | [The battle](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break; the roles' Back units, Tech, chance skills, items, Stride, the bench call; objectives, the forecast, and the tuning tables, live (CY4, CY5) | [battle.html](previews/battle.html) |
+| [The story](story.md) | The story's files and steps, `pnpm story:check` and `pnpm story:pack`, delivery and the stand-in, the scene player, the story state in save v2 (CY9) | [story.html](previews/story.html) |
 | [The sandbox](sandbox.md) | Setting up and playing any skirmish, autosave and Resume, the results, the test scenario (CY8) | [sandbox.html](previews/sandbox.html) |
 | [The board](board.md) | The battle board on uma-stage: terrain, figures with their rings and wedges, the overlays, taps, the pan, the fade, the loop, the test bench at `/board`, and the five checks (CY7) | [board.html](previews/board.html) |
 | [How enemies choose](enemy-ai.md) | The enemy AI and ally Auto: where she stands, what she does, never idling (CY6) | [enemy-ai.html](previews/enemy-ai.html) |

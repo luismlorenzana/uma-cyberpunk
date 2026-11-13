@@ -2,3 +2,4 @@
 export const GAME = 'uma-cyberpunk' as const
 
 export * from './save/save'
+export * from './story/index'

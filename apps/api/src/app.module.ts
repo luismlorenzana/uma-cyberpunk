@@ -5,6 +5,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { HealthController } from './health.controller'
 import { SaveModule } from './save/save.module'
+import { storyPackModule } from './story/story-pack'
 
 // Every route sits behind the shared owner guard (uma-platform P54): a Firebase ID token for the owner's email, or the
 // fixed local user with AUTH_MODE=disabled. `@Public()` opens a route (only /api/health).
@@ -23,6 +24,8 @@ import { SaveModule } from './save/save.module'
       dir: resolve(process.cwd(), process.env.MASTER_DIR ?? '../../../uma-platform/content/release'),
     }),
     SaveModule,
+    // The story's private pack at /api/content/… (CY9): STORY_DIR locally, the stand-in in production until Phase 4.
+    storyPackModule(),
   ],
   controllers: [HealthController],
 })

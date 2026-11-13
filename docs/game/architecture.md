@@ -36,11 +36,15 @@ the gates, so a waiting build shows on any screen.
 
 ## The save
 
-**Save v1** (`packages/domain/src/save/save.ts`):
+**Save v2** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 adds the story state in CY9):
 
 ```json
-{ "version": 1, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" } }
+{ "version": 2, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
+  "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] } }
 ```
+
+A v1 save opens as v2 on the device (an empty story, `account.updatedAt` untouched); the story's fields are on
+[story.md](story.md#the-story-state-save-v2).
 
 - **`account.updatedAt` is the conflict rule's clock.** Only the player's own change moves it (`touched`); parsing,
   syncing and the server never do. A Restore counts as the player's own change.

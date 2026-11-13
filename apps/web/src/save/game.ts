@@ -1,7 +1,7 @@
 // The game store and its sync engine (copied from uma-rpg at 30a322a, its D32 and D260, cut to save v1): the save lives
 // on the device (Dexie) and in a Zustand store; every change writes both and schedules a background sync. Play never
 // waits on the network.
-import { newSave, parseSave, touched, type Save } from '@cyber/domain'
+import { newSave, parseSave, touched, type Save, type StoryState } from '@cyber/domain'
 import { create } from 'zustand'
 import { conflictEnvelope, saveApi } from '../api/client'
 import { addSafetyCopy, readSafetyCopy, readSaveRow, removeSafetyCopy, writeSaveRow } from './db'
@@ -153,6 +153,15 @@ async function syncPass(): Promise<void> {
   } catch {
     useGame.setState({ sync: typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error' })
   }
+}
+
+/** The story moves on (CY9): the player's own change, so it moves `account.updatedAt` and syncs. */
+export async function updateStory(change: (story: StoryState) => StoryState): Promise<void> {
+  const { save } = useGame.getState()
+  if (!save) return
+  const story = change(save.story)
+  if (story === save.story) return
+  await commit(touched({ ...save, story }, nowIso()))
 }
 
 /**

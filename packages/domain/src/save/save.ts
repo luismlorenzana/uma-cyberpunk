@@ -3,8 +3,10 @@
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
 // takes any version this game ever wrote and returns the current one, and never moves `account.updatedAt`.
 
-/** The save's version now. */
-export const SAVE_VERSION = 1
+import { emptyStory, type StoryState } from '../story/state'
+
+/** The save's version now: 2 adds the story state (CY9). */
+export const SAVE_VERSION = 2
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -20,8 +22,15 @@ export interface SaveV1 {
   account: Account
 }
 
+/** v2 (CY9): the story's flags, Leads, Log Files, Anomalies and scenes seen. */
+export interface SaveV2 {
+  version: 2
+  account: Account
+  story: StoryState
+}
+
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV1
+export type Save = SaveV2
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -48,7 +57,12 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return { version: SAVE_VERSION, account: { uid, createdAt: now, updatedAt: now } }
+  return { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
+}
+
+/** v1 to v2: the account as it was (its `updatedAt` untouched), and an empty story. Pure; runs on the device. */
+export function migrateV1(save: SaveV1): SaveV2 {
+  return { version: 2, account: { ...save.account }, story: emptyStory() }
 }
 
 /** The save after the player's own change at `now`: the only thing that moves `updatedAt`. */
@@ -88,6 +102,28 @@ function id(value: unknown, path: string): string {
   return value
 }
 
+const slugs = (value: unknown, path: string): string[] => {
+  if (!Array.isArray(value) || value.length > 5000) throw new SaveParseError(path, 'expected a list')
+  return value.map((v, i) => id(v, `${path}[${i}]`))
+}
+
+function parseStory(value: unknown, path: string): StoryState {
+  const o = object(value, path, ['flags', 'leads', 'files', 'anomalies', 'seen'])
+  const files = object(o.files, `${path}.files`, Object.keys((o.files ?? {}) as Obj))
+  const anomalies = object(o.anomalies, `${path}.anomalies`, Object.keys((o.anomalies ?? {}) as Obj))
+  return {
+    flags: slugs(o.flags, `${path}.flags`), leads: slugs(o.leads, `${path}.leads`), seen: slugs(o.seen, `${path}.seen`),
+    files: Object.fromEntries(Object.entries(files).map(([k, v]) => {
+      if (!Array.isArray(v) || v.length > 100) throw new SaveParseError(`${path}.files.${k}`, 'expected a list of lines')
+      return [id(k, `${path}.files`), v.map((n, i) => count(n, `${path}.files.${k}[${i}]`))]
+    })),
+    anomalies: Object.fromEntries(Object.entries(anomalies).map(([k, v]) => {
+      if (typeof v !== 'boolean') throw new SaveParseError(`${path}.anomalies.${k}`, 'expected true or false')
+      return [id(k, `${path}.anomalies`), v]
+    })),
+  }
+}
+
 function parseAccount(value: unknown, path: string): Account {
   const o = object(value, path, ['uid', 'createdAt', 'updatedAt'])
   return { uid: id(o.uid, `${path}.uid`), createdAt: timestamp(o.createdAt, `${path}.createdAt`), updatedAt: timestamp(o.updatedAt, `${path}.updatedAt`) }
@@ -99,14 +135,18 @@ export function versionOf(value: unknown): number {
   return typeof v === 'number' && Number.isSafeInteger(v) ? v : 0
 }
 
-/** Parses a save of any version this game has written and returns the current one. A version from a newer app is refused,
- * so an old client never half-reads a newer save. v2 (CY9) adds its migration here. */
+/** Parses a save of any version this game has written and returns the current one, migrating as it goes. A version from
+ * a newer app is refused, so an old client never half-reads a newer save. Never moves `account.updatedAt`. */
 export function parseSave(value: unknown, path = 'save'): Save {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
-  if (version !== 1) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
-  const o = object(value, path, ['version', 'account'])
-  return { version: 1, account: parseAccount(o.account, `${path}.account`) }
+  if (version === 1) {
+    const o = object(value, path, ['version', 'account'])
+    return migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) })
+  }
+  if (version !== 2) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
+  const o = object(value, path, ['version', 'account', 'story'])
+  return { version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) }
 }
 
 /** The body of `PUT /api/save`. */

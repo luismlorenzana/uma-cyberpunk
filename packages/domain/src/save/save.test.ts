@@ -4,17 +4,31 @@ import { newSave, parseSave, parseSaveEnvelope, parseSavePut, resolveConflict, S
 const T0 = '2026-11-08T12:00:00.000Z'
 const T1 = '2026-11-08T12:05:00.000Z'
 
-describe('save v1', () => {
-  it('is version 1', () => expect(SAVE_VERSION).toBe(1))
+const EMPTY = { flags: [], leads: [], files: {}, anomalies: {}, seen: [] }
 
-  it('starts an account with both dates at now', () => {
-    expect(newSave('u1', T0)).toEqual({ version: 1, account: { uid: 'u1', createdAt: T0, updatedAt: T0 } })
+describe('save v2', () => {
+  it('is version 2', () => expect(SAVE_VERSION).toBe(2))
+
+  it('starts an account with both dates at now and an empty story', () => {
+    expect(newSave('u1', T0)).toEqual({ version: 2, account: { uid: 'u1', createdAt: T0, updatedAt: T0 }, story: EMPTY })
   })
 
   it('moves only updatedAt on a change', () => {
     const save = newSave('u1', T0)
-    expect(touched(save, T1)).toEqual({ version: 1, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } })
+    expect(touched(save, T1)).toEqual({ version: 2, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY })
     expect(save.account.updatedAt).toBe(T0)
+  })
+
+  it('opens a v1 save as v2 with account.updatedAt unchanged (the migration, CY9)', () => {
+    const v1 = { version: 1, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
+    expect(parseSave(v1)).toEqual({ version: 2, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY })
+  })
+
+  it('carries the story state, strictly', () => {
+    const save = { ...newSave('u1', T0), story: { flags: ['a'], leads: ['b'], files: { 'f-1': [0, 2] }, anomalies: { x: true }, seen: ['s'] } }
+    expect(parseSave(JSON.parse(JSON.stringify(save)))).toEqual(save)
+    expect(() => parseSave({ ...save, story: { ...save.story, extra: 1 } })).toThrow(SaveParseError)
+    expect(() => parseSave({ ...save, story: { ...save.story, anomalies: { x: 'open' } } })).toThrow(/true or false/)
   })
 
   it('round-trips through JSON', () => {
@@ -46,7 +60,7 @@ describe('parsing', () => {
     expect(() => parseSave({ version: 1, account: { ...newSave('u1', T0).account, name: 'x' } })).toThrow(/save\.account: unknown keys name/)
   })
   it('refuses a version newer than this app', () => {
-    expect(() => parseSave({ version: 2, account: newSave('u1', T0).account })).toThrow(/newer than this app/)
+    expect(() => parseSave({ version: 3, account: newSave('u1', T0).account })).toThrow(/newer than this app/)
   })
   it('refuses a missing or broken version', () => {
     expect(() => parseSave({ account: newSave('u1', T0).account })).toThrow(SaveParseError)
@@ -63,7 +77,7 @@ describe('parsing', () => {
   })
   it('parses an upload with the version sent', () => {
     const put = parseSavePut({ baseRevision: 3, save: newSave('u1', T0) })
-    expect(put).toEqual({ baseRevision: 3, save: newSave('u1', T0), sentVersion: 1 })
+    expect(put).toEqual({ baseRevision: 3, save: newSave('u1', T0), sentVersion: 2 })
     expect(() => parseSavePut({ baseRevision: -1, save: newSave('u1', T0) })).toThrow('body.baseRevision')
     expect(() => parseSavePut({ baseRevision: 0, save: newSave('u1', T0), extra: 1 })).toThrow(/unknown keys extra/)
   })

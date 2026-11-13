@@ -211,8 +211,17 @@ Each has the game session's default, so nothing waits on an answer:
 ## 8. The content contract (SB8)
 
 The game reads the story from files, the way uma-quest and uma-farm do: the format and its validator live in git, the
-content never does. This is a sketch; **CY9** builds the parser and the check, `pnpm story:check`, and may tighten
-it. Any change is logged and this section updated.
+content never does.
+
+> **Live since CY9 (D13).** The parser and the check are built: run **`pnpm story:check`** in this repo to validate
+> `content/stories/` (it writes `checks.json` beside your files and exits non-zero on any error). The exact format, every
+> step's syntax and every rule are in [the manual's story page](../game/story.md). What CY9 settled beyond this sketch:
+> `wait` is a number of ms; `flag` is a slug, or `{ flag, set }` to clear one; `file` is `{ file, line }`; `anomaly` is
+> `{ anomaly, open }`; `join` and `aboard` are an outfit id; `call` and `battle` are a slug; a file's `id` is its file
+> name; worlds give each location `danger`, `needs` and `links` (and optional `x`, `y` for the map); `casting.json`
+> holds `leads` (`{ outfit, world, opens?, talent? }`), `crewOrder`, `heroines` and `minor`; any file may carry a
+> `layer`; a mission may name the `scenario` the game builds for it. Further changes are logged and this section
+> updated.
 
 **Where the files live** (the ignored `content/`, on the same disk as the repo, so both sessions see them):
 

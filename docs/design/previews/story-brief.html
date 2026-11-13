@@ -660,8 +660,19 @@
   <section class="card" id="contract">
     <h2>8. The content contract <span class="tag">SB8</span></h2>
     <p>The game reads the story from files, the way uma-quest and uma-farm do: the format and its validator live in git,
-      the content never does. This is a sketch; <b>CY9</b> builds the parser and the check, <code>pnpm story:check</code>,
-      and may tighten it. Any change is logged and this section updated.</p>
+      the content never does.</p>
+    <div class="callout" style="border-left:3px solid #2ee6ff;padding:8px 12px;margin:8px 0;background:rgba(46,230,255,0.08);border-radius:0 8px 8px 0">
+      <b>Live since CY9 (D13).</b> The parser and the check are built: run <code>pnpm story:check</code> in this repo to
+      validate <code>content/stories/</code> (it writes <code>checks.json</code> beside your files and exits non-zero on any
+      error). The exact format, every step's syntax and every rule are in
+      <a href="../../game/previews/story.html">the manual's story page</a>. Settled beyond the sketch below:
+      <code>wait</code> is ms; <code>flag</code> is a slug or <code>{ flag, set }</code>; <code>file</code> is
+      <code>{ file, line }</code>; <code>anomaly</code> is <code>{ anomaly, open }</code>; <code>join</code> and
+      <code>aboard</code> are an outfit id; <code>call</code> and <code>battle</code> a slug; a file's <code>id</code> is its
+      name; locations carry <code>danger</code>, <code>needs</code> and <code>links</code>; <code>casting.json</code> holds
+      <code>leads</code>, <code>crewOrder</code>, <code>heroines</code> and <code>minor</code>; any file may carry a
+      <code>layer</code>; a mission may name the game's <code>scenario</code>.
+    </div>
 
     <div class="codehead"><span>Where the files live</span><span class="sub">the ignored <code>content/</code>, on the same disk as the repo, so both sessions see them</span></div>
     <pre class="code tree"><span class="d">content/stories/</span>                 <span class="c">ignored by git; the story session's</span>
