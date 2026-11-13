@@ -10,13 +10,16 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json .npmrc .
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/domain/package.json packages/domain/package.json
-# When CY4 adds packages/battle, copy its package.json here and its sources below: @cyber/domain imports it.
+COPY packages/battle/package.json packages/battle/package.json
 
 RUN --mount=type=secret,id=npm_token NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token)" \
     pnpm install --filter @cyber/api... --frozen-lockfile
 
 COPY packages/domain packages/domain
+COPY packages/battle packages/battle
 COPY apps/api apps/api
+# @cyber/battle is copied for the day @cyber/domain imports it; the filtered install then pulls it in, and its build
+# goes first here.
 RUN pnpm --filter @cyber/domain build && pnpm --filter @cyber/api build
 RUN --mount=type=secret,id=npm_token NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token)" \
     pnpm --filter @cyber/api --prod deploy --legacy /out

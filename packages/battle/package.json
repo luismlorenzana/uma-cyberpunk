@@ -1,0 +1,31 @@
+{
+  "name": "@cyber/battle",
+  "version": "0.1.0",
+  "private": true,
+  "sideEffects": false,
+  "description": "uma-cyberpunk's battle rules: a pure, seeded reducer with no dependencies (TC54, BP4).",
+  "main": "./dist/cjs/index.js",
+  "types": "./dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      },
+      "default": {
+        "types": "./src/index.ts",
+        "default": "./src/index.ts"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.cjs.json && node -e \"require('fs').writeFileSync('dist/cjs/package.json', JSON.stringify({ type: 'commonjs' }))\"",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "~5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

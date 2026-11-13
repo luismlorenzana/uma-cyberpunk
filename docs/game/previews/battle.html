@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The battle, core rules</title>
+<!-- Generated from docs/game/battle.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The battle, core rules</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-map">The map</a><a class="h2" href="#the-units-and-their-rigs">The units and their rigs</a><a class="h2" href="#the-timeline-and-charge">The timeline and Charge</a><a class="h2" href="#a-turn">A turn</a><a class="h3" href="#movement">Movement</a><a class="h3" href="#reach-and-line-of-fire">Reach and line of fire</a><a class="h2" href="#attacks">Attacks</a><a class="h3" href="#the-exchange-in-order">The exchange, in order</a><a class="h2" href="#rig-break-and-hold-on">Rig Break and Hold on</a><a class="h2" href="#objectives">Objectives</a><a class="h2" href="#the-forecast">The forecast</a><a class="h2" href="#cues">Cues</a><a class="h2" href="#determinism-and-versions">Determinism and versions</a><a class="h2" href="#the-tuning-table">The tuning table</a></nav>
+<main id="top">
+<h1 id="the-battle-core-rules">The battle, core rules</h1>
+<blockquote><p><b>Status: 2026-11-12, CY4 (D8).</b> The rules as <code>@cyber/battle</code> plays them, rules version 1. Terrain, Tech, the Back units' actions, chance skills and items arrive in CY5; the enemy AI and the simulator in CY6; the board in CY7. Every number below comes from <code>packages/battle/src/tuning.ts</code>, and the tables marked live are rendered from it.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>A battle is a frozen input plus a list of actions.</b> The input holds the rules version, the seed, the map, the objective and every unit with her bands and her resolved rig. Replaying the actions on the input gives the same state every time, so the save keeps only those two (an autosave after every action is a few bytes).</li><li><b>Each unit acts when her own clock fills,</b> at a rate set by Speed. A turn is <b>move, then one action, then face.</b></li><li><b>The rig takes the damage:</b> four parts (Core, two arms, Legs) with their own HP. A broken arm drops its weapon, broken Legs slow her, a broken Core is a <b>Rig Break</b>: she kneels and extracts, never dies.</li><li><b>Charge</b> is one small bar: spend it on your turn or keep it to counter, join an ally's attack (Crossfire) or take a hit for one (Cover) on theirs.</li><li><b>The forecast card</b> shows every number before a turn is sent, from the same functions the result uses.</li></ul>
+<pre class="mermaid">flowchart LR
+  input[Frozen input: version, seed, map, objective, units] --&gt; start[startBattle]
+  start --&gt; state[State + cues]
+  state --&gt; action[A turn: move, act, face]
+  action --&gt; reducer[applyBattleAction]
+  reducer --&gt;|legal| state
+  reducer --&gt;|illegal| error[Error, nothing changes]
+  state --&gt; board[The board plays the cues]</pre>
+<h2 id="the-map">The map</h2>
+<p>A map is JSON, schema 1. Its heights stay digit rows, exactly uma-stage's room format, so the board builds them with no translation.</p>
+<pre><code>{
+  "schemaVersion": 1,
+  "id": "test-yard",
+  "width": 10, "depth": 10,
+  "heights": ["0000000000", "…"],
+  "tiles": ["..........", "…"],
+  "spawns": { "squad": [[1, 8], "…"], "enemy": [[7, 1], "…"] }
+}</code></pre>
+<div class="scroll"><table><tr><th>Field</th><th>Rule</th></tr><tr><td><code>width</code>, <code>depth</code></td><td>6–14 each</td></tr><tr><td><code>heights</code></td><td>One digit 0–3 a tile; row 0 is the back (north), x grows east</td></tr><tr><td><code>tiles</code></td><td><code>.</code> floor, <code>#</code> solid (no standing, blocks sight), <code>=</code> grating, <code>c</code> cover; grating and cover play as floor until CY5</td></tr><tr><td><code>spawns.squad</code></td><td>Exactly five tiles: four Umas and a guest</td></tr><tr><td><code>spawns.enemy</code></td><td>One to eight tiles</td></tr></table></div>
+<p>No spawn sits on a solid tile or shares one. <code>parseMap</code> refuses anything else and names the path, such as <code>map.heights[3][0]: expected a digit 0–3</code>.</p>
+<p><b>Directions</b> are N, E, S and W; S faces the camera.</p>
+<h2 id="the-units-and-their-rigs">The units and their rigs</h2>
+<p>Each unit brings five <b>bands</b> (Speed, Stamina, Power, Guts and Wit, 1–5), a Charge cap (3, or 4 and 5 with licences later), her link toggle, a leader flag, a spawn, a facing and her <b>resolved loadout</b>: each part's numbers, never a catalogue id. A unit may carry a <code>ref</code> and a <code>label</code> for the app; the rules never read them.</p>
+<p><b>The loadout: eight slots and a Coat.</b></p>
+<div class="scroll"><table><tr><th>Slot</th><th>Carries</th></tr><tr><td>Core</td><td>Load; optional Capacity and HP bonus</td></tr><tr><td>Left arm, Right arm</td><td>Load; optional HP bonus</td></tr><tr><td>Legs</td><td>Load; optional HP bonus and a Move modifier</td></tr><tr><td>Back unit</td><td>Launcher, Bulwark, Thruster, Deck, Med or none; Load and optional Capacity; a Launcher carries a Long weapon and 1–9 ammo</td></tr><tr><td>Visor</td><td>Load; <code>aim</code> lets her pick a part at −25% hit</td></tr><tr><td>Left hand, Right hand</td><td>A weapon or a shield, or nothing</td></tr><tr><td>Coat</td><td>P, I or F: halves that damage type</td></tr></table></div>
+<ul><li><b>Load against Capacity:</b> every slot's Load added up must fit her Capacity (10 + 2 a Power band, plus the Core's and the Back unit's bonus). Over Capacity, the battle refuses her.</li><li><b>A light rig is a fast rig:</b> at 70% of Capacity or less, +1 Move.</li><li><b>A two-handed weapon</b> goes in the right hand with the left hand empty. <b>A Long weapon</b> fires only from a Launcher.</li></ul>
+<p><b>What breaks when a part breaks:</b></p>
+<div class="scroll"><table><tr><th>Part</th><th>When it breaks</th></tr><tr><td>Core</td><td><b>Rig Break:</b> she kneels, out of the fight</td></tr><tr><td>One arm</td><td>That hand's weapon or shield is off; a two-handed weapon fires at half accuracy</td></tr><tr><td>Both arms</td><td>No attack and no guard; she can still move and Wait</td></tr><tr><td>Legs</td><td>Move 1, no level changes, evasion 0</td></tr><tr><td>A hit on a broken part</td><td>Goes to the Core</td></tr></table></div>
+<h2 id="the-timeline-and-charge">The timeline and Charge</h2>
+<ul><li>Every clock fills at its Speed band's rate; a turn comes at 1,000. A <b>round</b> is 100 ticks: one turn at Speed band 3. Rounds are what "hold for N rounds" counts.</li><li><b>Ties</b> go to the higher Speed band, then to the seeded roll. The timeline shows the next eight turns.</li><li><b>Charge</b> starts at 1 and gains 1 at the start of each of her turns, up to her cap.</li><li><b>Wait</b> means no action (moving is still allowed): +1 Charge more, and her clock restarts at 250 instead of 0, so her next turn comes sooner. The forecast shows the shift.</li><li><b>The link toggle</b> is a free action on her own turn: with it off she never joins Crossfire or gives Cover.</li></ul>
+<h2 id="a-turn">A turn</h2>
+<p>One action: <code>{ kind: "turn", unit, to?, act, face }</code>, where <code>act</code> is an attack (a mount, a target and an optional aimed part), <code>wait</code> or <code>none</code>. The app holds the two-tap move and its undo itself and sends the turn whole.</p>
+<ol><li><b>Move</b> (optional): to any reachable tile.</li><li><b>Act:</b> attack, Wait, or nothing.</li><li><b>Face</b> one of the four ways.</li></ol>
+<p>An illegal turn (not her turn, an unreachable tile, a target out of reach, a part already broken) returns an error and changes nothing.</p>
+<h3 id="movement">Movement</h3>
+<ul><li>Move points come from her Speed band, +1 for a light rig, plus the Legs' modifier; broken Legs move 1.</li><li>A step climbs or drops one level at most; broken Legs stay level. Solid tiles can't be entered.</li><li><b>Zones of control:</b> entering a tile next to a standing enemy ends the move.</li><li>A unit passes through her own side, never through the other, and never ends on an occupied tile.</li></ul>
+<h3 id="reach-and-line-of-fire">Reach and line of fire</h3>
+<div class="scroll"><table><tr><th>Band</th><th>Range</th><th>Height reach</th><th>Line of fire</th></tr><tr><td>Melee</td><td>1</td><td>Two levels up or down</td><td>Not needed</td></tr><tr><td>Short</td><td>The weapon's, within 1–3</td><td>Two levels up or down</td><td>Needed</td></tr><tr><td>Long</td><td>The weapon's, within 3–6; +1 from two levels up</td><td>Any</td><td>Needed</td></tr></table></div>
+<p>Range is counted in steps (no diagonals). <b>Line of fire</b> runs from her eye (0.8 of a level above her tile) to the target's middle (0.5 above hers); a solid tile, or a tile higher than the line where it crosses, blocks it. Units never block.</p>
+<h2 id="attacks">Attacks</h2>
+<p>An attack fires one mount (right hand, left hand, or the Back unit's Launcher) at one standing enemy. The attacker turns to face her target as she fires.</p>
+<p><b>Where it lands:</b> inside the target's front quarter is the <b>front</b>, inside her back quarter the <b>back</b>, anything else, diagonals included, the <b>side</b>.</p>
+<p><b>Each hit rolls on its own</b> (Short weapons fire several):</p>
+<ol><li><b>Hit %</b> = the weapon's accuracy + 3 a Wit band − the target's evasion (2 a Speed band, 0 with broken Legs), − 25 when aimed, clamped to 5–95%.</li><li><b>Crit:</b> the weapon's crit % (5 unless it says) for ×1.5 damage.</li><li><b>The part:</b> aimed, or rolled on the band's weights; a hit on a broken part goes to the Core.</li><li><b>Damage</b> = the weapon's power (+2 a Power band for Melee) × facing (side ×1.25, back ×1.5) × height (+10% a level above the target, −10% a level below) × Coat (×0.5 when it matches) × crit × (100% − the Guard), rounded down, at least 1. The arithmetic is exact integers, so a replay can't drift.</li><li><b>The Guard:</b> a whole shield arm cuts a hit from the front or side (a tower shield 40%, a buckler 20%), never from behind.</li></ol>
+<p><b>A Long weapon</b> uses one ammo a shot, and is never countered and never counters.</p>
+<h3 id="the-exchange-in-order">The exchange, in order</h3>
+<pre class="mermaid">flowchart TD
+  A[Attack declared] --&gt; C{Target's own shield guards it?}
+  C --&gt;|No, and an adjacent ally can Cover| CV[Cover: she steps in, takes it from the front, 1 Charge]
+  C --&gt;|Yes, or no one covers| M[The main strike rolls]
+  CV --&gt; X
+  M --&gt; X{Target still standing?}
+  X --&gt;|Yes| J[Up to two allies join: Crossfire, 1 Charge each]
+  X --&gt;|No| E[End]
+  J --&gt; K{Covered?}
+  K --&gt;|No| R{Defender can counter?}
+  K --&gt;|Yes| E
+  R --&gt;|Yes| CT[Counter, 1 Charge]
+  R --&gt;|No| E
+  CT --&gt; E</pre>
+<ul><li><b>Cover:</b> when the target's own shield doesn't guard the attack (she has none, or it comes from behind), the first adjacent ally in timeline order with a whole shield arm, her link on and 1 Charge steps in. She takes the main strike from the front, so her Guard applies. A covered attack draws no counter.</li><li><b>Crossfire:</b> up to two of the attacker's allies join with a free basic attack, 1 Charge each, in timeline order, if their link is on and either they stand on the target's far side with a Melee or Short weapon in reach (a <b>pincer</b>), or they have a Short or Long weapon in reach with a line of fire (a <b>link</b>). Enemies do it too.</li><li><b>Counters</b> are automatic: the defender answers with a Melee or Short weapon in reach of the attacker, for 1 Charge, when she's still standing, the attack came from her front or side, and it wasn't Long.</li></ul>
+<h2 id="rig-break-and-hold-on">Rig Break and Hold on</h2>
+<ul><li>At Core 0 her rig locks and she <b>kneels</b>: no turns, not a target. She stays <b>rebootable until the end of her next turn</b> (the Medic's reboot arrives in CY5); when that turn comes she <b>extracts</b>.</li><li><b>Hold on:</b> Guts at band 4 or more lets her survive one Core-breaking hit a battle at Core 1.</li></ul>
+<h2 id="objectives">Objectives</h2>
+<div class="scroll"><table><tr><th>Objective</th><th>Won when</th></tr><tr><td>Defeat all</td><td>Every enemy is down or out</td></tr><tr><td>Defeat the leader</td><td>The enemy leader is down or out</td></tr><tr><td>Reach a tile</td><td>A squad unit ends her move on it (the battle ends before her action)</td></tr><tr><td>Hold for N rounds</td><td>The clock passes N rounds</td></tr></table></div>
+<p>Beating every enemy always wins. The battle is <b>lost</b> when every squad unit is down or out. It ends the moment either happens, mid-turn included.</p>
+<h2 id="the-forecast">The forecast</h2>
+<p><code>forecast(state, turn)</code> answers before a turn is sent, without rolling anything: it calls the resolution's own functions on the board as it would stand after the move.</p>
+<div class="scroll"><table><tr><th>It shows</th><th>From</th></tr><tr><td>Hit %, crit %, hits, and one hit's damage (normal and crit) for the attack</td><td>The strike's numbers</td></tr><tr><td>Front, side or back, and the Guard</td><td>Facing</td></tr><tr><td>Each part's chance of being hit, and whether it <b>will</b> break (one normal hit) or <b>may</b> (a crit or several hits)</td><td>The band's weights, broken parts sent to the Core</td></tr><tr><td>Who covers, who joins (pincer or link) and who counters, each with their numbers</td><td>The same eligibility the resolution uses</td></tr><tr><td>The Charge each unit spends (a Wait shows as a gain)</td><td>The tuning table</td></tr><tr><td>The next eight turns after this one</td><td>The timeline</td></tr></table></div>
+<p>A test checks that the forecast's hit % is within two points of the resolved hit rate over 2,000 seeds for each weapon band, and that every resolved hit's damage is the forecast's number.</p>
+<h2 id="cues">Cues</h2>
+<p>The board and the cut-in play cues; they decide nothing. Each action returns its cues in order: <code>turnStarted</code>, <code>charge</code> (with why: turn, wait, counter, crossfire, cover), <code>moved</code> (with the path), <code>faced</code>, <code>waited</code>, <code>linked</code>, <code>attack</code> (main, crossfire or counter, with the facing), <code>cover</code>, <code>crossfire</code> (pincer or link), <code>counter</code>, <code>guard</code>, <code>hit</code> (part, amount, crit, broke), <code>miss</code>, <code>partBroke</code>, <code>holdOn</code>, <code>rigBreak</code>, <code>extracted</code>, <code>objective</code> (progress) and <code>ended</code>.</p>
+<h2 id="determinism-and-versions">Determinism and versions</h2>
+<ul><li>Every roll is a seeded hash of <code>seed:turn:unit:purpose:n</code>, keyed by the battle's turn number. The package has no unseeded randomness and no clock; a test scans its sources.</li><li><b>The rules version is 1.</b> A battle refuses an unknown version; a later version keeps the old branches, so a saved battle still replays the way it was played.</li><li><code>battleStateHash(state)</code> hashes everything that changes. <b>Golden replays</b> (<code>packages/battle/src/golden/</code>) hold seven battles on two test maps: their inputs, actions, every cue and the final hash. Any change to a rule or a number fails the test and names the battle; <code>UPDATE_GOLDEN=1</code> rewrites them, and the commit says why.</li></ul>
+<h2 id="the-tuning-table">The tuning table</h2>
+<p><b>The bands</b> (Guts: Hold on at band 4 or more):</p>
+<div class="scroll"><table><tr><th>Band</th><th>Stat at 5★</th><th>Speed: a turn every</th><th>Speed: Move</th><th>Speed: evasion</th><th>Stamina: Core / arm / Legs HP</th><th>Power: Capacity</th><th>Power: Melee bonus</th><th>Wit: accuracy</th></tr><tr><td>1</td><td>under 90</td><td>125 ticks</td><td>3</td><td>2%</td><td>40 / 20 / 26</td><td>12</td><td>+2</td><td>+3%</td></tr><tr><td>2</td><td>90–109</td><td>112 ticks</td><td>3</td><td>4%</td><td>50 / 25 / 32</td><td>14</td><td>+4</td><td>+6%</td></tr><tr><td>3</td><td>110–129</td><td>100 ticks</td><td>4</td><td>6%</td><td>60 / 30 / 38</td><td>16</td><td>+6</td><td>+9%</td></tr><tr><td>4</td><td>130–149</td><td>91 ticks</td><td>4</td><td>8%</td><td>70 / 35 / 44</td><td>18</td><td>+8</td><td>+12%</td></tr><tr><td>5</td><td>150+</td><td>84 ticks</td><td>5</td><td>10%</td><td>80 / 40 / 50</td><td>20</td><td>+10</td><td>+15%</td></tr></table></div>
+<p><b>The rest of the table:</b></p>
+<div class="scroll"><table><tr><th>Rule</th><th>Number</th></tr><tr><td>A round</td><td>100 ticks (a turn fills at 1000)</td></tr><tr><td>Wait</td><td>+1 Charge, and her clock restarts at 250 instead of 0</td></tr><tr><td>Charge</td><td>Starts at 1, +1 a turn, cap 3; a counter, a Crossfire and a Cover cost 1 each</td></tr><tr><td>Light rig</td><td>+1 Move at 70% of Capacity or less</td></tr><tr><td>Broken Legs</td><td>Move 1, no level changes, evasion 0</td></tr><tr><td>A step</td><td>Climbs or drops 1 level at most</td></tr><tr><td>Hit %</td><td>Accuracy + Wit − evasion − 25 when aimed, clamped to 5–95%; a two-handed weapon with one arm broken fires at 50% accuracy</td></tr><tr><td>Crit</td><td>5% unless the weapon says, ×1.5 damage</td></tr><tr><td>Facing</td><td>Side ×1.25, back ×1.5 (past shield and counter)</td></tr><tr><td>Height</td><td>±10% damage a level; Melee and Short reach 2 levels up or down; Long +1 range from 2 levels up</td></tr><tr><td>Coat</td><td>×0.5 against its damage type</td></tr><tr><td>Damage</td><td>At least 1</td></tr><tr><td>Crossfire</td><td>2 allies at most</td></tr><tr><td>Hold on</td><td>Survives at Core 1, once a battle</td></tr><tr><td>Board</td><td>6–14 tiles a side, heights 0–3, 5 squad spawns, 8 enemies at most</td></tr></table></div>
+<p><b>Where hits land</b> (out of 100):</p>
+<div class="scroll"><table><tr><th>Band</th><th>Core</th><th>Each arm</th><th>Legs</th></tr><tr><td>Melee</td><td>60</td><td>15</td><td>10</td></tr><tr><td>Short</td><td>40</td><td>20</td><td>20</td></tr><tr><td>Long</td><td>50</td><td>15</td><td>20</td></tr></table></div>
+<p class="foot">From <a href="../battle.md">docs/game/battle.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

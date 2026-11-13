@@ -19,7 +19,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D8.
+Packet ids run CY1–CY12; decision numbers continue from D9.
 
 ## Phase 1: the foundation
 
@@ -31,7 +31,6 @@ Starts as soon as CY1 is in, beside the cloud.
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY4 | [The battle rules, core](tasks/CY4-battle-core.md): `@cyber/battle`, the map format, the rig, loadout, timeline, Charge, movement, attacks, counters, Crossfire, Cover, Rig Break, objectives, the forecast; golden replays | Claude | L | CY1 | Written |
 | CY5 | [The battle rules, the rest](tasks/CY5-battle-rest.md): terrain states and terminals, Tech and the Holds, Back units, chance skills, items, Stride, the Steel Muster's cover and volley | Claude | L | CY4 | Written |
 | CY6 | [The AI and the simulator](tasks/CY6-ai-and-simulator.md): enemy AI, ally Auto, the scenario format, `pnpm sim`, the first balance pass | Claude | M | CY5 | Written |
 | CY7 | [The board on uma-stage](tasks/CY7-board.md): the game-owned scene from the stage's parts, its five checks, the stage requests | Claude | M | CY1 | Written |
@@ -99,7 +98,8 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
-| CY3 | The hello app (D7): uma-quest's hello-app wiring (cc42fd1) with uma-farm's shell at the night tint; Google sign-in through "Uma Cyberpunk web"; save v1 synced to `cyber` with five safety copies and a Restore; master data through `/api/master`; the update prompt, the PWA and a neon ring icon; [the manual's first page](../game/architecture.md) ([page](../game/previews/architecture.html)). Main JS 134 KB of 180 | `CY3SHA` |
+| CY4 | The battle rules, core (D8): `@cyber/battle`, rules version 1, no dependencies; the map format (schema 1), the rig and loadout, the timeline and Charge, movement, line of fire, attacks, Guard, Cover, Crossfire, counters, Rig Break and Hold on, four objectives, the forecast; 60 tests and seven golden replays; [the manual's battle page](../game/battle.md) ([page](../game/previews/battle.html)) with the tuning tables live | `CY4SHA` |
+| CY3 | The hello app (D7): uma-quest's hello-app wiring (cc42fd1) with uma-farm's shell at the night tint; Google sign-in through "Uma Cyberpunk web"; save v1 synced to `cyber` with five safety copies and a Restore; master data through `/api/master`; the update prompt, the PWA and a neon ring icon; [the manual's first page](../game/architecture.md) ([page](../game/previews/architecture.html)). Main JS 134 KB of 180 | `1a06650` |
 | CY2 | The cloud (D6): database `cyber`, `cyber-api-runtime`, images `cyber`, Cloud Run `cyber-api`, `cyber-deploy`, the provider `uma-cyberpunk`, site [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app), the web app and its sign-in domain, all in `uma-rpg`; the variables and the deploy job on; isolation checked in every cell; [infrastructure](../technical/infrastructure.md). First green deploy: [run 43337938264](https://github.com/luismlorenzana/uma-cyberpunk/actions/runs/43337938264) | `ae47a91` |
 | CY1 | The workspace and its checks (D5): pnpm 10.33.0 and turbo; `@cyber/web`, `@cyber/api` and `@cyber/domain`, installing uma-data 1.5.0, uma-kit 0.19.0, uma-work 0.1.0, uma-server 0.2.0, uma-art 2.27.0 and uma-stage 0.3.0 with three 0.187.0; lint, tests, build, the 180 KB size check (69.4 KB, three.js marked lazy) and the private-content guard; CI's verify job. Locally with the guard on: health 200, save 401; the page and its proxied health on :5214 | `f2cc71b` |
 
