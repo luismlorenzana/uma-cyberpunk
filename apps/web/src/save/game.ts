@@ -155,6 +155,18 @@ async function syncPass(): Promise<void> {
   }
 }
 
+/** A change of the player's own (CY10: the ship, the crew, the worlds, the mission): it moves `account.updatedAt` and
+ * syncs. `quiet` waits a few seconds before the sync, for a battle's action after action. */
+export async function updateSave(change: (save: Save) => Save, opts: { quiet?: boolean } = {}): Promise<void> {
+  const { save } = useGame.getState()
+  if (!save) return
+  const next = change(save)
+  if (next === save) return
+  useGame.setState({ save: touched(next, nowIso()), dirty: true })
+  await persist()
+  scheduleSync(opts.quiet ? 4000 : 0)
+}
+
 /** The story moves on (CY9): the player's own change, so it moves `account.updatedAt` and syncs. */
 export async function updateStory(change: (story: StoryState) => StoryState): Promise<void> {
   const { save } = useGame.getState()

@@ -3,10 +3,11 @@
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
 // takes any version this game ever wrote and returns the current one, and never moves `account.updatedAt`.
 
+import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
 import { emptyStory, type StoryState } from '../story/state'
 
-/** The save's version now: 2 adds the story state (CY9). */
-export const SAVE_VERSION = 2
+/** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10). */
+export const SAVE_VERSION = 3
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -29,8 +30,35 @@ export interface SaveV2 {
   story: StoryState
 }
 
+export type MissionStep = 'briefing' | 'deploy' | 'battle' | 'results' | 'aboard'
+export const MISSION_STEPS: readonly MissionStep[] = ['briefing', 'deploy', 'battle', 'results', 'aboard']
+
+/** The mission in progress (CY10): where it stands, the squad, and its battle as CY8's input plus actions. The battle's
+ * shape is the battle package's; the save checks it as JSON, and resume replays it. */
+export interface MissionState {
+  id: string
+  chapter: string
+  step: MissionStep
+  squad: number[]
+  battle: { input: unknown; actions: unknown[] } | null
+  /** At results: won or lost. */
+  won: boolean | null
+}
+
+/** v3 (CY10): the crew aboard, the ship's open rooms, the worlds and the mission in progress. */
+export interface SaveV3 {
+  version: 3
+  account: Account
+  /** Outfit ids aboard, in join order (CY11 adds levels and loadouts). */
+  crew: number[]
+  ship: { rooms: RoomId[] }
+  worlds: { current: string | null; known: Record<string, { cleared: string[] }>; missions: string[] }
+  story: StoryState
+  mission: MissionState | null
+}
+
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV2
+export type Save = SaveV3
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -57,7 +85,16 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
+  return migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() })
+}
+
+/** v2 to v3: the account and story as they were (`updatedAt` untouched); the crew, worlds and mission empty, the rooms
+ * open from the start open. Pure; runs on the device. */
+export function migrateV2(save: SaveV2): SaveV3 {
+  return {
+    version: 3, account: { ...save.account }, crew: [], ship: { rooms: [...OPEN_FROM_START] },
+    worlds: { current: null, known: {}, missions: [] }, story: save.story, mission: null,
+  }
 }
 
 /** v1 to v2: the account as it was (its `updatedAt` untouched), and an empty story. Pure; runs on the device. */
@@ -124,6 +161,39 @@ function parseStory(value: unknown, path: string): StoryState {
   }
 }
 
+function outfits(value: unknown, path: string): number[] {
+  if (!Array.isArray(value) || value.length > 300) throw new SaveParseError(path, 'expected a list of outfit ids')
+  return value.map((v, i) => { if (!Number.isSafeInteger(v) || (v as number) < 1) throw new SaveParseError(`${path}[${i}]`, 'expected an outfit id'); return v as number })
+}
+
+function parseMission(value: unknown, path: string): MissionState | null {
+  if (value === null) return null
+  const o = object(value, path, ['id', 'chapter', 'step', 'squad', 'battle', 'won'])
+  if (!MISSION_STEPS.includes(o.step as MissionStep)) throw new SaveParseError(`${path}.step`, `expected one of ${MISSION_STEPS.join(', ')}`)
+  let battle: MissionState['battle'] = null
+  if (o.battle !== null) {
+    const b = object(o.battle, `${path}.battle`, ['input', 'actions'])
+    if (typeof b.input !== 'object' || b.input === null || Array.isArray(b.input)) throw new SaveParseError(`${path}.battle.input`, 'expected an object')
+    if (!Array.isArray(b.actions) || b.actions.length > 2000) throw new SaveParseError(`${path}.battle.actions`, 'expected a list')
+    battle = { input: b.input, actions: b.actions }
+  }
+  if (o.won !== null && typeof o.won !== 'boolean') throw new SaveParseError(`${path}.won`, 'expected true, false or null')
+  return { id: id(o.id, `${path}.id`), chapter: id(o.chapter, `${path}.chapter`), step: o.step as MissionStep, squad: outfits(o.squad, `${path}.squad`), battle, won: o.won as boolean | null }
+}
+
+function parseWorlds(value: unknown, path: string): SaveV3['worlds'] {
+  const o = object(value, path, ['current', 'known', 'missions'])
+  const known = object(o.known, `${path}.known`, Object.keys((o.known ?? {}) as Obj))
+  return {
+    current: o.current === null ? null : id(o.current, `${path}.current`),
+    known: Object.fromEntries(Object.entries(known).map(([k, v]) => {
+      const w = object(v, `${path}.known.${k}`, ['cleared'])
+      return [id(k, `${path}.known`), { cleared: slugs(w.cleared, `${path}.known.${k}.cleared`) }]
+    })),
+    missions: slugs(o.missions, `${path}.missions`),
+  }
+}
+
 function parseAccount(value: unknown, path: string): Account {
   const o = object(value, path, ['uid', 'createdAt', 'updatedAt'])
   return { uid: id(o.uid, `${path}.uid`), createdAt: timestamp(o.createdAt, `${path}.createdAt`), updatedAt: timestamp(o.updatedAt, `${path}.updatedAt`) }
@@ -142,11 +212,21 @@ export function parseSave(value: unknown, path = 'save'): Save {
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version === 1) {
     const o = object(value, path, ['version', 'account'])
-    return migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) })
+    return migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) }))
   }
-  if (version !== 2) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
-  const o = object(value, path, ['version', 'account', 'story'])
-  return { version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) }
+  if (version === 2) {
+    const o = object(value, path, ['version', 'account', 'story'])
+    return migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) })
+  }
+  if (version !== 3) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
+  const o = object(value, path, ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission'])
+  const ship = object(o.ship, `${path}.ship`, ['rooms'])
+  const rooms = slugs(ship.rooms, `${path}.ship.rooms`)
+  for (const [i, r] of rooms.entries()) if (!ROOM_IDS.includes(r as RoomId)) throw new SaveParseError(`${path}.ship.rooms[${i}]`, 'expected a room')
+  return {
+    version: 3, account: parseAccount(o.account, `${path}.account`), crew: outfits(o.crew, `${path}.crew`), ship: { rooms: rooms as RoomId[] },
+    worlds: parseWorlds(o.worlds, `${path}.worlds`), story: parseStory(o.story, `${path}.story`), mission: parseMission(o.mission, `${path}.mission`),
+  }
 }
 
 /** The body of `PUT /api/save`. */

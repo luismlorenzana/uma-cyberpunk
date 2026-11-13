@@ -90,6 +90,9 @@ export function checkPack(pack: StoryPack): Finding[] {
     }
     c.scenes.forEach((s, i) => {
       if (world && !places.has(s.place)) err(file, `scenes[${i}].place`, `no location ${s.place} on ${c.world}`)
+      // The flow hands off to the mission at a battle step, and its next scene follows the mission (`after`).
+      const b = s.steps.findIndex((st) => st.kind === 'battle')
+      if (b >= 0 && b !== s.steps.length - 1) err(file, `scenes[${i}].steps[${b}]`, 'a battle step is its scene’s last step; what follows goes in a scene triggered after the mission')
       const t = s.trigger
       if ('arrive' in t && world && !places.has(t.arrive)) err(file, `scenes[${i}].trigger.arrive`, `no location ${t.arrive}`)
       if ('talk' in t && world && !places.has(t.talk)) err(file, `scenes[${i}].trigger.talk`, `no location ${t.talk}`)

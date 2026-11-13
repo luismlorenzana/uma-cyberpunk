@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The mission flow</title>
+<!-- Generated from docs/game/missions.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The mission flow</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-steps">The steps</a><a class="h2" href="#resume">Resume</a><a class="h2" href="#the-save">The save</a></nav>
+<main id="top">
+<h1 id="the-mission-flow">The mission flow</h1>
+<blockquote><p><b>Status: 2026-11-12, CY10 (D14).</b> From a mission's briefing to the scene aboard (TC32, TC42), each step held in the save so the app reopens wherever it was. The rules between the screens and the save are the <b>director</b> (<code>apps/web/src/mission/director.ts</code>), pure and tested headless.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>Briefing → deploy → battle → results → aboard.</b> A scene's <code>battle</code> step starts it; winning plays the scene the story triggers after it, then the ship.</li><li><b>The battle is the sandbox's screen,</b> unchanged, on the battle the mission names (a scenario in <code>scenarios/</code>) with the squad's Umas in its slots.</li><li><b>Every step and every battle action is saved,</b> so after iOS closes the app it reopens at the briefing, the deploy screen, the battle (replayed to the same state), the results, or the scene aboard (from its start).</li></ul>
+<pre class="mermaid">stateDiagram-v2
+  [*] --&gt; briefing: a battle step, or a node
+  briefing --&gt; deploy: Deploy
+  deploy --&gt; battle: Start the battle
+  battle --&gt; results: the battle ends
+  results --&gt; battle: Retry (a loss)
+  results --&gt; aboard: Continue (a win)
+  results --&gt; [*]: Back to the ship (a loss)
+  aboard --&gt; [*]: the scene after it, then the ship</pre>
+<h2 id="the-steps">The steps</h2>
+<div class="scroll"><table><tr><th>Step</th><th>Shows</th><th>Then</th></tr><tr><td><b>Briefing</b></td><td>The objective, the place and its danger, the enemies known (the leader's pool, the regulars by faction and job), the side objectives, the brief</td><td><b>Deploy</b>, or back to the ship (the mission waits)</td></tr><tr><td><b>Deploy</b></td><td>Four squad slots and the guest slot, and the crew to pick from: the chapter's leads are locked in (🔒); a flash-forward's whole squad is fixed (TC32). Slots left empty keep the scenario's stand-ins</td><td><b>Start the battle</b></td></tr><tr><td><b>Battle</b></td><td>The battle screen (<a href="battle.html#the-battle-screen">battle.md</a>) on the mission's scenario, its seed the mission's</td><td>Its end goes to the results</td></tr><tr><td><b>Results</b></td><td>Won or lost; XP, credits and salvage as plain numbers (the economy is Phase 5)</td><td>A loss: <b>Retry</b> (the same squad and battle from its start) or back to the ship (the mission ends). A win: <b>Continue</b></td></tr><tr><td><b>Aboard</b></td><td>The scene the story triggers after the mission, played by the scene player</td><td>Then the ship; the mission is done</td></tr></table></div>
+<p><b>A battle step is its scene's last step</b> (the story check refuses one in the middle): the scene is marked seen as the mission starts, and what follows goes in a scene triggered <code>after</code> the mission.</p>
+<h2 id="resume">Resume</h2>
+<div class="scroll"><table><tr><th>Closed at</th><th>Reopens</th></tr><tr><td>A scene on a world's map</td><td>That scene from its start (it isn't seen until it ends)</td></tr><tr><td>The briefing, the deploy screen</td><td>The same screen</td></tr><tr><td>The battle</td><td>The battle, its actions replayed on its stored input to exactly the state it left; one that no longer replays offers to restart it</td></tr><tr><td>The results</td><td>The results</td></tr><tr><td>The scene aboard</td><td>That scene from its start</td></tr></table></div>
+<h2 id="the-save">The save</h2>
+<p><code>mission</code> holds the mission in progress: its <code>id</code>, <code>chapter</code>, <code>step</code>, the <code>squad</code> (outfit ids), its <code>battle</code> as CY8's frozen input and the actions taken (checked as JSON; the battle package replays it), and at the results whether it was <code>won</code>. Battle actions save as they're made and sync a few seconds later rather than one by one. A won mission joins <code>worlds.missions</code>.</p>
+<p class="foot">From <a href="../missions.md">docs/game/missions.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

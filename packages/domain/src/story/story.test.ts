@@ -75,6 +75,7 @@ describe('the cross-file rules', () => {
     expect(broken((p) => { p.chapters['sw1-ch1']!.number = 2 })).toContain('chapters/sw1-ch1.json scenes')
     expect(broken((p) => { p.worlds['sw1']!.locations[2]!.needs = ['file:nope'] })).toContain('worlds/sw1.json locations[2].needs')
     expect(broken((p) => { (p.chapters['sw1-ch1']!.scenes[0]!.steps[4] as { lines: Record<string, string> }).lines = { 9000004: 'x' } })).toContain('chapters/sw1-ch1.json scenes[0].steps[4].slot.lines["9000004"]')
+    expect(broken((p) => { p.chapters['sw1-ch1']!.scenes[1]!.steps.push({ kind: 'narrate', text: 'after' }) })).toContain('chapters/sw1-ch1.json scenes[1].steps[3]')
   })
   it('flags a scene likely over three minutes, a lead in fewer than two crossed paths, and a long Chapter 1, as todos', () => {
     const p = standIn()

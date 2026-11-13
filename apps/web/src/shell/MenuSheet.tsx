@@ -9,7 +9,7 @@ export function MenuSheet({ open, onClose }: { open: boolean; onClose: () => voi
   const auth = useAuth()
   return (
     <Sheet open={open} onClose={onClose} title="Menu">
-      <PlaceMenu groups={[]} extra={[{ key: 'home', name: 'Home', to: '/' }, { key: 'account', name: 'Account', to: '/account' }]} />
+      <PlaceMenu groups={[]} extra={[{ key: 'ship', name: 'Ship', to: '/' }, { key: 'home', name: 'Status', to: '/home' }, { key: 'account', name: 'Account', to: '/account' }]} />
       {auth.authRequired && (
         <div className="mt-4"><Button variant="secondary" onClick={() => void auth.signOut()}>Sign out</Button></div>
       )}

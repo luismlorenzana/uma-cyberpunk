@@ -22,7 +22,8 @@ export function applyEffect(step: Extract<Step, { kind: 'flag' | 'lead' | 'file'
 
 function Story() {
   const navigate = useNavigate()
-  const seen = useGame((g) => g.save?.story.seen ?? [])
+  const seenList = useGame((g) => g.save?.story.seen)
+  const seen = seenList ?? []
   const [loaded, setLoaded] = useState<LoadedStory | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [index, setIndex] = useState<number | null>(null)

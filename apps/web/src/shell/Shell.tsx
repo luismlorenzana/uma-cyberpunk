@@ -33,7 +33,8 @@ export function CyberBottomBar() {
   const location = useLocation()
   return (
     <BottomBar label="Pages" menu={{ to: withParam(location, 'sheet', 'menu'), label: 'Menu', text: 'Menu' }} tabs={[
-      { key: 'home', to: '/', label: 'Home', Icon: HomeIcon, active: location.pathname === '/' },
+      { key: 'ship', to: '/', label: 'Ship', Icon: HomeIcon, active: false },
+      { key: 'home', to: '/home', label: 'Status', Icon: HomeIcon, active: location.pathname === '/home' },
       { key: 'account', to: '/account', label: 'Account', Icon: SettingsIcon, active: location.pathname === '/account' },
     ]} />
   )

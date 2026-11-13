@@ -25,26 +25,32 @@ iPhone (Home Screen app)                 Firebase Hosting: uma-cyberpunk.web.app
 | Path | What it shows |
 |---|---|
 | (the gates) | uma-kit's boot gates: the splash ("Uma Cyberpunk · Rigs up. Lights out."), then **Sign in with Google** when signed out, then the boot below, then master data ("Loading game data…", or "Connect once" with **Try again**) |
-| `/` | **Home:** the game's name; the account; the save's state (Synced and when, Syncing, Saved on this phone, Offline, Not backed up); its revision; master data's release version; **Sync now** |
+| `/` | **The ship** ([ship.md](ship.md)): the rooms, the Continue card, the Menu; `/room/:id` a room's page, `/mission` the mission flow ([missions.md](missions.md)) |
+| `/home` | **Status:** the game's name; the account; the save's state (Synced and when, Syncing, Saved on this phone, Offline, Not backed up); its revision; master data's release version; **Sync now**; links to the sandbox, the board bench and the story test |
 | `/account` | **Account:** who's signed in, the save's state and when it was last backed up, **Sync now**, the phone's **safety copies** with a **Restore** each, and **Sign out** |
 | `?sheet=menu` | **The menu,** over any page (the bottom bar's Menu, or the rail's on a landscape phone): Home, Account, Sign out and the build id |
 
-The shell is uma-kit's `AppFrame` at its night tint: the account bar on top (the initial opens Account; a sync chip shows
-while the save isn't synced), the bottom bar (Home · Account · Menu). A save not backed up for ten minutes, or replaced by
+Status and Account sit in uma-kit's `AppFrame` at its night tint: the account bar on top (the initial opens Account; a
+sync chip shows while the save isn't synced), the bottom bar (Ship · Status · Account · Menu). The ship, its rooms, the
+flow, the sandbox and the benches are landscape screens on uma-stage's turned stage. A save not backed up for ten minutes, or replaced by
 a newer one, puts a red line under the bar on every page. Every other path goes to Home. The update prompt sits outside
 the gates, so a waiting build shows on any screen.
 
 ## The save
 
-**Save v2** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 adds the story state in CY9):
+**Save v3** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
+the worlds and the mission in CY10):
 
 ```json
-{ "version": 2, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
-  "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] } }
+{ "version": 3, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
+  "crew": [], "ship": { "rooms": ["bridge", "hangar", "quarters", "log"] },
+  "worlds": { "current": null, "known": {}, "missions": [] },
+  "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] },
+  "mission": null }
 ```
 
-A v1 save opens as v2 on the device (an empty story, `account.updatedAt` untouched); the story's fields are on
-[story.md](story.md#the-story-state-save-v2).
+Older saves open as v3 on the device, each step pure and `account.updatedAt` untouched; the fields are on
+[story.md](story.md#the-story-state-save-v2), [ship.md](ship.md#the-save-v3) and [missions.md](missions.md#the-save).
 
 - **`account.updatedAt` is the conflict rule's clock.** Only the player's own change moves it (`touched`); parsing,
   syncing and the server never do. A Restore counts as the player's own change.

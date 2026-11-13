@@ -155,7 +155,8 @@ export function BattleView({ layout, session: first, control, debug, onCommit, o
     const speed = speedOf(side)
     let current: CutInView | null = null
     for (const c of cues) {
-      if (c.kind === 'moved') await sc.walk(c.unit, c.path, speed)
+      // A walk also ends on a timer, so a page that draws no frames (hidden, throttled) never stalls the battle.
+      if (c.kind === 'moved') await Promise.race([sc.walk(c.unit, c.path, speed), wait((c.path.length * 350) / speed + 400)])
       else if (c.kind === 'attack') {
         const sp = cutInSpeed(settingRef.current, seen.current, c, after)
         seen.current.add(`${c.unit}:${c.with}`)
