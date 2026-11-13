@@ -1,6 +1,6 @@
 # Handoff: open work
 
-> **Status: 2026-11-13, after D20: [life aboard](../design/life-aboard.md) is designed for the owner's review** (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
+> **Status: 2026-11-13, after D21: Phase 4's packets are written (CY13–CY19, below).** After D20: [life aboard](../design/life-aboard.md) is designed (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
 > to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
 > below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
 > the story session delivers its first world** ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)). The owner split the work (D4): **the story has its own session,** which writes the world
@@ -14,13 +14,13 @@
 >   [the world's first pass](../design/world.md) (WD1–WD24, [page](../design/previews/world.html)) and
 >   [the references](../design/references.md) ([page](../design/previews/references.html)).
 > - **The manual of the game as built** is [docs/game/](../game/README.md), from CY3's [app as built](../game/architecture.md).
-> - Each task is a self-contained packet in `tasks/` (empty until Phase 4's packets are written). Start a worker, Claude or ChatGPT, with uma-platform's
+> - Each task is a self-contained packet in [tasks/](tasks/). Start a worker, Claude or ChatGPT, with uma-platform's
 >   [master prompt](https://github.com/luismlorenzana/uma-platform/blob/main/docs/handoff/master-prompt.md) and name the
 >   packet: "Take CY1".
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D21; Phase 4's packets (life aboard) start at CY13, written after the owner's review.
+Packet ids run CY1–CY19; decision numbers continue from D22.
 
 ## Phase 1: the foundation
 
@@ -34,6 +34,21 @@ Done (CY4–CY8); its exit is the owner's sandbox play (below).
 
 Done (CY9–CY12); its exit is the owner's Chapter 1 play-through (below).
 
+## Phase 4: life aboard, on test content
+
+The captain, bonds, cabins, duties, the ship as a build, squads and factions ([life aboard](../design/life-aboard.md),
+D20), built on the stand-in while the story session writes its base elements. In number order:
+
+| Id | What | Who | Size | Needs | State |
+|---|---|---|---|---|---|
+| CY13 | [The captain and bonds](tasks/CY13-captain-and-bonds.md): the captain at a new game, the watch, bonds 1–10, rapport, bond scenes with the captain's choices and Trust or Heart, messages; save v5 | Claude | L | CY12 | Written |
+| CY14 | [Cabins, decor and visits](tasks/CY14-cabins-and-visits.md): six slots, six styles, Comfort and Strain, tastes discovered, visits, requests, theme kits; the furniture art request; save v6 | Claude | L | CY13 | Written |
+| CY15 | [The ship as a build](tasks/CY15-ship-as-a-build.md): decks and modules, levels, building over watches, the wallet, power per sortie, the Lab, the map by capability; save v7 | Claude | L | CY14 | Written |
+| CY16 | [Duties, the ship log and travel events](tasks/CY16-duties-and-travel.md): posts, aptitude by thresholds, running style as tenure, mastery, chiefs, one ship-log card, auto-assign, event cards; save v8 | Claude | M | CY15 | Written |
+| CY17 | [Bonds and the ship in battle](tasks/CY17-bonds-and-ship-in-battle.md): rules version 3: bond perks, Resonance, Orders, ship support, meals, partners and duo techniques; the balance pass; save v9 | Claude | L | CY13, CY15, CY16 | Written |
+| CY18 | [Squads, operations and faction standing](tasks/CY18-squads-and-operations.md): squads and cohesion, operations, standing, readiness and finale conditions; save v10 | Claude | M | CY16, CY17 | Written |
+| CY19 | [The life-aboard loop](tasks/CY19-life-aboard-loop.md): the stand-in extended, a headless loop test, resume everywhere; Phase 4's exit | Claude | M | CY13–CY18 | Written |
+
 **Order:** the packets in number order, CY2 to CY12 (the owner, 2026-11-12, D5), so the cloud and the hello app come
 first and every later packet can be checked on the phone ([the build plan §8](../design/build-plan.md#8-the-packets-bp8)).
 
@@ -43,7 +58,6 @@ Each phase's packets are written when it starts:
 
 | Phase | What | Who | Needs |
 |---|---|---|---|
-| 4 | **Life aboard, on test content** (D20): CY13 the captain and bonds; CY14 cabins and decor; CY15 the ship as a build; CY16 duties and watches; CY17 bonds and the ship in battle; CY18 squads and operations; CY19 the life-aboard loop ([life-aboard §9](../design/life-aboard.md#9-the-plan-tc74)) | Claude; Claude in uma-platform for the furniture and module art | Phase 3; the owner's review of [life-aboard](../design/previews/life-aboard.html) |
 | 5 | The first worlds: the story session's first world and its arcs on the D20 spine, then a second; master data's chibi sets, renders and the Ranker's standees; the story's private bucket, with its cost table; the first world's map kit | Claude; ChatGPT for the Combat Adult keys; Claude in uma-platform for the kit | Phase 4; the story session's base elements (SB13) and items 1–3 ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)) |
 | 6 | Progression and the ship's later systems: levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents, boarding missions | Claude | Phase 5 |
 | 7 | Worlds as content waves, with their leads, factions and guests | Claude; ChatGPT | Phase 6; the story session's worlds |

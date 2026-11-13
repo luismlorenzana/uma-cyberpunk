@@ -38,7 +38,7 @@
   **operations** on the star map; each faction has a **standing** with the ship. The story's spine becomes one big plot
   told through the factions and the ship's journey; a lead's Chapter 1 stays as her recruitment arc.
 - **The order** (TC74): a new **Phase 4, life aboard,** on test content, while the story session writes the base
-  elements; then the first worlds. Packets are written after the owner reviews this page.
+  elements; then the first worlds. Its packets, CY13–CY19, are written (D21).
 
 ```mermaid
 flowchart LR
@@ -510,7 +510,7 @@ elements; the first worlds move to Phase 5.
 | 6 | Progression and the ship's later systems: levels, roles, licences, remodels, side jobs, the Call, talents, boarding missions | The first two worlds play end to end and need the progression to win |
 | 7 | Worlds as content waves | Each world plays end to end |
 
-Phase 4's packets, written after the owner's review of this page:
+Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/README.md#phase-4-life-aboard-on-test-content):
 
 | Id | Packet | Builds |
 |---|---|---|
