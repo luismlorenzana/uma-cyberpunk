@@ -7,10 +7,15 @@ import { fileURLToPath } from 'node:url'
 import { gzipSync } from 'node:zlib'
 
 export const MAIN_JS_BUDGET = 180_000
-/** Modules that must load on demand: three.js now (it installs with uma-stage, TC10); the board's modules join in CY7. */
+/** Modules that must load on demand: three.js and uma-stage's world and sprites (TC10), the board (CY7) and the battle
+ * rules (CY4), which load with the board's routes. uma-stage's small helpers (`markStageRequested`) may stay in. */
 export const LAZY_MODULES = [
   'three/build/three.core.js',
   'three/build/three.module.js',
+  'uma-stage/dist/esm/world/build.js',
+  'uma-stage/dist/esm/sprites/actor.js',
+  'src/board/scene.ts',
+  'packages/battle/src/battle.ts',
 ]
 
 export function entrySrc(html) {

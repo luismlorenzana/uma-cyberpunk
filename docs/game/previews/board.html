@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The board</title>
+<!-- Generated from docs/game/board.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The board</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#what-it-shows">What it shows</a><a class="h2" href="#the-overlays">The overlays</a><a class="h2" href="#taps-and-the-pan">Taps and the pan</a><a class="h2" href="#the-fade">The fade</a><a class="h2" href="#the-loop-and-the-saver">The loop and the saver</a><a class="h2" href="#the-test-bench">The test bench</a><a class="h2" href="#the-five-checks-cy7">The five checks (CY7)</a><a class="h2" href="#requests-to-uma-stage">Requests to uma-stage</a></nav>
+<main id="top">
+<h1 id="the-board">The board</h1>
+<blockquote><p><b>Status: 2026-11-12, CY7 (D11).</b> The battle board as <code>apps/web/src/board/</code> draws it, on uma-stage 0.3.0's parts, and its test bench at <code>/board</code>. The sandbox (CY8) plays battles on it. The kit is uma-stage's stand-in forest under a night grade until the first world's kit (Phase 4).</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>The map's heights become terrain</b> exactly as written: digit rows 0–3 are uma-stage's own format, passed straight to <code>roomGeometry</code> (never through <code>parseRoomDesign</code>, which stops at level 2). Solid tiles are walls.</li><li><b>Umas are sprites, enemies and guests are standees,</b> each on a <b>base ring</b> in her side's colour with a <b>facing wedge</b> pointing the way she faces.</li><li><b>The overlays</b> paint tile tops in TC29's colours. A tap picks a tile; a drag pans; the camera never turns or zooms.</li><li><b>It draws only when something changes,</b> and the battery saver drops it to 30 fps with no post effects.</li></ul>
+<pre class="mermaid">flowchart LR
+  map[BattleMap: heights, tiles] --&gt; design[toRoomDesign] --&gt; geo[roomGeometry, stand-in kit] --&gt; world[buildWorldParts: high ground kept apart]
+  world --&gt; scene[BoardScene]
+  figures[Figures: sprites, standees, rings, wedges] --&gt; scene
+  overlays[Overlays and the cursor] --&gt; scene
+  scene --&gt; loop[Render on change, FramePacer, Effects unless saver]
+  taps[Taps and drags, through toStage] --&gt; scene</pre>
+<h2 id="what-it-shows">What it shows</h2>
+<div class="scroll"><table><tr><th>Piece</th><th>How it looks</th></tr><tr><td><b>Terrain</b></td><td>The map's tiles at their heights (0–3), risers between levels, walls for solid tiles, from the stand-in biome kit</td></tr><tr><td><b>The light</b></td><td>A night grade: a blue-violet sky light, a cool key light from the top front-left, the sprites tinted toward it, a dark navy behind the board; the four live lights go to the kit's lamps nearest the view's middle</td></tr><tr><td><b>An Uma</b></td><td>Her sprite (stand-in sets now; master data's chibi sets in Phase 4), walking with her four facings</td></tr><tr><td><b>An enemy, a guest</b></td><td>A standee: a face card on a base (stand-in faces now)</td></tr><tr><td><b>The base ring</b></td><td>A flat ring under each unit: <b>cyan</b> the squad, <b>green</b> a guest, <b>red</b> an enemy</td></tr><tr><td><b>The facing wedge</b></td><td>A small arrowhead on the ring, pointing the way she faces (N to the back, S toward the camera)</td></tr></table></div>
+<h2 id="the-overlays">The overlays</h2>
+<p>One merged mesh over the tile tops, rebuilt when the set changes:</p>
+<div class="scroll"><table><tr><th>Colour</th><th>Means</th></tr><tr><td><b>Blue</b></td><td>She can reach it, and no enemy can strike it next turn</td></tr><tr><td><b>Magenta</b></td><td>She can reach it, inside an enemy's reach</td></tr><tr><td><b>Red</b></td><td>An enemy she could strike from a tile she can reach</td></tr><tr><td><b>Yellow</b></td><td>An area (a mortar, a smoke charge), from CY8</td></tr><tr><td><b>A white outline</b></td><td>The cursor: the tile last tapped</td></tr></table></div>
+<h2 id="taps-and-the-pan">Taps and the pan</h2>
+<ul><li><b>A tap</b> picks the tile under the finger: a unit's tile when the tap lands on her (her card is about a thumb wide), else the nearest tile top. A tap on a raised tile's front face picks the tile it belongs to only if its top is under the finger, as the stage's picking does everywhere.</li><li><b>A drag</b> pans on both axes, clamped to the board's edges; the camera snaps to the pixel grid, so the art stays crisp.</li><li><b>No rotation and no zoom:</b> the camera is uma-stage's, pitched 35°, 128 texels a tile. A tile is about 24 pt deep on a 3× phone held sideways, just under the 44 pt rule, which is why the sandbox moves in two taps (TC29).</li><li><b>On an upright phone</b> the stage is turned (uma-stage's <code>TurnedStage</code>), and touches go through <code>toStage</code>.</li></ul>
+<h2 id="the-fade">The fade</h2>
+<p>High ground (level 2 and up) is built apart from the rest. While a tile of it stands in front of the unit in focus (the one selected, acting or targeted), it eases to 35% opacity over 150 ms, at once with reduced motion; a unit's own tile never fades for her.</p>
+<h2 id="the-loop-and-the-saver">The loop and the saver</h2>
+<ul><li><b>Render on change:</b> a tap, a pan, a walk, a fade or a resize wakes the loop; it sleeps three frames after the last change. A hidden page draws nothing.</li><li><b>The battery saver</b> (on by default on phones, <code>initialSaver()</code>): 30 fps through <code>FramePacer</code>, and no tilt-shift or bloom. With it off, uma-stage's <code>Effects</code> draws both, unchanged until the first stage request ships.</li></ul>
+<h2 id="the-test-bench">The test bench</h2>
+<p><code>/board</code> (behind sign-in, loaded on demand with three.js and the stage) puts thirteen stand-ins on a 14 × 14 map with heights 0–3 (<code>?map=flat-14</code> for the flat one): four Umas as sprites, a guest and eight enemies as standees. Tap a unit for her reach, tap a blue or magenta tile to walk her there, drag to pan. <b>Back</b> returns Home; <b>Saver</b> toggles it.</p>
+<p><code>?debug</code> adds a readout (figures, sprites and live sets, draw calls, fps, the saver, the device size, faded tiles) and <code>window.__board</code>: <code>step(ms)</code>, <code>pick(x, y)</code>, <code>figures</code>, <code>drawCalls</code>, <code>fps</code>, <code>saver</code>, <code>debug</code>, <code>setSaver(on)</code>, <code>tap(x, z)</code> and <code>record(ms)</code>, which pans for <code>ms</code> while recording frames. The preview pane draws WebGL but runs no animation frames while hidden, so checks call <code>step()</code> and read these.</p>
+<h2 id="the-five-checks-cy7">The five checks (CY7)</h2>
+<div class="scroll"><table><tr><th>#</th><th>Check</th><th>Result</th></tr><tr><td>1</td><td>A level-3 tile builds</td><td><b>Passes:</b> <code>roomGeometry</code> builds risers to level 3 from a design made directly (a test). Heights 0–3 need no request</td></tr><tr><td>2</td><td>Picking with heights</td><td><b>Passes:</b> on the 14 × 14 heights map, all 159 visible tile tops (of 177 on screen) pick back to themselves; a tile is about 24 pt deep at DPR 3 (a test)</td></tr><tr><td>3</td><td>Thirteen figures</td><td><b>Passes:</b> 13 figures, 4 sprite sets live (the cap is 8); 41 draw calls with the saver on, about 101 with tilt-shift and bloom</td></tr><tr><td>4</td><td>Frame rate</td><td><b>Desktop, labelled so</b> (a Mac's 120 Hz display, the preview pane, 1688 × 1188 device px at DPR 2), ten seconds panning: saver off 120 fps mean, 107.5 the 1% low; saver on 29.9 fps mean, 29.1 the 1% low. The owner's phone gives the real numbers</td></tr><tr><td>5</td><td>What heights hide</td><td>Tile tops more than half covered by nearer terrain, fade off: 9.2% on the heights map, 8.3% on the underlevels, 0% on flat maps (a test). The fade shows whatever is in focus</td></tr></table></div>
+<h2 id="requests-to-uma-stage">Requests to uma-stage</h2>
+<p>Filed one at a time, each only once the checks prove it (<a href="../../design/build-plan.md#3-the-hd-2d-board-on-uma-stage-bp3">BP3</a>):</p>
+<div class="scroll"><table><tr><th>#</th><th>Request</th><th>State</th></tr><tr><td>1</td><td><a href="../../design/stage-requests/tunable-effects.md">Tunable bloom and tilt-shift</a>: bloom's threshold of 0.86 means no neon colour ever blooms (the squad's cyan is 0.587)</td><td><b>Filed</b> to the uma-platform session</td></tr><tr><td>2</td><td>Glowing kit frames</td><td>Queued, after 1 ships</td></tr><tr><td>3</td><td>A tactics kit kind cached by kit id</td><td>Queued</td></tr><tr><td>4</td><td>A lighter saver tier</td><td>Queued</td></tr><tr><td>—</td><td>Heights 0–3</td><td><b>Not needed:</b> check 1 passes</td></tr><tr><td>—</td><td>A zoom for 2× phones</td><td>Only if the phone check asks</td></tr></table></div>
+<p class="foot">From <a href="../board.md">docs/game/board.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>
