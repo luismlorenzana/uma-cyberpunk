@@ -29,8 +29,9 @@ flowchart LR
 |---|---|
 | **Terrain** | The map's tiles at their heights (0–3), risers between levels, walls for solid tiles, from the stand-in biome kit |
 | **The light** | A night grade: a blue-violet sky light, a cool key light from the top front-left, the sprites tinted toward it, a dark navy behind the board; the four live lights go to the kit's lamps nearest the view's middle |
-| **An Uma** | Her sprite (stand-in sets now; master data's chibi sets in Phase 4), walking with her four facings |
-| **An enemy, a guest** | A standee: a face card on a base (stand-in faces now) |
+| **An Uma** | Her **sprite set from master data** (`outfit-sprites`, the authored chibis) when the release has one, walking with her four facings; else a standee with **her face** (`outfit-faces`); a stand-in sprite only when the release can't be read (D18, `apps/web/src/board/looks.ts`) |
+| **A stand-in squad unit** | A stand-in sprite set (the first four), as on the bench |
+| **An enemy, a guest** | A standee: a face card on a base (stand-in faces until the heroines, Phase 4) |
 | **The base ring** | A flat ring under each unit: **cyan** the squad, **green** a guest, **red** an enemy |
 | **The facing wedge** | A small arrowhead on the ring, pointing the way she faces (N to the back, S toward the camera) |
 

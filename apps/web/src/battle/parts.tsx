@@ -1,6 +1,7 @@
 // The battle screen's pieces (CY8, TC29): the timeline, the unit card, the forecast card, the paper doll, the terrain card
 // and the cut-in. DOM over the board; each reads the battle's state and the forecast, and decides nothing.
 import type { BattleState, Forecast, StrikeForecast, TerrainCard, UnitState } from '@cyber/battle'
+import { FaceTile, UmaBust } from '@luismlorenzana/uma-kit/album'
 import type { ReactNode } from 'react'
 import type { CutInSpeed } from './playback'
 
@@ -9,6 +10,8 @@ const PART_NAME = { core: 'Core', leftArm: 'L arm', rightArm: 'R arm', legs: 'Le
 
 export const labelOf = (state: BattleState, id: string): string => state.input.units.find((u) => u.id === id)?.label ?? id
 const initials = (label: string) => label.split(' ').map((w) => w[0]).join('').slice(0, 3)
+/** An Uma's outfit id (her face and bust come from master data, D18), or null for a stand-in, an enemy or a guest. */
+export const umaOf = (state: BattleState, id: string): string | null => { const r = state.input.units.find((u) => u.id === id)?.ref; return r?.kind === 'uma' ? r.id : null }
 
 function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {
   return <div className={`rounded-lg border border-white/10 bg-[#0e1222]/90 p-2 text-[12px] text-[#e8ebf5] shadow-lg backdrop-blur ${className}`}>{children}</div>
@@ -23,7 +26,7 @@ export function Timeline({ state, ids, ghost, onInspect }: { state: BattleState;
       <button key={`${id}-${i}`} type="button" onClick={() => onInspect(id)} aria-label={`Turn ${i + 1}: ${labelOf(state, id)}`}
         className={`flex min-h-11 min-w-11 flex-col items-center justify-center rounded-md border px-1 font-display text-[11px] font-bold ${faint ? 'opacity-50' : ''}`}
         style={{ borderColor: hue, color: hue, background: i === 0 && !faint ? `${hue}22` : 'rgba(14,18,34,0.85)' }}>
-        {initials(labelOf(state, id))}
+        {umaOf(state, id) ? <FaceTile outfitId={umaOf(state, id)!} size={36} label={labelOf(state, id)} round /> : initials(labelOf(state, id))}
       </button>
     )
   }
@@ -48,8 +51,9 @@ export function UnitCard({ state, unit, onClose }: { state: BattleState; unit: U
   const hue = SIDE_HUE[unit.side]
   return (
     <Panel className="pointer-events-auto w-56">
-      <div className="mb-1 flex items-center justify-between">
-        <b style={{ color: hue }}>{labelOf(state, unit.id)}</b>
+      <div className="mb-1 flex items-center justify-between gap-2">
+        {umaOf(state, unit.id) && <FaceTile outfitId={umaOf(state, unit.id)!} size={40} label={labelOf(state, unit.id)} round />}
+        <b className="min-w-0 flex-1 truncate" style={{ color: hue }}>{labelOf(state, unit.id)}</b>
         <button type="button" onClick={onClose} className="min-h-11 min-w-11 text-[#a3abc2]" aria-label="Close">✕</button>
       </div>
       {(['core', 'leftArm', 'rightArm', 'legs'] as const).map((p) => (
@@ -132,7 +136,8 @@ export function TerrainPanel({ card, onClose }: { card: TerrainCard; onClose: ()
 export interface CutInView { attacker: string; target: string; band: string; role: string; speed: CutInSpeed; numbers: string[]; key: number }
 
 /** The cut-in (TC28): a side view of the two, the Uma facing left on the right, the enemy facing right on the left, with
- * the numbers as they land. Stand-in cards until master data's full-body renders. */
+ * the numbers as they land. An Uma shows her bust from master data (D18); stand-ins and enemies stay cards until the
+ * full-body renders and the heroines arrive. */
 export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
   const a = state.units.find((u) => u.id === c.attacker), t = state.units.find((u) => u.id === c.target)
   if (!a || !t) return null
@@ -141,7 +146,9 @@ export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
     <div className={`flex h-full flex-1 items-center ${right ? 'justify-end pr-[8%]' : 'justify-start pl-[8%]'}`}>
       <div className="flex h-[70%] w-[22%] min-w-24 flex-col items-center justify-end rounded-xl border-2 pb-2 font-display text-[13px] font-bold"
         style={{ borderColor: SIDE_HUE[u.side], color: SIDE_HUE[u.side], background: `linear-gradient(${right ? 270 : 90}deg, ${SIDE_HUE[u.side]}33, transparent)`, transform: right ? 'scaleX(1)' : 'scaleX(1)' }}>
-        <span className="mb-auto mt-2 text-[28px]">{right ? '◀' : '▶'}</span>
+        {umaOf(state, u.id)
+          ? <div className="mb-1 min-h-0 w-full flex-1 overflow-hidden"><UmaBust outfitId={umaOf(state, u.id)!} label={labelOf(state, u.id)} size={160} className="mx-auto h-full w-auto" /></div>
+          : <span className="mb-auto mt-2 text-[28px]">{right ? '◀' : '▶'}</span>}
         {labelOf(state, u.id)}
       </div>
     </div>

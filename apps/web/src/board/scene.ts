@@ -7,7 +7,7 @@ import type { BattleMap, Dir } from '@cyber/battle'
 import {
   boxOf, buildWorldParts, CAMERA_PITCH, cameraOffset, cardQuad, coveringOccluders, deviceSize, drawStandInKit, Effects, figureTarget, FpsRecorder,
   FramePacer, frustum, liveSets, pickAt, pixelTexture, project, roomGeometry, SAVER_FPS, snapToGrid, SpriteActor, spriteStretch, Standee, STANDEE,
-  standInKitAtlas, standInSet, stepFade, TEXELS_PER_UNIT, tileQuad, tintAt, type EffectsOptions, type Facing, type FadeTarget, type Occluder, type PickTarget,
+  standInKitAtlas, standInSet, stepFade, TEXELS_PER_UNIT, tileQuad, tintAt, type ActorSource, type EffectsOptions, type Facing, type FadeTarget, type Occluder, type PickTarget,
   type StageGrade, type View,
 } from '@luismlorenzana/uma-stage'
 import {
@@ -46,8 +46,9 @@ export type StateKind = keyof typeof STATE_COLOUR
 
 export interface BoardFigure {
   id: string
-  /** A sprite (an Uma) from a stand-in set, or a standee card (an enemy, a guest). */
-  look: { kind: 'sprite'; set: number } | { kind: 'standee'; face: CanvasImageSource | null }
+  /** A sprite (an Uma): her own set from master data (`source`), or a stand-in set; else a standee card, with her face
+   * (an Uma without a set) or a plain one (an enemy, a guest, a stand-in). */
+  look: { kind: 'sprite'; set: number } | { kind: 'sprite'; source: ActorSource } | { kind: 'standee'; face: CanvasImageSource | null }
   /** The base ring's colour: the side's hue. */
   hue: string
   tile: Tile
@@ -290,7 +291,7 @@ export class BoardScene {
 
   addFigure(spec: BoardFigure): void {
     this.removeFigure(spec.id)
-    const body = spec.look.kind === 'sprite' ? new SpriteActor(standInSet(spec.look.set)) : new Standee(spec.look.face)
+    const body = spec.look.kind === 'sprite' ? new SpriteActor('source' in spec.look ? spec.look.source : standInSet(spec.look.set)) : new Standee(spec.look.face)
     const { group, wedge } = baseRing(spec.hue)
     this.scene.add(body.group, body.shadowMesh, group)
     const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], speed: 1, done: null, body, base: group, wedge, down: false }

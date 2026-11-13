@@ -6,9 +6,13 @@ import {
   boardOf, chooseTurn, dirTo, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
   type Cue, type Dir, type Forecast, type Reach, type Role, type TerrainCard, type Tile, type TurnAction,
 } from '@cyber/battle'
+import { AlbumArtProvider } from '@luismlorenzana/uma-kit/album'
 import { initialSaver, toStage, type StageLayout } from '@luismlorenzana/uma-stage'
-import { useEffect, useRef, useState } from 'react'
-import { BoardScene, type StateKind } from '../board/scene'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { looksFor, type UnitLook } from '../board/looks'
+import { BoardScene, type BoardFigure, type StateKind } from '../board/scene'
+import { albumArt } from '../crew/art'
+import { useMaster } from '../master/master'
 import { CutIn, ForecastCard, labelOf, PaperDoll, SIDE_HUE, TerrainPanel, Timeline, UnitCard, type CutInView, type Doll } from './parts'
 import { CUT_IN_MS, cutInSpeed, speedOf, stepMs, type CutInSetting } from './playback'
 import { targetsFrom, threatTiles, tileKey, turnReach } from './reach'
@@ -33,6 +37,8 @@ export interface SandboxHandle {
   tap: (x: number, z: number) => void
   step: (ms?: number) => void
   auto: () => Promise<BattleState['result']>
+  /** The board's readout (figures, sprites, live sets, draw calls). */
+  readonly board: BoardScene['debug'] | null
 }
 declare global { interface Window { __sandbox?: SandboxHandle } }
 
@@ -52,7 +58,7 @@ function actWords(state: BattleState, a: Act): string {
   return a.kind
 }
 
-export function BattleView({ layout, session: first, control, debug, onCommit, onEnd, onQuit }: {
+export interface BattleViewProps {
   layout: StageLayout
   session: Session
   control: Control
@@ -60,7 +66,26 @@ export function BattleView({ layout, session: first, control, debug, onCommit, o
   onCommit: (s: Session) => void
   onEnd: (s: Session) => void
   onQuit: () => void
-}) {
+}
+
+/** The battle screen: its Umas' looks first (their sprite sets or faces from master data, D18, a few seconds at most),
+ * then the board. Faces on the timeline, the unit card and the cut-in come through uma-kit's album art. */
+export function BattleView(props: BattleViewProps) {
+  const master = useMaster()
+  const art = master.status === 'ready' ? master.view.art : null
+  const [looks, setLooks] = useState<Map<string, UnitLook> | null>(null)
+  const [loaded, setLoaded] = useState<[number, number]>([0, 0])
+  useEffect(() => {
+    let live = true
+    void looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }).then((l) => { if (live) setLooks(l) })
+    return () => { live = false }
+  }, [])
+  const albums = useMemo(() => albumArt((id) => props.session.input.units.find((u) => u.ref?.id === id)?.label ?? `Uma ${id}`), [props.session.input])
+  if (!looks) return <div data-loading-squad className="flex h-full items-center justify-center bg-[#0b0d17] font-display text-[15px] text-white/60">Bringing the squad aboard…{loaded[1] ? ` ${loaded[0]} of ${loaded[1]}` : ''}</div>
+  return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
+}
+
+function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -237,8 +262,12 @@ export function BattleView({ layout, session: first, control, debug, onCommit, o
     let sprite = 0
     for (const u of s.units) {
       const ref = s.input.units.find((i) => i.id === u.id)
-      const sprites = u.side === 'squad' && sprite < 4 && !/guest/i.test(ref?.label ?? '')
-      sc.addFigure({ id: u.id, tile: [u.x, u.y], facing: u.facing, hue: SIDE_HUE[u.side], look: sprites ? { kind: 'sprite', set: sprite++ } : { kind: 'standee', face: null } })
+      const own = looks.get(u.id)
+      // Her own look (an Uma's set or face), else a stand-in set for the first four squad units, else a plain card.
+      const standIn = u.side === 'squad' && ref?.ref?.kind !== 'uma' && sprite < 4 && !/guest/i.test(ref?.label ?? '')
+      const look: BoardFigure['look'] = own?.kind === 'set' ? { kind: 'sprite', source: own.source } : own?.kind === 'face' ? { kind: 'standee', face: own.face }
+        : standIn || (ref?.ref?.kind === 'uma' && sprite < 4) ? { kind: 'sprite', set: sprite++ } : { kind: 'standee', face: null }
+      sc.addFigure({ id: u.id, tile: [u.x, u.y], facing: u.facing, hue: SIDE_HUE[u.side], look })
     }
     sync(s)
     sc.step()
@@ -262,6 +291,7 @@ export function BattleView({ layout, session: first, control, debug, onCommit, o
     if (!debug) return
     window.__sandbox = {
       get state() { return session.current.state },
+      get board() { return scene.current?.debug ?? null },
       act: (a) => { const r = applyAct(session.current, a); if ('error' in r) return r.error; session.current = r.session; onCommit(r.session); sync(r.session.state); setState(r.session.state); return null },
       step: (ms) => scene.current?.step(ms),
       tap: (x, z) => tapRef.current([x, z]),

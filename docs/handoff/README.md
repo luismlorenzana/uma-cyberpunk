@@ -20,7 +20,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D18; Phase 4's packets start at CY13.
+Packet ids run CY1–CY12; decision numbers continue from D19; Phase 4's packets start at CY13.
 
 ## Phase 1: the foundation
 
@@ -84,7 +84,7 @@ packet, or says why not.
 | Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | CY3 | The phone check (the OAuth entries are in, 2026-11-13): open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, open it from there, sign in, and see the ship; **Status** in the menu shows the save synced |
 | CY7 | Open [uma-cyberpunk.web.app/board](https://uma-cyberpunk.web.app/board) on the phone, pan around, tap a unit: does it read at a glance? |
-| CY8 | One play of the sandbox on the phone: open [uma-cyberpunk.web.app/sandbox](https://uma-cyberpunk.web.app/sandbox) from the Home Screen, play the test scenario to the end, and say in a line what felt wrong. **Phase 2's exit** |
+| CY8 | One play of the sandbox on the phone: open [uma-cyberpunk.web.app/sandbox](https://uma-cyberpunk.web.app/sandbox) from the Home Screen, pick tier 1's Umas for the squad (D18), play the test scenario to the end, and say in a line what felt wrong. **Phase 2's exit** |
 | CY12 | One play-through on the phone, about twenty minutes: open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) from the Home Screen; a new game goes straight into Lead A's Chapter 1; play it to her pickup and debrief, jump to sw2 from the Bridge, play Lead B's to hers, and close the app once mid-way to see it resume. Say in a line what felt wrong. **Phase 3's exit.** |
 
 ## Done

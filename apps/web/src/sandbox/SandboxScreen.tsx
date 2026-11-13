@@ -1,13 +1,23 @@
 // The sandbox at /sandbox (CY8, TC54): set up any skirmish from a scenario, play it with the full battle screen on the
 // phone, and read the results. The setup reads and writes CY6's scenario format; scenarios load from scenarios/ in git
 // and from this phone's list; Copy and Paste move one as JSON. The battle autosaves to a local row after every action and
-// when the page hides, and Resume replays it. `?debug` adds `window.__sandbox` (state, act, step, auto).
-import { parseScenario, scenarioInput, type BattleMap, type Loadout, type Scenario } from '@cyber/battle'
+// when the page hides, and Resume replays it. `?debug` adds `window.__sandbox` (state, act, step, auto). The squad's slots
+// take tier 1's Umas from master data (D18): each with her bands, Stride and best rig for her role, on the board as her
+// chibi when she has one, else as a card with her face; the picks are this phone's, applied when a battle starts.
+import { parseScenario, scenarioInput, type BattleMap, type Loadout, type Role, type Scenario } from '@cyber/battle'
+import { ROLE_NAME, ROLES, STRIDE_NAME } from '@cyber/domain'
+import { AlbumArtProvider, FaceTile } from '@luismlorenzana/uma-kit/album'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { BattleView, type Control } from '../battle/BattleView'
 import { resume, startSession, type Session } from '../battle/session'
+import { hasSet, preloadLooks } from '../board/looks'
+import { albumArt } from '../crew/art'
+import { TIER_1 } from '../crew/tier1'
+import { infoFrom } from '../crew/view'
+import { useMaster } from '../master/master'
+import { applyPicks, defaultPicks, pickView, readPicks, writePicks, type Pick, type SquadPicks } from './squad'
 import { clearBattle, readBattle, saveScenario, savedScenarios, writeBattle, type SandboxRow } from './store'
 
 const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import.meta.glob<{ default: BattleMap }>('../../../../scenarios/maps/*.json', { eager: true }))
@@ -46,6 +56,23 @@ function Sandbox({ layout }: { layout: StageLayout }) {
   const [control, setControl] = useState<Control>({ squad: 'player', enemy: 'ai' })
   const [note, setNote] = useState<string | null>(null)
   const latest = useRef<SandboxRow | null>(null)
+  const master = useMaster()
+  const art = master.status === 'ready' ? master.view.art : null
+  const infoOf = useMemo(() => infoFrom(master.status === 'ready' ? master.view.info : null), [master])
+  const nameOf = useMemo(() => (o: number) => (master.status === 'ready' ? master.view.names.get(o) : undefined) ?? `Uma ${o}`, [master])
+  const albums = useMemo(() => albumArt((id) => nameOf(Number(id))), [nameOf])
+  const [saved, setSaved] = useState<SquadPicks | null>(readPicks)
+  const picks: SquadPicks = saved ?? defaultPicks(art)
+  // The picked squad's chibis and faces start loading while the setup shows, so Start is quick.
+  const pickedKey = picks.map((p) => p?.outfit ?? 0).join(',')
+  useEffect(() => { preloadLooks(art, picks.flatMap((p) => (p ? [p.outfit] : []))) }, [art, pickedKey])
+  const setPick = (i: number, p: Pick | null) => {
+    const next = [...picks]
+    while (next.length <= i) next.push(null)
+    next[i] = p
+    setSaved(next)
+    writePicks(next)
+  }
 
   useEffect(() => {
     void readBattle().then(setStored)
@@ -63,7 +90,7 @@ function Sandbox({ layout }: { layout: StageLayout }) {
   const begin = (s: Scenario, seedValue: number, ctrl: Control) => {
     const map = MAPS[s.map]
     if (!map) { setNote(`No map ${s.map}`); return }
-    const input = scenarioInput(s, map, seedValue)
+    const input = applyPicks(scenarioInput(s, map, seedValue), picks, infoOf, nameOf)
     const startedAt = new Date().toISOString()
     const session = startSession(input).session
     latest.current = { id: 'current', scenario: s, input, actions: [], rulesVersion: input.rulesVersion, updatedAt: startedAt, startedAt }
@@ -187,18 +214,47 @@ function Sandbox({ layout }: { layout: StageLayout }) {
           <div className="flex flex-wrap gap-2">{button('Start', () => begin(scenario, seed, control), true)}{button('Copy', () => void copy())}{button('Paste', () => void paste())}{button('Save', () => void save())}</div>
           {note && <div className="text-[#ffb84d]">{note}</div>}
         </div>
-        <div className={`${panel} space-y-2`}>
-          <h2 className="font-display font-bold">Squad</h2>
-          {squadSlots.map((u) => (
-            <label key={u.id} className="flex items-center justify-between gap-2">
-              <span>{u.label ?? u.id}</span>
-              <select className={field} value={u.label?.split(' ')[0] ?? ''} onChange={(e) => setRig(u.id, e.target.value)}>
-                {RIGS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
-              </select>
-            </label>
-          ))}
+        <div data-squad className={`${panel} space-y-2`}>
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="font-display font-bold">Squad</h2>
+            {button('Tier 1 squad', () => { setSaved(null); writePicks(defaultPicks(art)) })}
+          </div>
+          <p className="text-[#a3abc2]">Tier 1's Umas, from master data: each fights with her own bands, Stride and the best rig for her role. {TIER_1.filter((o) => hasSet(art, o)).length} of {TIER_1.length} walk the board as their chibis; the rest stand as cards with their faces.</p>
+          <AlbumArtProvider art={albums}>
+            {squadSlots.map((u, i) => {
+              const p = picks[i] ?? null
+              const v = p ? pickView(p, infoOf, nameOf) : null
+              const style = p ? pickView({ outfit: p.outfit, role: null }, infoOf, nameOf) : null
+              return (
+                <div key={u.id} data-slot={i} className="rounded-md bg-[#0b0d17] p-2 ring-1 ring-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="size-11 shrink-0 overflow-hidden rounded-md">
+                      {p ? <FaceTile outfitId={String(p.outfit)} size={44} label={v!.name} /> : <span className="flex size-full items-center justify-center bg-white/10 font-display text-[11px] font-bold">{(u.label ?? u.id).split(' ').map((w) => w[0]).join('')}</span>}
+                    </div>
+                    <select aria-label={`Squad slot ${i + 1}`} className={`${field} min-w-0 flex-1`} value={p ? String(p.outfit) : ''} onChange={(e) => setPick(i, e.target.value ? { outfit: Number(e.target.value), role: null } : null)}>
+                      <option value="">Stand-in: {u.label ?? u.id}</option>
+                      {TIER_1.map((o) => <option key={o} value={o} disabled={picks.some((x, j) => j !== i && x?.outfit === o)}>{nameOf(o)}{hasSet(art, o) ? '' : ' · card'}</option>)}
+                    </select>
+                    {p
+                      ? <select aria-label={`Slot ${i + 1}'s role`} className={field} value={p.role ?? ''} onChange={(e) => setPick(i, { outfit: p.outfit, role: (e.target.value || null) as Role | null })}>
+                          <option value="">{ROLE_NAME[style!.role]} (her style)</option>
+                          {ROLES.map((r) => <option key={r} value={r}>{ROLE_NAME[r]}</option>)}
+                        </select>
+                      : <select aria-label={`Slot ${i + 1}'s rig`} className={field} value={u.label?.split(' ')[0] ?? ''} onChange={(e) => setRig(u.id, e.target.value)}>
+                          {RIGS.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
+                        </select>}
+                  </div>
+                  {v && (
+                    <div data-pick-line className="mt-1 text-[12px] text-[#a3abc2]">
+                      {ROLE_NAME[v.role]} · {v.stride ? `Stride ${STRIDE_NAME[v.stride]}` : 'no Stride'} · Spd {v.bands.speed} Sta {v.bands.stamina} Pow {v.bands.power} Gut {v.bands.guts} Wit {v.bands.wit} · Load {v.stats.load}/{v.stats.capacity}, Move {v.stats.move} · {hasSet(art, v.outfit) ? 'her chibi' : 'a face card'}{v.unknown ? ' · not in master data yet: band 3' : ''}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </AlbumArtProvider>
           <h2 className="pt-2 font-display font-bold">Enemies</h2>
-          <div className="text-[#a3abc2]">{enemies.map((u) => u.label ?? u.id).join(', ')}</div>
+          <div className="text-[#a3abc2]">{enemies.map((u) => u.label ?? u.id).join(', ')}: stand-ins until the heroines arrive (Phase 4).</div>
         </div>
       </div>
     </div>

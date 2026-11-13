@@ -4,6 +4,7 @@
 import type { AlbumArt, UmaArtKind } from '@luismlorenzana/uma-kit/album'
 import { imagePath, useArtUrl } from '@luismlorenzana/uma-kit/content'
 import type { ImageFamily } from '@luismlorenzana/uma-data'
+import { CONTENT } from '../content/client'
 import { useMaster } from '../master/master'
 
 const FAMILY: Record<UmaArtKind, ImageFamily | null> = { face: 'outfit-faces', bust: 'outfit-busts', chibi: 'outfit-chibis', icon: null }
@@ -12,7 +13,7 @@ function useUrl(kind: UmaArtKind, id: string): string | null {
   const master = useMaster()
   const art = master.status === 'ready' ? master.view.art : null
   const family = FAMILY[kind]
-  return useArtUrl(family && art ? imagePath(art, family, kind === 'chibi' ? `${id}-a` : id) : null)
+  return useArtUrl(family && art ? imagePath(art, family, kind === 'chibi' ? `${id}-a` : id) : null, CONTENT)
 }
 
 const COLORS = ['#3a5fcf', '#b6407e', '#2f8f8a', '#7a52c9', '#c0702c', '#3f7f3a', '#9a3b3b', '#2b6f9e']

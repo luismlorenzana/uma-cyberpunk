@@ -299,7 +299,7 @@ The battle as the sandbox (CY8) and the missions (CY10) show it: DOM over the [b
 
 | Piece | Where | What it does |
 |---|---|---|
-| **The timeline** | Across the top | The next eight turns as chips in each side's colour; tap one to inspect her. With a forecast open, the turns after the planned one are ghosted underneath (TC3) |
+| **The timeline** | Across the top | The next eight turns as chips in each side's colour, an Uma's with her face, the rest with initials; tap one to inspect her. With a forecast open, the turns after the planned one are ghosted underneath (TC3) |
 | **Two-tap move** | On the board | Her reach painted blue (safe) and magenta (inside an enemy's reach); the first tap on a tile shows her path in yellow, the second walks her there. The move stays undoable until the turn is sent |
 | **The commands arc** | Bottom right | Moving: **Act here**, **Wait**, **Dash** (a Thruster's), **Link on/off**, a **Call** for each bench role. Acting: **Attack**, **Aim at Hold** (a heroine in reach), **More** (Tech, hacks, barriers, Mend, Reboot, items), **Wait**, **Done**, **Undo**. Facing: four arrows preset toward the last target, then **Confirm** |
 | **Targets** | On the board | What she can strike from where she stands, in red; tap one for the forecast card |
@@ -307,7 +307,7 @@ The battle as the sandbox (CY8) and the missions (CY10) show it: DOM over the [b
 | **Reach** | Top left | Paints every enemy's reach for the next turn |
 | **The terrain card** | A long press | The tile's height, ground, state and rounds left, whether it's Live, what it does and what could change it |
 | **Paper dolls** | Above a hit unit | The damage and her four parts, coloured by what's left, for a second and a half |
-| **The cut-in** | Across the middle | Full the first time each weapon is seen and always for a leader, Quick after, or Off (**Cut-in** cycles auto, quick, off): the enemy on the left facing right, the Uma on the right facing left, the band, and the numbers as they land. Stand-in cards until master data's renders |
+| **The cut-in** | Across the middle | Full the first time each weapon is seen and always for a leader, Quick after, or Off (**Cut-in** cycles auto, quick, off): the enemy on the left facing right, the Uma on the right facing left, the band, and the numbers as they land. An Uma shows her bust from master data; stand-ins and enemies stay cards until the full-body renders and the heroines |
 | **Enemy turns** | — | At double speed; **Skip** jumps to the next player turn |
 | **Setup, Saver** | Top left | Back to the sandbox's setup; the battery saver |
 
