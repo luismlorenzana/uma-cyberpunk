@@ -1,4 +1,4 @@
-// The battle screen's faces (D18): an Uma's chip on the timeline and her side of the cut-in show her art from master
+// The battle screen's faces (D19): an Uma's chip on the timeline and her side of the cut-in show her art from master
 // data; stand-ins and enemies keep their initials and cards.
 import { startBattle, scenarioInput } from '@cyber/battle'
 import { AlbumArtProvider, type AlbumArt } from '@luismlorenzana/uma-kit/album'

@@ -1,6 +1,6 @@
 # Handoff: open work
 
-> **Status: 2026-11-13, after D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322).** 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
+> **Status: 2026-11-13, after D20: [life aboard](../design/life-aboard.md) is designed for the owner's review** (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
 > to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
 > below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
 > the story session delivers its first world** ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)). The owner split the work (D4): **the story has its own session,** which writes the world
@@ -20,7 +20,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D19; Phase 4's packets start at CY13.
+Packet ids run CY1–CY12; decision numbers continue from D21; Phase 4's packets (life aboard) start at CY13, written after the owner's review.
 
 ## Phase 1: the foundation
 
@@ -43,9 +43,10 @@ Each phase's packets are written when it starts:
 
 | Phase | What | Who | Needs |
 |---|---|---|---|
-| 4 | The first worlds: the story session's first world and its Chapter 1, then a second; master data's chibi sets, renders and the Ranker's standees; the story's private bucket, with its cost table; the first world's map kit | Claude; ChatGPT for the Combat Adult keys; Claude in uma-platform for the kit | Phase 3; the story session's items 1–3 ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)) |
-| 5 | Progression: levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents | Claude | Phase 4 |
-| 6 | Worlds as content waves, with their leads, factions and guests | Claude; ChatGPT | Phase 5; the story session's worlds |
+| 4 | **Life aboard, on test content** (D20): CY13 the captain and bonds; CY14 cabins and decor; CY15 the ship as a build; CY16 duties and watches; CY17 bonds and the ship in battle; CY18 squads and operations; CY19 the life-aboard loop ([life-aboard §9](../design/life-aboard.md#9-the-plan-tc74)) | Claude; Claude in uma-platform for the furniture and module art | Phase 3; the owner's review of [life-aboard](../design/previews/life-aboard.html) |
+| 5 | The first worlds: the story session's first world and its arcs on the D20 spine, then a second; master data's chibi sets, renders and the Ranker's standees; the story's private bucket, with its cost table; the first world's map kit | Claude; ChatGPT for the Combat Adult keys; Claude in uma-platform for the kit | Phase 4; the story session's base elements (SB13) and items 1–3 ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)) |
+| 6 | Progression and the ship's later systems: levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents, boarding missions | Claude | Phase 5 |
+| 7 | Worlds as content waves, with their leads, factions and guests | Claude; ChatGPT | Phase 6; the story session's worlds |
 
 ## Story requests
 
@@ -61,11 +62,11 @@ packet, or says why not.
 - **The story session** works in this repo from [the story brief](../design/story-brief.md). **Its check is live (CY9):**
   `pnpm story:check` validates `content/stories/`. **Its review page is live (D17):** `pnpm stories` opens the
   [Cyberpunk Story Sandbox](../design/story-sandbox.md) on :4322, where the owner reads each layer and leaves verdicts. It starts with one line:
-  "Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief."
+  "Read CLAUDE.md, docs/design/story-brief.md and docs/design/story-brief-life-aboard.md in ~/workspace/uma-cyberpunk, then take the story brief, starting with part two's base elements."
 - **uma-platform:** P144 logs this repo as Phase 10. Shared changes go there as requests, never forks here:
   - **`uma-stage`:** one request at a time, each proven by the board's checks (TC48). **The first,**
     [tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md), shipped in uma-stage 0.5.0 (ST5, P156) and
-    is pinned with the board's own values (D17). Queued behind it: glowing kit frames, a tactics kit kind cached by id, a lighter saver tier. Heights 0–3 aren't
+    is pinned with the board's own values (D18). Queued behind it: glowing kit frames, a tactics kit kind cached by id, a lighter saver tier. Heights 0–3 aren't
     needed (level 3 builds);
   - **the map kits** are drawn in code by Claude in a uma-platform session (`scripts/kit-art`, P147), from the story
     session's world outline, in Phase 4;
@@ -81,10 +82,11 @@ packet, or says why not.
 
 | When | What |
 |---|---|
-| Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
+| D20 | Read [life aboard](../design/previews/life-aboard.html) (the captain, bonds, cabins, duties, the ship, squads; TC55–TC74) and say what to change; silence keeps it. Then hand the story session its new line (above) to start [part two](../design/previews/story-brief-life-aboard.html): worldbuilding first |
+| Earlier | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | CY3 | The phone check (the OAuth entries are in, 2026-11-13): open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, open it from there, sign in, and see the ship; **Status** in the menu shows the save synced |
 | CY7 | Open [uma-cyberpunk.web.app/board](https://uma-cyberpunk.web.app/board) on the phone, pan around, tap a unit: does it read at a glance? |
-| CY8 | One play of the sandbox on the phone: open [uma-cyberpunk.web.app/sandbox](https://uma-cyberpunk.web.app/sandbox) from the Home Screen, pick tier 1's Umas for the squad (D18), play the test scenario to the end, and say in a line what felt wrong. **Phase 2's exit** |
+| CY8 | One play of the sandbox on the phone: open [uma-cyberpunk.web.app/sandbox](https://uma-cyberpunk.web.app/sandbox) from the Home Screen, pick tier 1's Umas for the squad (D19), play the test scenario to the end, and say in a line what felt wrong. **Phase 2's exit** |
 | CY12 | One play-through on the phone, about twenty minutes: open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) from the Home Screen; a new game goes straight into Lead A's Chapter 1; play it to her pickup and debrief, jump to sw2 from the Bridge, play Lead B's to hers, and close the app once mid-way to see it resume. Say in a line what felt wrong. **Phase 3's exit.** |
 
 ## Done

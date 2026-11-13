@@ -1,5 +1,8 @@
 # Uma Cyberpunk: the references
 
+> **D20 (2026-11-13):** the research for life aboard (ships, crew duties, bonds and quarters) is its own page,
+> [research-life-aboard.md](research-life-aboard.md).
+
 > **Status: 2026-11-12, the owner's direction (D3).** The owner took the concept further with five directions:
 > 1. **A spinoff that uses Uma Musume's characters only,** in the same vein as uma-quest and uma-farm.
 > 2. **Lore and story** from *13 Sentinels: Aegis Rim* and League of Legends' *Star Guardian* series.

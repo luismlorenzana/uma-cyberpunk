@@ -3,7 +3,7 @@
 > **Shipped (2026-11-13):** uma-stage 0.5.0 carries it as ST5 (uma-platform P156): `Effects` options, `effects.set(…)`
 > and `effects.settings`, the defaults unchanged for uma-quest and uma-farm. uma-cyberpunk pins 0.5.0 and passes values
 > measured on its rendered night frame rather than the starting values below: bloom `{ threshold: 0.22, strength: 0.5,
-> radius: 0.5 }`, tilt-shift `{ strength: 0.8 }` (D17, [board.md](../../game/board.md#the-loop-and-the-saver)). The
+> radius: 0.5 }`, tilt-shift `{ strength: 0.8 }` (D18, [board.md](../../game/board.md#the-loop-and-the-saver)). The
 > uma-platform session's finding held: at 0.45, magenta and the danger overlay never bloom.
 
 > **A "Both apps" request from uma-cyberpunk's CY7 (2026-11-12, D11)** to uma-platform, under the

@@ -2,7 +2,7 @@
 // phone, and read the results. The setup reads and writes CY6's scenario format; scenarios load from scenarios/ in git
 // and from this phone's list; Copy and Paste move one as JSON. The battle autosaves to a local row after every action and
 // when the page hides, and Resume replays it. `?debug` adds `window.__sandbox` (state, act, step, auto). The squad's slots
-// take tier 1's Umas from master data (D18): each with her bands, Stride and best rig for her role, on the board as her
+// take tier 1's Umas from master data (D19): each with her bands, Stride and best rig for her role, on the board as her
 // chibi when she has one, else as a card with her face; the picks are this phone's, applied when a battle starts.
 import { parseScenario, scenarioInput, type BattleMap, type Loadout, type Role, type Scenario } from '@cyber/battle'
 import { ROLE_NAME, ROLES, STRIDE_NAME } from '@cyber/domain'

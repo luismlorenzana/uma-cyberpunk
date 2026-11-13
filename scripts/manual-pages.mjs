@@ -1,5 +1,6 @@
 // The manual's desktop pages (CY4): renders each docs/game/*.md page to docs/game/previews/<page>.html in one style, with
-// Mermaid diagrams drawn in the browser, light and dark. A page whose HTML carries `<!-- hand-made -->` is left
+// Mermaid diagrams drawn in the browser, light and dark. Design docs listed in DESIGN (D20) render the same way to
+// docs/design/previews/; the older design pages there are hand-made. A page whose HTML carries `<!-- hand-made -->` is left
 // alone (the marker sits right after its doctype). `node scripts/manual-pages.mjs` writes them; its test fails when one is stale. No dependencies: a small
 // Markdown subset (headings, paragraphs, lists, tables, code, quotes, bold, italics, code spans and links).
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
@@ -9,6 +10,9 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 export const MANUAL = join(root, 'docs/game')
 const PREVIEWS = join(MANUAL, 'previews')
+const DESIGN_DIR = join(root, 'docs/design')
+/** Design docs whose desktop pages are generated (the rest of docs/design/previews is hand-made). */
+export const DESIGN = ['life-aboard', 'research-life-aboard', 'story-brief-life-aboard']
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
@@ -142,7 +146,7 @@ const STYLE = `
 `
 
 /** The page for one Markdown file. */
-export function page(name, markdown) {
+export function page(name, markdown, { source = `docs/game/${name}.md`, foot = 'The manual is what the game is, as built.' } = {}) {
   const lines = markdown.replace(/\r/g, '').split('\n').filter((l) => !/^<!-- .* -->$/.test(l.trim()))
   const title = (/^# (.*)$/m.exec(markdown)?.[1] ?? name).replace(/`/g, '')
   const body = blocks(lines)
@@ -157,7 +161,7 @@ mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>
-<!-- Generated from docs/game/${name}.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<!-- Generated from ${source} by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
 <style>${STYLE}</style>
 </head>
 <body>
@@ -165,7 +169,7 @@ mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme
 <nav class="toc"><a href="#top"><b>${esc(title)}</b></a>${toc}</nav>
 <main id="top">
 ${body}
-<p class="foot">From <a href="../${name}.md">docs/game/${name}.md</a>. The manual is what the game is, as built.</p>
+<p class="foot">From <a href="../${name}.md">${source}</a>. ${foot}</p>
 </main>
 </div>${mermaid}
 </body>
@@ -175,14 +179,17 @@ ${body}
 
 /** Every generated page: [path, html]. */
 export function pages() {
-  return readdirSync(MANUAL).filter((f) => f.endsWith('.md') && f !== 'README.md').flatMap((f) => {
+  const manual = readdirSync(MANUAL).filter((f) => f.endsWith('.md') && f !== 'README.md').flatMap((f) => {
     const name = f.slice(0, -3), path = join(PREVIEWS, `${name}.html`)
     if (existsSync(path) && readFileSync(path, 'utf8').slice(0, 200).includes('<!-- hand-made -->')) return []
     return [[path, page(name, readFileSync(join(MANUAL, f), 'utf8'))]]
   })
+  const design = DESIGN.filter((name) => existsSync(join(DESIGN_DIR, `${name}.md`))).map((name) => [join(DESIGN_DIR, 'previews', `${name}.html`),
+    page(name, readFileSync(join(DESIGN_DIR, `${name}.md`), 'utf8'), { source: `docs/design/${name}.md`, foot: 'A design page: every call is a recommendation, adopted until the owner changes it.' })])
+  return [...manual, ...design]
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const [path, html] of pages()) writeFileSync(path, html)
-  console.log(`manual pages → ${PREVIEWS}`)
+  console.log(`manual pages → ${PREVIEWS}; design pages → ${join(DESIGN_DIR, 'previews')}`)
 }

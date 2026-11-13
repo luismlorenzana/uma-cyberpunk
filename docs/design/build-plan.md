@@ -7,6 +7,10 @@
 > code and story pipelines. Its calls are **BP1–BP9**, each a recommendation, adopted until the owner changes one. The
 > game it builds is [the concept](concept.md); the story's side is [the story brief](story-brief.md). Visual page:
 > [previews/build-plan.html](previews/build-plan.html).
+>
+> **D20 (2026-11-13):** Phases 1–3 are built (CY1–CY12). The next phase is **life aboard** (CY13–CY19), planned in
+> [life-aboard.md §9](life-aboard.md#9-the-plan-tc74); it reuses this plan's shapes (the pure domain, the director, the
+> save's versioned migrations, the manual) and adds furniture and module art drawn in code in a uma-platform session.
 
 ## The short answer
 

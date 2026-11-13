@@ -27,6 +27,15 @@
 >
 > In D4, **sixteen calls were amended** (TC6, TC8–TC10, TC12, TC13, TC15, TC31–TC34, TC39, TC40, TC42, TC45 and
 > TC48 say "amended D4"), eight were reworded (TC4, TC5, TC22, TC35, TC36, TC38, TC41, TC43), and **TC49–TC54 are new.**
+>
+> **Revised again on 2026-11-13 (D20): life aboard.** With Phases 1–3 built, the owner set the direction past the
+> sandbox: **the player is the ship's captain**, the point of view; **squads, factions and one big plot** over
+> individual stories; **light dating-sim bonds with every Uma**, whose friendship and love feed the battles;
+> **decoratable cabins** the captain visits; **duties** aboard; and **the ship as a large part of play**. Three research
+> passes ran ([research-life-aboard.md](research-life-aboard.md)), and the design is its own page,
+> [life-aboard.md](life-aboard.md) (**TC55–TC74**, new), with the story session's open brief beside it,
+> [story-brief-life-aboard.md](story-brief-life-aboard.md). It amends TC8, TC15, TC36, TC42, TC44, TC49, TC50 and
+> TC51, each marked "amended D20" below.
 
 ## The short answer
 
@@ -48,6 +57,11 @@
 - **Between battles, the ship** works like Triangle Strategy's Encampment: a Hangar for rig parts, a Sim Pod, the Log
   of the mystery, the Bridge's star map, and **the Call**, where the crew votes on the big choices. It grows a room
   as each lead comes aboard (TC42, TC49, TC50, TC34, TC35).
+- **Life aboard (D20):** the player is **the captain**, never drawn, who gives Orders from the Bridge; **bonds** with
+  every Uma (at rank 8 she speaks first; Trust or Heart, equal in power) add perks in battle and end in Resonance; each Uma has a **cabin** to
+  decorate and visit; **duties** at the ship's posts tick by watches, never real time; the ship is **built** from decks,
+  modules, Power and research, and supports the squad in battle; **squads** run operations and **factions** keep a
+  standing. The spine becomes one big plot through the factions ([life-aboard.md](life-aboard.md), TC55–TC74).
 - **No new character art blocks the start.** The map uses the Umas' existing four-facing chibi sets and the heroines'
   Ranker images as standees; attack cut-ins use the Umas' full-body renders until ChatGPT's Combat Adult keys arrive
   (TC12).
@@ -620,8 +634,9 @@ as [world.md](world.md) is. Who plays which part, the chapters and every line of
 
 ## 9. Phases (TC15)
 
-**TC15 (amended D4).** The app and the combat come first, on test content, so the story plugs into a finished game.
-Phase 2 starts as soon as CY1 is in, beside the cloud.
+**TC15 (amended D4, then D20).** The app and the combat come first, on test content, so the story plugs into a finished
+game. Phase 2 starts as soon as CY1 is in, beside the cloud. D20 adds Phase 4, life aboard, before the first worlds
+(TC74).
 
 | Phase | What | Packets | Exit check |
 |---|---|---|---|
@@ -629,9 +644,10 @@ Phase 2 starts as soon as CY1 is in, beside the cloud.
 | **1** | **The foundation:** the workspace, the cloud and the hello app | CY1, CY2, CY3 | Signed in on the phone, with the save synced |
 | **2** | **The combat, tested three ways:** the battle rules as a pure, seeded package with tests; the AI and the headless simulator; the board on uma-stage; the sandbox on the phone, on stand-ins | CY4–CY8 | Any skirmish set up in the sandbox plays on the phone, start to win or loss, in about ten minutes; the simulator runs a thousand battles and reports |
 | **3** | **The app:** the content contract and the story runner; the ship, the star map and the mission flow; the crew and the Hangar; the Chapter 1 loop, on test content | CY9–CY12 | A test lead's Chapter 1 plays from the ship to her world and back, brings her aboard, and resumes after iOS closes the app |
-| **4** | **The first worlds:** the story session's first world and its Chapter 1, and a second world's, with chibi sets, renders and standees | Written when the story delivers | The opening and the first pickup play end to end |
-| **5** | **Progression:** levels, roles, licences, the Store, salvage and remodels, side jobs, the Sim Pod, the Call, talents | Written when Phase 4 ends | The first two worlds play end to end and need the progression to win |
-| **6** | **Worlds as content waves,** each with its leads, factions and guests | One wave at a time | Each world plays end to end |
+| **4** | *(new D20)* **Life aboard, on test content:** the captain and bonds, cabins and decor, the ship as a build, duties and watches, bonds and the ship in battle, squads and operations ([life-aboard.md §9](life-aboard.md#9-the-plan-tc74)) | CY13–CY19, written after the owner's review | Several stops of ship life play end to end on the stand-in, and the battle feels each system |
+| **5** | **The first worlds:** the story session's first world and its arcs, on the D20 spine, with chibi sets, renders and standees | Written when the story delivers | The opening and the first pickup play end to end |
+| **6** | **Progression and the ship's later systems:** levels, roles, licences, remodels, side jobs, the Call, talents, boarding missions | Written when Phase 5 ends | The first two worlds play end to end and need the progression to win |
+| **7** | **Worlds as content waves,** each with its leads, factions and guests | One wave at a time | Each world plays end to end |
 
 ## 10. The calls
 
@@ -644,14 +660,14 @@ Phase 2 starts as soon as CY1 is in, beside the cloud.
 | TC5 | *(amended D3)* Five roles as jobs, each with a signature Back unit; the default from an authored per-Uma tag, running style as the fallback; swapped aboard the ship | [4.8](#48-roles-tc5) |
 | TC6 | *(amended D4)* Interplanetary: worlds reached by the ship, each with its maps, factions and a lead's Chapter 1; the first world is D3's Ring; the story session writes the world | [2](#2-the-world-tc6-tc31) |
 | TC7 | *(amended D3)* Umas are the squad; heroines from eight franchises (NIKKE added) are the enemy factions; none of it in git | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
-| TC8 | *(amended D4)* Worlds, chapters and missions; a chapter is a lead's short arc of two to four battles; side jobs repeat on a world's map | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC8 | *(amended D4, D20)* Worlds, chapters and missions; the spine becomes one big plot through the factions (TC71); a chapter is a lead's short arc of two to four battles; side jobs repeat on a world's map | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC9 | *(amended D4)* The ship is the hub and the squad's stronghold, on uma-kit's shell; no gacha | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
 | TC10 | *(amended D4)* Battles are an HD-2D diorama in Triangle Strategy's look, a game-owned scene from uma-stage 0.3.0's parts at a fixed 35°, night and neon, rendered only when something moves; proved by CY7; the fallback is a Phaser 4 isometric board | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 | TC11 | uma-rpg's stack and the six platform packages; the cloud in the `uma-rpg` project with every piece its own, created on the owner's go | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 | TC12 | *(amended D4)* Art by kind with stand-ins first: chibi sets and renders for the Umas, the Ranker's images as standees for the heroines, Combat Adult keys and enemies from ChatGPT, map kits and marks drawn in code by Claude (P147) | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
 | TC13 | *(amended D4)* The story session writes the story; its world doc is in git, nameless; casting, chapters and dialogue are private; read and judged in the local Story Sandbox (D17) | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
 | TC14 | It stands alone: its own save, rules and economy; no parcels at the start | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
-| TC15 | *(amended D4)* Seven phases: the repo; the foundation; the combat tested three ways; the app on test content; the first worlds; progression; worlds as waves | [9](#9-phases-tc15) |
+| TC15 | *(amended D4, D20)* Eight phases: the repo; the foundation; the combat tested three ways; the app on test content; life aboard (TC74); the first worlds; progression; worlds as waves | [9](#9-phases-tc15) |
 | TC16 | *(amended D3)* Deferred, for discussion only: ship battles, permadeath, camera rotation, difficulty modes, recruiting beyond the story, franchise monsters as summons. Never: multiplayer | [Deferred](#deferred) |
 | TC17 | The rig: Core, two arms and Legs take damage and break; the Visor and Back unit can't be hit; hits on a broken part go to the Core | [4.4](#44-the-rig-tc17-tc18) |
 | TC18 | The loadout: eight slots and a Coat; Capacity from Power, the Core and the Back unit; a light rig gets +1 Move; saved loadouts from day one | [4.4](#44-the-rig-tc17-tc18) |
@@ -672,30 +688,51 @@ Phase 2 starts as soon as CY1 is in, beside the cloud.
 | TC33 | *(amended D4)* Folded into TC51: route leads are the lead Umas; genre lenses are the story session's | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC34 | *(amended D4)* Leads as one-tap choices; the Log's Files, Timeline and Anomalies; every lock names its key on the world's map; freed heroines' logs | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC35 | The Call: the crew votes with tokens; visible convictions Code, Edge and Free; Intel scenes unlock arguments; branches rejoin; thresholds pick guests | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
-| TC36 | A session of about fifteen minutes: a scene of three at most, a battle of ten, two aboard; the first battle within two minutes | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC36 | *(amended D20)* A session of about fifteen minutes, aboard up to five more (TC72): a scene of three at most, a battle of ten, two aboard; the first battle within two minutes | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC37 | Eight factions, one per franchise, with original names and one new mechanic each (world.md WD10–WD14) | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC38 | Every enemy character is a heroine from the Boss, Key and Regular boards, in slots filled from pools; each faction adds original hardware | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC39 | *(amended D4)* Suit-up opens each battle and big moments; D3's double life is the story session's | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
 | TC40 | *(amended D4)* A rival squad of Umas from the NPC board, with the squad's own rigs, who can join later, if the story keeps one | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC41 | Visual identity: a hue per Uma, a glyph per faction and per world, corruption as a palette swap, a companion drone, neon busts | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
-| TC42 | *(amended D4)* The ship's seven rooms: Bridge, Hangar, Quarters and Log from the start; Store, Comms and Sim Pod with leads | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC42 | *(amended D4, D20)* The ship's seven rooms, now modules among fifteen (TC62): Bridge, Hangar, Quarters and Log from the start; Store, Comms and Sim Pod with leads | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
 | TC43 | The economy: credits, salvage, scrap and remodels; maker bonuses; the capped Arena; one item stock | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
-| TC44 | Progression: levels 1–50, role ranks, licences that raise the Charge cap, Rep, and once-a-battle Overrides | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC44 | *(amended D20)* Progression: levels 1–50, role ranks, licences that raise the Charge cap, Rep; Overrides become the captain's Orders (TC59) | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
 | TC45 | *(amended D4)* The crew is the Ranker's 100 by outfit: lead Umas join through their own Chapter 1, crew Umas through chapters and side jobs, in batch order as a guide | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC46 | Stride: her running style colours her movement (Break, Draft, Surge, Kick) | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC47 | Guests: freed heroines in the guest slot, with hand-set stats, a job from her archetype and her own salvaged parts | [3](#3-the-cast-and-the-crossover-tc7-tc38-tc40-tc45tc47) |
 | TC48 | *(amended D4)* CY7 files the stage requests it shows are needed, one at a time: tunable bloom and tilt-shift, glowing frames, a tactics kit kind, a saver tier; heights 0–3, zoom, rain and overlays only if needed | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
-| TC49 | *(new D4)* The ship grows with its crew: each lead who comes aboard opens or upgrades a room | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
-| TC50 | *(new D4)* The Bridge's star map of worlds, travel with no fuel or clock; each world a node map of locations with danger levels and named keys; no world closes | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
-| TC51 | *(new D4)* Lead Umas, Octopath's way: her Chapter 1 on her home world brings her aboard at the squad's level; fixed in her chapters; short Chapter 1s never back to back; interjection slots and debriefs; crossed paths; a main thread and a signposted finale | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
+| TC49 | *(new D4, amended D20)* The ship grows with its crew and is built from modules (TC62): each lead who comes aboard opens or upgrades a room | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC50 | *(new D4, amended D20)* The Bridge's star map of worlds, travel with no fuel or clock, a jump a watch with maybe one event (TC66); each world a node map of locations with danger levels and named keys; no world closes | [6](#6-the-ship-and-progression-tc9-tc39-tc42tc44-tc49-tc50) |
+| TC51 | *(new D4, amended D20)* Lead Umas, Octopath's way, now as recruitment arcs on the plot's spine (TC71): her Chapter 1 on her home world brings her aboard at the squad's level; fixed in her chapters; short Chapter 1s never back to back; interjection slots and debriefs; crossed paths; a main thread and a signposted finale | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC52 | *(new D4)* Talents, Octopath's path actions kept small: six (Scout, Bargain, Hack, Recruit, Duel, Mend), one per lead (leads may share), used on a world's map | [5](#5-the-story-and-the-loop-tc8-tc32tc36-tc51-tc52) |
 | TC53 | *(new D4)* A separate story session writes the world and the story from the story brief; the two meet at a content contract checked by a validator; story requests go in the handoff | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
 | TC54 | *(new D4)* Combat testing three ways: a pure seeded rules package with golden replays, a sandbox on the phone with scenario files, a headless simulator with one tuning table | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
+| TC55 | *(new D20)* The player is the ship's captain: named, pronouns picked, never drawn; commands from the Bridge | [life-aboard §2](life-aboard.md#2-the-captain-tc55) |
+| TC56 | *(new D20)* Bonds 1–10 with every Uma; at rank 8 she speaks first, then Trust or Heart, open with all, non-exclusive, equal in power; upper ranks gated by the story; no decay | [life-aboard §3.1](life-aboard.md#31-the-captain-and-each-uma-tc56) |
+| TC57 | *(new D20)* Bond scenes at ranks 2, 4, 6, 8, 10 carry the personal stories | [life-aboard §3.2](life-aboard.md#32-bond-scenes-tc57) |
+| TC58 | *(new D20)* Bond perks in battle at ranks 3, 5, 7, 8 and 9, Resonance at 10 on one Uma a battle; partners between Umas with a duo technique | [life-aboard §3.3](life-aboard.md#33-bonds-in-battle-tc58) |
+| TC59 | *(new D20)* The captain's Orders replace Overrides; Call her name; ship support | [life-aboard §3.4](life-aboard.md#34-the-captains-orders-tc59) |
+| TC60 | *(new D20)* A cabin for every Uma: six decor slots and a window | [life-aboard §4.1](life-aboard.md#41-cabins-tc60) |
+| TC61 | *(new D20)* Six styles, Comfort, her tastes; Comfort sheds Strain; visits: talk, gift, decorate, invite | [life-aboard §4.2](life-aboard.md#42-decor-and-comfort-tc61) |
+| TC62 | *(new D20)* The ship is built: decks of module slots, three levels, posts, no upkeep; install everything, power a few battle systems per sortie | [life-aboard §5.1](life-aboard.md#51-decks-and-modules-tc62) |
+| TC63 | *(new D20)* The Lab: research in four branches, paid in Data | [life-aboard §5.2](life-aboard.md#52-research-tc63) |
+| TC64 | *(new D20)* The ship in battle through ship support Orders and duty boosts; readiness before a finale; no second battle mode | [life-aboard §5.3](life-aboard.md#53-the-ship-in-battle-tc64) |
+| TC65 | *(new D20)* Boarding missions on the player's own decks, in Phase 6 | [life-aboard §5.4](life-aboard.md#54-boarding-missions-tc65) |
+| TC66 | *(new D20)* A jump passes a watch and may draw one event; no fuel, no clock | [life-aboard §5.5](life-aboard.md#55-travel-tc66) |
+| TC67 | *(new D20)* Duties: posts produce once a watch (a mission or a jump); aptitude from bands, role and liked duty | [life-aboard §6.1](life-aboard.md#61-posts-and-watches-tc67) |
+| TC68 | *(new D20)* Duties never chores: auto-assign, presets, one ship-log card, no decay, no duty fatigue; deployed at half | [life-aboard §6.2](life-aboard.md#62-what-it-asks-of-the-player-tc68) |
+| TC69 | *(new D20)* Squads with leaders and banners; cohesion to level 5 | [life-aboard §7.1](life-aboard.md#71-squads-tc69) |
+| TC70 | *(new D20)* Operations: squads not deployed run side missions over watches | [life-aboard §7.2](life-aboard.md#72-operations-tc70) |
+| TC71 | *(new D20)* Faction standing; one big plot through the factions as the spine | [life-aboard §7.3](life-aboard.md#73-faction-standing-tc71) |
+| TC72 | *(new D20)* Aboard up to five minutes, optional; the dating layer's tone | [life-aboard §8](life-aboard.md#8-the-session-the-save-and-the-art-tc72-tc73) |
+| TC73 | *(new D20)* The save grows a version a packet; furniture and modules drawn in code; the captain never drawn | [life-aboard §8](life-aboard.md#8-the-session-the-save-and-the-art-tc72-tc73) |
+| TC74 | *(new D20)* Phase 4 is life aboard (CY13–CY19); the first worlds move to Phase 5 | [life-aboard §9](life-aboard.md#9-the-plan-tc74) |
 
 ## Deferred
 
 Discussion only, not planned (TC16, amended D3):
-- **Ship battles** between worlds, as a second battle mode; the ship as hub (TC49) makes them a natural later add.
+- **Ship battles** between worlds, as a second battle mode. D20 answers the wish without one: ship support in battle
+  (TC64) and boarding missions on the player's own decks (TC65).
 - **Permadeath,** as an option; Rig Break is the rule (TC25).
 - **Camera rotation** in 90° steps, if a map ever needs it (TC48).
 - **Difficulty modes.**

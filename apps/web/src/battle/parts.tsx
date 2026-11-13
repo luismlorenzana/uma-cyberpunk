@@ -10,7 +10,7 @@ const PART_NAME = { core: 'Core', leftArm: 'L arm', rightArm: 'R arm', legs: 'Le
 
 export const labelOf = (state: BattleState, id: string): string => state.input.units.find((u) => u.id === id)?.label ?? id
 const initials = (label: string) => label.split(' ').map((w) => w[0]).join('').slice(0, 3)
-/** An Uma's outfit id (her face and bust come from master data, D18), or null for a stand-in, an enemy or a guest. */
+/** An Uma's outfit id (her face and bust come from master data, D19), or null for a stand-in, an enemy or a guest. */
 export const umaOf = (state: BattleState, id: string): string | null => { const r = state.input.units.find((u) => u.id === id)?.ref; return r?.kind === 'uma' ? r.id : null }
 
 function Panel({ children, className = '' }: { children: ReactNode; className?: string }) {
@@ -136,7 +136,7 @@ export function TerrainPanel({ card, onClose }: { card: TerrainCard; onClose: ()
 export interface CutInView { attacker: string; target: string; band: string; role: string; speed: CutInSpeed; numbers: string[]; key: number }
 
 /** The cut-in (TC28): a side view of the two, the Uma facing left on the right, the enemy facing right on the left, with
- * the numbers as they land. An Uma shows her bust from master data (D18); stand-ins and enemies stay cards until the
+ * the numbers as they land. An Uma shows her bust from master data (D19); stand-ins and enemies stay cards until the
  * full-body renders and the heroines arrive. */
 export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
   const a = state.units.find((u) => u.id === c.attacker), t = state.units.find((u) => u.id === c.target)

@@ -1,6 +1,6 @@
 # The sandbox
 
-> **Status: 2026-11-13, CY8 (D12), tier 1's Umas (D18).** The second of the three ways the combat is tested (TC54): any skirmish set up and
+> **Status: 2026-11-13, CY8 (D12), tier 1's Umas (D19).** The second of the three ways the combat is tested (TC54): any skirmish set up and
 > played with the full battle screen, on the phone, at `/sandbox`. The battle screen itself is on
 > [battle.md](battle.md#the-battle-screen).
 
@@ -39,7 +39,7 @@ flowchart LR
 | **Copy, Paste** | The scenario as edited (seed and control included) to the clipboard as JSON, and back; Paste checks it with `parseScenario` |
 | **Save** | Keeps the scenario as edited on this phone |
 
-## The squad: tier 1's Umas (D18)
+## The squad: tier 1's Umas (D19)
 
 The Ranker's tier 1 (uma-platform's Playable Umas T1, its first art batch) is ten outfits, kept in git by **id only**
 (`apps/web/src/crew/tier1.ts`, as uma-quest keeps its batch 1); everything about them comes from master data's release

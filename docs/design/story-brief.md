@@ -6,6 +6,11 @@
 > first pass to start from, the questions it answers, and what it delivers back, where and in what shape. Its calls are
 > **SB1–SB11**, each a recommendation from the game side, kept until the owner or the story session changes one.
 > Visual page: [previews/story-brief.html](previews/story-brief.html).
+>
+> **Part two (2026-11-13, D20): read [story-brief-life-aboard.md](story-brief-life-aboard.md) next.** The owner's new
+> direction makes the player the ship's captain, leans the story toward squads, factions and one big plot, and adds
+> light dating-sim bonds, cabins and duties aboard. Part two is open on purpose: worldbuilding and base elements first,
+> nothing required yet (SB12–SB16). Where it changes this part (the spine, SB2 and SB5's role), part two wins.
 
 ## The short answer
 
@@ -333,7 +338,7 @@ world's kit and maps can be drawn.
 Give the story session this one line:
 
 ```text
-Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief.
+Read CLAUDE.md, docs/design/story-brief.md and docs/design/story-brief-life-aboard.md in ~/workspace/uma-cyberpunk, then take the story brief, starting with part two's base elements.
 ```
 
 ## 12. The calls

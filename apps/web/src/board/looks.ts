@@ -1,4 +1,4 @@
-// How a unit looks on the board (D18): an Uma (a unit whose `ref` is `uma`) walks as her outfit's sprite set from master
+// How a unit looks on the board (D19): an Uma (a unit whose `ref` is `uma`) walks as her outfit's sprite set from master
 // data's `outfit-sprites` when the release has one (the authored chibis), else stands as a card with her face from
 // `outfit-faces`; anyone else, or any Uma before master data loads, is a stand-in. uma-farm's figure-looks in shape: sets
 // and faces load through the release client (hash-named, cached on the device), once a session, and are kept.

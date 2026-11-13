@@ -24,7 +24,7 @@ export const NIGHT_GRADE: StageGrade = {
   sky: '#5a6cc8', ground: '#1a1030', skyLight: 1.1, sun: '#b8c8ff', sunLight: 0.8, tint: '#c9d2ff', background: '#0b0d17', lamps: 1,
 }
 
-/** The post layer (uma-stage 0.5.0's ST5, our first stage request; D17). Measured on the rendered night frame, not the
+/** The post layer (uma-stage 0.5.0's ST5, our first stage request; D18). Measured on the rendered night frame, not the
  * nominal colours: the cyan ring reads about 0.49 luminance, the red and magenta rings and the danger overlay about
  * 0.28–0.30, the lamps about 0.24, and 96% of the board under 0.1. A threshold of 0.22 blooms all the neon and leaves the
  * terrain dark (the figures' cards, about 0.45, glow a little at any useful threshold, hence the modest strength). The

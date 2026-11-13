@@ -68,7 +68,7 @@ export interface BattleViewProps {
   onQuit: () => void
 }
 
-/** The battle screen: its Umas' looks first (their sprite sets or faces from master data, D18, a few seconds at most),
+/** The battle screen: its Umas' looks first (their sprite sets or faces from master data, D19, a few seconds at most),
  * then the board. Faces on the timeline, the unit card and the cut-in come through uma-kit's album art. */
 export function BattleView(props: BattleViewProps) {
   const master = useMaster()

@@ -1,4 +1,4 @@
-// The sandbox's squad (D18): who fills each squad slot. A pick is a tier 1 Uma (by outfit id) and her role (null: her
+// The sandbox's squad (D19): who fills each squad slot. A pick is a tier 1 Uma (by outfit id) and her role (null: her
 // default, from her running style); a slot with no pick keeps the scenario's stand-in. Each Uma fights as the crew does
 // (CY11): her bands from master data's 5★ stats, her Stride, and the best rig for her role. Scenarios stay stand-in only
 // (they're in git); the picks are this phone's own, applied when a battle starts. Pure, tested headless.

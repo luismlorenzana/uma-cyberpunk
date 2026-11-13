@@ -1,4 +1,4 @@
-// The sandbox's squad, headless (D18): tier 1's picks fill the squad slots with their bands, Stride and best rig; the rest
+// The sandbox's squad, headless (D19): tier 1's picks fill the squad slots with their bands, Stride and best rig; the rest
 // of tier 1 is the bench, each role once; a slot with no pick keeps its stand-in.
 import { startBattle, scenarioInput, type BattleInput } from '@cyber/battle'
 import { bandsOf, bestRig, loadoutOf, type OutfitInfo } from '@cyber/domain'

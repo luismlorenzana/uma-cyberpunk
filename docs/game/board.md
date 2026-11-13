@@ -1,6 +1,6 @@
 # The board
 
-> **Status: 2026-11-13, CY7 (D11), the post layer tuned (D17).** The battle board as `apps/web/src/board/` draws it, on
+> **Status: 2026-11-13, CY7 (D11), the post layer tuned (D18).** The battle board as `apps/web/src/board/` draws it, on
 > uma-stage 0.5.0's parts, and its test bench at `/board`. The sandbox (CY8) plays battles on it. The kit is uma-stage's stand-in forest under a night
 > grade until the first world's kit (Phase 4).
 
@@ -29,7 +29,7 @@ flowchart LR
 |---|---|
 | **Terrain** | The map's tiles at their heights (0–3), risers between levels, walls for solid tiles, from the stand-in biome kit |
 | **The light** | A night grade: a blue-violet sky light, a cool key light from the top front-left, the sprites tinted toward it, a dark navy behind the board; the four live lights go to the kit's lamps nearest the view's middle |
-| **An Uma** | Her **sprite set from master data** (`outfit-sprites`, the authored chibis) when the release has one, walking with her four facings; else a standee with **her face** (`outfit-faces`); a stand-in sprite only when the release can't be read (D18, `apps/web/src/board/looks.ts`) |
+| **An Uma** | Her **sprite set from master data** (`outfit-sprites`, the authored chibis) when the release has one, walking with her four facings; else a standee with **her face** (`outfit-faces`); a stand-in sprite only when the release can't be read (D19, `apps/web/src/board/looks.ts`) |
 | **A stand-in squad unit** | A stand-in sprite set (the first four), as on the bench |
 | **An enemy, a guest** | A standee: a face card on a base (stand-in faces until the heroines, Phase 4) |
 | **The base ring** | A flat ring under each unit: **cyan** the squad, **green** a guest, **red** an enemy |
@@ -68,7 +68,7 @@ never fades for her.
 - **Render on change:** a tap, a pan, a walk, a fade or a resize wakes the loop; it sleeps three frames after the last
   change. A hidden page draws nothing.
 - **The battery saver** (on by default on phones, `initialSaver()`): 30 fps through `FramePacer`, and no tilt-shift or
-  bloom. With it off, uma-stage's `Effects` draws both with the board's own values (`BOARD_EFFECTS`, D17), which the
+  bloom. With it off, uma-stage's `Effects` draws both with the board's own values (`BOARD_EFFECTS`, D18), which the
   first stage request made possible:
 
   | Pass | Value | uma-stage's default | Why |
@@ -109,7 +109,7 @@ Filed one at a time, each only once the checks prove it ([BP3](../design/build-p
 
 | # | Request | State |
 |---|---|---|
-| 1 | [Tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md): bloom's threshold of 0.86 means no neon colour ever blooms (the squad's cyan is 0.587) | **Shipped** in uma-stage 0.5.0 (ST5, P156); pinned, with the values above (D17) |
+| 1 | [Tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md): bloom's threshold of 0.86 means no neon colour ever blooms (the squad's cyan is 0.587) | **Shipped** in uma-stage 0.5.0 (ST5, P156); pinned, with the values above (D18) |
 | 2 | Glowing kit frames | Queued: filed when the first world's kit (Phase 4) needs lit signs and windows |
 | 3 | A tactics kit kind cached by kit id | Queued |
 | 4 | A lighter saver tier | Queued |
