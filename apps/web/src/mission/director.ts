@@ -53,10 +53,20 @@ export const chapterOf = (pack: StoryPack, mission: string): Chapter | undefined
 
 // --- Story steps -------------------------------------------------------------------------------------------------------
 
-/** A story step's change: the story state, or the crew (join, aboard), whose coming aboard opens her rooms. */
+/** The XP a newcomer joins at (TC51, D16): the squad's level, never level 1 after a fight: the crew's average XP, or the
+ * XP of the mission she just fought in (its scene aboard is where leads come aboard), whichever is higher. */
+export function joiningXp(save: Save, outfit: number): number {
+  const mean = save.crew.length ? Math.floor(save.crew.reduce((n, m) => n + m.xp, 0) / save.crew.length) : 0
+  const m = save.mission
+  const fought = m?.won && m.squad.includes(outfit) ? rewards((m.battle?.input ?? null) as BattleInput | null, true).xp : 0
+  return Math.max(mean, fought)
+}
+
+/** A story step's change: the story state, or the crew (join, aboard: she joins at the squad's level), whose coming
+ * aboard opens her rooms. */
 export function applyStep(save: Save, pack: StoryPack, step: Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' }>): Save {
   if (step.kind === 'join' || step.kind === 'aboard') {
-    const crew = save.crew.some((m) => m.outfit === step.outfit) ? save.crew : [...save.crew, newMember(step.outfit)]
+    const crew = save.crew.some((m) => m.outfit === step.outfit) ? save.crew : [...save.crew, { ...newMember(step.outfit), xp: joiningXp(save, step.outfit) }]
     const rooms = step.kind === 'aboard' ? [...new Set([...save.ship.rooms, ...roomsOpenedBy(pack.casting, step.outfit)])] : save.ship.rooms
     return { ...save, crew, ship: { rooms } }
   }
@@ -66,6 +76,30 @@ export function applyStep(save: Save, pack: StoryPack, step: Extract<Step, { kin
 }
 
 export const markSeen = (save: Save, scene: string): Save => ({ ...save, story: seeScene(save.story, scene) })
+
+/** The order interjection slots prefer (TC51): the casting's crew order, anyone else after, as they were. */
+export function squadOrder(pack: StoryPack, outfits: readonly number[]): number[] {
+  const rank = (o: number) => { const i = pack.casting.crewOrder.indexOf(o); return i < 0 ? Number.MAX_SAFE_INTEGER : i }
+  return [...outfits].sort((a, b) => rank(a) - rank(b))
+}
+/** Who a scene's slots hear: the mission's squad for its scene aboard, else the crew aboard. */
+export const sceneSquad = (pack: StoryPack, save: Save, squad?: readonly number[]): number[] => squadOrder(pack, squad ?? save.crew.map((m) => m.outfit))
+
+// --- Debriefs ------------------------------------------------------------------------------------------------------------
+
+export const debriefId = (chapter: Chapter): string => `${chapter.id}-debrief`
+/** A chapter's debrief as a scene the player plays aboard, and the Log replays. */
+export const debriefScene = (chapter: Chapter): Scene => ({ id: debriefId(chapter), place: 'aboard', trigger: { after: chapter.id }, cast: chapter.leads.map((outfit) => ({ outfit })), steps: chapter.debrief.steps })
+/** The debrief due aboard: a finished chapter's, not yet seen. */
+export function debriefDue(pack: StoryPack, save: Save): Chapter | null {
+  const done = finishedChapters(pack, save.story)
+  return Object.values(pack.chapters).find((c) => done.includes(c.id) && c.debrief.steps.length > 0 && !save.story.seen.includes(debriefId(c))) ?? null
+}
+/** The Log's Timeline: each chapter's scenes seen, in order, then its debrief once seen. */
+export function timeline(pack: StoryPack, save: Save): Scene[] {
+  return Object.values(pack.chapters).sort((a, b) => a.world.localeCompare(b.world) || a.number - b.number)
+    .flatMap((c) => [...c.scenes, ...(c.debrief.steps.length ? [debriefScene(c)] : [])]).filter((s) => save.story.seen.includes(s.id))
+}
 
 /** The worlds the star map shows: the known ones; a new game knows the first lead's world and stands on it. */
 export function ensureWorld(save: Save, pack: StoryPack): Save {
@@ -139,23 +173,39 @@ export function closeResults(save: Save): Save {
   const crew = crewAfterMission(save.crew, m.squad, rewards((m.battle?.input ?? null) as BattleInput | null, !!m.won).xp)
   if (!m.won) return { ...save, crew, mission: null }
   const missions = save.worlds.missions.includes(m.id) ? save.worlds.missions : [...save.worlds.missions, m.id]
-  return { ...save, crew, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard', battle: null } }
+  // The battle stays until the mission ends: a lead who fought it comes aboard at its XP (`joiningXp`).
+  return { ...save, crew, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard' } }
 }
 export const finishMission = (save: Save): Save => withMission(save, null)
 
-/** What the ship's Continue card says is waiting. */
+/** The place on the current world where the next scene waits, or null. */
+export function nextPlace(pack: StoryPack, save: Save): string | null {
+  const world = save.worlds.current
+  if (!world) return null
+  for (const c of chaptersOn(pack, world)) {
+    if (!needsMet(pack, save, c)) continue
+    const next = c.scenes.find((s) => !save.story.seen.includes(s.id))
+    if (next) return 'arrive' in next.trigger ? next.trigger.arrive : 'talk' in next.trigger ? next.trigger.talk : null
+  }
+  return null
+}
+
+/** A new game's opening (TC36): nothing seen yet and no mission, so the ship goes straight to the first scene. */
+export const opening = (pack: StoryPack, save: Save): string | null => (save.story.seen.length === 0 && !save.mission ? nextPlace(pack, save) : null)
+
+/** What the ship's Continue card says is waiting: the mission in progress, the debrief, the next scene, else a world to
+ * jump to. */
 export function waiting(pack: StoryPack, save: Save): { text: string; to: string } | null {
   const m = save.mission
   if (m) {
     const words = { briefing: 'the briefing', deploy: 'deploying the squad', battle: 'the battle in progress', results: 'the results', aboard: 'the scene aboard' }[m.step]
     return { text: `Continue ${m.id}: ${words}`, to: '/mission' }
   }
-  const world = save.worlds.current
-  if (!world) return null
-  for (const c of chaptersOn(pack, world)) {
-    if (!needsMet(pack, save, c)) continue
-    const next = c.scenes.find((s) => !save.story.seen.includes(s.id))
-    if (next) return { text: `Next: ${next.place} on ${world}`, to: '/room/bridge' }
-  }
+  const debrief = debriefDue(pack, save)
+  if (debrief) return { text: `Debrief: ${debrief.id}`, to: '/' }
+  const place = nextPlace(pack, save)
+  if (place) return { text: `Next: ${place} on ${save.worlds.current}`, to: `/room/bridge?node=${place}` }
+  const open = reachableWorlds(save, pack)
+  if (open[0]) return { text: `Next: jump to ${open[0]} from the Bridge's star map`, to: '/room/bridge?view=stars' }
   return null
 }

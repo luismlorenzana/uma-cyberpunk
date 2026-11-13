@@ -1,6 +1,6 @@
 # The story: its format, its check and the player
 
-> **Status: 2026-11-12, CY9 (D13).** Where the story session's files plug in (TC53): the format and its strict parser in
+> **Status: 2026-11-12, CY9 (D13), CY12 (D16).** Where the story session's files plug in (TC53): the format and its strict parser in
 > `packages/domain/src/story/`, `pnpm story:check` and `pnpm story:pack`, the delivery, the runner and the scene player.
 > The story itself is the story session's, written from [the story brief](../design/story-brief.md) in the ignored
 > `content/stories/`; this page holds the format only.
@@ -90,9 +90,9 @@ a look or mood is a `bible`.
   bucket `STORY_BUCKET` and its cost table are Phase 4's.
 - **The web's one seam** (`apps/web/src/story/load.ts`) reads the index through uma-kit's content client, verifies each
   file by its hash and parses the lot. On a 404 (no release locally; production now), or with
-  `VITE_CYBER_STORY=stand-in`, it plays **the stand-in**: an invented world (`sw1`), one lead's Chapter 1 with its debrief,
-  one Log File and one Call, using every step kind once, with invented ids (Umas 9000001–9000004, the heroine
-  `stand-in-1`) and plain labels.
+  `VITE_CYBER_STORY=stand-in`, it plays **the stand-in**: two invented worlds (`sw1`, `sw2`) and two leads' Chapter 1s,
+  each with a battle, an interjection slot, a crew Uma who joins and a debrief, two Log Files and a Call, using every
+  step kind, with invented ids (Umas 9000001–9000004, the heroine `stand-in-1`) and plain labels ([the loop](#the-chapter-1-loop-cy12)).
 
 ## The player
 
@@ -104,7 +104,36 @@ a look or mood is a `bible`.
 - **Auto** moves on by the line's length (0.9 s and 45 ms a character); **Skip** passes lines to the next choice or the
   end, keeping every change; **Log** shows the scene so far.
 - **The test route** `/story` lists the loaded story's first chapter and plays it scene by scene, then its debrief; a
-  scene seen is marked. CY10 replaces it with the ship's flow.
+  scene seen is marked. The game itself plays scenes from the ship's flow ([ship.md](ship.md), [missions.md](missions.md)).
+
+## The Chapter 1 loop (CY12)
+
+The Octopath structure (TC51): each lead's Chapter 1 plays on her home world, and finishing it brings her aboard; the
+ship then travels on to the next. The stand-in proves it twice, end to end, and a headless test plays it all through the
+director on fixed seeds with auto-played battles (`apps/web/src/mission/loop.test.ts`).
+
+```mermaid
+flowchart LR
+  new[A new game] -->|straight in| a1[sw1: Lead A's Chapter 1] --> ma[Its battle] --> pa[Lead A aboard: Comms opens]
+  pa --> da[Her debrief, aboard] --> jump[The Bridge: jump to sw2]
+  jump --> b1[sw2: Lead B's Chapter 1] --> mb[Its battle] --> pb[Lead B aboard: the Store opens] --> db[Her debrief]
+```
+
+| Step | What happens | The rule |
+|---|---|---|
+| **A new game** | The ship goes straight to the Bridge and plays the first lead's first scene | Nothing seen and no mission: the opening (TC36). The stand-in reaches its first battle in about 45 s of reading (the check's estimate), under two minutes |
+| **Her Chapter 1** | Its scenes in order, then its battle, with her locked in the squad | A chapter's scenes play in order ([ship.md](ship.md#a-worlds-map)); the battle step ends its scene |
+| **A crew Uma joins** | `join` in a chapter's scene: Crew C in Lead A's, Crew D in Lead B's | Both kinds of arrival (TC45) |
+| **She comes aboard** | `aboard`, the last step of her chapter's last scene, usually the scene after its battle | She joins **at the squad's level**: the crew's average XP, or the XP of the battle she just fought, whichever is higher, so never level 1 after a fight. A `join` follows the same rule. Her room opens (`casting.json`'s `opens`) |
+| **Her debrief** | Plays on the ship as soon as her chapter's last scene ends; then it's in the Log's Timeline with the scenes, replayable | A chapter is finished when all its scenes are seen; its debrief is due once |
+| **The next world** | The Continue card says "jump to …"; the Bridge's star map shows the world her chapter opened | A world appears once a location on it has every key met |
+
+**Interjection slots** (TC51): a `slot` plays the line of the first lead in the squad who has one, by the casting's
+`crewOrder`, else its fallback. **Who counts as the squad:** in the scene after a battle, the squad that fought it; in a
+scene on the map or a debrief, the crew aboard. So in Lead B's chapter, Lead A speaks at the gate once she's aboard, and
+after the battle only if she was deployed (the test plays both).
+
+**Chapter 1s never run back to back** in the real game (TC51); the stand-in is too small to show it and doesn't try.
 
 ## The story state (save v2)
 

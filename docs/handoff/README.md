@@ -1,8 +1,9 @@
 # Handoff: open work
 
-> **Status: 2026-11-12, after D6.** CY1's workspace and CY2's cloud are done: every push to `main` deploys to
-> [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). The owner approved every deployment and asked for CY3 to CY12
-> in number order, end to end. The owner split the work (D4): **the story has its own session,** which writes the world
+> **Status: 2026-11-12, after D16.** CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
+> to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
+> below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
+> the story session delivers its first world** ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)). The owner split the work (D4): **the story has its own session,** which writes the world
 > and the story from [the story brief](../design/story-brief.md), and **this queue builds the app and the combat
 > testing,** on test content, so the story drops into a finished game. The world is now interplanetary: each lead Uma's Chapter 1 on her
 > own world, then the ship as the hub.
@@ -13,13 +14,13 @@
 >   [the world's first pass](../design/world.md) (WD1–WD24, [page](../design/previews/world.html)) and
 >   [the references](../design/references.md) ([page](../design/previews/references.html)).
 > - **The manual of the game as built** is [docs/game/](../game/README.md), from CY3's [app as built](../game/architecture.md).
-> - Each task is a self-contained packet in [tasks/](tasks/). Start a worker, Claude or ChatGPT, with uma-platform's
+> - Each task is a self-contained packet in `tasks/` (empty until Phase 4's packets are written). Start a worker, Claude or ChatGPT, with uma-platform's
 >   [master prompt](https://github.com/luismlorenzana/uma-platform/blob/main/docs/handoff/master-prompt.md) and name the
 >   packet: "Take CY1".
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D16.
+Packet ids run CY1–CY12; decision numbers continue from D17; Phase 4's packets start at CY13.
 
 ## Phase 1: the foundation
 
@@ -27,16 +28,11 @@ Done: see the Done table.
 
 ## Phase 2: the combat, tested three ways
 
-Starts as soon as CY1 is in, beside the cloud.
-
-| Id | What | Who | Size | Needs | State |
-|---|---|---|---|---|---|
+Done (CY4–CY8); its exit is the owner's sandbox play (below).
 
 ## Phase 3: the app, on test content
 
-| Id | What | Who | Size | Needs | State |
-|---|---|---|---|---|---|
-| CY12 | [The Chapter 1 loop](tasks/CY12-chapter-one-loop.md): two stand-in worlds, two pickups, rooms opening, debriefs | Claude | M | CY10, CY11 | Written |
+Done (CY9–CY12); its exit is the owner's Chapter 1 play-through (below).
 
 **Order:** the packets in number order, CY2 to CY12 (the owner, 2026-11-12, D5), so the cloud and the hello app come
 first and every later packet can be checked on the phone ([the build plan §8](../design/build-plan.md#8-the-packets-bp8)).
@@ -88,7 +84,7 @@ packet, or says why not.
 | CY7 | Open [uma-cyberpunk.web.app/board](https://uma-cyberpunk.web.app/board) on the phone, pan around, tap a unit: does it read at a glance? |
 | CY3 | The two sign-in entries for `uma-cyberpunk.web.app`: in the [uma-rpg OAuth client](https://console.cloud.google.com/apis/credentials?project=uma-rpg) "Web client (auto created by Google Service)", add `https://uma-cyberpunk.web.app/__/auth/handler` (redirect URIs) and `https://uma-cyberpunk.web.app` (JavaScript origins); then the phone check: open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, sign in, see the save synced on Home |
 | CY8 | One play of the sandbox on the phone: open [uma-cyberpunk.web.app/sandbox](https://uma-cyberpunk.web.app/sandbox) from the Home Screen, play the test scenario to the end, and say in a line what felt wrong. **Phase 2's exit** |
-| CY12 | One play-through of the Chapter 1 loop on the phone |
+| CY12 | One play-through on the phone, about twenty minutes: open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) from the Home Screen; a new game goes straight into Lead A's Chapter 1; play it to her pickup and debrief, jump to sw2 from the Bridge, play Lead B's to hers, and close the app once mid-way to see it resume. Say in a line what felt wrong. **Phase 3's exit.** (Needs CY3's sign-in entries first.) |
 
 ## Done
 
@@ -96,6 +92,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY12 | The Chapter 1 loop (D16): the stand-in's two worlds and two Chapter 1s, the headless loop test, debriefs on the ship and in the Timeline, slots that hear the real squad, newcomers at the squad's level, the map's available-means-playable rule, a new game straight into its first scene, the Continue card's four cases; story.md's loop and ship.md's rooms opening with leads. **Phase 3's code is done** | `CY12SHA` |
 | CY11 | The crew and the Hangar (D15): save v4 with each crew member's record, the master-data adapter (bands, Stride, the fallback role), the casting's `roles` tag, 32 starter parts, best for her role, role change, Strain and XP after a mission, the Quarters with profiles, the Hangar (slots, Capacity bar, swap preview, saved loadouts), deploy in the crew's own rigs; [the crew](../game/crew.md) and [the Hangar](../game/hangar.md) in the manual | `10764d4` |
 | CY10 | The ship and the mission flow (D14): the ship as the home screen with seven rooms and their keys, the Bridge's star map and a world's node map, the Log's Timeline, Files and Anomalies, the director, briefing to deploy to battle to results to the scene aboard, resume at every step, save v3 with its migration; [the ship and the worlds](../game/ship.md) and [the mission flow](../game/missions.md) in the manual | `8f20d90` |
 | CY9 | The story format and runner (D13): the strict parser, `pnpm story:check` (Uma Story's `checks.json`) and `pnpm story:pack`, the API's private pack and the web's loader with the stand-in, the runner and the scene player, `/story`, save v2 with the story state; [the story](../game/story.md) in the manual; the brief's §8 says the check is live | `78db2f6` |

@@ -70,7 +70,9 @@ starter unless she already wears one of its kind; a rig still on "best for her r
 ## Level and XP
 
 A mission pays XP as a plain number ([missions.md](missions.md#the-steps)): the squad takes it in full, the crew aboard
-half, and a loss keeps its XP (TC25). Her level is 1 plus one for each 100 XP, up to 50: a placeholder curve until Phase
+half, and a loss keeps its XP (TC25). **A newcomer joins at the squad's level** (CY12): the crew's average XP, or the XP
+of the battle she just fought, whichever is higher, so a lead never comes aboard at level 1 after her Chapter 1's fight
+([the loop](story.md#the-chapter-1-loop-cy12)). Her level is 1 plus one for each 100 XP, up to 50: a placeholder curve until Phase
 5's economy, and levels change no numbers yet.
 
 ## Strain (TC27)

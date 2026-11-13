@@ -1,6 +1,6 @@
 # The ship and the worlds
 
-> **Status: 2026-11-12, CY10 (D14).** The hub every session starts and ends in (TC9, TC49), the Bridge's star map and a
+> **Status: 2026-11-12, CY10 (D14), CY12 (D16).** The hub every session starts and ends in (TC9, TC49), the Bridge's star map and a
 > world's map (TC50), with their locks and keys (TC34). Played on the stand-in story until the story session's first
 > world lands. The mission flow is on [missions.md](missions.md).
 
@@ -50,8 +50,8 @@ The current world's locations as nodes, joined by their links:
 | State | Means | Colour |
 |---|---|---|
 | **Locked** | A key in its `needs` isn't met: a chapter to finish, a mission to win or a Log File to find; a tap names it | Grey, with a lock |
-| **Available** | A scene or a mission still waits there | Cyan |
-| **Cleared** | Nothing waits there now. A world never closes | Green |
+| **Available** | A tap plays something now: a chapter's next scene triggered there, or a mission there whose battle step has played and isn't won | Cyan |
+| **Cleared** | Nothing waits there now (a later scene there turns it cyan again when its turn comes). A world never closes | Green |
 
 Each node shows its **danger** in diamonds. A tap on an available node plays the scene due there (a `talk` scene, then
 an `arrive` one), or starts a mission there not yet won.
@@ -61,8 +61,24 @@ the chapter's own `needs` are met. A scene triggered `after` a mission plays whe
 
 ## The Continue card
 
-On the ship, top right: **Continue** a mission in progress (and the step it's at), else **Next**: the place the next
-scene waits on the current world. When the app opens with a mission in progress, it goes straight back to it.
+On the ship, top right, the first of these that applies:
+
+| Card | When | A tap |
+|---|---|---|
+| **Continue** *mission*: *its step* | A mission is in progress | Back into it |
+| **Debrief:** *chapter* | A finished chapter's debrief hasn't played (it plays on the ship by itself) | — |
+| **Next:** *place* on *world* | A scene waits on the current world | The Bridge, playing it at once |
+| **Next: jump to** *world* | Nothing waits here, and a chapter has opened another world | The Bridge's star map |
+
+**When the app opens:** with a mission in progress, it goes straight back to it; on a new game (nothing seen yet), it
+goes straight to the Bridge and plays the first scene (TC36, [the loop](story.md#the-chapter-1-loop-cy12)).
+
+## Rooms opening with leads (TC49)
+
+Each lead's `casting.json` entry names the room she opens (`opens`). When her `aboard` step plays, she joins the crew
+and the room opens at once; the ship's cutaway lights it, and its quick look turns from "Opens when … comes aboard" to
+the room's summary. On the stand-in, Lead A opens **Comms** and Lead B the **Store**; the **Sim Pod** waits for a
+later lead ("Opens later in the story").
 
 ## The save (v3)
 

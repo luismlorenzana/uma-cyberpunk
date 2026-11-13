@@ -2,11 +2,11 @@
 // (CY11), and placeholders for the rooms later packets fill. Loaded on demand. Landscape, on the turned stage.
 import { ROOMS, roomView, worldNodes, type RoomId, type Scene, type StoryPack } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
-import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { useEffect, useState } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Hangar } from '../crew/Hangar'
 import { Quarters } from '../crew/Quarters'
-import { applyStep, atNode, markSeen, progressOf, reachableWorlds, startMission, travel } from '../mission/director'
+import { applyStep, atNode, markSeen, progressOf, reachableWorlds, sceneSquad, startMission, timeline, travel } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer } from '../story/ScenePlayer'
 import { outfitName, useStory } from './useStory'
@@ -53,7 +53,8 @@ function Placeholder({ text }: { text?: string }) {
 function Bridge({ pack }: { pack: StoryPack }) {
   const navigate = useNavigate()
   const save = useGame((g) => g.save)!
-  const [view, setView] = useState<'stars' | 'world'>(save.worlds.current ? 'world' : 'stars')
+  const [params, setParams] = useSearchParams()
+  const [view, setView] = useState<'stars' | 'world'>(save.worlds.current && params.get('view') !== 'stars' ? 'world' : 'stars')
   const [jump, setJump] = useState<string | null>(null)
   const [playing, setPlaying] = useState<Scene | null>(null)
   const [note, setNote] = useState<string | null>(null)
@@ -68,11 +69,18 @@ function Bridge({ pack }: { pack: StoryPack }) {
     else if (due.kind === 'mission') { void updateSave((s) => startMission(s, due.chapter, due.mission)).then(() => navigate('/mission')) }
     else setNote('Nothing waits here now.')
   }
+  // `?node=` (the Continue card, a new game's opening) plays what waits at that node at once.
+  const node = params.get('node')
+  useEffect(() => {
+    if (!node) return
+    setParams({}, { replace: true })
+    tapNode(node)
+  }, [node])
 
   if (playing && world) {
     return (
       <div className="absolute inset-0 z-20">
-        <ScenePlayer key={playing.id} pack={pack} scene={playing} squad={[...save.crew.map((c) => c.outfit), ...pack.casting.crewOrder]}
+        <ScenePlayer key={playing.id} pack={pack} scene={playing} squad={sceneSquad(pack, save)}
           onEffect={(step) => void updateSave((s) => applyStep(s, pack, step))}
           onBattle={async (mission) => {
             const due = Object.values(pack.chapters).find((c) => c.missions.some((m) => m.id === mission))
@@ -143,13 +151,13 @@ function Bridge({ pack }: { pack: StoryPack }) {
   )
 }
 
-/** The Log: the Timeline of scenes seen (each replayable), the Files with their lines filled in, the Anomalies. */
+/** The Log: the Timeline of scenes and debriefs seen (each replayable), the Files with their lines filled in, the Anomalies. */
 function LogRoom({ pack }: { pack: StoryPack }) {
   const save = useGame((g) => g.save)!
   const [tab, setTab] = useState<'timeline' | 'files' | 'anomalies'>('timeline')
   const [replay, setReplay] = useState<Scene | null>(null)
-  const scenes = Object.values(pack.chapters).flatMap((c) => c.scenes).filter((s) => save.story.seen.includes(s.id))
-  if (replay) return <div className="absolute inset-0 z-20"><ScenePlayer key={replay.id} pack={pack} scene={replay} squad={save.crew.map((c) => c.outfit)} onEffect={() => {}} onBattle={async () => {}} onDone={() => setReplay(null)} /></div>
+  const scenes = timeline(pack, save)
+  if (replay) return <div className="absolute inset-0 z-20"><ScenePlayer key={replay.id} pack={pack} scene={replay} squad={sceneSquad(pack, save)} onEffect={() => {}} onBattle={async () => {}} onDone={() => setReplay(null)} /></div>
   return (
     <div className="absolute inset-0 overflow-y-auto p-4" style={{ paddingTop: 'calc(var(--inset-top) + 64px)', paddingLeft: 'calc(var(--inset-left) + 16px)' }}>
       <div className="mb-3 flex gap-2">{(['timeline', 'files', 'anomalies'] as const).map((t) => (

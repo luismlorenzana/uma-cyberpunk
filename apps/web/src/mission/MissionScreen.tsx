@@ -15,8 +15,8 @@ import { outfitName, useStory } from '../ship/useStory'
 import { ScenePlayer } from '../story/ScenePlayer'
 import { missionInput, SCENARIOS } from './battleInput'
 import {
-  afterMission, applyStep, cantDeploy, chapterOf, closeResults, deploy, finishBattle, finishMission, lockedMembers, markSeen, recordAction, retry, rewards, setSquad,
-  toDeploy,
+  afterMission, applyStep, cantDeploy, chapterOf, closeResults, deploy, finishBattle, finishMission, lockedMembers, markSeen, recordAction, retry, rewards, sceneSquad,
+  setSquad, toDeploy,
 } from './director'
 
 export default function MissionScreen() {
@@ -100,7 +100,7 @@ function Mission({ layout }: { layout: StageLayout }) {
     }
     return (
       <div className="absolute inset-0">
-        <ScenePlayer key={next.scene.id} pack={pack} scene={next.scene} squad={[...save.crew.map((c) => c.outfit), ...pack.casting.crewOrder]}
+        <ScenePlayer key={next.scene.id} pack={pack} scene={next.scene} squad={sceneSquad(pack, save, m.squad)}
           onEffect={(step) => void updateSave((s) => applyStep(s, pack, step))}
           onBattle={async () => {}}
           onDone={() => { void updateSave((s) => finishMission(markSeen(s, next.scene.id))).then(() => navigate('/')) }} />

@@ -1,13 +1,15 @@
 // The ship (CY10, TC9, TC49): the hub every session starts and ends in. A side cutaway of the decks, each room a hotspot
 // of at least 44 pt; a tap opens its quick look (an open room's, or a locked one naming its key), and Enter goes in. A
 // Continue card says what's waiting. Landscape, on the turned stage. When the app opens with a mission in progress, it
-// goes straight back to it (resume anywhere).
+// goes straight back to it (resume anywhere); a new game goes straight to its first scene (CY12, TC36); a finished
+// chapter's debrief plays here, aboard.
 import { resting, ROOMS, roomView, type RoomId, type Save } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { ensureWorld, waiting } from '../mission/director'
+import { applyStep, debriefDue, debriefScene, ensureWorld, markSeen, opening, sceneSquad, waiting } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
+import { ScenePlayer } from '../story/ScenePlayer'
 import { outfitName, useStory } from './useStory'
 
 /** Each room's place on the cutaway (viewBox 1000 × 460). */
@@ -32,14 +34,27 @@ function Ship() {
 
   useEffect(() => {
     if (!save || !pack) return
-    if (Object.keys(save.worlds.known).length === 0) void updateSave((s) => ensureWorld(s, pack))
+    if (Object.keys(save.worlds.known).length === 0 && pack.casting.leads[0]) { void updateSave((s) => ensureWorld(s, pack)); return }
     if (!resumedThisLoad) {
       resumedThisLoad = true
+      const first = opening(pack, save)
       if (save.mission) void navigate('/mission')
+      else if (first) void navigate(`/room/bridge?node=${first}`)
     }
   }, [save, pack])
 
   if (!save || !pack) return <div className="flex h-full items-center justify-center bg-[#0b0d17] text-white/60">Boarding…</div>
+  const debrief = save.mission ? null : debriefDue(pack, save)
+  if (debrief) {
+    const scene = debriefScene(debrief)
+    return (
+      <div data-debrief={debrief.id} className="absolute inset-0">
+        <ScenePlayer key={scene.id} pack={pack} scene={scene} squad={sceneSquad(pack, save)}
+          onEffect={(step) => void updateSave((s) => applyStep(s, pack, step))} onBattle={async () => {}}
+          onDone={() => void updateSave((s) => markSeen(s, scene.id))} />
+      </div>
+    )
+  }
   const views = ROOMS.map((r) => roomView(pack.casting, save.ship.rooms, r, (o) => outfitName(pack, o)))
   const card = waiting(pack, save)
   const peeked = views.find((v) => v.room.id === peek)

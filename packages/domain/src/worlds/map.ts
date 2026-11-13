@@ -1,6 +1,6 @@
 // A world's map (CY10, TC50, TC34): each location is locked, available or cleared, shows its danger, and a locked one
 // names its key (a chapter, a mission or a File). A world never closes. Pure.
-import type { StoryPack, World } from '../story/types'
+import type { Scene, StoryPack, World } from '../story/types'
 import type { StoryState } from '../story/state'
 
 export type NodeState = 'locked' | 'available' | 'cleared'
@@ -28,12 +28,16 @@ export function keyWords(key: string, pack: StoryPack): string {
   return `Find the Log File ${id}`
 }
 
-/** What's still to play at a location: unseen scenes and unwon missions of this world's chapters. */
+/** What a tap at a location plays now (CY12: as the director does): in each of this world's chapters whose keys are met,
+ * its next unseen scene when it's triggered by arriving at or talking at this place, and a mission here whose battle
+ * step has played and that isn't won yet. */
 export function pendingAt(pack: StoryPack, world: string, place: string, story: StoryState, progress: WorldProgress): { scenes: string[]; missions: string[] } {
-  const chapters = Object.values(pack.chapters).filter((c) => c.world === world)
+  const chapters = Object.values(pack.chapters).filter((c) => c.world === world && c.needs.every((k) => keyMet(k, story, progress)))
+  const at = (t: Scene['trigger']) => ('arrive' in t ? t.arrive : 'talk' in t ? t.talk : null)
   return {
-    scenes: chapters.flatMap((c) => c.scenes).filter((s) => s.place === place && !story.seen.includes(s.id)).map((s) => s.id),
-    missions: chapters.flatMap((c) => c.missions).filter((m) => m.place === place && !progress.missions.includes(m.id)).map((m) => m.id),
+    scenes: chapters.flatMap((c) => { const next = c.scenes.find((s) => !story.seen.includes(s.id)); return next && at(next.trigger) === place ? [next.id] : [] }),
+    missions: chapters.flatMap((c) => c.missions.filter((m) => m.place === place && !progress.missions.includes(m.id)
+      && c.scenes.some((s) => story.seen.includes(s.id) && s.steps.some((st) => st.kind === 'battle' && st.mission === m.id))).map((m) => m.id)),
   }
 }
 
