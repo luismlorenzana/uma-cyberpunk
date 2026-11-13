@@ -1,7 +1,7 @@
 // The map format (schema 1, CY4) and its parser. Heights stay digit rows, the same as uma-stage's room format, so the
 // board (CY7) builds them with no translation. `parseMap` checks every rule and names the path of any error.
 import { TUNING } from './tuning'
-import type { BattleMap, Tile } from './types'
+import type { BattleMap, Prop, Tile } from './types'
 
 export class BattleInputError extends Error {
   readonly path: string
@@ -66,9 +66,66 @@ export function parseMap(value: unknown, path = 'map'): BattleMap {
     if (seen.has(key)) throw new BattleInputError(`${path}.spawns`, `tile ${key} is used twice (spawn ${i})`)
     seen.add(key)
   }
-  const extra = Object.keys(o).filter((k) => !['schemaVersion', 'id', 'width', 'depth', 'heights', 'tiles', 'spawns'].includes(k))
+  const extra = Object.keys(o).filter((k) => !['schemaVersion', 'id', 'width', 'depth', 'heights', 'tiles', 'spawns', 'props'].includes(k))
   if (extra.length > 0) throw new BattleInputError(path, `unknown keys ${extra.join(', ')}`)
-  return { schemaVersion: 1, id: o.id, width, depth, heights, tiles: tileRows, spawns: { squad: squadTiles, enemy: enemyTiles } }
+  const map: BattleMap = { schemaVersion: 1, id: o.id, width, depth, heights, tiles: tileRows, spawns: { squad: squadTiles, enemy: enemyTiles } }
+  if (o.props !== undefined) map.props = props(o.props, `${path}.props`, map, seen)
+  return map
+}
+
+const PROP_ID = /^[a-z0-9][a-z0-9-]{0,31}$/
+
+/** The props (CY5): unique ids, tiles on the map; barrels, pipes and terminals off spawns and solid tiles; a terminal's
+ * door or lift exists; a lift's heights are 0–3. */
+function props(value: unknown, path: string, map: BattleMap, spawns: Set<string>): Prop[] {
+  if (!Array.isArray(value) || value.length > 32) throw new BattleInputError(path, 'expected up to 32 props')
+  const ids = new Set<string>()
+  const tile = (t: unknown, p: string): Tile => {
+    if (!Array.isArray(t) || t.length !== 2) throw new BattleInputError(p, 'expected [x, y]')
+    const x = int(t[0], `${p}[0]`, 0, map.width - 1), y = int(t[1], `${p}[1]`, 0, map.depth - 1)
+    if (map.tiles[y]![x] === '#') throw new BattleInputError(p, 'on a solid tile')
+    return [x, y]
+  }
+  const list = value.map((raw, i): Prop => {
+    const p = `${path}[${i}]`
+    const o = object(raw, p)
+    if (typeof o.id !== 'string' || !PROP_ID.test(o.id) || ids.has(o.id)) throw new BattleInputError(`${p}.id`, 'expected a unique lowercase id')
+    ids.add(o.id)
+    const id = o.id
+    switch (o.kind) {
+      case 'barrel': case 'pipe': case 'cable': case 'terminal': {
+        const t = tile(o.tile, `${p}.tile`)
+        if (o.kind !== 'cable' && spawns.has(`${t[0]},${t[1]}`)) throw new BattleInputError(`${p}.tile`, 'on a spawn')
+        if (o.kind !== 'terminal') return { kind: o.kind, id, tile: t } as Prop
+        const does = object(o.does, `${p}.does`)
+        const keys = Object.keys(does)
+        if (keys.length !== 1 || !['door', 'lift', 'turret', 'lights'].includes(keys[0]!)) throw new BattleInputError(`${p}.does`, 'expected one of door, lift, turret or lights')
+        if (keys[0] === 'lights' ? does.lights !== true : typeof does[keys[0]!] !== 'string') throw new BattleInputError(`${p}.does`, 'expected an id, or lights: true')
+        return { kind: 'terminal', id, tile: t, does } as Prop
+      }
+      case 'door': case 'lift': {
+        if (!Array.isArray(o.tiles) || o.tiles.length < 1 || o.tiles.length > 12) throw new BattleInputError(`${p}.tiles`, 'expected 1–12 tiles')
+        const tiles = o.tiles.map((t, k) => tile(t, `${p}.tiles[${k}]`))
+        if (o.kind === 'door') {
+          if (typeof o.open !== 'boolean') throw new BattleInputError(`${p}.open`, 'expected true or false')
+          return { kind: 'door' as const, id, tiles, open: o.open }
+        }
+        const low = int(o.low, `${p}.low`, 0, TUNING.map.maxHeight), high = int(o.high, `${p}.high`, 0, TUNING.map.maxHeight)
+        if (high <= low) throw new BattleInputError(`${p}.high`, 'expected above low')
+        if (typeof o.raised !== 'boolean') throw new BattleInputError(`${p}.raised`, 'expected true or false')
+        return { kind: 'lift' as const, id, tiles, low, high, raised: o.raised }
+      }
+      default:
+        throw new BattleInputError(`${p}.kind`, 'expected barrel, pipe, cable, terminal, door or lift')
+    }
+  })
+  for (const [i, prop] of list.entries()) {
+    if (prop.kind !== 'terminal') continue
+    const does = prop.does as Record<string, unknown>
+    for (const k of ['door', 'lift'] as const)
+      if (k in does && !list.some((q) => q.kind === k && q.id === does[k])) throw new BattleInputError(`${path}[${i}].does.${k}`, `no ${k} ${String(does[k])}`)
+  }
+  return list
 }
 
 export const inBounds = (map: BattleMap, x: number, y: number): boolean => x >= 0 && y >= 0 && x < map.width && y < map.depth

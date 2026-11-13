@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Terrain, props and terminals</title>
+<!-- Generated from docs/game/terrain.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>Terrain, props and terminals</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-five-states">The five states</a><a class="h2" href="#the-maps-tiles">The map's tiles</a><a class="h2" href="#props">Props</a><a class="h2" href="#terminals">Terminals</a><a class="h2" href="#the-terrain-card">The terrain card</a></nav>
+<main id="top">
+<h1 id="terrain-props-and-terminals">Terrain, props and terminals</h1>
+<blockquote><p><b>Status: 2026-11-12, CY5 (D9).</b> Rules version 2. How the board itself changes in a battle: the five tile states, the props that make them, cover and grating, the terminals, and the terrain card. The numbers are in <a href="battle.html#rules-version-2">battle.md's tuning table</a>, rendered from <code>packages/battle/src/tuning.ts</code>.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>A tile can be in one state:</b> Wet, Oil, Fire or Smoke. <b>Live</b> is worked out, never stored: every cable's tile, and current spreading at once across connected Wet tiles and grating.</li><li><b>States spread at once:</b> Fire across a connected Oil slick, current across Wet and grating, and current meeting Oil sets it alight. Wet puts Fire out and can't catch.</li><li><b>Props</b> make states: a barrel bursts into Oil, a pipe into Wet, a cable is Live. <b>Terminals</b> move the map: doors, turrets, lifts and the lights.</li><li><b>A long press</b> on any tile gives its terrain card.</li></ul>
+<pre class="mermaid">flowchart LR
+  barrel[Barrel hit] --&gt; oil[Oil on it and its four neighbours]
+  oil --&gt;|an F hit or current| fire[Fire across the whole slick]
+  pipe[Pipe hit] --&gt; wet[Wet on it and its four neighbours]
+  cable[Cable] --&gt; live[Live]
+  wet --&gt; live
+  grating[Grating] --&gt; live
+  live --&gt;|meets Oil| fire
+  wet --&gt;|on Fire| out[Fire out]
+  fire --&gt;|3 rounds| gone[Burns out]</pre>
+<h2 id="the-five-states">The five states</h2>
+<div class="scroll"><table><tr><th>State</th><th>What it does</th><th>Made by</th><th>Lasts</th></tr><tr><td><b>Wet</b></td><td>Carries current; puts out Fire; Fire can't take it</td><td>A burst pipe</td><td>Until it changes</td></tr><tr><td><b>Oil</b></td><td>Fire spreads at once across the connected slick</td><td>A burst barrel</td><td>Until it burns</td></tr><tr><td><b>Fire</b></td><td>8 F damage to the Legs of whoever ends a turn there (a Fire Coat halves it; broken Legs send it to the Core)</td><td>An F hit on a unit, an F hit on a barrel, current on Oil</td><td>3 rounds</td></tr><tr><td><b>Live</b></td><td>6 damage to the Core of whoever enters or ends a turn there, past any Coat</td><td>Cables, and current across Wet and grating</td><td>While its source stands</td></tr><tr><td><b>Smoke</b></td><td>Blocks line of sight; −30% to ranged hits into or out of it</td><td>A smoke charge</td><td>2 rounds</td></tr></table></div>
+<p>Timers count in rounds (100 ticks) and run out as the clock passes them. Entering a Live tile mid-move hurts once a tile; ending the turn on it hurts again.</p>
+<h2 id="the-maps-tiles">The map's tiles</h2>
+<div class="scroll"><table><tr><th>Tile</th><th>Rule</th></tr><tr><td><code>.</code> floor</td><td>Nothing</td></tr><tr><td><code>#</code> solid</td><td>No standing, blocks sight</td></tr><tr><td><code>=</code> grating</td><td>Carries current, like Wet</td></tr><tr><td><code>c</code> cover</td><td>−20% to Short and Long hits on whoever stands there, from the front and sides (not from behind, not Melee)</td></tr></table></div>
+<h2 id="props">Props</h2>
+<p>Props sit in the map's <code>props</code> list, each with an id. <code>parseMap</code> checks them: unique ids, tiles on the map, barrels, pipes and terminals off spawns and solid tiles, a terminal's door or lift existing, a lift's heights 0–3.</p>
+<div class="scroll"><table><tr><th>Prop</th><th>On the board</th><th>When hit</th></tr><tr><td><b>Barrel</b></td><td>Takes its tile: no standing, shots pass over</td><td>Any hit bursts it: Oil on its tile and its four neighbours; under an F weapon, alight at once</td></tr><tr><td><b>Pipe</b></td><td>Takes its tile like a barrel</td><td>Any hit bursts it: Wet on its tile and its four neighbours</td></tr><tr><td><b>Cable</b></td><td>On the floor: its tile is Live</td><td>—</td></tr><tr><td><b>Terminal</b></td><td>Takes its tile like a barrel</td><td>Hacked, not hit</td></tr><tr><td><b>Door</b></td><td>Its tiles are solid and block sight while it's shut</td><td>—</td></tr><tr><td><b>Lift</b></td><td>Its tiles stand at its low or high height</td><td>—</td></tr></table></div>
+<p><b>Barriers</b> (the Bulwark's) are on the board too: solid, block sight, 40 HP; any attack can hit one.</p>
+<h2 id="terminals">Terminals</h2>
+<p>A unit with a <b>Deck</b> within range 1–4 of a terminal hacks it as her action, for <b>1 Charge, with no roll</b>. Each hack toggles or fires its effect, and a terminal counts once for "hack N terminals" however often it's used.</p>
+<div class="scroll"><table><tr><th>Terminal does</th><th>Effect</th><th>Cue</th></tr><tr><td><b>A door</b></td><td>Opens or shuts its tiles. It won't shut on someone</td><td><code>door</code> (open, tiles)</td></tr><tr><td><b>A lift</b></td><td>Moves its tiles to the other height; whoever stands on them rides along</td><td><code>heights</code> (tiles, height), so the board re-meshes</td></tr><tr><td><b>A turret</b></td><td>Turns a turret (a fixed hardware unit) to her side</td><td><code>turned</code></td></tr><tr><td><b>The lights</b></td><td>Cut for 2 rounds: −15% to ranged hits, and turrets sit out their turns</td><td><code>lights</code> (out, then back)</td></tr></table></div>
+<p>A <b>turret</b> is a unit with <code>fixed: true</code>: it never moves, and fights on whichever side it's on.</p>
+<h2 id="the-terrain-card">The terrain card</h2>
+<p><code>terrainCard(state, tile)</code> answers the board's long press: its height, its ground (floor, solid, grating or cover), its state and the rounds left on it, whether it's Live, the props on it, what could change it, and what it does to whoever stands there, in words.</p>
+<p class="foot">From <a href="../terrain.md">docs/game/terrain.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

@@ -31,7 +31,22 @@ export interface BattleMap {
   tiles: readonly string[]
   /** Five squad tiles (four and a guest) and one to eight enemy tiles. */
   spawns: { squad: readonly Tile[]; enemy: readonly Tile[] }
+  /** Things on the map (CY5, rules version 2). */
+  props?: readonly Prop[]
 }
+
+/** What a terminal does when hacked (CY5). */
+export type TerminalDoes = { door: string } | { lift: string } | { turret: string } | { lights: true }
+
+/** Things on the map (CY5). Barrels, pipes and terminals take a tile no one stands on but shots pass over; a cable makes
+ * its tile Live; a door's tiles are solid while it's shut; a lift's tiles sit at `low` or `high`. */
+export type Prop =
+  | { kind: 'barrel'; id: string; tile: Tile }
+  | { kind: 'pipe'; id: string; tile: Tile }
+  | { kind: 'cable'; id: string; tile: Tile }
+  | { kind: 'terminal'; id: string; tile: Tile; does: TerminalDoes }
+  | { kind: 'door'; id: string; tiles: readonly Tile[]; open: boolean }
+  | { kind: 'lift'; id: string; tiles: readonly Tile[]; low: number; high: number; raised: boolean }
 
 // --- The rig --------------------------------------------------------------------------------------------------------
 
@@ -87,6 +102,18 @@ export interface Bands {
   wit: Band
 }
 
+/** The five roles (TC5), as the bench support call names them. */
+export type Role = 'vanguard' | 'striker' | 'gunner' | 'netrunner' | 'medic'
+/** Stride, from her running style (TC46). */
+export type Stride = 'break' | 'draft' | 'surge' | 'kick'
+/** A heroine's Hold (WD9, TC26). */
+export type Hold = 'anchor' | 'collar' | 'none'
+/** The five chance skills (TC22), each with its base %. */
+export interface ChanceSkills { double?: number; switch?: number; burst?: number; first?: number; stun?: number }
+export type ChanceSkill = keyof ChanceSkills
+export type ItemKind = 'repair' | 'patch' | 'smoke' | 'cell'
+export type Faction = 'steel-muster'
+
 /** Who a unit is, for the app only: the rules never read it. Git holds stand-ins only. */
 export interface UnitRef {
   kind: 'standin' | 'uma' | 'heroine' | 'hardware'
@@ -108,6 +135,16 @@ export interface UnitInput {
   loadout: Loadout
   ref?: UnitRef
   label?: string
+  // --- Rules version 2 (CY5) ---
+  /** Chance skills with their base % (+5% a Wit band in play). */
+  skills?: ChanceSkills
+  stride?: Stride
+  /** A heroine's Hold; an Anchor or a Collar is an extra part with `holdHp`. */
+  hold?: Hold
+  holdHp?: number
+  /** Hardware that never moves: a turret. */
+  fixed?: boolean
+  faction?: Faction
 }
 
 export type Objective =
@@ -115,6 +152,10 @@ export type Objective =
   | { kind: 'defeatLeader' }
   | { kind: 'reach'; tile: Tile }
   | { kind: 'hold'; rounds: number }
+  // Rules version 2 (CY5):
+  | { kind: 'escort'; unit: string; tile: Tile }
+  | { kind: 'hack'; count: number }
+  | { kind: 'freeLeader' }
 
 /** Everything a battle starts from, frozen: a battle is this plus its actions (BP4). */
 export interface BattleInput {
@@ -123,11 +164,19 @@ export interface BattleInput {
   map: BattleMap
   objective: Objective
   units: readonly UnitInput[]
+  // --- Rules version 2 (CY5) ---
+  /** The squad's item stock, six at most. */
+  items?: Partial<Record<ItemKind, number>>
+  /** The resting Umas' roles, for one bench support call a battle. */
+  bench?: readonly Role[]
+  /** Factions whose mechanics are on. */
+  factions?: readonly Faction[]
 }
 
 // --- The state ------------------------------------------------------------------------------------------------------
 
-export type UnitStatus = 'active' | 'down' | 'out'
+/** Down: Rig Break, kneeling. Out: extracted. Freed: a heroine freed by her Hold or a Jack-Out, gone from the field. */
+export type UnitStatus = 'active' | 'down' | 'out' | 'freed'
 
 export interface PartHp {
   core: number
@@ -154,11 +203,55 @@ export interface UnitState {
   /** The Launcher's shots left. */
   ammo: number
   turns: number
+  // --- Rules version 2 (CY5): present only once they apply, so a version-1 state is CY4's exactly ---
+  /** An Anchor's or Collar's HP. */
+  holdHp?: number
+  /** Loses her next turn. */
+  stunned?: boolean
+  /** A Steel Muster unit that fired can't counter until her next turn. */
+  reloading?: boolean
+  /** Pinned by Muster fire on an arm: −10% hit until her next turn. */
+  pinned?: boolean
+  /** Her last turn was a Wait (for Surge). */
+  waited?: boolean
 }
+
+export type TileStateKind = 'wet' | 'oil' | 'fire' | 'smoke'
+export interface TileState {
+  kind: TileStateKind
+  /** The time it ends, or 0 for lasting. */
+  until: number
+}
+
+export interface Barrier { id: string; x: number; y: number; hp: number }
+
+/** Rules version 2's board state (CY5). */
+export interface FieldState {
+  /** By tile key "x,y". Live is worked out from cables, Wet and grating, never stored. */
+  states: Record<string, TileState>
+  doors: Record<string, boolean>
+  lifts: Record<string, boolean>
+  /** Barrels and pipes already burst. */
+  burst: string[]
+  barriers: Barrier[]
+  nextBarrier: number
+  lightsOutUntil: number
+  /** Terminals hacked at least once. */
+  hacked: string[]
+  /** The Steel Muster's volley: the meter, and once full, the marked tiles and when they're hit. */
+  volley: { meter: number; marked: Tile[]; at: number }
+  items: Record<ItemKind, number>
+  benchUsed: boolean
+}
+
+export type Fate = 'freed' | 'broken' | 'standing'
+export interface EnemyOutcome { id: string; fate: Fate; salvage: PartId[] }
 
 export interface BattleResult {
   winner: Side
   reason: 'objective' | 'defeated'
+  /** Rules version 2: each enemy freed, broken or standing, with her salvage (her unbroken parts). */
+  enemies?: EnemyOutcome[]
 }
 
 export interface BattleState {
@@ -171,14 +264,27 @@ export interface BattleState {
   active: string | null
   units: UnitState[]
   result: BattleResult | null
+  /** Rules version 2 only. */
+  field?: FieldState
 }
 
 // --- Actions --------------------------------------------------------------------------------------------------------
 
+/** Where an aimed hit goes: a part, or a heroine's Hold. */
+export type AimAt = PartId | 'hold'
+export type TechKind = 'stun' | 'jam' | 'jackout'
+
 export type Act =
-  | { kind: 'attack'; with: Mount; target: string; aim?: PartId }
+  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt }
   | { kind: 'wait' }
   | { kind: 'none' }
+  // Rules version 2 (CY5):
+  | { kind: 'tech'; tech: TechKind; target: string }
+  | { kind: 'hack'; terminal: string }
+  | { kind: 'barrier'; at: Tile }
+  | { kind: 'mend'; target: string; part: PartId }
+  | { kind: 'reboot'; target: string }
+  | { kind: 'item'; item: ItemKind; target?: string; part?: PartId; at?: Tile }
 
 /** A whole turn: the move (optional), one action, then the facing. The UI holds the two-tap move and its undo locally and
  * sends the turn whole, so an autosave after every action is exact (TC29). */
@@ -186,6 +292,8 @@ export interface TurnAction {
   kind: 'turn'
   unit: string
   to?: Tile
+  /** A Thruster's Dash (1 Charge): +2 Move and no zones of control this turn (rules version 2). */
+  dash?: boolean
   act: Act
   face: Dir
 }
@@ -197,11 +305,19 @@ export interface LinkAction {
   on: boolean
 }
 
-export type BattleAction = TurnAction | LinkAction
+/** The bench support call (TC27): once a battle, a free action on a squad unit's turn (rules version 2). */
+export interface BenchAction {
+  kind: 'bench'
+  unit: string
+  role: Role
+  at: Tile
+}
+
+export type BattleAction = TurnAction | LinkAction | BenchAction
 
 // --- Cues: what the board and the cut-in play; the scene decides nothing ----------------------------------------------
 
-export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover'
+export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam'
 export type AttackRole = 'main' | 'crossfire' | 'counter'
 
 export type Cue =
@@ -224,6 +340,33 @@ export type Cue =
   | { kind: 'extracted'; unit: string }
   | { kind: 'objective'; objective: Objective['kind']; value: number; of: number }
   | { kind: 'ended'; winner: Side; reason: BattleResult['reason'] }
+  // Rules version 2 (CY5):
+  | { kind: 'terrain'; tiles: Tile[]; state: TileStateKind | null }
+  | { kind: 'burn'; unit: string; part: PartId; amount: number; by: 'fire' | 'live' | 'volley' | 'strike' | 'mortar'; broke: boolean }
+  | { kind: 'burst'; prop: string }
+  | { kind: 'hacked'; unit: string; terminal: string }
+  | { kind: 'door'; door: string; open: boolean; tiles: Tile[] }
+  | { kind: 'heights'; lift: string; tiles: Tile[]; height: number }
+  | { kind: 'turned'; unit: string; side: Side }
+  | { kind: 'lights'; out: boolean }
+  | { kind: 'tech'; unit: string; target: string; tech: TechKind; landed: boolean }
+  | { kind: 'stunned'; unit: string }
+  | { kind: 'skipped'; unit: string; why: 'stunned' | 'idle' }
+  | { kind: 'holdHit'; unit: string; target: string; amount: number; broke: boolean }
+  | { kind: 'freed'; unit: string; by: 'hold' | 'jackout' }
+  | { kind: 'barrier'; unit: string; id: string; at: Tile }
+  | { kind: 'barrierHit'; unit: string; id: string; amount: number; broke: boolean }
+  | { kind: 'dash'; unit: string }
+  | { kind: 'mended'; unit: string; target: string; part: PartId; hp: number }
+  | { kind: 'rebooted'; unit: string; target: string }
+  | { kind: 'item'; unit: string; item: ItemKind; target?: string; at?: Tile }
+  | { kind: 'skill'; unit: string; skill: ChanceSkill }
+  | { kind: 'bench'; unit: string; role: Role; at: Tile }
+  | { kind: 'scan'; unit: string }
+  | { kind: 'reload'; unit: string }
+  | { kind: 'pinned'; unit: string }
+  | { kind: 'volleySignal'; tiles: Tile[]; at: number }
+  | { kind: 'volley'; tiles: Tile[] }
 
 export interface ActionResult {
   state: BattleState

@@ -78,6 +78,33 @@ export const TUNING = {
 
   /** The board (TC2, TC30). */
   map: { minSize: 6, maxSize: 14, maxHeight: 3, squad: 5, maxEnemies: 8 },
+
+  // --- Rules version 2 (CY5) ---
+
+  /** Terrain (TC24): damage and timers in rounds; cover and Smoke as hit % off; the lights. */
+  terrain: { fireDamage: 8, liveDamage: 6, fireRounds: 3, smokeRounds: 2, smokePenalty: 30, coverEvasion: 20, lightsPenalty: 15, lightsRounds: 2 },
+  /** Tech (TC19, TC26): the Deck's range, the chance (base + Wit − Guts), the Charge each costs, Jack-Out's threshold, and
+   * a Stun or Jam's damage to a Hold. Hacking a terminal: range and Charge, no roll. */
+  tech: {
+    range: [2, 4] as const, jackOutRange: 1, base: 50, perWit: 5, perGuts: 10, clamp: [5, 95] as const,
+    stun: 2, jam: 1, jackOut: 2, jackOutCorePct: 30, holdDamage: 10, hackRange: [1, 4] as const, hack: 1,
+  },
+  /** An impact hit on the Core can Stun (rules version 2). */
+  impactStun: 10,
+  /** An Anchor or a Collar's HP unless the unit says. */
+  holdHp: 30,
+  /** The Back units (TC5). */
+  back: { barrier: 1, barrierHp: 40, dash: 1, dashMove: 2, thrusterClimb: 2, mend: 1, mendCore: 20, mendPartPct: 25, reboot: 2, rebootCorePct: 25 },
+  /** Chance skills (TC22): +5% a Wit band, capped; Burst's extra rounds. */
+  skills: { perWit: 5, cap: 95, burstRounds: 2 },
+  /** Items: the stock's cap and what each does. */
+  items: { max: 6, repairCore: 20, patchPct: 25, smokeRange: 3, cell: 1 },
+  /** Stride's Move (TC46). */
+  stride: { break: 1, draft: 1, surge: 1, kick: 2 },
+  /** The bench support call (TC27): fixed damage and the repair drop. */
+  bench: { strike: 15, mortar: 10, drop: 15 },
+  /** The Steel Muster (WD11): the volley meter's size and pinning fire's hit % off. */
+  muster: { volleyFull: 6, pinPenalty: 10 },
 } as const
 
 /** A master-data stat at 5★ to its band (TC4). */

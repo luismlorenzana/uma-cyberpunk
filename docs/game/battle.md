@@ -1,8 +1,10 @@
-# The battle, core rules
+# The battle
 
-> **Status: 2026-11-12, CY4 (D8).** The rules as `@cyber/battle` plays them, rules version 1. Terrain, Tech, the Back
-> units' actions, chance skills and items arrive in CY5; the enemy AI and the simulator in CY6; the board in CY7. Every
-> number below comes from `packages/battle/src/tuning.ts`, and the tables marked live are rendered from it.
+> **Status: 2026-11-12, CY5 (D9).** The rules as `@cyber/battle` plays them, **rules version 2**: CY4's core and CY5's
+> roles, Tech, chance skills, items, Stride, the bench call and three more objectives. Terrain, props and terminals are
+> on [terrain.md](terrain.md); the Holds and the Steel Muster on [factions.md](factions.md). The enemy AI and the
+> simulator arrive in CY6, the board in CY7. Every number comes from `packages/battle/src/tuning.ts`, and the tables
+> marked live are rendered from it.
 
 ## The short answer
 
@@ -15,6 +17,8 @@
 - **Charge** is one small bar: spend it on your turn or keep it to counter, join an ally's attack (Crossfire) or take a
   hit for one (Cover) on theirs.
 - **The forecast card** shows every number before a turn is sent, from the same functions the result uses.
+- **Each role has its Back unit** (Bulwark, Thruster, Launcher, Deck, Med), and the Deck's **Tech** hacks heroines,
+  hardware and terminals. Heroines are freed, never killed.
 
 ```mermaid
 flowchart LR
@@ -178,12 +182,18 @@ flowchart TD
   their link is on and either they stand on the target's far side with a Melee or Short weapon in reach (a **pincer**),
   or they have a Short or Long weapon in reach with a line of fire (a **link**). Enemies do it too.
 - **Counters** are automatic: the defender answers with a Melee or Short weapon in reach of the attacker, for 1 Charge,
-  when she's still standing, the attack came from her front or side, and it wasn't Long.
+  when she's still standing, the attack came from her front or side, it wasn't Long, and (rules version 2) she isn't a
+  Steel Muster unit reloading.
+- **Rules version 2 adds to the exchange:** a defender's **First** can counter before the attack; **Burst** adds rounds
+  to the main strike; after it, **Double**, else **Switch**, else **Stun** (one chain at most); an **impact** hit on the
+  Core can Stun (10%); an **F** hit sets the target's tile on Fire. Cover takes an aim at a Hold unaimed.
+- **Things on the map** (v2): barrels, pipes and barriers can be attacked: no evasion, Guard or Coat, and no Cover,
+  Crossfire or counter.
 
 ## Rig Break and Hold on
 
 - At Core 0 her rig locks and she **kneels**: no turns, not a target. She stays **rebootable until the end of her next
-  turn** (the Medic's reboot arrives in CY5); when that turn comes she **extracts**.
+  turn**: a Medic next to her can **Reboot** her (rules version 2); when that turn comes first, she **extracts**.
 - **Hold on:** Guts at band 4 or more lets her survive one Core-breaking hit a battle at Core 1.
 
 ## Objectives
@@ -194,9 +204,94 @@ flowchart TD
 | Defeat the leader | The enemy leader is down or out |
 | Reach a tile | A squad unit ends her move on it (the battle ends before her action) |
 | Hold for N rounds | The clock passes N rounds |
+| **Escort** (v2) | The named squad unit ends her move on the tile; **lost** if she's down or out |
+| **Hack N terminals** (v2) | N different terminals have been hacked |
+| **Free the leader** (v2) | The enemy leader, a heroine, is freed; **lost** if she's broken instead |
 
-Beating every enemy always wins. The battle is **lost** when every squad unit is down or out. It ends the moment either
+Beating every enemy always wins (except that a leader to free must be freed). The battle is **lost** when every squad unit is down or out. It ends the moment either
 happens, mid-turn included.
+
+## Roles and their Back units (rules version 2)
+
+| Back unit | Role | What it does |
+|---|---|---|
+| **Bulwark** | Vanguard | **Barrier** (1 Charge): a one-tile wall on an adjacent tile: solid, blocks sight, 40 HP, lasts until broken |
+| **Thruster** | Striker | Climbs **two levels a step**; **Dash** (1 Charge, part of the move): +2 Move and no zones of control this turn |
+| **Launcher** | Gunner | Carries the Long weapon (rules version 1) and lets her **Aim** |
+| **Deck** | Netrunner | **Tech** (below) and **hacking terminals** ([terrain.md](terrain.md#terminals)) |
+| **Med** | Medic | **Mend** (1 Charge, adjacent or herself): +20 Core HP, or a broken arm or Legs back at 25%. **Reboot** (2 Charge, adjacent): a kneeling ally inside her window stands at 25% Core, limbs still broken |
+
+A turn's action is one of: attack, Wait, nothing, Tech, hack, barrier, Mend, Reboot or an item.
+
+## Tech (rules version 2)
+
+The Deck's three hacks, never countered, each one roll of **Wit against Guts**: 50% + 5% a Wit band − 10% a target's
+Guts band, clamped 5–95%. The forecast shows the %.
+
+| Tech | Charge | Range | On a success |
+|---|---|---|---|
+| **Stun** | 2 | 2–4 | She loses her next turn |
+| **Jam** | 1 | 2–4 | She loses 1 Charge |
+| **Jack-Out** | 2 | Adjacent, a heroine below 30% Core | She's **freed** ([factions.md](factions.md#the-holds)) |
+
+A landed Stun or Jam on a held heroine also does 10 damage to her Hold. A stunned unit's next turn is skipped and her
+clock restarts.
+
+## Chance skills (rules version 2)
+
+A unit's input lists her chance skills with their base %; in play each gets +5% a Wit band, capped at 95%, and the
+forecast shows them. Where they come from (parts and mastery) is Phase 5's.
+
+| Skill | When it rolls | What it does |
+|---|---|---|
+| **Burst** | Before her main strike with a Short weapon | +2 rounds |
+| **Double** | After her main Melee strike | A second strike with the same weapon |
+| **Switch** | After her main strike, if Double didn't fire | The other hand fires too, if in reach |
+| **Stun** | After a main strike that landed, if neither did | The target is stunned |
+| **First** | When she'd counter, as the defender | Her counter lands before the attack |
+
+**One chain per attack:** Burst, or one of Double, Switch and Stun, never two. Cover stops the chain.
+
+## Items (rules version 2)
+
+One squad stock of up to six, set in the input. Using one is her action and costs no Charge; she can use one with both
+arms broken.
+
+| Item | On | Does |
+|---|---|---|
+| **Repair kit** | Herself or an adjacent ally | +20 Core HP |
+| **Patch** | Herself or an adjacent ally | A broken arm or Legs back at 25% |
+| **Smoke charge** | A tile in range 3 | Smoke on it and its four neighbours |
+| **Cell** | Herself or an adjacent ally | +1 Charge |
+
+## Stride (rules version 2)
+
+From her running style (TC46), set in the input:
+
+| Stride | +Move |
+|---|---|
+| **Break** | +1 on her first turn |
+| **Draft** | +1 when she starts her turn next to an ally |
+| **Surge** | +1 on the turn after a Wait |
+| **Kick** | +2 while her Core is at half or less |
+
+## The bench support call (rules version 2)
+
+The input lists the resting Umas' roles. Once a battle, on a squad unit's turn, the squad makes one call as a **free
+action** (her turn goes on), with fixed numbers and no rolls:
+
+| Role | The call |
+|---|---|
+| Vanguard | A barrier on any open tile |
+| Striker | A strike on one tile: 15 to the Core of whoever stands there |
+| Gunner | A mortar on a 3 × 3 area: 10 to the Core of everyone in it, either side |
+| Netrunner | A scan: the app shows every enemy's loadout and next turn |
+| Medic | A repair drop on a 3 × 3 area: +15 Core to each squad unit in it |
+
+## The end of a battle (rules version 2)
+
+The result lists each enemy as **freed**, **broken** or **standing**, with her **salvage**: her unbroken parts, freed
+or broken alike. A guest joins only when freed, so breaking her parts against keeping them whole is a real choice.
 
 ## The forecast
 
@@ -209,7 +304,11 @@ functions on the board as it would stand after the move.
 | Front, side or back, and the Guard | Facing |
 | Each part's chance of being hit, and whether it **will** break (one normal hit) or **may** (a crit or several hits) | The band's weights, broken parts sent to the Core |
 | Who covers, who joins (pincer or link) and who counters, each with their numbers | The same eligibility the resolution uses |
-| The Charge each unit spends (a Wait shows as a gain) | The tuning table |
+| Each chance skill's %, the attacker's and the defender's First (v2) | The same chance the roll uses |
+| A Tech action's % (v2) | Wit against Guts |
+| The Hold's chance of being hit and whether it frees her, when aimed at (v2) | The strike's numbers |
+| The Steel Muster's marked tiles and when they're hit (v2) | The volley |
+| The Charge each unit spends (a gain shows negative) | The tuning table |
 | The next eight turns after this one | The timeline |
 
 A test checks that the forecast's hit % is within two points of the resolved hit rate over 2,000 seeds for each weapon
@@ -226,13 +325,20 @@ The board and the cut-in play cues; they decide nothing. Each action returns its
 
 - Every roll is a seeded hash of `seed:turn:unit:purpose:n`, keyed by the battle's turn number. The package has no
   unseeded randomness and no clock; a test scans its sources.
-- **The rules version is 1.** A battle refuses an unknown version; a later version keeps the old branches, so a saved
-  battle still replays the way it was played.
+- **Rules versions:** **1** is CY4's core; **2** adds CY5's rules. A battle refuses an unknown version, and a version-1
+  battle plays exactly as CY4's did: its fields are refused in version 1, and the new state appears only in version 2.
+  Version 2's always-on rules are the impact Stun, Fire from F hits, cover tiles and grating; with none of those in play
+  and every new field empty, version 2 plays exactly as version 1 (a test).
 - `battleStateHash(state)` hashes everything that changes. **Golden replays** (`packages/battle/src/golden/`) hold seven
-  battles on two test maps: their inputs, actions, every cue and the final hash. Any change to a rule or a number fails
-  the test and names the battle; `UPDATE_GOLDEN=1` rewrites them, and the commit says why.
+  version-1 battles on two test maps and nine version-2 battles on the `test-works` map (Fire across an Oil slick,
+  current across Wet and grating, a lift mid-battle, a heroine freed by her Anchor and one by a Jack-Out, a reboot inside
+  and outside the window, a volley dodged and one that lands): their inputs, actions, every cue and the final hash, and
+  for each version-2 battle the cue that proves its rule. Any change to a rule or a number fails the test and names the
+  battle; `UPDATE_GOLDEN=1` rewrites them, and the commit says why.
 
 ## The tuning table
+
+### Rules version 1
 
 <!-- live:tuning -->
 **The bands** (Guts: Hold on at band 4 or more):
@@ -272,4 +378,29 @@ The board and the cut-in play cues; they decide nothing. Each action returns its
 | Melee | 60 | 15 | 10 |
 | Short | 40 | 20 | 20 |
 | Long | 50 | 15 | 20 |
+<!-- /live -->
+
+### Rules version 2
+
+<!-- live:tuning2 -->
+| Rule | Number |
+|---|---|
+| Fire | 8 F damage to the Legs on ending a turn there; burns out after 3 rounds |
+| Live | 6 damage to the Core on entering or ending a turn there, past any Coat |
+| Smoke | Blocks sight; −30% to ranged hits into or out of it; clears after 2 rounds |
+| Cover tile | −20% to Short and Long hits from the front and sides |
+| Lights out | −15% to ranged hits; turrets idle; 2 rounds |
+| Tech | Range 2–4 (Jack-Out 1); 50% + 5% a Wit band − 10% a Guts band, clamped 5–95% |
+| Tech Charge | Stun 2, Jam 1, Jack-Out 2 (below 30% Core); a landed Stun or Jam does 10 to a Hold |
+| Hacking | Range 1–4, 1 Charge, no roll |
+| Impact Stun | 10% on an impact hit to the Core |
+| A Hold | 30 HP unless the unit says |
+| Bulwark | Barrier: 1 Charge, 40 HP |
+| Thruster | 2 levels a step; Dash: 1 Charge, +2 Move, no zones of control |
+| Med | Mend: 1 Charge, +20 Core or a limb at 25%; Reboot: 2 Charge, stands at 25% Core |
+| Chance skills | Base + 5% a Wit band, capped at 95%; Burst adds 2 rounds |
+| Items | 6 at most; repair +20 Core; patch mends a limb at 25%; smoke in range 3; cell +1 Charge |
+| Stride | Break +1, Draft +1, Surge +1, Kick +2 Move |
+| Bench call | Strike 15 to the Core on one tile; mortar 10 to every Core in 3 × 3; repair drop +15 Core in 3 × 3 |
+| Steel Muster | The volley fills at 6 attacks; pinning fire −10% hit |
 <!-- /live -->

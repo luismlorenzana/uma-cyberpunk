@@ -1,17 +1,17 @@
 // Places units where a test wants them and hands the turn to one of them (tests only).
 import { createBattle } from './battle'
 import { battle, placed, unit } from './fixtures'
-import type { BattleState, Dir, Objective, UnitInput } from './types'
+import type { BattleInput, BattleMap, BattleState, Dir, Objective, UnitInput } from './types'
 
 export interface Spot { id: string; at: [number, number]; facing?: Dir; opts?: Partial<Omit<UnitInput, 'id' | 'side' | 'spawn'>> }
 
-export function setup(squad: Spot[], enemy: Spot[], opts: { heights?: string[]; tiles?: string[]; seed?: string; objective?: Objective; active?: string } = {}): BattleState {
-  const map = placed(squad.map((s) => s.at), enemy.map((s) => s.at), opts)
+export function setup(squad: Spot[], enemy: Spot[], opts: { heights?: string[]; tiles?: string[]; seed?: string; objective?: Objective; active?: string; version?: number; props?: BattleMap['props'] } & Pick<BattleInput, 'items' | 'bench' | 'factions'> = {}): BattleState {
+  const map: BattleMap = { ...placed(squad.map((s) => s.at), enemy.map((s) => s.at), opts), ...(opts.props ? { props: opts.props } : {}) }
   const units = [
     ...squad.map((s, i) => unit(s.id, 'squad', i, { facing: s.facing ?? 'N', ...s.opts })),
     ...enemy.map((s, i) => unit(s.id, 'enemy', i, { facing: s.facing ?? 'S', ...s.opts })),
   ]
-  const state = createBattle(battle(units, { map, seed: opts.seed, objective: opts.objective }))
+  const state = createBattle(battle(units, { map, seed: opts.seed, objective: opts.objective, version: opts.version, items: opts.items, bench: opts.bench, factions: opts.factions }))
   return opts.active ? { ...state, active: opts.active } : state
 }
 

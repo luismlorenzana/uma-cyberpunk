@@ -54,11 +54,41 @@ export function tuningTables(): string {
   ].join('\n')
 }
 
+/** Rules version 2's numbers (CY5). */
+export function tuningTables2(): string {
+  const t = T.terrain, k = T.tech, b = T.back, sk = T.skills, it = T.items, st = T.stride, be = T.bench, m = T.muster
+  return [
+    '| Rule | Number |',
+    '|---|---|',
+    `| Fire | ${t.fireDamage} F damage to the Legs on ending a turn there; burns out after ${t.fireRounds} rounds |`,
+    `| Live | ${t.liveDamage} damage to the Core on entering or ending a turn there, past any Coat |`,
+    `| Smoke | Blocks sight; −${t.smokePenalty}% to ranged hits into or out of it; clears after ${t.smokeRounds} rounds |`,
+    `| Cover tile | −${t.coverEvasion}% to Short and Long hits from the front and sides |`,
+    `| Lights out | −${t.lightsPenalty}% to ranged hits; turrets idle; ${t.lightsRounds} rounds |`,
+    `| Tech | Range ${k.range[0]}–${k.range[1]} (Jack-Out ${k.jackOutRange}); ${k.base}% + ${k.perWit}% a Wit band − ${k.perGuts}% a Guts band, clamped ${k.clamp[0]}–${k.clamp[1]}% |`,
+    `| Tech Charge | Stun ${k.stun}, Jam ${k.jam}, Jack-Out ${k.jackOut} (below ${k.jackOutCorePct}% Core); a landed Stun or Jam does ${k.holdDamage} to a Hold |`,
+    `| Hacking | Range ${k.hackRange[0]}–${k.hackRange[1]}, ${k.hack} Charge, no roll |`,
+    `| Impact Stun | ${T.impactStun}% on an impact hit to the Core |`,
+    `| A Hold | ${T.holdHp} HP unless the unit says |`,
+    `| Bulwark | Barrier: ${b.barrier} Charge, ${b.barrierHp} HP |`,
+    `| Thruster | ${b.thrusterClimb} levels a step; Dash: ${b.dash} Charge, +${b.dashMove} Move, no zones of control |`,
+    `| Med | Mend: ${b.mend} Charge, +${b.mendCore} Core or a limb at ${b.mendPartPct}%; Reboot: ${b.reboot} Charge, stands at ${b.rebootCorePct}% Core |`,
+    `| Chance skills | Base + ${sk.perWit}% a Wit band, capped at ${sk.cap}%; Burst adds ${sk.burstRounds} rounds |`,
+    `| Items | ${it.max} at most; repair +${it.repairCore} Core; patch mends a limb at ${it.patchPct}%; smoke in range ${it.smokeRange}; cell +${it.cell} Charge |`,
+    `| Stride | Break +${st.break}, Draft +${st.draft}, Surge +${st.surge}, Kick +${st.kick} Move |`,
+    `| Bench call | Strike ${be.strike} to the Core on one tile; mortar ${be.mortar} to every Core in 3 × 3; repair drop +${be.drop} Core in 3 × 3 |`,
+    `| Steel Muster | The volley fills at ${m.volleyFull} attacks; pinning fire −${m.pinPenalty}% hit |`,
+  ].join('\n')
+}
+
+function live(doc: string, key: string, body: string): string {
+  return doc.replace(new RegExp(`<!-- live:${key} -->[\\s\\S]*?<!-- \\/live -->`), `<!-- live:${key} -->\n${body}\n<!-- /live -->`)
+}
+
 describe('the manual', () => {
   it('holds the current tuning tables', () => {
     const doc = readFileSync(DOC, 'utf8')
-    const block = `<!-- live:tuning -->\n${tuningTables()}\n<!-- /live -->`
-    const current = doc.replace(/<!-- live:tuning -->[\s\S]*?<!-- \/live -->/, block)
+    const current = live(live(doc, 'tuning', tuningTables()), 'tuning2', tuningTables2())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DOC, current)
     else expect(doc, 'docs/game/battle.md is stale: run pnpm docs:update').toBe(current)
   })

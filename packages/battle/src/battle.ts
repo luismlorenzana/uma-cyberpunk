@@ -1,24 +1,37 @@
-// The battle reducer (CY4, BP4; uma-rpg's engine is the pattern, copied in shape, never imported). A battle is a frozen
-// input plus a list of actions: `applyBattleAction` returns the next state and the cues the board plays, or an error and
-// no change; `replayBattle` rebuilds any state from the two. Every roll is seeded, so a replay is exact.
+// The battle reducer (CY4, CY5, BP4; uma-rpg's engine is the pattern, copied in shape, never imported). A battle is a
+// frozen input plus a list of actions: `applyBattleAction` returns the next state and the cues the board plays, or an
+// error and no change; `replayBattle` rebuilds any state from the two. Every roll is seeded, so a replay is exact. A
+// version-1 battle plays exactly as CY4's did; version 2 adds CY5's rules, gated by `v2`.
 import { resolveAttack, tileOf, unitById } from './attack'
+import { harm, spendCharge, v2 } from './harm'
 import { checkTurn } from './legal'
 import { BattleInputError, inBounds, isSolid, parseMap } from './map'
+import { fireVolley, startOwnTurn } from './muster'
 import { checkLoadout, maxHpOf } from './rig'
 import { hash32 } from './rng'
 import { DIRS } from './sight'
+import { benchError, callBench, mend, placeBarrier, reboot, useItem } from './support'
+import { outcomes, resolveHack, resolveTech } from './tech'
+import { expire, keyOf, lightsOut, liveTiles, newField } from './terrain'
 import { advanceClocks, nextTurn, roundAt } from './timeline'
 import { TUNING } from './tuning'
-import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, Objective, UnitState } from './types'
+import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, FieldState, Objective, Role, UnitState } from './types'
 import { SUPPORTED_VERSIONS } from './version'
 
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,63}$/
 const isBand = (v: unknown) => v === 1 || v === 2 || v === 3 || v === 4 || v === 5
+const ROLES: readonly Role[] = ['vanguard', 'striker', 'gunner', 'netrunner', 'medic']
 
 function checkInput(input: BattleInput): void {
   if (!SUPPORTED_VERSIONS.includes(input.rulesVersion)) throw new BattleInputError('rulesVersion', `unknown rules version ${String(input.rulesVersion)}`)
   if (typeof input.seed !== 'string' || input.seed.length === 0 || input.seed.length > 64) throw new BattleInputError('seed', 'expected a string of 1–64 characters')
   const map = parseMap(input.map)
+  const later = input.rulesVersion >= 2
+  const needs2 = (path: string, present: unknown) => { if (present !== undefined && !later) throw new BattleInputError(path, 'needs rules version 2') }
+  needs2('map.props', input.map.props)
+  needs2('items', input.items)
+  needs2('bench', input.bench)
+  needs2('factions', input.factions)
   const ids = new Set<string>()
   const spawns = { squad: new Set<number>(), enemy: new Set<number>() }
   input.units.forEach((u, i) => {
@@ -32,53 +45,100 @@ function checkInput(input: BattleInput): void {
     const pool = u.side === 'squad' ? map.spawns.squad : map.spawns.enemy
     if (!(Number.isSafeInteger(u.spawn) && u.spawn >= 0 && u.spawn < pool.length) || spawns[u.side].has(u.spawn)) throw new BattleInputError(`${path}.spawn`, 'expected an unused spawn of its side')
     spawns[u.side].add(u.spawn)
+    for (const k of ['skills', 'stride', 'hold', 'holdHp', 'fixed', 'faction'] as const) needs2(`${path}.${k}`, u[k])
+    if (u.skills) for (const [k, v] of Object.entries(u.skills)) if (!['double', 'switch', 'burst', 'first', 'stun'].includes(k) || !(Number.isSafeInteger(v) && v >= 0 && v <= 100)) throw new BattleInputError(`${path}.skills.${k}`, 'expected a chance skill with 0–100%')
+    if (u.stride !== undefined && !['break', 'draft', 'surge', 'kick'].includes(u.stride)) throw new BattleInputError(`${path}.stride`, 'expected break, draft, surge or kick')
+    if (u.hold !== undefined && !['anchor', 'collar', 'none'].includes(u.hold)) throw new BattleInputError(`${path}.hold`, 'expected anchor, collar or none')
+    if (u.holdHp !== undefined && !(Number.isSafeInteger(u.holdHp) && u.holdHp >= 1 && (u.hold === 'anchor' || u.hold === 'collar'))) throw new BattleInputError(`${path}.holdHp`, 'expected a positive integer on an Anchor or a Collar')
+    if (u.faction !== undefined && u.faction !== 'steel-muster') throw new BattleInputError(`${path}.faction`, 'unknown faction')
     checkLoadout(u, path)
   })
   const squad = input.units.filter((u) => u.side === 'squad').length, enemies = input.units.length - squad
   if (squad < 1 || squad > TUNING.map.squad) throw new BattleInputError('units', `expected 1–${TUNING.map.squad} squad units`)
   if (enemies < 1 || enemies > TUNING.map.maxEnemies) throw new BattleInputError('units', `expected 1–${TUNING.map.maxEnemies} enemies`)
+  if (input.items) {
+    let total = 0
+    for (const [k, v] of Object.entries(input.items)) {
+      if (!['repair', 'patch', 'smoke', 'cell'].includes(k) || !(Number.isSafeInteger(v) && v! >= 0)) throw new BattleInputError(`items.${k}`, 'expected an item and a count')
+      total += v!
+    }
+    if (total > TUNING.items.max) throw new BattleInputError('items', `expected ${TUNING.items.max} items at most`)
+  }
+  for (const [i, r] of (input.bench ?? []).entries()) if (!ROLES.includes(r)) throw new BattleInputError(`bench[${i}]`, 'expected a role')
+  for (const [i, f] of (input.factions ?? []).entries()) if (f !== 'steel-muster') throw new BattleInputError(`factions[${i}]`, 'unknown faction')
+  for (const p of input.map.props ?? []) {
+    if (p.kind === 'terminal' && 'turret' in p.does) {
+      const turret = input.units.find((u) => u.id === (p.does as { turret: string }).turret)
+      if (!turret?.fixed) throw new BattleInputError(`map.props.${p.id}.does.turret`, 'expected a fixed unit')
+    }
+  }
   checkObjective(input, map)
 }
 
 function checkObjective(input: BattleInput, map: BattleInput['map']): void {
   const o = input.objective
-  if (o.kind === 'reach') {
-    const [x, y] = o.tile
-    if (!inBounds(map, x, y) || isSolid(map, x, y)) throw new BattleInputError('objective.tile', 'expected a standing tile on the map')
-  } else if (o.kind === 'hold') {
+  const tileOk = (path: string, [x, y]: readonly [number, number]) => { if (!inBounds(map, x, y) || isSolid(map, x, y)) throw new BattleInputError(path, 'expected a standing tile on the map') }
+  if (['escort', 'hack', 'freeLeader'].includes(o.kind) && input.rulesVersion < 2) throw new BattleInputError('objective.kind', 'needs rules version 2')
+  if (o.kind === 'reach') tileOk('objective.tile', o.tile)
+  else if (o.kind === 'hold') {
     if (!(Number.isSafeInteger(o.rounds) && o.rounds >= 1 && o.rounds <= 30)) throw new BattleInputError('objective.rounds', 'expected 1–30')
-  } else if (o.kind === 'defeatLeader') {
-    if (input.units.filter((u) => u.side === 'enemy' && u.leader).length !== 1) throw new BattleInputError('objective', 'expected exactly one enemy leader')
+  } else if (o.kind === 'defeatLeader' || o.kind === 'freeLeader') {
+    const leaders = input.units.filter((u) => u.side === 'enemy' && u.leader)
+    if (leaders.length !== 1) throw new BattleInputError('objective', 'expected exactly one enemy leader')
+    if (o.kind === 'freeLeader' && leaders[0]!.hold === undefined) throw new BattleInputError('objective', 'the leader to free must be a heroine with a Hold')
+  } else if (o.kind === 'escort') {
+    if (!input.units.some((u) => u.id === o.unit && u.side === 'squad')) throw new BattleInputError('objective.unit', 'expected a squad unit')
+    tileOk('objective.tile', o.tile)
+  } else if (o.kind === 'hack') {
+    const terminals = (map.props ?? []).filter((p) => p.kind === 'terminal').length
+    if (!(Number.isSafeInteger(o.count) && o.count >= 1 && o.count <= terminals)) throw new BattleInputError('objective.count', `expected 1–${terminals} terminals`)
   } else if (o.kind !== 'defeatAll') throw new BattleInputError('objective.kind', 'unknown objective')
 }
 
 const beaten = (u: UnitState) => u.status !== 'active'
+const leaderOf = (state: BattleState) => state.units.find((u) => u.side === 'enemy' && state.input.units.find((i) => i.id === u.id)?.leader)
 
 /** The objective's progress as a number out of a target, for the objective cue. */
 export function objectiveProgress(state: BattleState): { value: number; of: number } {
   const o: Objective = state.input.objective
   const enemies = state.units.filter((u) => u.side === 'enemy')
+  const on = (id: string | null, t: readonly [number, number]) => state.units.some((u) => (id === null ? u.side === 'squad' : u.id === id) && u.status === 'active' && u.x === t[0] && u.y === t[1])
   if (o.kind === 'defeatAll') return { value: enemies.filter(beaten).length, of: enemies.length }
   if (o.kind === 'defeatLeader') return { value: enemies.some((u) => beaten(u) && state.input.units.find((i) => i.id === u.id)?.leader) ? 1 : 0, of: 1 }
   if (o.kind === 'hold') return { value: Math.min(o.rounds, Math.floor(state.time / TUNING.roundTicks)), of: o.rounds }
-  return { value: state.units.some((u) => u.side === 'squad' && u.status === 'active' && u.x === o.tile[0] && u.y === o.tile[1]) ? 1 : 0, of: 1 }
+  if (o.kind === 'escort') return { value: on(o.unit, o.tile) ? 1 : 0, of: 1 }
+  if (o.kind === 'hack') return { value: Math.min(o.count, state.field?.hacked.length ?? 0), of: o.count }
+  if (o.kind === 'freeLeader') return { value: leaderOf(state)?.status === 'freed' ? 1 : 0, of: 1 }
+  return { value: on(null, o.tile) ? 1 : 0, of: 1 }
 }
 
-/** Ends the battle if the objective is met or every squad unit is out; beating every enemy always wins. */
+/** Rules version 2's ways to fail: the escort is out, or the leader to free was broken instead. */
+function failed(state: BattleState): boolean {
+  const o = state.input.objective
+  if (o.kind === 'escort') return unitById(state, o.unit).status !== 'active'
+  if (o.kind === 'freeLeader') {
+    const l = leaderOf(state)
+    return l?.status === 'down' || l?.status === 'out'
+  }
+  return false
+}
+
+/** Ends the battle if the objective is met or failed, or every squad unit is out; beating every enemy wins otherwise. */
 function settle(state: BattleState, cues: Cue[]): boolean {
   if (state.result) return true
   const progress = objectiveProgress(state)
   const enemiesBeaten = state.units.filter((u) => u.side === 'enemy').every(beaten)
   const squadBeaten = state.units.filter((u) => u.side === 'squad').every(beaten)
-  const winner = progress.value >= progress.of || enemiesBeaten ? 'squad' : squadBeaten ? 'enemy' : null
+  const winner = failed(state) ? 'enemy' : progress.value >= progress.of || enemiesBeaten ? 'squad' : squadBeaten ? 'enemy' : null
   if (!winner) return false
-  state.result = { winner, reason: winner === 'squad' ? 'objective' : 'defeated' }
+  state.result = { winner, reason: winner === 'squad' ? 'objective' : 'defeated', ...(v2(state) ? { enemies: outcomes(state) } : {}) }
   state.active = null
   cues.push({ kind: 'ended', winner, reason: state.result.reason })
   return true
 }
 
-/** Runs the clock to the next turn: down units extract on theirs, and a held objective may be met on the way. */
+/** Runs the clock to the next turn: timers run out, a signalled volley lands, down units extract on theirs, stunned
+ * units lose theirs, idle turrets sit theirs out, and a held objective may be met on the way. */
 function startNextTurn(state: BattleState, cues: Cue[]): void {
   for (;;) {
     if (settle(state, cues)) return
@@ -87,10 +147,15 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
     const before = objectiveProgress(state)
     state.time += next.ticks
     advanceClocks(state.units, state, next.ticks)
+    if (state.field) {
+      expire(state, cues)
+      fireVolley(state, cues)
+    }
     const after = objectiveProgress(state)
     if (state.input.objective.kind === 'hold' && after.value !== before.value) cues.push({ kind: 'objective', objective: 'hold', value: after.value, of: after.of })
     if (settle(state, cues)) return
     const u = unitById(state, next.id)
+    if (u.status !== 'active' && u.status !== 'down') continue
     if (u.status === 'down') {
       // Not rebooted by the end of her next turn: she extracts (TC25).
       u.status = 'out'
@@ -99,6 +164,16 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
       cues.push({ kind: 'extracted', unit: u.id })
       continue
     }
+    const idle = state.input.units.find((i) => i.id === u.id)!.fixed && lightsOut(state)
+    if (u.stunned || idle) {
+      cues.push({ kind: 'skipped', unit: u.id, why: u.stunned ? 'stunned' : 'idle' })
+      delete u.stunned
+      startOwnTurn(state, u.id)
+      u.clock = 0
+      state.turn += 1
+      continue
+    }
+    if (v2(state)) startOwnTurn(state, u.id)
     state.active = u.id
     cues.push({ kind: 'turnStarted', unit: u.id, round: roundAt(state.time) })
     const from = u.charge
@@ -114,12 +189,15 @@ export function startBattle(input: BattleInput): { state: BattleState; cues: Cue
   const units: UnitState[] = input.units.map((u) => {
     const [x, y] = (u.side === 'squad' ? input.map.spawns.squad : input.map.spawns.enemy)[u.spawn]!
     const maxHp = maxHpOf(u)
-    return {
+    const unit: UnitState = {
       id: u.id, side: u.side, x, y, facing: u.facing, hp: { ...maxHp }, maxHp, charge: TUNING.charge.start, clock: 0, link: u.link,
       status: 'active', holdOnUsed: false, ammo: u.loadout.back.kind === 'launcher' ? u.loadout.back.ammo ?? 0 : 0, turns: 0,
     }
+    if (u.hold === 'anchor' || u.hold === 'collar') unit.holdHp = u.holdHp ?? TUNING.holdHp
+    return unit
   })
   const state: BattleState = { input, time: 0, turn: 0, active: null, units, result: null }
+  if (input.rulesVersion >= 2) state.field = newField(state)
   const cues: Cue[] = []
   startNextTurn(state, cues)
   return { state, cues }
@@ -127,8 +205,28 @@ export function startBattle(input: BattleInput): { state: BattleState; cues: Cue
 
 export const createBattle = (input: BattleInput): BattleState => startBattle(input).state
 
+function cloneField(f: FieldState): FieldState {
+  return {
+    ...f, states: { ...f.states }, doors: { ...f.doors }, lifts: { ...f.lifts }, burst: [...f.burst], barriers: f.barriers.map((b) => ({ ...b })),
+    hacked: [...f.hacked], volley: { ...f.volley, marked: [...f.volley.marked] }, items: { ...f.items },
+  }
+}
+
 function clone(state: BattleState): BattleState {
-  return { ...state, units: state.units.map((u) => ({ ...u, hp: { ...u.hp } })), result: state.result && { ...state.result } }
+  const next: BattleState = { ...state, units: state.units.map((u) => ({ ...u, hp: { ...u.hp } })), result: state.result && { ...state.result } }
+  if (state.field) next.field = cloneField(state.field)
+  return next
+}
+
+/** Fire burns the Legs (F: a Fire Coat halves it); current hits the Core and ignores Coats. */
+function terrainHarm(state: BattleState, u: UnitState, by: 'fire' | 'live', cues: Cue[]): void {
+  if (u.status !== 'active') return
+  const t = TUNING.terrain
+  let part: 'legs' | 'core' = by === 'fire' ? 'legs' : 'core'
+  if (part === 'legs' && u.hp.legs <= 0) part = 'core'
+  const coat = by === 'fire' && state.input.units.find((i) => i.id === u.id)!.loadout.coat === 'F'
+  const amount = by === 'fire' ? Math.max(TUNING.minDamage, Math.floor((t.fireDamage * (coat ? TUNING.coatPct : 100)) / 100)) : t.liveDamage
+  harm(state, u, part, amount, cues, (broke) => ({ kind: 'burn', unit: u.id, part, amount, by, broke }))
 }
 
 /** One action: the next state and its cues, or an error and the state unchanged. */
@@ -140,6 +238,20 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     unitById(next, action.unit).link = action.on
     return { state: next, cues: [{ kind: 'linked', unit: action.unit, on: action.on }], error: null }
   }
+  if (action.kind === 'bench') {
+    if (!v2(state)) return { state, cues: [], error: 'no bench in rules version 1' }
+    const error = benchError(state, action.unit, action.role, action.at)
+    if (error) return { state, cues: [], error }
+    const next = clone(state)
+    const cues: Cue[] = []
+    callBench(next, action.unit, action.role, action.at, cues)
+    if (unitById(next, action.unit).status !== 'active') {
+      next.active = null
+      next.turn += 1
+      startNextTurn(next, cues)
+    } else settle(next, cues)
+    return { state: next, cues, error: null }
+  }
   if (action.kind !== 'turn') return { state, cues: [], error: 'unknown action' }
   const checked = checkTurn(state, action)
   if ('error' in checked) return { state, cues: [], error: checked.error }
@@ -147,15 +259,24 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
   const cues: Cue[] = []
   const u = unitById(next, action.unit)
   const progressBefore = objectiveProgress(next)
+  if (action.dash) {
+    spendCharge(u, TUNING.back.dash, 'dash', cues)
+    cues.push({ kind: 'dash', unit: u.id })
+  }
   if (checked.reach.path.length > 1) {
     const [x, y] = checked.reach.to
     u.x = x
     u.y = y
     cues.push({ kind: 'moved', unit: u.id, path: checked.reach.path })
+    if (next.field) {
+      const live = liveTiles(next)
+      for (const t of checked.reach.path.slice(1)) if (live.has(keyOf(t[0], t[1]))) terrainHarm(next, u, 'live', cues)
+    }
   }
   let restart = 0
-  const reached = next.input.objective.kind === 'reach' && objectiveProgress(next).value === 1
-  if (!reached) {
+  const o = next.input.objective.kind
+  const reached = (o === 'reach' || o === 'escort') && objectiveProgress(next).value === 1
+  if (!reached && u.status === 'active') {
     const act = action.act
     if (act.kind === 'attack') resolveAttack(next, u.id, act.with, act.target, act.aim, cues)
     else if (act.kind === 'wait') {
@@ -164,19 +285,33 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
       cues.push({ kind: 'waited', unit: u.id })
       if (u.charge !== from) cues.push({ kind: 'charge', unit: u.id, from, to: u.charge, why: 'wait' })
       restart = TUNING.waitClock
-    }
+    } else if (act.kind === 'tech') resolveTech(next, u.id, act.tech, act.target, cues)
+    else if (act.kind === 'hack') resolveHack(next, u.id, act.terminal, cues)
+    else if (act.kind === 'barrier') placeBarrier(next, u.id, act.at, cues)
+    else if (act.kind === 'mend') mend(next, u.id, act.target, act.part, cues)
+    else if (act.kind === 'reboot') reboot(next, u.id, act.target, cues)
+    else if (act.kind === 'item') useItem(next, u.id, act, cues)
     if (u.status === 'active') {
       u.facing = action.face
       cues.push({ kind: 'faced', unit: u.id, facing: action.face })
     }
+    if (next.field && !next.result) {
+      const here = next.field.states[keyOf(u.x, u.y)]
+      if (here?.kind === 'fire') terrainHarm(next, u, 'fire', cues)
+      if (liveTiles(next).has(keyOf(u.x, u.y))) terrainHarm(next, u, 'live', cues)
+    }
+  }
+  // Surge reads whether her last turn was a Wait; only a Surge unit carries the flag.
+  if (v2(next) && next.input.units.find((i) => i.id === u.id)!.stride === 'surge') {
+    if (action.act.kind === 'wait' && !reached) u.waited = true
+    else delete u.waited
   }
   u.clock = restart
   u.turns += 1
   next.turn += 1
   next.active = null
   const progressAfter = objectiveProgress(next)
-  const kind = next.input.objective.kind
-  if (kind !== 'hold' && progressAfter.value !== progressBefore.value) cues.push({ kind: 'objective', objective: kind, value: progressAfter.value, of: progressAfter.of })
+  if (o !== 'hold' && progressAfter.value !== progressBefore.value) cues.push({ kind: 'objective', objective: o, value: progressAfter.value, of: progressAfter.of })
   startNextTurn(next, cues)
   return { state: next, cues, error: null }
 }

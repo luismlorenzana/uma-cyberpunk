@@ -24,8 +24,10 @@ function pick(state: Pick<BattleState, 'input'>, clocks: readonly Clock[], turn:
   return best && { clock: best.clock, ticks: best.ticks }
 }
 
+const ticking = (u: UnitState) => u.status === 'active' || u.status === 'down'
+
 const clocksOf = (state: Pick<BattleState, 'input' | 'units'>): Clock[] =>
-  state.units.filter((u) => u.status !== 'out').map((u) => {
+  state.units.filter(ticking).map((u) => {
     const input = inputOf(state, u.id)
     return { id: u.id, clock: u.clock, rate: rateOf(input), speed: input.bands.speed }
   })
@@ -38,7 +40,7 @@ export function nextTurn(state: Pick<BattleState, 'input' | 'units'>, turn: numb
 
 /** Fills every clock by `ticks`. */
 export function advanceClocks(units: UnitState[], state: Pick<BattleState, 'input'>, ticks: number): void {
-  for (const u of units) if (u.status !== 'out') u.clock += rateOf(inputOf(state, u.id)) * ticks
+  for (const u of units) if (ticking(u)) u.clock += rateOf(inputOf(state, u.id)) * ticks
 }
 
 /**

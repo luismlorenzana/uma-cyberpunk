@@ -4,7 +4,12 @@ import { coverFor, crossfireFor, damageOf, strikeOf } from './attack'
 import { applyBattleAction } from './battle'
 import { RIG, S, W } from './fixtures'
 import { reachable } from './move'
-import { facingOf, inReach, lineOfFire } from './sight'
+import { facingOf, inReach as reachOn, lineOfFire as lineOn } from './sight'
+import { mapBoard } from './terrain'
+import type { BattleMap, Tile as T, Weapon } from './types'
+
+const lineOfFire = (map: BattleMap, a: T, b: T) => lineOn(mapBoard(map), a, b)
+const inReach = (map: BattleMap, w: Weapon, a: T, b: T) => reachOn(mapBoard(map), w, a, b)
 import { edit, setup, unitOf } from './test-kit'
 import { TUNING } from './tuning'
 import type { Cue } from './types'

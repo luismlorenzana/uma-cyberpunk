@@ -5,7 +5,9 @@ What the game **is**, as built. Every packet that ships a rule writes or updates
 | Page | What | Visual page |
 |---|---|---|
 | [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
-| [The battle, core rules](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break, objectives, the forecast, and the tuning table, live (CY4) | [battle.html](previews/battle.html) |
+| [The battle](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break; the roles' Back units, Tech, chance skills, items, Stride, the bench call; objectives, the forecast, and the tuning tables, live (CY4, CY5) | [battle.html](previews/battle.html) |
+| [Terrain, props and terminals](terrain.md) | The five tile states and how they spread, props, cover and grating, terminals, the terrain card (CY5) | [terrain.html](previews/terrain.html) |
+| [The Holds and the factions](factions.md) | How heroines are freed, and the Steel Muster's reload, volley and pinning fire (CY5) | [factions.html](previews/factions.html) |
 
 Specs and intent live in [docs/design/](../design/). Where they differ from this manual, the manual and the code win.
 

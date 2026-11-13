@@ -37,9 +37,10 @@ export const RIG = {
 export const BANDS: Bands = { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 }
 
 export function unit(id: string, side: Side, spawn: number, opts: Partial<Omit<UnitInput, 'id' | 'side' | 'spawn'>> = {}): UnitInput {
+  const { bands, chargeCap, link, facing, loadout, leader, ...rest } = opts
   return {
-    id, side, spawn, bands: { ...BANDS, ...opts.bands }, chargeCap: opts.chargeCap ?? 3, link: opts.link ?? true, facing: opts.facing ?? (side === 'squad' ? 'N' : 'S'),
-    loadout: opts.loadout ?? RIG.striker(), ...(opts.leader ? { leader: true } : {}),
+    id, side, spawn, bands: { ...BANDS, ...bands }, chargeCap: chargeCap ?? 3, link: link ?? true, facing: facing ?? (side === 'squad' ? 'N' : 'S'),
+    loadout: loadout ?? RIG.striker(), ...(leader ? { leader: true } : {}), ...rest,
   }
 }
 
@@ -67,8 +68,19 @@ export const OPEN: BattleMap = {
   spawns: { squad: [[0, 7], [1, 7], [2, 7], [3, 7], [4, 7]], enemy: [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0]] },
 }
 
-export function battle(units: UnitInput[], opts: { map?: BattleMap; seed?: string; objective?: Objective } = {}): BattleInput {
-  return { rulesVersion: 1, seed: opts.seed ?? 'test', map: opts.map ?? OPEN, objective: opts.objective ?? { kind: 'defeatAll' }, units }
+export function battle(units: UnitInput[], opts: { map?: BattleMap; seed?: string; objective?: Objective; version?: number } & Pick<BattleInput, 'items' | 'bench' | 'factions'> = {}): BattleInput {
+  const { map, seed, objective, version, ...rest } = opts
+  return { rulesVersion: version ?? 1, seed: seed ?? 'test', map: map ?? OPEN, objective: objective ?? { kind: 'defeatAll' }, units, ...rest }
+}
+
+/** Rules version 2's stand-in rigs (CY5): the Deck, the Med unit, a flamer. */
+export const RIG2 = {
+  netrunner: (): Loadout => ({ ...base(), back: { kind: 'deck', load: 2 }, rightHand: W.rifle }),
+  medic: (): Loadout => ({ ...base(), back: { kind: 'med', load: 2 }, rightHand: W.rifle }),
+  bulwark: (): Loadout => ({ ...base(), back: { kind: 'bulwark', load: 3, capacity: 4 }, leftHand: S.buckler, rightHand: W.knuckles }),
+  thruster: (): Loadout => ({ ...base(), core: { load: 2 }, back: { kind: 'thruster', load: 2 }, rightHand: W.blade }),
+  flamer: (): Loadout => ({ ...base(), rightHand: { kind: 'weapon', band: 'short', type: 'F', power: 4, accuracy: 80, range: [1, 2], hits: 3, load: 3 } }),
+  turret: (): Loadout => ({ ...base(), core: { load: 4 }, legs: { load: 0 }, rightHand: W.rifle }),
 }
 
 /** A map with spawns placed where a test wants its units: `squad` and `enemy` tiles, the rest of the map open. */
