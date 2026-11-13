@@ -1,8 +1,8 @@
 // The story's strict parser (CY9, uma-quest's way): every shape checked, unknown keys refused, and every error names its
 // file and path, as `chapters/w1-ch1.json: scenes[0].steps[3].slot.lines["1002"]: expected text of 160 characters at most`.
 import type { Role } from '@cyber/battle'
-import type { Call, CastMember, Casting, Chapter, ChoiceOption, EnemySlot, Layer, Location, LogFile, Mission, Scene, Step, StoryPack, Trigger, World } from './types'
-import { LAYERS, MISSION_OBJECTIVES } from './types'
+import type { BondFile, Call, CaptainOption, CastMember, Casting, Chapter, ChoiceOption, EnemySlot, Layer, Location, LogFile, Mission, Scene, Step, StoryPack, Tone, Trigger, World } from './types'
+import { LAYERS, MISSION_OBJECTIVES, TONES } from './types'
 
 export class StoryParseError extends Error {
   readonly file: string
@@ -90,12 +90,23 @@ class P {
       case 'join': case 'aboard': return { kind, outfit: this.outfit(x, p) }
       case 'call': return { kind, call: this.slug(x, p) }
       case 'battle': return { kind, mission: this.slug(x, p) }
+      case 'captain': {
+        const options = this.list(x, p, (c, cp) => this.captainOption(c, cp), 3)
+        if (options.length < 2) this.fail(p, 'expected two or three options')
+        return { kind, options }
+      }
+      case 'path': { const o = this.object(x, p, ['trust', 'heart']); return { kind, trust: this.steps(o.trust, `${p}.trust`), heart: this.steps(o.heart, `${p}.heart`) } }
       default: return this.fail(path, `unknown step kind ${kind}`)
     }
   }
   option(v: unknown, path: string): ChoiceOption {
     const o = this.object(v, path, ['text', 'lead', 'then'], ['text'])
     return { text: this.text(o.text, `${path}.text`, 60), ...(o.lead !== undefined ? { lead: this.slug(o.lead, `${path}.lead`) } : {}), then: o.then === undefined ? [] : this.steps(o.then, `${path}.then`) }
+  }
+  captainOption(v: unknown, path: string): CaptainOption {
+    const o = this.object(v, path, ['tone', 'text', 'rapport', 'then'], ['tone', 'text'])
+    if (!TONES.includes(o.tone as Tone)) this.fail(`${path}.tone`, `expected one of ${TONES.join(', ')}`)
+    return { tone: o.tone as Tone, text: this.text(o.text, `${path}.text`, 80), rapport: o.rapport === undefined ? 0 : this.int(o.rapport, `${path}.rapport`, 0, 30), then: o.then === undefined ? [] : this.steps(o.then, `${path}.then`) }
   }
   steps(v: unknown, path: string): Step[] { return this.list(v, path, (s, p) => this.step(s, p), 400) }
 }
@@ -187,7 +198,7 @@ export function parseWorld(value: unknown, file = 'world'): World {
 
 export function parseCasting(value: unknown, file = 'casting.json'): Casting {
   const p = new P(file)
-  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
+  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'bondGates', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
   p.version(o)
   const casting: Casting = {
     schemaVersion: 1,
@@ -202,6 +213,13 @@ export function parseCasting(value: unknown, file = 'casting.json'): Casting {
       return { board: p.slug(x.board, `${hp}.board`), faction: p.slug(x.faction, `${hp}.faction`), hold: x.hold as 'anchor' | 'collar' | 'none' }
     }, 200),
     minor: o.minor === undefined ? [] : p.list(o.minor, 'minor', (x, xp) => p.slug(x, xp), 200),
+  }
+  if (o.bondGates !== undefined) {
+    const gates = p.object(o.bondGates, 'bondGates', ['4', '6', '8', '10'], [])
+    casting.bondGates = Object.fromEntries(Object.entries(gates).map(([rank, key]) => {
+      if (typeof key !== 'string' || !/^(chapter|mission|file):[a-z0-9][a-z0-9-]{0,63}$/.test(key)) p.fail(`bondGates["${rank}"]`, 'expected a key: chapter:…, mission:… or file:…')
+      return [rank, key as string]
+    }))
   }
   if (o.roles !== undefined) {
     const roles = p.object(o.roles, 'roles', Object.keys((o.roles ?? {}) as Obj), [])
@@ -250,11 +268,31 @@ export function parseCall(value: unknown, file = 'call'): Call {
   return c
 }
 
+/** A bond file (CY13): her scenes at ranks 2, 4, 6, 8 and 10, and her epilogue card. */
+export function parseBondFile(value: unknown, file = 'bond'): BondFile {
+  const p = new P(file)
+  const o = p.object(value, 'bond', ['schemaVersion', 'outfit', 'scenes', 'epilogue', 'layer'], ['schemaVersion', 'outfit', 'scenes'])
+  p.version(o)
+  const b: BondFile = {
+    schemaVersion: 1, outfit: p.outfit(o.outfit, 'outfit'),
+    scenes: p.list(o.scenes, 'scenes', (s, sp) => {
+      const x = p.object(s, sp, ['rank', 'place', 'steps'])
+      const rank = p.int(x.rank, `${sp}.rank`, 2, 10)
+      if (rank % 2 !== 0) p.fail(`${sp}.rank`, 'expected 2, 4, 6, 8 or 10')
+      return { rank, place: p.slug(x.place, `${sp}.place`), steps: p.steps(x.steps, `${sp}.steps`) }
+    }, 5),
+  }
+  if (o.epilogue !== undefined) b.epilogue = p.text(o.epilogue, 'epilogue', 400)
+  const layer = p.layer(o.layer, 'layer')
+  if (layer) b.layer = layer
+  return b
+}
+
 /** The pack from its files, by path relative to content/stories/ (`casting.json`, `worlds/…`, `chapters/…`, `log/…`,
  * `calls/…`); other files are left alone. Parse errors are collected, not thrown, so the check can list them all. */
 export function parsePack(files: Record<string, unknown>): { pack: StoryPack | null; errors: StoryParseError[] } {
   const errors: StoryParseError[] = []
-  const pack: StoryPack = { casting: { schemaVersion: 1, leads: [], crewOrder: [], heroines: [], minor: [] }, worlds: {}, chapters: {}, files: {}, calls: {} }
+  const pack: StoryPack = { casting: { schemaVersion: 1, leads: [], crewOrder: [], heroines: [], minor: [] }, worlds: {}, chapters: {}, files: {}, calls: {}, bonds: {} }
   let casting = false
   const id = (path: string) => path.split('/').pop()!.replace(/\.json$/, '')
   for (const [path, value] of Object.entries(files).sort(([a], [b]) => a.localeCompare(b))) {
@@ -264,6 +302,7 @@ export function parsePack(files: Record<string, unknown>): { pack: StoryPack | n
       else if (/^chapters\/[^/]+\.json$/.test(path)) { const c = parseChapter(value, path); if (c.id !== id(path)) throw new StoryParseError(path, 'id', `expected ${id(path)}, the file's name`); pack.chapters[c.id] = c }
       else if (/^log\/[^/]+\.json$/.test(path)) { const f = parseLogFile(value, path); if (f.id !== id(path)) throw new StoryParseError(path, 'id', `expected ${id(path)}, the file's name`); pack.files[f.id] = f }
       else if (/^calls\/[^/]+\.json$/.test(path)) { const c = parseCall(value, path); if (c.id !== id(path)) throw new StoryParseError(path, 'id', `expected ${id(path)}, the file's name`); pack.calls[c.id] = c }
+      else if (/^bonds\/[^/]+\.json$/.test(path)) { const b = parseBondFile(value, path); if (String(b.outfit) !== id(path)) throw new StoryParseError(path, 'outfit', `expected ${id(path)}, the file's name`); pack.bonds[String(b.outfit)] = b }
     } catch (e) {
       if (e instanceof StoryParseError) errors.push(e)
       else throw e

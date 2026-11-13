@@ -21,7 +21,7 @@ export function bandJobs(b: Record<'speed' | 'stamina' | 'power' | 'guts' | 'wit
   ]
 }
 
-export function Profile({ view, nameOf }: { view: CrewView; nameOf: (id: string) => string }) {
+export function Profile({ view, nameOf, bond }: { view: CrewView; nameOf: (id: string) => string; bond?: React.ReactNode }) {
   const navigate = useNavigate()
   const back = view.rig.back ? PARTS_BY_ID.get(view.rig.back) : undefined
   const setRole = (role: Role) => void updateSave((s) => updateMember(s, view.outfit, (m) => changeRole(m, role, view.rig)))
@@ -51,6 +51,7 @@ export function Profile({ view, nameOf }: { view: CrewView; nameOf: (id: string)
           ))}
         </div>
       </div>
+      {bond}
       <table className="w-full text-left text-[13px]">
         <thead className="text-white/50"><tr><th className="py-1 pr-2">Stat</th><th className="pr-2">Band</th><th className="pr-2">In combat</th><th>On the rig</th></tr></thead>
         <tbody>{bandJobs(view.bands).map((r) => (

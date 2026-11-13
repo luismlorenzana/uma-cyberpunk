@@ -74,8 +74,8 @@ Prompts, not a checklist. Take them in any order, skip what doesn't spark, add w
 
 | Hook | What the game does with it | The game's default without it |
 |---|---|---|
-| **The captain's lines** | Short choices in scenes, in three tones (warm, steady, wry) | Generic choices |
-| **Bond scenes** (TC57) | Five per lead at ranks 2, 4, 6, 8, 10; three for featured crew (2, 8, 10); at rank 8 she speaks first, then the player chooses Trust or Heart | Small talk from her tastes, and lines drawn from her cabin, Strain and last battle |
+| **The captain's lines** | **Live since CY13:** the `captain` step, two or three answers in three tones (warm, steady, wry), and `{captain}` and pronoun placeholders in any line | Generic choices |
+| **Bond scenes** (TC57) | **Live since CY13:** `bonds/<outfit>.json`, the `path` step, `bondGates`, an `epilogue` card. Five per lead at ranks 2, 4, 6, 8, 10; three for featured crew (2, 8, 10); at rank 8 she speaks first, then the player chooses Trust or Heart | Small talk from her tastes, and lines drawn from her cabin, Strain and last battle |
 | **Her tastes** (TC61) | Favourite and disliked decor style (Neon, Classic, Cozy, Sporty, Tech, Wild), favourite gift kind, two loved topics, a liked duty | Derived from her running style, role and stats |
 | **Partners** (TC58) | Canonical pairs who start with camaraderie | None; the player pairs anyone |
 | **Squads** (TC69) | Named squads with leaders and banners | Four numbered squads |

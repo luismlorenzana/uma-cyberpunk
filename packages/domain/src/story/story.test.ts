@@ -26,7 +26,42 @@ describe('the stand-in', () => {
     const scan = (steps: { kind: string; options?: { then: unknown[] }[] }[]) => { for (const s of steps) { kinds.add(s.kind); for (const o of s.options ?? []) scan(o.then as never) } }
     for (const c of Object.values(pack.chapters)) { for (const s of c.scenes) scan(s.steps as never); scan(c.debrief.steps as never) }
     for (const call of Object.values(pack.calls)) for (const b of call.branches) scan(b.then as never)
+    for (const b of Object.values(pack.bonds)) for (const s of b.scenes) scan(s.steps as never)
     expect([...kinds].sort()).toEqual([...STEP_KINDS].sort())
+  })
+})
+
+describe('bond scenes (CY13)', () => {
+  const base = () => JSON.parse(JSON.stringify(STAND_IN_FILES)) as Record<string, any>
+  const errorsOf = (files: Record<string, unknown>) => { const r = parsePack(files); return r.pack ? checkPack(r.pack).filter((f) => f.level === 'error').map((f) => `${f.file} ${f.where}: ${f.message}`) : r.errors.map((e) => e.message) }
+  it('reads the stand-in’s bond files, gates and epilogues', () => {
+    const pack = standIn()
+    expect(Object.keys(pack.bonds).sort()).toEqual(['9000001', '9000002'])
+    expect(pack.bonds['9000001']!.scenes.map((s) => s.rank)).toEqual([2, 4, 6, 8, 10])
+    expect(pack.casting.bondGates).toEqual({ '4': 'chapter:sw1-ch1', '6': 'chapter:sw2-ch1' })
+    expect(pack.bonds['9000002']!.epilogue).toMatch(/med bay/)
+  })
+  it('refuses a captain step with one option, a bad tone, a bond file under the wrong name and a bad gate key', () => {
+    const one = base(); one['bonds/9000002.json'].scenes[0].steps[1] = { captain: [{ tone: 'warm', text: 'Only one.' }] }
+    expect(errorsOf(one).join()).toMatch(/expected two or three options/)
+    const tone = base(); tone['bonds/9000002.json'].scenes[0].steps[1].captain[0].tone = 'flirty'
+    expect(errorsOf(tone).join()).toMatch(/tone: expected one of warm, steady, wry/)
+    const named = base(); named['bonds/9000003.json'] = named['bonds/9000002.json']
+    expect(errorsOf(named).join()).toMatch(/outfit: expected 9000003/)
+    const gate = base(); gate['casting.json'].bondGates = { '4': 'act-1' }
+    expect(errorsOf(gate).join()).toMatch(/bondGates\["4"\]/)
+  })
+  it('checks the path: once at rank 8, nowhere but 8 and 10; no battles in a bond scene; placeholders spelled right', () => {
+    const none = base(); none['bonds/9000002.json'].scenes[1].steps.pop()
+    expect(errorsOf(none).join()).toMatch(/exactly one path step/)
+    const early = base(); early['bonds/9000002.json'].scenes[0].steps.push({ path: { trust: [], heart: [] } })
+    expect(errorsOf(early).join()).toMatch(/only comes at rank 8/)
+    const fight = base(); fight['bonds/9000002.json'].scenes[0].steps.push({ battle: 'sw1-ch1-m1' })
+    expect(errorsOf(fight).join()).toMatch(/no battle step in a bond scene/)
+    const typo = base(); typo['bonds/9000002.json'].scenes[0].steps[0].line.text = 'Hello, {captian}.'
+    expect(errorsOf(typo).join()).toMatch(/unknown placeholder \{captian\}/)
+    const gateKey = base(); gateKey['casting.json'].bondGates = { '6': 'chapter:nowhere' }
+    expect(errorsOf(gateKey).join()).toMatch(/no chapter:nowhere/)
   })
 })
 

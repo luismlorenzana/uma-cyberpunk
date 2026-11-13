@@ -3,6 +3,7 @@
 // Hangar, and Strain. Every rule number comes from `@cyber/battle`; nothing here recomputes Load, Capacity or Move.
 import { bandOf, capacityOf, isLight, loadOf, maxHpOf, moveOf, TUNING, type Bands, type Loadout, type Role, type Stride, type Weapon } from '@cyber/battle'
 import type { AptitudeGrade, Stats, Strategy } from '@luismlorenzana/uma-data'
+import { newBond, type Bond } from './bonds'
 import { BACK_ROLE, loadoutOf, PARTS_BY_ID, partsFor, ROLE_BACK, rigProblem, type Part, type Rig } from './parts'
 
 export const ROLES: readonly Role[] = ['vanguard', 'striker', 'gunner', 'netrunner', 'medic']
@@ -52,7 +53,8 @@ export function defaultRole(tag: Role | undefined, info: OutfitInfo | null): Rol
 
 export interface Preset { name: string; rig: Rig }
 
-/** A crew member in the save (v4): her outfit, XP, role and rig once the player sets them, three saved loadouts, Strain. */
+/** A crew member in the save (v4, v5): her outfit, XP, role and rig once the player sets them, three saved loadouts, Strain,
+ * and from v5 her bond. */
 export interface CrewMember {
   outfit: number
   xp: number
@@ -64,13 +66,15 @@ export interface CrewMember {
   presets: Preset[]
   /** 0–3: at 3 she sits the next mission out, which clears it (TC27). */
   strain: number
+  /** Her bond with the captain (CY13). */
+  bond: Bond
 }
 
 export const MAX_PRESETS = 3
 export const STRAIN_REST = 3
 export const PRESET_NAME_MAX = 24
 
-export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0 })
+export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: newBond() })
 
 /** Her level: 1 + one a hundred XP, to 50. A placeholder curve until Phase 5's economy; levels change no numbers yet. */
 export const levelOf = (xp: number): number => Math.min(50, 1 + Math.floor(xp / 100))

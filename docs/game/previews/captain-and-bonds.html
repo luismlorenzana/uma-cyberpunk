@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The captain and bonds</title>
+<!-- Generated from docs/game/captain-and-bonds.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The captain and bonds</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-captain-tc55">The captain (TC55)</a><a class="h2" href="#the-watch">The watch</a><a class="h2" href="#bonds-tc56">Bonds (TC56)</a><a class="h2" href="#bond-scenes-tc57">Bond scenes (TC57)</a><a class="h2" href="#her-profile-and-the-log">Her profile and the Log</a><a class="h2" href="#the-save-v5">The save (v5)</a></nav>
+<main id="top">
+<h1 id="the-captain-and-bonds">The captain and bonds</h1>
+<blockquote><p><b>Status: 2026-11-13, CY13 (D22).</b> The player as the ship's captain (TC55), the watch every life-aboard budget counts by, and a bond with every Uma from rank 1 to 10 (TC56, TC57): rapport from battles, messages and bond scenes, the story's gates, the catch-up, and the Trust or Heart choice at rank 8. Cabins and visits come in CY14; the bonds' perks play in battle with rules version 3 (CY17). The design is <a href="../../design/life-aboard.md">life-aboard.md</a>.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>A new game names the captain</b> before anything plays: a name, pronouns (they by default) and the Romance setting. The captain is never drawn. Account changes all three later.</li><li><b>A watch</b> passes when a mission's results close and when the ship jumps. Never real time.</li><li><b>Every Uma aboard has a bond,</b> rank 1 to 10, shown as a ring on her profile and her roster tile. Rapport fills it: fighting, covering, joining a Crossfire, replying to her message after a battle, and the captain's choices in her bond scenes. Below the crew's median rank, rapport counts double.</li><li><b>Ranks 4, 6, 8 and 10 can wait on the story</b> (the casting's <code>bondGates</code>); rapport keeps filling, and the rank lands when the key is met.</li><li><b>Bond scenes</b> play from her profile once she reaches their rank, replay from the Log, and never go missing. At rank 8 she says what she hopes for, then the player chooses <b>Trust</b> or <b>Heart</b>; under <b>Friends only</b> it's always Trust. Both are equal in battle.</li></ul>
+<pre class="mermaid">flowchart LR
+  newgame[A new game] --&gt; captain[Name, pronouns, Romance] --&gt; opening[The opening scene]
+  battle[A battle's results] --&gt;|+20, +10 a cover, +10 a Crossfire| rapport
+  battle --&gt; inbox[Her message] --&gt;|Reply: +15| rapport
+  scene[Her bond scene] --&gt;|the captain's choice: 0–30| rapport
+  rapport[Rapport, doubled below the median] --&gt; rank[Bond rank 1–10]
+  gate[The story's gate for ranks 4, 6, 8, 10] -.-&gt;|waits until met| rank
+  rank --&gt; ready[Her next bond scene ready] --&gt; scene
+  rank --&gt;|rank 8| path[She speaks first: Trust or Heart]</pre>
+<h2 id="the-captain-tc55">The captain (TC55)</h2>
+<div class="scroll"><table><tr><th>Field</th><th>Holds</th><th>Default</th></tr><tr><td><b>Name</b></td><td>24 characters at most, trimmed</td><td>"Captain"</td></tr><tr><td><b>Pronouns</b></td><td>they, she or he</td><td>they</td></tr><tr><td><b>Romance</b></td><td>Ask (each Uma's rank-8 scene offers Trust or Heart) or Friends only (always Trust)</td><td>Ask</td></tr></table></div>
+<p>A new game, or a save from before CY13, shows the captain screen once, on the ship, before the opening; <b>Take command</b> saves it. Account's <b>Captain</b> panel changes any of the three.</p>
+<p><b>In scene text</b> the story writes <code>{captain}</code> and <code>{they}</code>, <code>{them}</code>, <code>{their}</code>, <code>{theirs}</code>, <code>{they're}</code> (or capitalised, <code>{They}</code>…), and the scene player fills them from the save. The story check refuses any other placeholder.</p>
+<h2 id="the-watch">The watch</h2>
+<p>A counter on the save: +1 when a mission's results close (won or lost) and +1 on a jump from the Bridge. Messages are per battle; CY14's visits, CY15's builds and CY16's duties count by it. No timers, no real time.</p>
+<h2 id="bonds-tc56">Bonds (TC56)</h2>
+<div class="scroll"><table><tr><th>Rank</th><th>To reach it</th><th>Gate</th></tr><tr><td>2</td><td>100 rapport</td><td>—</td></tr><tr><td>3</td><td>150</td><td>—</td></tr><tr><td>4</td><td>200</td><td><code>bondGates["4"]</code> if named</td></tr><tr><td>5</td><td>250</td><td>—</td></tr><tr><td>6</td><td>300</td><td><code>bondGates["6"]</code></td></tr><tr><td>7</td><td>350</td><td>—</td></tr><tr><td>8</td><td>400</td><td><code>bondGates["8"]</code></td></tr><tr><td>9</td><td>450</td><td>—</td></tr><tr><td>10</td><td>500</td><td><code>bondGates["10"]</code></td></tr></table></div>
+<p><b>Rapport:</b></p>
+<div class="scroll"><table><tr><th>Source</th><th>Rapport</th></tr><tr><td>A battle she fought (at its results)</td><td>+20</td></tr><tr><td>She covered an ally in it</td><td>+10, once a battle</td></tr><tr><td>She joined a Crossfire in it</td><td>+10, once a battle</td></tr><tr><td>A reply to her message after the battle</td><td>+15</td></tr><tr><td>A captain's choice in her bond scene</td><td>0–30, as the scene writes it</td></tr></table></div>
+<ul><li><b>The catch-up:</b> an Uma below the crew's median rank earns double, so a late recruit catches up.</li><li><b>Gates:</b> rapport keeps filling past a closed gate; the rank lands the moment the key is met (the ship checks on opening). The ring's next segment and the profile say which key it waits on.</li><li><b>Never lost:</b> rapport never decays. A replay from the Log changes nothing.</li><li><b>Only Umas aboard</b> take rapport; a lead fighting her own Chapter 1 starts at rank 1 when she comes aboard.</li></ul>
+<p><b>Her message:</b> after each battle, every Uma aboard who fought writes one line (a generic pool until the story writes hers), shown as <b>✉</b> on the ship. <b>Reply</b> pays +15 and reads it; a new battle replaces the unanswered ones.</p>
+<h2 id="bond-scenes-tc57">Bond scenes (TC57)</h2>
+<p>A bond scene is a story file's scene at rank 2, 4, 6, 8 or 10 (<a href="story.html#the-files">story.md</a>). Once she reaches a written rank, her roster tile shows <b>!</b> and her profile <b>Her rank N scene</b>; the lowest unplayed one comes first. It plays in the scene player, with two steps of its own:</p>
+<div class="scroll"><table><tr><th>Step</th><th>On screen</th></tr><tr><td><b>captain</b></td><td>The captain's two or three answers, each with its tone (♥ warm, ◆ steady, ~ wry); her last line stays above them</td></tr><tr><td><b>path</b></td><td>At rank 8: <b>Trust</b> (partners in arms) or <b>Heart</b> (a light romance), her line above, "both are equal in battle" below; under Friends only it doesn't appear</td></tr></table></div>
+<p><b>Her path</b> shows on her ring (◆ cyan, ♥ magenta) and names her rank-10 Resonance: <b>Resolve</b> for Trust, <b>Devotion</b> for Heart. <b>Her epilogue card</b> (the bond file's <code>epilogue</code>) appears in the Log once she reaches rank 10.</p>
+<h2 id="her-profile-and-the-log">Her profile and the Log</h2>
+<ul><li><b>The bond panel</b> on her profile: the ring, the rank and path, the rapport toward the next rank (or the key it waits on), the perks of each rank (lit as reached; played in battle from CY17), and her ready scene.</li><li><b>The roster</b> shows each Uma's rank (♦) and a <b>!</b> when a scene is ready.</li><li><b>The Log's Bonds tab</b> lists the bond scenes each Uma has played, to replay, and her epilogue card at rank 10.</li></ul>
+<div class="scroll"><table><tr><th>Rank</th><th>Perk (played from CY17)</th></tr><tr><td>3</td><td><b>Ready:</b> starts each battle with +1 Charge</td></tr><tr><td>5</td><td><b>Answer:</b> 1 Charge when an ally next to her suffers a Rig Break</td></tr><tr><td>7</td><td><b>Sure:</b> her chance skills +5%</td></tr><tr><td>8</td><td><b>Endure:</b> once a battle, a hit that would break her Core leaves it at 1</td></tr><tr><td>9</td><td><b>Steadfast:</b> one free Cover a battle</td></tr><tr><td>10</td><td><b>Resonance</b> (Resolve or Devotion): the captain calls her name</td></tr></table></div>
+<h2 id="the-save-v5">The save (v5)</h2>
+<div class="scroll"><table><tr><th>Field</th><th>Holds</th></tr><tr><td><code>captain</code></td><td><code>{ name, pronouns, romance, named }</code></td></tr><tr><td><code>watch</code></td><td>Watches passed</td></tr><tr><td><code>inbox</code></td><td>Umas whose message after the last battle has no reply yet</td></tr><tr><td>each crew record's <code>bond</code></td><td><code>{ rank, rapport, path, seen }</code>: the rank 1–10, rapport toward the next, <code>trust</code>, <code>heart</code> or null, the scene ranks played</td></tr></table></div>
+<p>A v4 save opens as v5 on the device: a default captain to name (the screen asks once), watch 0, an empty inbox, every Uma at rank 1, and <code>account.updatedAt</code> untouched.</p>
+<p class="foot">From <a href="../captain-and-bonds.md">docs/game/captain-and-bonds.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

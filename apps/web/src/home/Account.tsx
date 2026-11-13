@@ -3,10 +3,25 @@
 import { useAuth } from '@luismlorenzana/uma-kit/auth'
 import { Button, Panel } from '@luismlorenzana/uma-kit/ui'
 import { useEffect, useState } from 'react'
+import { captainName, type Captain } from '@cyber/domain'
+import { CaptainFields } from '../captain/CaptainSetup'
 import { safetyCopies, type SafetyCopy, type SafetyReason } from '../save/db'
-import { restoreSafetyCopy, seeReplaced, syncNow, useGame } from '../save/game'
+import { restoreSafetyCopy, seeReplaced, syncNow, updateSave, useGame } from '../save/game'
 import { Row } from './Home'
 import { shortTime, syncWords } from './sync-words'
+
+/** The captain (CY13): name, pronouns and the Romance setting, changeable any time. */
+function CaptainPanel({ captain }: { captain: Captain }) {
+  const [value, setValue] = useState({ name: captain.name, pronouns: captain.pronouns, romance: captain.romance })
+  const changed = value.name !== captain.name || value.pronouns !== captain.pronouns || value.romance !== captain.romance
+  return (
+    <>
+      <h2 className="font-display text-lg font-bold">Captain</h2>
+      <Panel><CaptainFields value={value} onChange={setValue} /></Panel>
+      <Button variant="secondary" disabled={!changed} onClick={() => void updateSave((s) => ({ ...s, captain: { ...value, name: captainName(value.name), named: true } }))}>Save the captain</Button>
+    </>
+  )
+}
 
 const REASON: Record<SafetyReason, string> = { replaced: 'Replaced by a newer save', restore: 'Before a restore', unreadable: 'Couldn’t be read' }
 
@@ -30,6 +45,7 @@ export function Account() {
           <Row label="Last backed up">{shortTime(game.lastSyncedAt)}</Row>
         </Panel>
         <Button variant="secondary" disabled={game.sync === 'syncing'} onClick={() => void syncNow()}>Sync now</Button>
+        {game.save && <CaptainPanel captain={game.save.captain} />}
         <h2 className="font-display text-lg font-bold">Safety copies</h2>
         {copies.length === 0 ? <p className="text-ink-soft">None on this phone.</p> : (
           <Panel>

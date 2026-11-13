@@ -6,6 +6,7 @@ import {
   afterMission as crewAfterMission, fillFile, finishedChapters, gainLead, newMember, resting, roomsOpenedBy, seeScene, setAnomaly, setFlag, type Chapter,
   type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
+import { afterBattleBonds } from '../bonds/bonds'
 
 export type Due = { kind: 'scene'; chapter: Chapter; scene: Scene } | { kind: 'mission'; chapter: Chapter; mission: Mission } | { kind: 'none' }
 
@@ -109,8 +110,9 @@ export function ensureWorld(save: Save, pack: StoryPack): Save {
   return { ...save, worlds: { ...save.worlds, current: first, known: { [first]: { cleared: [] } } } }
 }
 
+/** A jump: the ship is at the world, which is known from now on, and a watch passes (CY13). */
 export const travel = (save: Save, world: string): Save =>
-  ({ ...save, worlds: { ...save.worlds, current: world, known: save.worlds.known[world] ? save.worlds.known : { ...save.worlds.known, [world]: { cleared: [] } } } })
+  ({ ...save, watch: save.watch + 1, worlds: { ...save.worlds, current: world, known: save.worlds.known[world] ? save.worlds.known : { ...save.worlds.known, [world]: { cleared: [] } } } })
 
 /** Worlds a lead's chapter has opened (any chapter whose needs are met, on a world not yet known), so the star map shows
  * them once reachable. */
@@ -165,16 +167,19 @@ export const recordAction = (save: Save, action: unknown): Save =>
 export const finishBattle = (save: Save, won: boolean): Save => (save.mission ? withMission(save, { ...save.mission, step: 'results', won }) : save)
 /** Retry after a loss: the same squad and the same battle, from its start. */
 export const retry = (save: Save): Save => (save.mission?.battle ? withMission(save, { ...save.mission, step: 'battle', battle: { ...save.mission.battle, actions: [] }, won: null }) : save)
-/** Leaves the results: the crew takes its XP and Strain (the squad in full and +1 Strain, the bench half and a rest), then
- * a win counts the mission and goes aboard (its next scene) and a loss ends the mission. */
-export function closeResults(save: Save): Save {
+/** Leaves the results: the crew takes its XP and Strain (the squad in full and +1 Strain, the bench half and a rest), the
+ * Umas aboard who fought take the battle's rapport and send a message (CY13), a watch passes; then a win counts the
+ * mission and goes aboard (its next scene) and a loss ends the mission. */
+export function closeResults(save: Save, pack: StoryPack | null = null, rapport: ReadonlyMap<number, number> | null = null): Save {
   const m = save.mission
   if (!m) return save
-  const crew = crewAfterMission(save.crew, m.squad, rewards((m.battle?.input ?? null) as BattleInput | null, !!m.won).xp)
-  if (!m.won) return { ...save, crew, mission: null }
+  const input = (m.battle?.input ?? null) as BattleInput | null
+  const crew = crewAfterMission(save.crew, m.squad, rewards(input, !!m.won).xp)
+  const bonded = afterBattleBonds({ ...save, crew, watch: save.watch + 1 }, pack, rapport)
+  if (!m.won) return { ...bonded, mission: null }
   const missions = save.worlds.missions.includes(m.id) ? save.worlds.missions : [...save.worlds.missions, m.id]
   // The battle stays until the mission ends: a lead who fought it comes aboard at its XP (`joiningXp`).
-  return { ...save, crew, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard' } }
+  return { ...bonded, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard' } }
 }
 export const finishMission = (save: Save): Save => withMission(save, null)
 

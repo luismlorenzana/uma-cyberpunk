@@ -3,7 +3,7 @@
 // who has one, else its fallback; a choice and a Call wait for a pick and play its steps; a battle hands the mission to
 // the flow; the rest change the story at once. Skipping passes lines, emotes and waits until the next choice. No three.js
 // and no React: the screen comes in as a small interface, so it's tested headless.
-import type { Call, ChoiceOption, Scene, Speaker, Step, StoryPack } from '@cyber/domain'
+import type { BondPath, Call, CaptainOption, ChoiceOption, Romance, Scene, Speaker, Step, StoryPack } from '@cyber/domain'
 
 export interface SceneUi {
   /** Shows a line (by its speaker, or narration) and resolves when the player taps on. */
@@ -18,9 +18,24 @@ export interface SceneUi {
   battle(mission: string): Promise<void>
   /** A step that changes the story or the crew: flag, lead, file, anomaly, join, aboard. */
   effect(step: Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' }>): void
+  /** The captain's choice (CY13): resolves with the option picked. Without it, the first. */
+  captain?(options: readonly CaptainOption[]): Promise<number>
+  /** Trust or Heart (CY13). Without it, Trust. */
+  path?(): Promise<BondPath>
+  /** What a bond scene changes: rapport from a captain's choice, the path chosen. */
+  bond?(effect: BondEffect): void
 }
 
-export interface RunOptions { pack: StoryPack; squad: readonly number[]; skipping: () => boolean; stopSkipping: () => void }
+export type BondEffect = { kind: 'rapport'; amount: number } | { kind: 'path'; path: BondPath }
+
+export interface RunOptions {
+  pack: StoryPack
+  squad: readonly number[]
+  skipping: () => boolean
+  stopSkipping: () => void
+  /** The captain's Romance setting: with Friends only, a path step takes Trust without asking. */
+  romance?: Romance
+}
 
 /** An interjection slot's line (TC51): the first lead in the squad's order who has one, else the fallback. */
 export function slotLine(step: Extract<Step, { kind: 'slot' }>, squad: readonly number[]): { speaker: number | null; text: string } {
@@ -58,6 +73,22 @@ export async function playSteps(steps: readonly Step[], ui: SceneUi, o: RunOptio
         break
       }
       case 'battle': o.stopSkipping(); await ui.battle(step.mission); break
+      case 'captain': {
+        o.stopSkipping()
+        const i = ui.captain ? await ui.captain(step.options) : 0
+        const option = step.options[i]
+        if (!option) break
+        if (option.rapport) ui.bond?.({ kind: 'rapport', amount: option.rapport })
+        await playSteps(option.then, ui, o)
+        break
+      }
+      case 'path': {
+        o.stopSkipping()
+        const path: BondPath = o.romance === 'friends' || !ui.path ? 'trust' : await ui.path()
+        ui.bond?.({ kind: 'path', path })
+        await playSteps(path === 'trust' ? step.trust : step.heart, ui, o)
+        break
+      }
       default: ui.effect(step)
     }
   }

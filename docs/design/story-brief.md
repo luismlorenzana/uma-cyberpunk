@@ -229,7 +229,11 @@ content never does.
 > `roles`, each Uma's authored role by outfit id (`{ "1001": "medic" }`; `vanguard`, `striker`, `gunner`, `netrunner` or
 > `medic`); an Uma untagged takes her running style's (Front Striker, Pace Vanguard, Late Gunner, End Netrunner), so tag
 > every Medic. **Since CY10 (D14):** a `battle` step is its scene's last step; what follows goes in a scene triggered
-> `after` the mission. Further changes are logged and this section updated.
+> `after` the mission. **Since CY13 (D22):** bond scenes are live: `bonds/<outfit>.json` (scenes at ranks 2, 4, 6, 8,
+> 10, and an `epilogue`), the `captain` step (two or three answers in a tone, with rapport) and the `path` step (Trust or
+> Heart, at rank 8), `bondGates` in the casting, and `{captain}`, `{they}`, `{them}`, `{their}`, `{theirs}`, `{they're}`
+> in any line ([the manual's captain-and-bonds page](../game/captain-and-bonds.md)). Further changes are logged and this
+> section updated.
 
 **Where the files live** (the ignored `content/`, on the same disk as the repo, so both sessions see them):
 

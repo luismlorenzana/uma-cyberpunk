@@ -7,6 +7,7 @@ import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { BattleView } from '../battle/BattleView'
+import { battleRapport } from '../bonds/battleRapport'
 import { resume } from '../battle/session'
 import { useMaster } from '../master/master'
 import { infoFrom, memberView, type CrewView } from '../crew/view'
@@ -86,7 +87,10 @@ function Mission({ layout }: { layout: StageLayout }) {
         <p className="mt-2 text-[12px] text-white/50">The squad takes the XP and a point of Strain; the crew aboard takes half and rests. The economy comes in Phase 5: credits and salvage are plain numbers for now.</p>
         <div className="mt-3 flex gap-2">
           {!won && <button type="button" className={primary} onClick={() => void updateSave(retry)}>Retry</button>}
-          <button type="button" className={won ? primary : secondary} onClick={() => void updateSave(closeResults).then(() => { if (!won) void navigate('/') })}>{won ? 'Continue' : 'Back to the ship'}</button>
+          <button type="button" className={won ? primary : secondary} onClick={() => {
+            const rapport = m.battle ? battleRapport(m.battle.input as BattleInput, m.battle.actions as BattleAction[]) : null
+            void updateSave((s) => closeResults(s, pack, rapport)).then(() => { if (!won) void navigate('/') })
+          }}>{won ? 'Continue' : 'Back to the ship'}</button>
         </div>
       </div>,
     )

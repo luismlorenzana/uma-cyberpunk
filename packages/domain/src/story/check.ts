@@ -22,6 +22,8 @@ export function* walkSteps(steps: readonly Step[], path: string): Generator<{ st
     const p = `${path}[${i}]`
     yield { step, path: p }
     if (step.kind === 'choice') for (const [j, o] of step.options.entries()) yield* walkSteps(o.then, `${p}.choice[${j}].then`)
+    if (step.kind === 'captain') for (const [j, o] of step.options.entries()) yield* walkSteps(o.then, `${p}.captain[${j}].then`)
+    if (step.kind === 'path') { yield* walkSteps(step.trust, `${p}.path.trust`); yield* walkSteps(step.heart, `${p}.path.heart`) }
   }
 }
 
@@ -46,6 +48,7 @@ export function layersOf(pack: StoryPack): Record<string, Layer> {
   for (const c of Object.values(pack.chapters)) out[`chapter:${c.id}`] = c.layer ?? (hasScripted(c) ? 'scripted' : 'skeleton')
   for (const f of Object.values(pack.files)) out[`file:${f.id}`] = f.layer ?? 'scripted'
   for (const c of Object.values(pack.calls)) out[`call:${c.id}`] = c.layer ?? 'scripted'
+  for (const b of Object.values(pack.bonds)) out[`bond:${b.outfit}`] = b.layer ?? 'scripted'
   return out
 }
 
@@ -110,6 +113,44 @@ export function checkPack(pack: StoryPack): Finding[] {
     } else if (aboard > 0) err(file, 'scenes', 'only a Chapter 1 has an aboard step')
   }
   for (const call of Object.values(pack.calls)) call.voters.forEach((v, i) => { if (!leads.has(v.outfit)) err(`calls/${call.id}.json`, `voters[${i}].outfit`, `${v.outfit} isn't a lead`) })
+  // Bonds (CY13): gates name real keys; each file's scenes at distinct ranks; the path only at rank 8 (or 10 to change
+  // it), exactly once at 8; no battles or arrivals in a bond scene; the captain's placeholders spelled right.
+  for (const [rank, k] of Object.entries(pack.casting.bondGates ?? {})) if (!key(k)) err('casting.json', `bondGates["${rank}"]`, `no ${k}`)
+  const crew = new Set([...leads, ...pack.casting.crewOrder])
+  for (const b of Object.values(pack.bonds)) {
+    const file = `bonds/${b.outfit}.json`
+    if (!crew.has(b.outfit)) todo(file, 'outfit', `${b.outfit} isn't a lead or in the crew order`)
+    const ranks = new Set<number>()
+    b.scenes.forEach((sc, i) => {
+      if (ranks.has(sc.rank)) err(file, `scenes[${i}].rank`, `a second scene at rank ${sc.rank}`)
+      ranks.add(sc.rank)
+      const paths = [...walkSteps(sc.steps, `scenes[${i}].steps`)].filter((w) => w.step.kind === 'path')
+      if (sc.rank === 8 && paths.length !== 1) err(file, `scenes[${i}]`, 'the rank-8 scene has exactly one path step (Trust or Heart)')
+      if (sc.rank !== 8 && sc.rank !== 10 && paths.length) err(file, paths[0]!.path, 'a path step only comes at rank 8, or at 10 to change it')
+      for (const { step, path: p } of walkSteps(sc.steps, `scenes[${i}].steps`)) {
+        if (step.kind === 'battle' || step.kind === 'aboard' || step.kind === 'join') err(file, p, `no ${step.kind} step in a bond scene`)
+        if (step.kind === 'slot') for (const k of Object.keys(step.lines)) if (!leads.has(Number(k))) err(file, `${p}.slot.lines["${k}"]`, `${k} isn't a lead`)
+      }
+      const secs = sceneSeconds(sc)
+      if (secs > 150) todo(file, `scenes[${i}]`, `likely ${Math.round(secs / 60)} minutes; bond scenes run one to two (TC57)`)
+    })
+  }
+  for (const l of pack.casting.leads) if (!pack.bonds[String(l.outfit)]) todo('casting.json', `leads.${l.outfit}`, 'no bond scenes yet (TC57)')
+  // The captain's placeholders (TC55), anywhere a line is written.
+  const placeholder = /\{([^}]*)\}/g
+  const okWord = /^(captain|they|them|their|theirs|they're)$/i
+  const texts: { file: string; where: string; text: string }[] = []
+  const collect = (file: string, base: string, steps: readonly Step[]) => {
+    for (const { step, path: p } of walkSteps(steps, base)) {
+      if ('text' in step) texts.push({ file, where: p, text: step.text })
+      if (step.kind === 'slot') { texts.push({ file, where: p, text: step.fallback }); for (const t of Object.values(step.lines)) texts.push({ file, where: p, text: t }) }
+      if (step.kind === 'choice') step.options.forEach((o, j) => texts.push({ file, where: `${p}.choice[${j}]`, text: o.text }))
+      if (step.kind === 'captain') step.options.forEach((o, j) => texts.push({ file, where: `${p}.captain[${j}]`, text: o.text }))
+    }
+  }
+  for (const c of Object.values(pack.chapters)) { c.scenes.forEach((sc, i) => collect(`chapters/${c.id}.json`, `scenes[${i}].steps`, sc.steps)); collect(`chapters/${c.id}.json`, 'debrief.steps', c.debrief.steps) }
+  for (const b of Object.values(pack.bonds)) b.scenes.forEach((sc, i) => collect(`bonds/${b.outfit}.json`, `scenes[${i}].steps`, sc.steps))
+  for (const t of texts) for (const m of t.text.matchAll(placeholder)) if (!okWord.test(m[1]!)) err(t.file, t.where, `unknown placeholder {${m[1]}}: use {captain}, {they}, {them}, {their}, {theirs} or {they're}`)
   for (const l of pack.casting.leads) {
     const crossed = Object.values(pack.chapters).filter((c) => c.leads.length === 2 && c.leads.includes(l.outfit)).length
     if (crossed < 2) todo('casting.json', `leads.${l.outfit}`, `in ${crossed} crossed paths, fewer than two (TC51)`)

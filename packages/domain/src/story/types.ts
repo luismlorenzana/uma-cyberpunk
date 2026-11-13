@@ -29,10 +29,23 @@ export type Step =
   | { kind: 'call'; call: string }
   /** Plays a mission of the same chapter. */
   | { kind: 'battle'; mission: string }
+  /** The captain's choice (CY13, TC55): two or three lines in a tone, each with the rapport it earns. */
+  | { kind: 'captain'; options: CaptainOption[] }
+  /** Trust or Heart (CY13, TC56): only in a bond scene at rank 8 (or 10, to change it), after she says what she hopes for. */
+  | { kind: 'path'; trust: Step[]; heart: Step[] }
 export type StepKind = Step['kind']
-export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle']
+export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path']
 
 export interface ChoiceOption { text: string; lead?: string; then: Step[] }
+
+export type Tone = 'warm' | 'steady' | 'wry'
+export const TONES: readonly Tone[] = ['warm', 'steady', 'wry']
+export interface CaptainOption { tone: Tone; text: string; rapport: number; then: Step[] }
+
+/** A bond scene (CY13, TC57): at a rank, in her cabin or a ship spot. */
+export interface BondScene { rank: number; place: string; steps: Step[] }
+/** Her bond scenes, `bonds/<outfit>.json`, and her epilogue card once she reaches rank 10. */
+export interface BondFile { schemaVersion: 1; outfit: number; scenes: BondScene[]; epilogue?: string; layer?: Layer }
 
 export type Trigger = { arrive: string } | { after: string } | { talk: string }
 
@@ -91,6 +104,8 @@ export interface Casting {
   crewOrder: number[]
   /** Each Uma's authored role (TC5), by outfit id; one untagged falls back to her running style (CY11). */
   roles?: Record<string, Role>
+  /** The keys bond ranks 4, 6, 8 and 10 wait on (CY13), in the `needs` syntax; a rank not named is open. */
+  bondGates?: Record<string, string>
   heroines: { board: string; faction: string; hold: 'anchor' | 'collar' | 'none' }[]
   minor: string[]
   /** Stand-in only: plain labels for invented ids, since no name comes from master data for them. */
@@ -109,4 +124,6 @@ export interface StoryPack {
   chapters: Record<string, Chapter>
   files: Record<string, LogFile>
   calls: Record<string, Call>
+  /** Bond scenes by outfit id (CY13). */
+  bonds: Record<string, BondFile>
 }

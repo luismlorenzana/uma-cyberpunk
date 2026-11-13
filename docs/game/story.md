@@ -31,11 +31,12 @@ flowchart LR
 
 | File | Holds |
 |---|---|
-| `casting.json` | `leads` (each `{ outfit, world, opens?, talent? }`), `crewOrder` (outfit ids: the order the squad's interjection slots prefer), `roles` (each Uma's authored role by outfit id, CY11: untagged, she takes her running style's, [crew.md](crew.md#her-role-tc5)), `heroines` (`{ board, faction, hold }`, the Hold `anchor`, `collar` or `none`), `minor` (slugs); `labels` for the stand-in only |
+| `casting.json` | `leads` (each `{ outfit, world, opens?, talent? }`), `crewOrder` (outfit ids: the order the squad's interjection slots prefer), `roles` (each Uma's authored role by outfit id, CY11: untagged, she takes her running style's, [crew.md](crew.md#her-role-tc5)), `bondGates` (CY13: the key each bond rank 4, 6, 8 and 10 waits on, in the `needs` syntax), `heroines` (`{ board, faction, hold }`, the Hold `anchor`, `collar` or `none`), `minor` (slugs); `labels` for the stand-in only |
 | `worlds/<id>.json` | `id`, `look`, `mood`, `factions`, `locations` (each `{ id, danger, needs, links, x?, y? }`: the world map's nodes), and the world's place on the star map (`x`, `y`) |
 | `chapters/<id>.json` | `id`, `world`, `leads` (one, or two for crossed paths), `number` (1 is her Chapter 1), `danger`, `needs`, `scenes`, `missions`, `debrief` |
 | `log/<id>.json` | A Log File: its `lines`, each `{ text, redacted }` |
 | `calls/<id>.json` | A Call: the `question`, the `voters` (`{ outfit, argument }`) and the `branches` (`{ id, text, then }`) |
+| `bonds/<outfit>.json` | *(CY13)* Her bond scenes: `outfit` (the file's name), `scenes` (each `{ rank, place, steps }`, ranks 2, 4, 6, 8 and 10), an optional `epilogue` (her card once she reaches rank 10, 400 characters at most). See [captain-and-bonds.md](captain-and-bonds.md) |
 
 Every file has `schemaVersion: 1` and may carry a `layer` (placeholder, skeleton, bible, scripted, published); a file's
 `id` is its file name. **Ids:** an Uma is her outfit id, a heroine her board id, everything else a lowercase slug that
@@ -66,6 +67,8 @@ of defeat-all, defeat-leader, free-leader, reach, hold, escort or hack; `enemies
 | join | `{ "join": 1003 }` | A crew Uma comes aboard (the crew is CY10's) |
 | aboard | `{ "aboard": 1001 }` | The lead comes aboard: Chapter 1's last step |
 | call | `{ "call": "slug" }` | Holds a Call and plays the branch picked |
+| captain | `{ "captain": [{ "tone": "warm", "text": "…", "rapport": 20, "then": [] }] }` | *(CY13)* The captain's choice: two or three options, each a tone (warm, steady, wry), 80 characters, the rapport it earns (0–30) |
+| path | `{ "path": { "trust": [], "heart": [] } }` | *(CY13)* Trust or Heart, only in a bond scene at rank 8 (once) or 10 (to change it); under Friends only the game takes `trust` without asking |
 | battle | `{ "battle": "mission-slug" }` | Plays a mission of the same chapter |
 
 ## The check
@@ -74,8 +77,8 @@ of defeat-all, defeat-leader, free-leader, reach, hold, escort or hack; `enemies
 
 | Level | Rules |
 |---|---|
-| **Error** | Every file parses: its shape, unknown keys refused, each error naming its file and path, such as `chapters/w1-ch1.json scenes[0].steps[3].slot.lines["1002"]: expected text of 160 characters at most`. Every id resolves (places on the chapter's world, triggers, missions in the chapter, Files and their lines, Calls, leads in the casting, worlds); a Chapter 1 ends with one `aboard`, her last scene's last step, and only a Chapter 1 has one; a `battle` step is its scene's last step (CY10: what follows goes in a scene triggered `after` the mission); every key in `needs` names a real chapter, mission or File; a `slot` keys only leads |
-| **Todo** | A scene likely over three minutes (four seconds a line and a second every fifteen characters; TC36); a lead in fewer than two crossed paths; a Chapter 1 with more than two battles (TC51) |
+| **Error** | Every file parses: its shape, unknown keys refused, each error naming its file and path, such as `chapters/w1-ch1.json scenes[0].steps[3].slot.lines["1002"]: expected text of 160 characters at most`. Every id resolves (places on the chapter's world, triggers, missions in the chapter, Files and their lines, Calls, leads in the casting, worlds); a Chapter 1 ends with one `aboard`, her last scene's last step, and only a Chapter 1 has one; a `battle` step is its scene's last step (CY10: what follows goes in a scene triggered `after` the mission); every key in `needs` names a real chapter, mission or File; a `slot` keys only leads; **bonds (CY13):** `bondGates` name real keys, a bond file's name is its outfit, its scenes sit at distinct ranks, the rank-8 scene has exactly one `path`, a `path` only at 8 or 10, no `battle`, `aboard` or `join` in a bond scene; **the captain's placeholders** anywhere are spelled `{captain}`, `{they}`, `{them}`, `{their}`, `{theirs}` or `{they're}` |
+| **Todo** | A scene likely over three minutes (four seconds a line and a second every fifteen characters; TC36); a lead in fewer than two crossed paths; a Chapter 1 with more than two battles (TC51); a lead with no bond scenes yet, a bond file for someone outside the casting, a bond scene likely over two and a half minutes (TC57) |
 | **Note** | Counts per world, lead and layer |
 
 It writes `checks.json` beside a real story (`{ schemaVersion, book: "cyberpunk", checkedAt, files: { path: sha256 },

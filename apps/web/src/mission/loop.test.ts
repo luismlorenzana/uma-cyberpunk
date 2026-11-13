@@ -9,6 +9,7 @@ import {
 import { describe, expect, it } from 'vitest'
 import { infoFrom, memberView } from '../crew/view'
 import { playScene, slotLine, type SceneUi } from '../story/runner'
+import { battleRapport } from '../bonds/battleRapport'
 import { missionInput, SCENARIOS } from './battleInput'
 import {
   afterMission, applyStep, atNode, closeResults, debriefDue, debriefScene, defaultSquad, deploy, ensureWorld, finishBattle, finishMission, markSeen, nextPlace,
@@ -69,7 +70,7 @@ async function playLoop(withLeadA: boolean) {
       }
       save = roundTrip(finishBattle(save, state.result?.winner === 'squad'))
       const won = !!save.mission?.won
-      save = roundTrip(closeResults(save))
+      save = roundTrip(closeResults(save, pack, battleRapport(input, save.mission!.battle!.actions as BattleAction[])))
       if (!won) continue
       const next = afterMission(pack, save, chapter.world, mission.id)
       expect(next.kind).toBe('scene')

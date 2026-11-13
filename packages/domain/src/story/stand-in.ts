@@ -10,6 +10,7 @@ export const STAND_IN_FILES: Record<string, unknown> = {
     leads: [{ outfit: LEAD, world: 'sw1', opens: 'comms', talent: 'stand-in-talent' }, { outfit: 9000002, world: 'sw2', opens: 'store' }],
     crewOrder: [LEAD, 9000002, 9000003, 9000004],
     roles: { '9000001': 'striker', '9000002': 'medic' },
+    bondGates: { '4': 'chapter:sw1-ch1', '6': 'chapter:sw2-ch1' },
     heroines: [{ board: 'stand-in-1', faction: 'steel-muster', hold: 'collar' }],
     minor: ['sw1-dockhand'],
     labels: { '9000001': 'Lead A', '9000002': 'Lead B', '9000003': 'Crew C', '9000004': 'Crew D', 'stand-in-1': 'Heroine A', 'sw1-dockhand': 'Dockhand' },
@@ -120,6 +121,69 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       { line: { speaker: 9000002, text: 'A store aboard? Good. I need parts more than I need sleep.' } },
       { slot: { lines: { [String(LEAD)]: 'Welcome aboard. Bunks are wherever you fall asleep.' }, fallback: 'The ship hums under her feet.' } },
     ] },
+  },
+  'bonds/9000001.json': {
+    schemaVersion: 1, outfit: LEAD,
+    epilogue: 'Lead A still runs the ring docks at dawn, with {captain} keeping pace a step behind.',
+    scenes: [
+      { rank: 2, place: 'cabin', steps: [
+        { line: { speaker: LEAD, text: '{Captain}. You knock like you expect to be told no.' } },
+        { captain: [
+          { tone: 'warm', text: 'I wanted to see how you were settling in.', rapport: 20, then: [{ line: { speaker: LEAD, text: 'Settling. Slowly. The bunk is too soft.' } }] },
+          { tone: 'steady', text: 'A status check. You fought hard today.', rapport: 10, then: [{ line: { speaker: LEAD, text: 'I always do. Ask me something harder.' } }] },
+          { tone: 'wry', text: 'I lost a bet. I have to say goodnight to everyone.', rapport: 15, then: [{ emote: { actor: LEAD, emote: 'smile' } }] },
+        ] },
+        { line: { speaker: LEAD, text: 'Thanks for checking. Really.' } },
+      ] },
+      { rank: 4, place: 'observation-deck', steps: [
+        { narrate: 'The stars wheel past the glass. Lead A watches them like a track.' },
+        { line: { speaker: LEAD, text: 'Back home I ran the dock rings every morning. Here I just run in circles.' } },
+        { captain: [
+          { tone: 'warm', text: 'Then run them with me tomorrow.', rapport: 25 },
+          { tone: 'steady', text: 'The Sim Pod has a track. I can get you time on it.', rapport: 15 },
+        ] },
+      ] },
+      { rank: 6, place: 'galley', steps: [
+        { line: { speaker: LEAD, text: 'I cooked. Do not say anything about the smoke.' } },
+        { captain: [
+          { tone: 'wry', text: 'What smoke?', rapport: 20 },
+          { tone: 'warm', text: 'It smells like home. Someone\'s home, anyway.', rapport: 25 },
+        ] },
+      ] },
+      { rank: 8, place: 'cabin', steps: [
+        { line: { speaker: LEAD, text: 'Can I say something without you being the captain for a minute?' } },
+        { line: { speaker: LEAD, text: 'I like who I am when you\'re around. I don\'t know what to call that yet.' } },
+        { path: {
+          trust: [{ line: { speaker: LEAD, text: 'Partners, then. The kind who always come back for each other.' } }],
+          heart: [{ line: { speaker: LEAD, text: 'Then let me call it something. Will you walk the deck with me tonight?' } }],
+        } },
+      ] },
+      { rank: 10, place: 'observation-deck', steps: [
+        { line: { speaker: LEAD, text: 'Whatever is out there, I\'d rather meet it next to {them}. Next to you.' } },
+        { captain: [{ tone: 'warm', text: 'Always.', rapport: 0 }, { tone: 'steady', text: 'Then we meet it together.', rapport: 0 }] },
+      ] },
+    ],
+  },
+  'bonds/9000002.json': {
+    schemaVersion: 1, outfit: 9000002,
+    epilogue: 'Lead B keeps the med bay stocked and the captain honest, which she says is the harder job.',
+    scenes: [
+      { rank: 2, place: 'cabin', steps: [
+        { line: { speaker: 9000002, text: 'If you\'re here for a checkup, sit. If not, sit anyway.' } },
+        { captain: [
+          { tone: 'steady', text: 'I\'m here to see how the medic is doing.', rapport: 20 },
+          { tone: 'wry', text: 'I\'ll take the checkup. I trust your aim.', rapport: 15 },
+        ] },
+      ] },
+      { rank: 8, place: 'garden', steps: [
+        { line: { speaker: 9000002, text: 'I patch everyone up. Nobody asks who patches me.' } },
+        { line: { speaker: 9000002, text: 'You did. I noticed.' } },
+        { path: {
+          trust: [{ line: { speaker: 9000002, text: 'Good. Keep asking. I\'ll keep answering.' } }],
+          heart: [{ line: { speaker: 9000002, text: 'Then stay a while. The garden is quiet at this hour.' } }],
+        } },
+      ] },
+    ],
   },
   'log/sw2-file-1.json': {
     schemaVersion: 1, id: 'sw2-file-1', world: 'sw2',
