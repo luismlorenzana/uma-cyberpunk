@@ -65,11 +65,15 @@ export async function playSteps(steps: readonly Step[], ui: SceneUi, o: RunOptio
 
 export const playScene = (scene: Pick<Scene, 'steps'>, ui: SceneUi, o: RunOptions): Promise<void> => playSteps(scene.steps, ui, o)
 
-/** A speaker's label: the casting's (stand-ins), else a placeholder until master data's names load. */
+let nameSource: (outfit: number) => string | undefined = () => undefined
+/** Master data's names, once loaded (CY11). */
+export function setNameSource(source: (outfit: number) => string | undefined): void { nameSource = source }
+
+/** A speaker's label: the casting's (stand-ins), else master data's name, else a placeholder until it loads. */
 export function nameOf(pack: StoryPack, speaker: Speaker | null): string {
   if (speaker === null) return ''
   const label = pack.casting.labels?.[String(speaker)]
   if (label) return label
-  if (typeof speaker === 'number') return `Uma ${speaker}`
+  if (typeof speaker === 'number') return nameSource(speaker) ?? `Uma ${speaker}`
   return speaker.replace(/^[a-z0-9]+-/, '').split('-').map((w) => w[0]!.toUpperCase() + w.slice(1)).join(' ')
 }

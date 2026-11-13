@@ -19,7 +19,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D15.
+Packet ids run CY1–CY12; decision numbers continue from D16.
 
 ## Phase 1: the foundation
 
@@ -36,7 +36,6 @@ Starts as soon as CY1 is in, beside the cloud.
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY11 | [The crew and the Hangar](tasks/CY11-crew-and-hangar.md): roster, profiles, loadouts, parts, roles, the bench | Claude | M | CY10 | Written |
 | CY12 | [The Chapter 1 loop](tasks/CY12-chapter-one-loop.md): two stand-in worlds, two pickups, rooms opening, debriefs | Claude | M | CY10, CY11 | Written |
 
 **Order:** the packets in number order, CY2 to CY12 (the owner, 2026-11-12, D5), so the cloud and the hello app come
@@ -97,6 +96,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY11 | The crew and the Hangar (D15): save v4 with each crew member's record, the master-data adapter (bands, Stride, the fallback role), the casting's `roles` tag, 32 starter parts, best for her role, role change, Strain and XP after a mission, the Quarters with profiles, the Hangar (slots, Capacity bar, swap preview, saved loadouts), deploy in the crew's own rigs; [the crew](../game/crew.md) and [the Hangar](../game/hangar.md) in the manual | `CY11SHA` |
 | CY10 | The ship and the mission flow (D14): the ship as the home screen with seven rooms and their keys, the Bridge's star map and a world's node map, the Log's Timeline, Files and Anomalies, the director, briefing to deploy to battle to results to the scene aboard, resume at every step, save v3 with its migration; [the ship and the worlds](../game/ship.md) and [the mission flow](../game/missions.md) in the manual | `8f20d90` |
 | CY9 | The story format and runner (D13): the strict parser, `pnpm story:check` (Uma Story's `checks.json`) and `pnpm story:pack`, the API's private pack and the web's loader with the stand-in, the runner and the scene player, `/story`, save v2 with the story state; [the story](../game/story.md) in the manual; the brief's §8 says the check is live | `78db2f6` |
 | CY8 | The sandbox (D12): setup from scenarios with Copy, Paste and Save; the battle screen (timeline, two-tap move, the arc, the forecast card, reach, the terrain card, paper dolls, a DOM cut-in, enemy turns at double speed with Skip); autosave in its own local database with Resume and Restart; results with Retry; the test scenario on `underlevels-14`; [the sandbox](../game/sandbox.md) and battle.md's battle screen in the manual. Phase 2's exit waits on the owner's play | `1ed6a40` |

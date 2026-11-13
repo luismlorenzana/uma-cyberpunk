@@ -2,7 +2,7 @@
 // of at least 44 pt; a tap opens its quick look (an open room's, or a locked one naming its key), and Enter goes in. A
 // Continue card says what's waiting. Landscape, on the turned stage. When the app opens with a mission in progress, it
 // goes straight back to it (resume anywhere).
-import { ROOMS, roomView, type RoomId } from '@cyber/domain'
+import { resting, ROOMS, roomView, type RoomId, type Save } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
@@ -80,7 +80,7 @@ function Ship() {
         <div data-peek className="absolute w-72 rounded-xl bg-[#141827]/95 p-3 ring-1 ring-white/15" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
           <div className="flex items-center justify-between"><b className="font-display text-[18px]">{peeked.room.name}</b>
             <button type="button" onClick={() => setPeek(null)} className="min-h-11 min-w-11 text-white/60" aria-label="Close">✕</button></div>
-          <p className="text-[13px] text-white/70">{peeked.open ? PEEK[peeked.room.id](save.crew.length, save.story.seen.length) : peeked.key}</p>
+          <p className="text-[13px] text-white/70">{peeked.open ? PEEK[peeked.room.id](save) : peeked.key}</p>
           {peeked.open && <button type="button" onClick={() => void navigate(`/room/${peeked.room.id}`)} className="mt-2 min-h-11 w-full rounded-md bg-[#2ee6ff] font-display font-bold text-[#0b0d17]">Enter</button>}
         </div>
       )}
@@ -89,11 +89,11 @@ function Ship() {
 }
 
 /** Each open room's quick look. */
-const PEEK: Record<RoomId, (crew: number, seen: number) => string> = {
+const PEEK: Record<RoomId, (save: Save) => string> = {
   bridge: () => 'The star map and the world below: travel, missions, scenes.',
-  hangar: (crew) => `The rigs and the crew's loadouts (CY11). ${crew} aboard.`,
-  quarters: (crew) => `Where the crew rests (CY11). ${crew} aboard.`,
-  log: (_, seen) => `The Timeline of ${seen} scenes, the Files and the Anomalies.`,
+  hangar: (s) => `Each Uma's rig: eight slots and a Coat, Capacity, saved loadouts. ${s.crew.length} aboard.`,
+  quarters: (s) => `The crew, their profiles and Strain. ${s.crew.length} aboard, ${s.crew.filter(resting).length} resting next mission.`,
+  log: (s) => `The Timeline of ${s.story.seen.length} scenes, the Files and the Anomalies.`,
   store: () => 'Parts and remodels (Phase 5).',
   comms: () => 'Calls and messages (Phase 5).',
   simpod: () => 'Practice battles (Phase 5).',

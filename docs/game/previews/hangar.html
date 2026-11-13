@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Hangar</title>
+<!-- Generated from docs/game/hangar.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The Hangar</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-screen">The screen</a><a class="h2" href="#best-for-her-role">Best for her role</a><a class="h2" href="#the-starter-parts">The starter parts</a><a class="h2" href="#deploy">Deploy</a><a class="h2" href="#the-save">The save</a></nav>
+<main id="top">
+<h1 id="the-hangar">The Hangar</h1>
+<blockquote><p><b>Status: 2026-11-12, CY11 (D15).</b> Where each Uma's rig is built (TC17, TC18): eight slots and a Coat, the Capacity bar against the total Load, every part's numbers before a swap, three saved loadouts, and "best for her role". The rules are the battle package's; the Hangar reads Load, Capacity and Move from it and never recomputes them.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>Eight slots and a Coat:</b> Core, Left arm, Right arm, Legs, Back unit, Visor, Left hand, Right hand, and the Coat.</li><li><b>Capacity</b> is 10 + 2 a Power band, plus the Core's and the Back unit's bonus. Over it, she can't deploy, and the deploy screen says why. At <b>70% load or less</b>, she gets +1 Move.</li><li><b>Before a swap,</b> every part shows what she'd have wearing it: part HP, Move, Capacity left, and hit and damage for a weapon.</li><li><b>"Best for her role"</b> in one tap: the best rig of the parts owned for her role and bands, never over Capacity, always with her role's Back unit.</li><li><b>Three saved loadouts</b> per Uma, named by the player.</li><li><b>The battle wears her rig:</b> deploy puts her bands, her rig as a loadout and her Stride into the mission's battle.</li></ul>
+<pre class="mermaid">flowchart LR
+  pick[Pick an Uma] --&gt; slots[Her nine slots] --&gt;|tap a slot| parts[The slot's parts, each with its numbers]
+  parts --&gt;|tap| wear[She wears it: saved at once]
+  best[Best for her role] --&gt; wear
+  presets[Saved loadouts: Save here, Wear] --&gt; wear
+  wear --&gt; deploy[Deploy: her bands, rig and Stride go into the battle]</pre>
+<h2 id="the-screen">The screen</h2>
+<div class="scroll"><table><tr><th>Part</th><th>Shows</th></tr><tr><td><b>The crew strip</b></td><td>Every Uma aboard and her role; ⚠ when her rig can't deploy</td></tr><tr><td><b>The Capacity bar</b></td><td>Load against Capacity; a tick at 70% (at or under: <b>+1 Move</b>, cyan); amber above it; red over Capacity, "she can't deploy"</td></tr><tr><td><b>The slots</b></td><td>Each slot's part and its Load; a tap opens the slot's parts on the right</td></tr><tr><td><b>A slot's parts</b></td><td>Each part's Load and note, and with it worn: HP (the change), Move (and the change), Capacity left, Guard, and a weapon's hit % × damage × hits; the part she wears is marked</td></tr><tr><td><b>Her rig</b> (no slot open)</td><td>Each part's HP, Move, Guard, Capacity left, and each weapon's band, hit and damage; why she can't deploy, if she can't</td></tr><tr><td><b>Best for her role</b></td><td>Wears the best rig at once; while she has never built her own, she wears it anyway</td></tr><tr><td><b>Saved loadouts</b></td><td>Three rows: a name, <b>Save here</b> (her rig now, under the name typed), <b>Wear</b></td></tr></table></div>
+<p><b>Hit</b> is her weapon's base accuracy plus 3% a Wit band, before her target's evasion and Cover; <b>damage</b> is a hit's, with +2 a Power band for Melee, before facing, height and Coats (<a href="battle.html">battle.md</a>).</p>
+<p><b>Hands:</b> a two-handed weapon goes in the right hand and empties the left; putting something in the left hand takes a two-handed weapon out of the right. A Long weapon only fires from a Launcher Back unit; Tech comes from the Deck.</p>
+<h2 id="best-for-her-role">Best for her role</h2>
+<p>Every rig of the parts owned with her role's Back unit (the Gunner has two) is scored for her role and bands, and the best that fits her Capacity is worn; ties go to the first in the Hangar's order, so it's the same every time. The score weighs part HP, Move (a light rig's +1 included), Guard, and her weapons' expected damage (hit × damage × hits), each role leaning its own way:</p>
+<div class="scroll"><table><tr><th>Role</th><th>Leans toward</th></tr><tr><td>Vanguard</td><td>HP, a shield, Short weapons</td></tr><tr><td>Striker</td><td>Move and Melee</td></tr><tr><td>Gunner</td><td>Short and Long weapons, an Aim visor</td></tr><tr><td>Netrunner, Medic</td><td>Move, then a light weapon</td></tr></table></div>
+<p>Something always fits: Capacity is at least 12, and the lightest rig with any role's Back unit and a hand weapon weighs 12 at most. Each role's default Coat is the Weave coat (P) for Vanguards and Strikers, the Heat coat (F) for Gunners, the Padded coat (I) for Netrunners and Medics; swap it for what a mission's enemies deal.</p>
+<h2 id="the-starter-parts">The starter parts</h2>
+<p>Original names, the game's own, so they're in git (<code>packages/domain/src/crew/parts.ts</code>). Shops, salvage and remodels (Phase 5) add rarer parts beside them, with their own counts.</p>
+<p><b>32 starter parts</b>, standard issue aboard (every one, any number):</p>
+<div class="scroll"><table><tr><th>Slot</th><th>Part</th><th>Load</th><th>Numbers</th><th>Note</th></tr><tr><td>Core</td><td>Frame core</td><td>3</td><td>—</td><td>The standard core</td></tr><tr><td>Core</td><td>Light core</td><td>2</td><td>—</td><td>Light; nothing extra</td></tr><tr><td>Core</td><td>Heavy harness</td><td>5</td><td>+4 Capacity, +10 Core HP</td><td></td></tr><tr><td>Core</td><td>Reactor core</td><td>4</td><td>+3 Capacity</td><td></td></tr><tr><td>Arm</td><td>Standard arm</td><td>2</td><td>—</td><td>The standard arm</td></tr><tr><td>Arm</td><td>Guard arm</td><td>3</td><td>+6 arm HP</td><td></td></tr><tr><td>Arm</td><td>Light arm</td><td>1</td><td>—</td><td>Light; nothing extra</td></tr><tr><td>Legs</td><td>Standard legs</td><td>2</td><td>—</td><td>The standard legs</td></tr><tr><td>Legs</td><td>Runner legs</td><td>3</td><td>+1 Move</td><td></td></tr><tr><td>Legs</td><td>Anchor greaves</td><td>4</td><td>−1 Move, +8 Legs HP</td><td></td></tr><tr><td>Legs</td><td>Light legs</td><td>1</td><td>—</td><td>Light; nothing extra</td></tr><tr><td>Back unit</td><td>Bulwark</td><td>3</td><td>Vanguard; +4 Capacity</td><td>Vanguard: deploys a one-tile barrier; +4 Capacity</td></tr><tr><td>Back unit</td><td>Thruster</td><td>2</td><td>Striker</td><td>Striker: dash, and jump a level higher</td></tr><tr><td>Back unit</td><td>Missile pod</td><td>3</td><td>Gunner; Long F 18 power, 70% base, range 3–6, 3 ammo</td><td>Gunner: Long F missiles, 3 ammo</td></tr><tr><td>Back unit</td><td>Mortar rack</td><td>4</td><td>Gunner; Long I 14 power, 80% base, range 3–6, 2 ammo</td><td>Gunner: Long I mortar, 2 ammo</td></tr><tr><td>Back unit</td><td>Deck</td><td>2</td><td>Netrunner</td><td>Netrunner: Stun, Jam, Jack-Out and terminals</td></tr><tr><td>Back unit</td><td>Med unit</td><td>2</td><td>Medic</td><td>Medic: mends, repairs and reboots</td></tr><tr><td>Visor</td><td>Basic visor</td><td>1</td><td>—</td><td>The standard visor</td></tr><tr><td>Visor</td><td>Aim visor</td><td>2</td><td>Aim</td><td>Aim: pick a part at −25% hit</td></tr><tr><td>Hand</td><td>Edge blade</td><td>2</td><td>Melee P, 12 power × 1, 85% base, range 1</td><td>Melee P</td></tr><tr><td>Hand</td><td>Shock knuckles</td><td>2</td><td>Melee I, 10 power × 1, 90% base, range 1</td><td>Melee I; can Stun on the Core</td></tr><tr><td>Hand</td><td>Pile driver</td><td>3</td><td>Melee P, 16 power × 1, 75% base, range 1</td><td>Melee P, heavy</td></tr><tr><td>Hand</td><td>Great blade</td><td>4</td><td>Melee P, 18 power × 1, 80% base, range 1, two-handed</td><td>Melee P, two-handed</td></tr><tr><td>Hand</td><td>Machine pistol</td><td>2</td><td>Short P, 4 power × 4, 80% base, range 1–2</td><td>Short P, 4 hits</td></tr><tr><td>Hand</td><td>Rifle</td><td>3</td><td>Short P, 6 power × 3, 75% base, range 1–3</td><td>Short P, 3 hits, range 3</td></tr><tr><td>Hand</td><td>Scattergun</td><td>3</td><td>Short I, 5 power × 4, 70% base, range 1–2</td><td>Short I, 4 hits</td></tr><tr><td>Hand</td><td>Flamer</td><td>3</td><td>Short F, 4 power × 3, 80% base, range 1–2</td><td>Short F; sets oil alight</td></tr><tr><td>Hand</td><td>Tower shield</td><td>3</td><td>Shield, Guard 40%</td><td>Guard 40%</td></tr><tr><td>Hand</td><td>Buckler</td><td>1</td><td>Shield, Guard 20%</td><td>Guard 20%</td></tr><tr><td>Coat</td><td>Weave coat</td><td>0</td><td>Halves P</td><td>Halves pierce</td></tr><tr><td>Coat</td><td>Padded coat</td><td>0</td><td>Halves I</td><td>Halves impact</td></tr><tr><td>Coat</td><td>Heat coat</td><td>0</td><td>Halves F</td><td>Halves fire</td></tr></table></div>
+<h2 id="deploy">Deploy</h2>
+<p>The deploy screen (<a href="missions.html#the-steps">missions.md</a>) shows each Uma's role, Load and Capacity, and refuses one who can't go, with the reason: over Capacity or a two-handed weapon with a full left hand ("fix her rig in the Hangar"), or resting at Strain 3. <b>Hangar</b> opens it with the mission waiting. Deploying puts into each squad slot her bands, her rig as the battle package's loadout and her Stride; the Umas aboard and not deployed are the battle's bench, by role.</p>
+<h2 id="the-save">The save</h2>
+<p>A rig names a starter part id for each slot; the Back unit, the hands and the Coat may be empty (<code>null</code>). The save refuses a part that isn't of its slot's kind. A loadout is <code>{ name, rig }</code>, the name 24 characters at most.</p>
+<pre><code>{ "core": "core-harness", "leftArm": "arm-guard", "rightArm": "arm-guard", "legs": "legs-runner", "back": "back-bulwark",
+  "visor": "visor-basic", "leftHand": "hand-tower", "rightHand": "hand-scattergun", "coat": "coat-p" }</code></pre>
+<p class="foot">From <a href="../hangar.md">docs/game/hangar.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ export const STAND_IN_FILES: Record<string, unknown> = {
     schemaVersion: 1, layer: 'placeholder',
     leads: [{ outfit: LEAD, world: 'sw1', opens: 'comms', talent: 'stand-in-talent' }, { outfit: 9000002, world: 'sw2', opens: 'store' }],
     crewOrder: [LEAD, 9000002, 9000003, 9000004],
+    roles: { '9000001': 'striker', '9000002': 'medic' },
     heroines: [{ board: 'stand-in-1', faction: 'steel-muster', hold: 'collar' }],
     minor: ['sw1-dockhand'],
     labels: { '9000001': 'Lead A', '9000002': 'Lead B', '9000003': 'Crew C', '9000004': 'Crew D', 'stand-in-1': 'Heroine A', 'sw1-dockhand': 'Dockhand' },

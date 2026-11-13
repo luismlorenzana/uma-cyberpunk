@@ -220,8 +220,11 @@ content never does.
 > `{ anomaly, open }`; `join` and `aboard` are an outfit id; `call` and `battle` are a slug; a file's `id` is its file
 > name; worlds give each location `danger`, `needs` and `links` (and optional `x`, `y` for the map); `casting.json`
 > holds `leads` (`{ outfit, world, opens?, talent? }`), `crewOrder`, `heroines` and `minor`; any file may carry a
-> `layer`; a mission may name the `scenario` the game builds for it. Further changes are logged and this section
-> updated.
+> `layer`; a mission may name the `scenario` the game builds for it. **Since CY11 (D15):** `casting.json` may carry
+> `roles`, each Uma's authored role by outfit id (`{ "1001": "medic" }`; `vanguard`, `striker`, `gunner`, `netrunner` or
+> `medic`); an Uma untagged takes her running style's (Front Striker, Pace Vanguard, Late Gunner, End Netrunner), so tag
+> every Medic. **Since CY10 (D14):** a `battle` step is its scene's last step; what follows goes in a scene triggered
+> `after` the mission. Further changes are logged and this section updated.
 
 **Where the files live** (the ignored `content/`, on the same disk as the repo, so both sessions see them):
 

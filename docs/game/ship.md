@@ -25,8 +25,8 @@ flowchart LR
 | Room | Opens | Its page now |
 |---|---|---|
 | **Bridge** | From the start | The star map, then the current world's map |
-| **Hangar** | From the start | A placeholder until the crew and their rigs (CY11) |
-| **Quarters** | From the start | A placeholder until the crew (CY11) |
+| **Hangar** | From the start | Each Uma's rig: slots, Capacity, the swap preview, saved loadouts, best for her role ([hangar.md](hangar.md)) |
+| **Quarters** | From the start | The crew's roster, each Uma's profile, who rests next mission ([crew.md](crew.md#the-quarters)) |
 | **Log** | From the start | The **Timeline** of scenes seen (each replayable), the **Files** (filled lines shown, the rest redacted), the **Anomalies** (open or closed) |
 | **Store** | When its lead comes aboard | Parts and remodels (Phase 5) |
 | **Comms** | When its lead comes aboard | Calls and messages (Phase 5) |
@@ -68,7 +68,7 @@ scene waits on the current world. When the app opens with a mission in progress,
 
 | Field | Holds |
 |---|---|
-| `crew` | Outfit ids aboard, in join order (a `join` step adds one; `aboard` adds the lead and opens her rooms) |
+| `crew` | Outfit ids aboard, in join order (a `join` step adds one; `aboard` adds the lead and opens her rooms); each a full record from v4 ([crew.md](crew.md#the-save-v4)) |
 | `ship.rooms` | The rooms open |
 | `worlds` | `current`, each `known` world's `cleared` locations, and the `missions` won |
 | `story` | CY9's flags, Leads, Files, Anomalies and scenes seen, unchanged |

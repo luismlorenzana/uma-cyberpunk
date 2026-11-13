@@ -29,7 +29,7 @@ flowchart LR
 
 | File | Holds |
 |---|---|
-| `casting.json` | `leads` (each `{ outfit, world, opens?, talent? }`), `crewOrder` (outfit ids: the order the squad's interjection slots prefer), `heroines` (`{ board, faction, hold }`, the Hold `anchor`, `collar` or `none`), `minor` (slugs); `labels` for the stand-in only |
+| `casting.json` | `leads` (each `{ outfit, world, opens?, talent? }`), `crewOrder` (outfit ids: the order the squad's interjection slots prefer), `roles` (each Uma's authored role by outfit id, CY11: untagged, she takes her running style's, [crew.md](crew.md#her-role-tc5)), `heroines` (`{ board, faction, hold }`, the Hold `anchor`, `collar` or `none`), `minor` (slugs); `labels` for the stand-in only |
 | `worlds/<id>.json` | `id`, `look`, `mood`, `factions`, `locations` (each `{ id, danger, needs, links, x?, y? }`: the world map's nodes), and the world's place on the star map (`x`, `y`) |
 | `chapters/<id>.json` | `id`, `world`, `leads` (one, or two for crossed paths), `number` (1 is her Chapter 1), `danger`, `needs`, `scenes`, `missions`, `debrief` |
 | `log/<id>.json` | A Log File: its `lines`, each `{ text, redacted }` |
@@ -72,7 +72,7 @@ of defeat-all, defeat-leader, free-leader, reach, hold, escort or hack; `enemies
 
 | Level | Rules |
 |---|---|
-| **Error** | Every file parses: its shape, unknown keys refused, each error naming its file and path, such as `chapters/w1-ch1.json scenes[0].steps[3].slot.lines["1002"]: expected text of 160 characters at most`. Every id resolves (places on the chapter's world, triggers, missions in the chapter, Files and their lines, Calls, leads in the casting, worlds); a Chapter 1 ends with one `aboard`, her last scene's last step, and only a Chapter 1 has one; every key in `needs` names a real chapter, mission or File; a `slot` keys only leads |
+| **Error** | Every file parses: its shape, unknown keys refused, each error naming its file and path, such as `chapters/w1-ch1.json scenes[0].steps[3].slot.lines["1002"]: expected text of 160 characters at most`. Every id resolves (places on the chapter's world, triggers, missions in the chapter, Files and their lines, Calls, leads in the casting, worlds); a Chapter 1 ends with one `aboard`, her last scene's last step, and only a Chapter 1 has one; a `battle` step is its scene's last step (CY10: what follows goes in a scene triggered `after` the mission); every key in `needs` names a real chapter, mission or File; a `slot` keys only leads |
 | **Todo** | A scene likely over three minutes (four seconds a line and a second every fifteen characters; TC36); a lead in fewer than two crossed paths; a Chapter 1 with more than two battles (TC51) |
 | **Note** | Counts per world, lead and layer |
 

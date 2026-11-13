@@ -1,9 +1,9 @@
 // The director, headless (CY10): the stand-in chapter played through on its rules, every step of a mission, and resume.
-import { newSave, parsePack, parseSave, STAND_IN_FILES, type Save, type StoryPack } from '@cyber/domain'
+import { newMember, newSave, parsePack, parseSave, STAND_IN_FILES, type Save, type StoryPack } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import {
-  afterMission, applyStep, atNode, chapterOf, closeResults, defaultSquad, deploy, ensureWorld, finishBattle, finishMission, lockedMembers, markSeen,
-  reachableWorlds, recordAction, retry, startMission, toDeploy, travel, waiting,
+  afterMission, applyStep, atNode, cantDeploy, chapterOf, closeResults, defaultSquad, deploy, ensureWorld, finishBattle, finishMission, lockedMembers, markSeen,
+  reachableWorlds, recordAction, retry, rewards, startMission, toDeploy, travel, waiting,
 } from './director'
 
 const pack = parsePack(STAND_IN_FILES).pack as StoryPack
@@ -61,16 +61,32 @@ describe('the director', () => {
     let save = newSave('u', T0)
     save = applyStep(save, pack, { kind: 'join', outfit: 9000003 })
     save = applyStep(save, pack, { kind: 'aboard', outfit: 9000001 })
-    expect(save.crew).toEqual([9000003, 9000001])
+    expect(save.crew).toEqual([newMember(9000003), newMember(9000001)])
+    expect(applyStep(save, pack, { kind: 'join', outfit: 9000003 }).crew).toHaveLength(2)
     expect(save.ship.rooms).toContain('comms')
     save = applyStep(save, pack, { kind: 'lead', lead: 'x' })
     expect(save.story.leads).toEqual(['x'])
   })
-  it('picks the squad: the chapter’s leads (locked), then the crew, four at most; a flash-forward’s fixed squad', () => {
-    const save = { ...newSave('u', T0), crew: [9000002, 9000003, 9000004, 9000005] }
+  it('picks the squad: the chapter’s leads (locked), then the crew not resting, four at most; a flash-forward’s fixed squad', () => {
+    const save = { ...newSave('u', T0), crew: [9000002, 9000003, 9000004, 9000005, 9000006].map(newMember) }
     expect(defaultSquad(save, chapter, mission)).toEqual([9000001, 9000002, 9000003, 9000004])
     expect(lockedMembers(chapter, mission)).toEqual([9000001])
     expect(defaultSquad(save, chapter, { ...mission, fixedSquad: [9000004] })).toEqual([9000004])
+    const tired = { ...save, crew: save.crew.map((m) => (m.outfit === 9000003 ? { ...m, strain: 3 } : m)) }
+    expect(defaultSquad(tired, chapter, mission)).toEqual([9000001, 9000002, 9000004, 9000005])
+    expect(cantDeploy(tired, 9000003, [9000001], null)).toMatch(/Resting/)
+    expect(cantDeploy({ ...tired, crew: [{ ...newMember(9000001), strain: 3 }] }, 9000001, [9000001], null)).toBeNull()
+    expect(cantDeploy(save, 9000002, [], 'Load 21 is over Capacity 16')).toBe('Load 21 is over Capacity 16: fix her rig in the Hangar')
+  })
+  it('gives the squad its XP and a Strain at the results, the bench half and a rest (TC27), win or lose', () => {
+    let save = { ...newSave('u', T0), crew: [newMember(9000001), { ...newMember(9000002), strain: 3 }] }
+    const input = { units: [{ side: 'enemy' }, { side: 'enemy' }, { side: 'squad' }] }
+    expect(rewards(input as never, true)).toEqual({ xp: 120, credits: 100, salvage: 2 })
+    expect(rewards(input as never, false)).toEqual({ xp: 10, credits: 0, salvage: 0 })
+    save = closeResults(finishBattle(deploy(startMission(save, chapter, mission), input), true))
+    expect(save.crew.map((m) => [m.outfit, m.xp, m.strain])).toEqual([[9000001, 120, 1], [9000002, 60, 0]])
+    save = closeResults(finishBattle(deploy(startMission(finishMission(save), chapter, mission), input), false))
+    expect(save.crew.map((m) => [m.xp, m.strain])).toEqual([[130, 2], [70, 1]]) // rested, she's back in the squad
   })
   it('opens a new world on the star map once a chapter’s key is met, and travels', () => {
     let save = ensureWorld(newSave('u', T0), pack)

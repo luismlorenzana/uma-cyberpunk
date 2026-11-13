@@ -1,6 +1,7 @@
 // The story's format (CY9, the story brief's §8 content contract, SB8): what the story session writes in content/stories/
 // and the game reads. Ids: an Uma by her outfit id, a heroine by her board id, everything else by a lowercase slug.
 // Names, busts and portraits come from master data at run time, never from these files.
+import type { Role } from '@cyber/battle'
 
 /** Who speaks: an Uma's outfit id, or a heroine's board id or a minor character's slug. */
 export type Speaker = number | string
@@ -88,6 +89,8 @@ export interface Casting {
   leads: Lead[]
   /** The order the squad's interjection slots prefer, by outfit id. */
   crewOrder: number[]
+  /** Each Uma's authored role (TC5), by outfit id; one untagged falls back to her running style (CY11). */
+  roles?: Record<string, Role>
   heroines: { board: string; faction: string; hold: 'anchor' | 'collar' | 'none' }[]
   minor: string[]
   /** Stand-in only: plain labels for invented ids, since no name comes from master data for them. */

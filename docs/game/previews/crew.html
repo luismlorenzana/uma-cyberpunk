@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The crew</title>
+<!-- Generated from docs/game/crew.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>The crew</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-bands-tc4">The bands (TC4)</a><a class="h2" href="#her-role-tc5">Her role (TC5)</a><a class="h2" href="#stride-tc46">Stride (TC46)</a><a class="h2" href="#level-and-xp">Level and XP</a><a class="h2" href="#strain-tc27">Strain (TC27)</a><a class="h2" href="#the-quarters">The Quarters</a><a class="h2" href="#the-save-v4">The save (v4)</a></nav>
+<main id="top">
+<h1 id="the-crew">The crew</h1>
+<blockquote><p><b>Status: 2026-11-12, CY11 (D15).</b> Who is aboard and what each Uma is in a fight: her bands from master data's 5★ stats (TC4), her role (TC5), her Stride (TC46), her level, and Strain (TC27). Her rig is on <a href="hangar.html">hangar.md</a>. Shown in the <b>Quarters</b>: the roster beside her profile, and who rests next mission.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>The crew is the save's:</b> each Uma aboard has a record (her outfit id, XP, role, rig, three saved loadouts, Strain), in join order. The story brings her aboard (<code>join</code>, <code>aboard</code>).</li><li><b>Her numbers come from master data</b> at run time, through one adapter: her 5★ stats become five bands, her best running style her Stride and, untagged, her role. An Uma master data doesn't hold shows as a <b>stand-in card</b>, at band 3 everywhere with no Stride; nothing breaks.</li><li><b>Her role</b> is the story's authored tag, else her running style's job; she changes it aboard.</li><li><b>Strain:</b> a mission adds 1 to everyone who fought; at 3 she sits the next one out.</li></ul>
+<pre class="mermaid">flowchart LR
+  md[Master data: 5★ stats, running-style grades] --&gt; bands[Five bands, TC4]
+  md --&gt; style[Her best running style]
+  style --&gt; stride[Stride, TC46]
+  tag[The story's role tag] --&gt; role[Her role, TC5]
+  style -.-&gt;|untagged| role
+  aboard[Set aboard] --&gt;|overrides| role
+  role --&gt; rig[Best for her role, or her own rig]
+  bands --&gt; rig</pre>
+<h2 id="the-bands-tc4">The bands (TC4)</h2>
+<p>Every outfit's 5★ stats sum to 550, so only the spread differs. Each stat becomes a band from 1 to 5 (70–89, 90–109, 110–129, 130–149, 150 and up; below 70 is still band 1), and each band does one job in combat and one on the rig. The numbers are the battle package's (<a href="battle.html#the-tuning-table">battle.md's tuning table</a>):</p>
+<div class="scroll"><table><tr><th>Stat</th><th>In combat</th><th>On the rig</th></tr><tr><td><b>Speed</b></td><td>How fast her clock fills; Move 3–5</td><td>Evasion +2% a band</td></tr><tr><td><b>Stamina</b></td><td>—</td><td>Part HP: the Core, each arm and the Legs grow with each band</td></tr><tr><td><b>Power</b></td><td>Melee damage +2 a band</td><td>Capacity 10 + 2 a band, before the Core's and the Back unit's bonus</td></tr><tr><td><b>Guts</b></td><td>Hacks on her lose 10% a band; at band 4+, <b>Hold on</b> once a battle</td><td>—</td></tr><tr><td><b>Wit</b></td><td>Accuracy +3% a band; chance skills and her hacks +5% a band</td><td>Visor slots 2 + band (skills come with parts, Phase 5)</td></tr></table></div>
+<p>Her profile shows each band as a bar with her own numbers beside it.</p>
+<h2 id="her-role-tc5">Her role (TC5)</h2>
+<div class="scroll"><table><tr><th>Role</th><th>Plays like</th><th>Back unit</th><th>Default from running style</th></tr><tr><td><b>Vanguard</b></td><td>Holds the line, shields, Cover</td><td>Bulwark</td><td>Pace Chaser</td></tr><tr><td><b>Striker</b></td><td>Fast melee, flanks, starts Crossfire</td><td>Thruster</td><td>Front Runner</td></tr><tr><td><b>Gunner</b></td><td>Long range, height, Aim</td><td>Launcher</td><td>Late Surger</td></tr><tr><td><b>Netrunner</b></td><td>Hacks heroines, hardware and terminals</td><td>Deck</td><td>End Closer</td></tr><tr><td><b>Medic</b></td><td>Mends and reboots</td><td>Med unit</td><td>Only by tag, or chosen aboard</td></tr></table></div>
+<p><b>Which applies:</b> a role set aboard, else the story's tag (<code>casting.json</code>'s <code>roles</code>, by outfit id), else her best running style's (ties to the earlier style: Front, Pace, Late, End), else Striker. Her profile says which.</p>
+<p><b>A change aboard:</b> tap a role in her profile. Her rig keeps every part but the Back unit, which becomes the new role's starter unless she already wears one of its kind; a rig still on "best for her role" simply follows the new role.</p>
+<h2 id="stride-tc46">Stride (TC46)</h2>
+<div class="scroll"><table><tr><th>Stride</th><th>From</th><th>Effect</th></tr><tr><td><b>Break</b></td><td>Front Runner</td><td>+1 Move on her first turn</td></tr><tr><td><b>Draft</b></td><td>Pace Chaser</td><td>+1 Move when she ends next to an ally</td></tr><tr><td><b>Surge</b></td><td>Late Surger</td><td>+1 Move on the turn after she Waits</td></tr><tr><td><b>Kick</b></td><td>End Closer</td><td>+2 Move while her Core is at half or less</td></tr></table></div>
+<h2 id="level-and-xp">Level and XP</h2>
+<p>A mission pays XP as a plain number (<a href="missions.html#the-steps">missions.md</a>): the squad takes it in full, the crew aboard half, and a loss keeps its XP (TC25). Her level is 1 plus one for each 100 XP, up to 50: a placeholder curve until Phase 5's economy, and levels change no numbers yet.</p>
+<h2 id="strain-tc27">Strain (TC27)</h2>
+<div class="scroll"><table><tr><th>When</th><th>Strain</th></tr><tr><td>She fights a mission (won or lost)</td><td>+1, to 3 at most</td></tr><tr><td>She's at 3</td><td>She sits the next mission out: the deploy screen won't take her, and the Quarters list her as resting</td></tr><tr><td>She sits a mission out at 3</td><td>Back to 0</td></tr><tr><td>A chapter's lead locked into a mission</td><td>Deploys even at 3 (the story needs her), and stays at 3</td></tr></table></div>
+<p>Resting, she still takes half the XP, and the squad can call one <b>bench support</b> a battle from a resting Uma's role: every Uma aboard and not deployed is the battle's bench (<a href="battle.html#the-bench-support-call-rules-version-2">battle.md</a>).</p>
+<h2 id="the-quarters">The Quarters</h2>
+<p>The crew on uma-kit's face tiles, each with her role and her Strain in the corners and dimmed while resting; a tap opens her <b>profile</b> beside the roster (her bust, level and XP, role and where it comes from, Back unit, Stride, Strain, the role buttons, the band table) and <b>Her rig in the Hangar</b>. Below the roster: who rests next mission, and everyone's Strain.</p>
+<h2 id="the-save-v4">The save (v4)</h2>
+<p><code>crew</code> holds one record each, in join order:</p>
+<div class="scroll"><table><tr><th>Field</th><th>Holds</th></tr><tr><td><code>outfit</code></td><td>Her outfit id (a sister shares her base Uma's character id, so the crew is keyed by outfit)</td></tr><tr><td><code>xp</code></td><td>Her XP</td></tr><tr><td><code>role</code></td><td>The role set aboard, or <code>null</code> for her default</td></tr><tr><td><code>rig</code></td><td>Her rig, a starter part id a slot (<a href="hangar.html#the-save">hangar.md</a>), or <code>null</code> for "best for her role"</td></tr><tr><td><code>presets</code></td><td>Up to three named loadouts</td></tr><tr><td><code>strain</code></td><td>0–3</td></tr></table></div>
+<p>A v3 save opens as v4 on the device: each outfit id aboard becomes her record with no XP, her default role, "best for her role", no loadouts and no Strain; everything else as it was, <code>account.updatedAt</code> untouched.</p>
+<p class="foot">From <a href="../crew.md">docs/game/crew.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

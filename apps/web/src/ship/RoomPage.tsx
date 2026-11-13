@@ -1,9 +1,11 @@
-// A room's page at /room/:id (CY10): the Bridge's star map and a world's map, the Log, and placeholders for the rooms
-// later packets fill. Loaded on demand. Landscape, on the turned stage.
+// A room's page at /room/:id (CY10, CY11): the Bridge's star map and a world's map, the Log, the Hangar and the Quarters
+// (CY11), and placeholders for the rooms later packets fill. Loaded on demand. Landscape, on the turned stage.
 import { ROOMS, roomView, worldNodes, type RoomId, type Scene, type StoryPack } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
+import { Hangar } from '../crew/Hangar'
+import { Quarters } from '../crew/Quarters'
 import { applyStep, atNode, markSeen, progressOf, reachableWorlds, startMission, travel } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer } from '../story/ScenePlayer'
@@ -31,13 +33,14 @@ function Room() {
       {!view.open ? <Placeholder text={view.key ?? 'Locked'} />
         : room.id === 'bridge' ? <Bridge pack={pack} />
           : room.id === 'log' ? <LogRoom pack={pack} />
+            : room.id === 'hangar' ? <Hangar />
+              : room.id === 'quarters' ? <Quarters />
             : <Placeholder text={PLACEHOLDER[room.id]} />}
     </div>
   )
 }
 
 const PLACEHOLDER: Partial<Record<RoomId, string>> = {
-  hangar: 'The Hangar fills in with the crew and their rigs (CY11).', quarters: 'The Quarters fill in with the crew (CY11).',
   store: 'The Store opens with progression (Phase 5).', comms: 'Comms open with Calls and messages (Phase 5).', simpod: 'The Sim Pod opens with practice battles (Phase 5).',
 }
 
@@ -69,7 +72,7 @@ function Bridge({ pack }: { pack: StoryPack }) {
   if (playing && world) {
     return (
       <div className="absolute inset-0 z-20">
-        <ScenePlayer key={playing.id} pack={pack} scene={playing} squad={[...save.crew, ...pack.casting.crewOrder]}
+        <ScenePlayer key={playing.id} pack={pack} scene={playing} squad={[...save.crew.map((c) => c.outfit), ...pack.casting.crewOrder]}
           onEffect={(step) => void updateSave((s) => applyStep(s, pack, step))}
           onBattle={async (mission) => {
             const due = Object.values(pack.chapters).find((c) => c.missions.some((m) => m.id === mission))
@@ -146,7 +149,7 @@ function LogRoom({ pack }: { pack: StoryPack }) {
   const [tab, setTab] = useState<'timeline' | 'files' | 'anomalies'>('timeline')
   const [replay, setReplay] = useState<Scene | null>(null)
   const scenes = Object.values(pack.chapters).flatMap((c) => c.scenes).filter((s) => save.story.seen.includes(s.id))
-  if (replay) return <div className="absolute inset-0 z-20"><ScenePlayer key={replay.id} pack={pack} scene={replay} squad={save.crew} onEffect={() => {}} onBattle={async () => {}} onDone={() => setReplay(null)} /></div>
+  if (replay) return <div className="absolute inset-0 z-20"><ScenePlayer key={replay.id} pack={pack} scene={replay} squad={save.crew.map((c) => c.outfit)} onEffect={() => {}} onBattle={async () => {}} onDone={() => setReplay(null)} /></div>
   return (
     <div className="absolute inset-0 overflow-y-auto p-4" style={{ paddingTop: 'calc(var(--inset-top) + 64px)', paddingLeft: 'calc(var(--inset-left) + 16px)' }}>
       <div className="mb-3 flex gap-2">{(['timeline', 'files', 'anomalies'] as const).map((t) => (

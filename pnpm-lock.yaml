@@ -72,6 +72,9 @@ importers:
       '@cyber/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@luismlorenzana/uma-data':
+        specifier: 1.5.0
+        version: 1.5.0
       '@luismlorenzana/uma-kit':
         specifier: 0.19.0
         version: 0.19.0(@luismlorenzana/uma-data@1.5.0)(@luismlorenzana/uma-work@0.1.0)(firebase@12.19.0)(motion@12.43.0(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(phaser@4.2.1)(react-dom@19.3.1(react@19.3.1))(react-router@7.18.5(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react@19.3.1)
@@ -157,6 +160,9 @@ importers:
 
   packages/domain:
     dependencies:
+      '@cyber/battle':
+        specifier: workspace:*
+        version: link:../battle
       '@luismlorenzana/uma-art':
         specifier: 2.27.0
         version: 2.27.0

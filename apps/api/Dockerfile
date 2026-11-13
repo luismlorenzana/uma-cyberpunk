@@ -18,9 +18,8 @@ RUN --mount=type=secret,id=npm_token NODE_AUTH_TOKEN="$(cat /run/secrets/npm_tok
 COPY packages/domain packages/domain
 COPY packages/battle packages/battle
 COPY apps/api apps/api
-# @cyber/battle is copied for the day @cyber/domain imports it; the filtered install then pulls it in, and its build
-# goes first here.
-RUN pnpm --filter @cyber/domain build && pnpm --filter @cyber/api build
+# @cyber/domain imports @cyber/battle (CY11: the crew's rigs), so the filtered install pulls it in and its build goes first.
+RUN pnpm --filter @cyber/battle build && pnpm --filter @cyber/domain build && pnpm --filter @cyber/api build
 RUN --mount=type=secret,id=npm_token NODE_AUTH_TOKEN="$(cat /run/secrets/npm_token)" \
     pnpm --filter @cyber/api --prod deploy --legacy /out
 

@@ -8,38 +8,62 @@ const EMPTY = { flags: [], leads: [], files: {}, anomalies: {}, seen: [] }
 const V3_REST = { crew: [], ship: { rooms: ['bridge', 'hangar', 'quarters', 'log'] }, worlds: { current: null, known: {}, missions: [] }, mission: null }
 
 describe('save v3', () => {
-  it('is version 3', () => expect(SAVE_VERSION).toBe(3))
+  it('is version 4', () => expect(SAVE_VERSION).toBe(4))
 
   it('starts an account with both dates at now, an empty story, no crew and the rooms open from the start', () => {
-    expect(newSave('u1', T0)).toEqual({ version: 3, account: { uid: 'u1', createdAt: T0, updatedAt: T0 }, story: EMPTY, ...V3_REST })
+    expect(newSave('u1', T0)).toEqual({ version: 4, account: { uid: 'u1', createdAt: T0, updatedAt: T0 }, story: EMPTY, ...V3_REST })
   })
 
   it('moves only updatedAt on a change', () => {
     const save = newSave('u1', T0)
-    expect(touched(save, T1)).toEqual({ version: 3, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...V3_REST })
+    expect(touched(save, T1)).toEqual({ version: 4, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...V3_REST })
     expect(save.account.updatedAt).toBe(T0)
   })
 
   it('opens a v1 save as v3 with account.updatedAt unchanged (CY9, CY10)', () => {
     const v1 = { version: 1, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
-    expect(parseSave(v1)).toEqual({ version: 3, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...V3_REST })
+    expect(parseSave(v1)).toEqual({ version: 4, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...V3_REST })
   })
 
   it('opens a v2 save as v3: the same account and story, the new fields empty (the migration, CY10)', () => {
     const story = { flags: ['a'], leads: [], files: {}, anomalies: {}, seen: ['s1'] }
     const v2 = { version: 2, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story }
-    expect(parseSave(v2)).toEqual({ version: 3, account: v2.account, story, ...V3_REST })
+    expect(parseSave(v2)).toEqual({ version: 4, account: v2.account, story, ...V3_REST })
   })
 
-  it('leaves a v3 save as it is, a mission in progress included', () => {
+  it('opens a v3 save as v4: each outfit id aboard becomes her record, the rest and updatedAt as they were (CY11)', () => {
     const v3 = {
-      ...newSave('u1', T0), crew: [9000001], ship: { rooms: ['bridge', 'hangar', 'quarters', 'log', 'comms'] },
+      ...newSave('u1', T0), version: 3, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, crew: [9000003, 9000001],
+      ship: { rooms: ['bridge', 'hangar', 'quarters', 'log', 'comms'] }, worlds: { current: 'sw1', known: { sw1: { cleared: [] } }, missions: ['m1'] },
+      mission: { id: 'm2', chapter: 'c1', step: 'battle', squad: [9000001], battle: { input: { seed: 'x' }, actions: [] }, won: null },
+    }
+    const v4 = parseSave(JSON.parse(JSON.stringify(v3)))
+    expect(v4.version).toBe(4)
+    expect(v4.account.updatedAt).toBe(T1)
+    expect(v4.crew).toEqual([
+      { outfit: 9000003, xp: 0, role: null, rig: null, presets: [], strain: 0 },
+      { outfit: 9000001, xp: 0, role: null, rig: null, presets: [], strain: 0 },
+    ])
+    expect({ ...v4, crew: v3.crew, version: 3 }).toEqual(v3)
+  })
+
+  it('leaves a v4 save as it is, a mission in progress and a crew record included', () => {
+    const rig = { core: 'core-frame', leftArm: 'arm-standard', rightArm: 'arm-standard', legs: 'legs-standard', back: 'back-thruster', visor: 'visor-basic', leftHand: null, rightHand: 'hand-blade', coat: 'coat-p' }
+    const v4 = {
+      ...newSave('u1', T0), crew: [{ outfit: 9000001, xp: 120, role: 'striker', rig, presets: [{ name: 'Fast', rig }], strain: 2 }],
+      ship: { rooms: ['bridge', 'hangar', 'quarters', 'log', 'comms'] },
       worlds: { current: 'sw1', known: { sw1: { cleared: ['sw1-docks'] } }, missions: ['m1'] },
       mission: { id: 'm2', chapter: 'c1', step: 'battle', squad: [9000001], battle: { input: { seed: 'x' }, actions: [{ kind: 'turn' }] }, won: null },
     }
-    expect(parseSave(JSON.parse(JSON.stringify(v3)))).toEqual(v3)
-    expect(() => parseSave({ ...v3, ship: { rooms: ['spa'] } })).toThrow(/expected a room/)
-    expect(() => parseSave({ ...v3, mission: { ...v3.mission, step: 'lunch' } })).toThrow(/mission.step/)
+    expect(parseSave(JSON.parse(JSON.stringify(v4)))).toEqual(v4)
+    expect(() => parseSave({ ...v4, ship: { rooms: ['spa'] } })).toThrow(/expected a room/)
+    expect(() => parseSave({ ...v4, mission: { ...v4.mission, step: 'lunch' } })).toThrow(/mission.step/)
+    const member = v4.crew[0]!
+    expect(() => parseSave({ ...v4, crew: [{ ...member, rig: { ...rig, back: 'hand-blade' } }] })).toThrow(/rig.back: expected a back part/)
+    expect(() => parseSave({ ...v4, crew: [{ ...member, role: 'pilot' }] })).toThrow(/role/)
+    expect(() => parseSave({ ...v4, crew: [{ ...member, strain: 4 }] })).toThrow(/strain/)
+    expect(() => parseSave({ ...v4, crew: [member, member] })).toThrow(/already aboard/)
+    expect(() => parseSave({ ...v4, crew: [{ ...member, presets: [1, 2, 3, 4] }] })).toThrow(/at most 3/)
   })
 
   it('carries the story state, strictly', () => {
@@ -78,7 +102,7 @@ describe('parsing', () => {
     expect(() => parseSave({ version: 1, account: { ...newSave('u1', T0).account, name: 'x' } })).toThrow(/save\.account: unknown keys name/)
   })
   it('refuses a version newer than this app', () => {
-    expect(() => parseSave({ version: 4, account: newSave('u1', T0).account })).toThrow(/newer than this app/)
+    expect(() => parseSave({ version: 5, account: newSave('u1', T0).account })).toThrow(/newer than this app/)
   })
   it('refuses a missing or broken version', () => {
     expect(() => parseSave({ account: newSave('u1', T0).account })).toThrow(SaveParseError)
@@ -95,7 +119,7 @@ describe('parsing', () => {
   })
   it('parses an upload with the version sent', () => {
     const put = parseSavePut({ baseRevision: 3, save: newSave('u1', T0) })
-    expect(put).toEqual({ baseRevision: 3, save: newSave('u1', T0), sentVersion: 3 })
+    expect(put).toEqual({ baseRevision: 3, save: newSave('u1', T0), sentVersion: 4 })
     expect(() => parseSavePut({ baseRevision: -1, save: newSave('u1', T0) })).toThrow('body.baseRevision')
     expect(() => parseSavePut({ baseRevision: 0, save: newSave('u1', T0), extra: 1 })).toThrow(/unknown keys extra/)
   })

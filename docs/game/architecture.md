@@ -38,11 +38,11 @@ the gates, so a waiting build shows on any screen.
 
 ## The save
 
-**Save v3** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
-the worlds and the mission in CY10):
+**Save v4** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
+the worlds and the mission in CY10, v4 each crew member's record in CY11):
 
 ```json
-{ "version": 3, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
+{ "version": 4, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
   "crew": [], "ship": { "rooms": ["bridge", "hangar", "quarters", "log"] },
   "worlds": { "current": null, "known": {}, "missions": [] },
   "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] },
@@ -50,7 +50,8 @@ the worlds and the mission in CY10):
 ```
 
 Older saves open as v3 on the device, each step pure and `account.updatedAt` untouched; the fields are on
-[story.md](story.md#the-story-state-save-v2), [ship.md](ship.md#the-save-v3) and [missions.md](missions.md#the-save).
+[story.md](story.md#the-story-state-save-v2), [ship.md](ship.md#the-save-v3), [missions.md](missions.md#the-save) and
+[crew.md](crew.md#the-save-v4); a crew member is `{ outfit, xp, role, rig, presets, strain }`.
 
 - **`account.updatedAt` is the conflict rule's clock.** Only the player's own change moves it (`touched`); parsing,
   syncing and the server never do. A Restore counts as the player's own change.

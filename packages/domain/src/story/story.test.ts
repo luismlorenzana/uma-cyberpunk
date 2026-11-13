@@ -52,6 +52,8 @@ describe('the parser names the path of every error', () => {
     expect(pathOf(() => parseChapter(obj, 'c'))).toBe('c: missions[0].objective.kind')
     expect(pathOf(() => parseWorld({ schemaVersion: 1, id: 'W1', locations: [], factions: [] }, 'w'))).toBe('w: id')
     expect(pathOf(() => parseCasting({ schemaVersion: 1, leads: [], heroines: [{ board: 'a', faction: 'b', hold: 'chain' }] }, 'casting.json'))).toBe('casting.json: heroines[0].hold')
+    expect(pathOf(() => parseCasting({ schemaVersion: 1, leads: [], roles: { '1001': 'pilot' } }, 'casting.json'))).toBe('casting.json: roles["1001"]')
+    expect(parseCasting({ schemaVersion: 1, leads: [], roles: { '1001': 'medic' } }).roles).toEqual({ '1001': 'medic' })
   })
   it('collects every file’s errors, and a file’s id must be its name', () => {
     const files = { ...STAND_IN_FILES, 'worlds/sw9.json': { schemaVersion: 1, id: 'sw1', locations: [], factions: [] } }

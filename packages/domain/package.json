@@ -24,6 +24,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@cyber/battle": "workspace:*",
     "@luismlorenzana/uma-art": "2.27.0",
     "@luismlorenzana/uma-data": "1.5.0",
     "@luismlorenzana/uma-work": "0.1.0"

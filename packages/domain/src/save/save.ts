@@ -3,11 +3,15 @@
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
 // takes any version this game ever wrote and returns the current one, and never moves `account.updatedAt`.
 
+import type { Role } from '@cyber/battle'
+import { MAX_PRESETS, newMember, PRESET_NAME_MAX, ROLES, STRAIN_REST, type CrewMember } from '../crew/crew'
+import { PARTS_BY_ID, RIG_SLOTS, SLOT_KIND, type Rig } from '../crew/parts'
 import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
 import { emptyStory, type StoryState } from '../story/state'
 
-/** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10). */
-export const SAVE_VERSION = 3
+/** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
+ * crew member's record (CY11). */
+export const SAVE_VERSION = 4
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -57,8 +61,15 @@ export interface SaveV3 {
   mission: MissionState | null
 }
 
+/** v4 (CY11): each crew member's record (XP, role, rig, saved loadouts, Strain) in place of her bare outfit id. */
+export interface SaveV4 extends Omit<SaveV3, 'version' | 'crew'> {
+  version: 4
+  /** In join order. */
+  crew: CrewMember[]
+}
+
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV3
+export type Save = SaveV4
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -85,7 +96,13 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() })
+  return migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }))
+}
+
+/** v3 to v4: each outfit id aboard becomes her record with no XP, her default role, "best for her role", no saved
+ * loadouts and no Strain; the rest as it was (`updatedAt` untouched). Pure; runs on the device. */
+export function migrateV3(save: SaveV3): SaveV4 {
+  return { ...save, version: 4, account: { ...save.account }, crew: save.crew.map(newMember) }
 }
 
 /** v2 to v3: the account and story as they were (`updatedAt` untouched); the crew, worlds and mission empty, the rooms
@@ -166,6 +183,46 @@ function outfits(value: unknown, path: string): number[] {
   return value.map((v, i) => { if (!Number.isSafeInteger(v) || (v as number) < 1) throw new SaveParseError(`${path}[${i}]`, 'expected an outfit id'); return v as number })
 }
 
+function parseRig(value: unknown, path: string): Rig {
+  const o = object(value, path, RIG_SLOTS)
+  const rig = {} as Record<string, string | null>
+  for (const slot of RIG_SLOTS) {
+    const v = o[slot]
+    const optional = slot === 'back' || slot === 'leftHand' || slot === 'rightHand' || slot === 'coat'
+    if (v === null && optional) { rig[slot] = null; continue }
+    const part = PARTS_BY_ID.get(id(v, `${path}.${slot}`))
+    if (!part || part.slot !== SLOT_KIND[slot]) throw new SaveParseError(`${path}.${slot}`, `expected a ${SLOT_KIND[slot]} part`)
+    rig[slot] = part.id
+  }
+  return rig as unknown as Rig
+}
+
+function parseCrew(value: unknown, path: string): CrewMember[] {
+  if (!Array.isArray(value) || value.length > 300) throw new SaveParseError(path, 'expected a list of crew members')
+  const seen = new Set<number>()
+  return value.map((v, i) => {
+    const p = `${path}[${i}]`
+    const o = object(v, p, ['outfit', 'xp', 'role', 'rig', 'presets', 'strain'])
+    const [outfit] = outfits([o.outfit], `${p}.outfit`)
+    if (seen.has(outfit!)) throw new SaveParseError(`${p}.outfit`, 'already aboard')
+    seen.add(outfit!)
+    if (o.role !== null && !ROLES.includes(o.role as Role)) throw new SaveParseError(`${p}.role`, `expected one of ${ROLES.join(', ')} or null`)
+    if (!Array.isArray(o.presets) || o.presets.length > MAX_PRESETS) throw new SaveParseError(`${p}.presets`, `expected at most ${MAX_PRESETS}`)
+    const strain = count(o.strain, `${p}.strain`)
+    if (strain > STRAIN_REST) throw new SaveParseError(`${p}.strain`, `expected 0–${STRAIN_REST}`)
+    return {
+      outfit: outfit!, xp: count(o.xp, `${p}.xp`), role: o.role as Role | null, rig: o.rig === null ? null : parseRig(o.rig, `${p}.rig`),
+      presets: o.presets.map((x, j) => {
+        const q = object(x, `${p}.presets[${j}]`, ['name', 'rig'])
+        const name = id(q.name, `${p}.presets[${j}].name`)
+        if (name.length > PRESET_NAME_MAX) throw new SaveParseError(`${p}.presets[${j}].name`, `expected ${PRESET_NAME_MAX} characters at most`)
+        return { name, rig: parseRig(q.rig, `${p}.presets[${j}].rig`) }
+      }),
+      strain,
+    }
+  })
+}
+
 function parseMission(value: unknown, path: string): MissionState | null {
   if (value === null) return null
   const o = object(value, path, ['id', 'chapter', 'step', 'squad', 'battle', 'won'])
@@ -212,21 +269,23 @@ export function parseSave(value: unknown, path = 'save'): Save {
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version === 1) {
     const o = object(value, path, ['version', 'account'])
-    return migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) }))
+    return migrateV3(migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) })))
   }
   if (version === 2) {
     const o = object(value, path, ['version', 'account', 'story'])
-    return migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) })
+    return migrateV3(migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) }))
   }
-  if (version !== 3) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
+  if (version !== 3 && version !== 4) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
   const o = object(value, path, ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission'])
   const ship = object(o.ship, `${path}.ship`, ['rooms'])
   const rooms = slugs(ship.rooms, `${path}.ship.rooms`)
   for (const [i, r] of rooms.entries()) if (!ROOM_IDS.includes(r as RoomId)) throw new SaveParseError(`${path}.ship.rooms[${i}]`, 'expected a room')
-  return {
-    version: 3, account: parseAccount(o.account, `${path}.account`), crew: outfits(o.crew, `${path}.crew`), ship: { rooms: rooms as RoomId[] },
+  const rest = {
+    account: parseAccount(o.account, `${path}.account`), ship: { rooms: rooms as RoomId[] },
     worlds: parseWorlds(o.worlds, `${path}.worlds`), story: parseStory(o.story, `${path}.story`), mission: parseMission(o.mission, `${path}.mission`),
   }
+  if (version === 3) return migrateV3({ version: 3, ...rest, crew: outfits(o.crew, `${path}.crew`) })
+  return { version: 4, ...rest, crew: parseCrew(o.crew, `${path}.crew`) }
 }
 
 /** The body of `PUT /api/save`. */

@@ -1,5 +1,6 @@
 // The story's strict parser (CY9, uma-quest's way): every shape checked, unknown keys refused, and every error names its
 // file and path, as `chapters/w1-ch1.json: scenes[0].steps[3].slot.lines["1002"]: expected text of 160 characters at most`.
+import type { Role } from '@cyber/battle'
 import type { Call, CastMember, Casting, Chapter, ChoiceOption, EnemySlot, Layer, Location, LogFile, Mission, Scene, Step, StoryPack, Trigger, World } from './types'
 import { LAYERS, MISSION_OBJECTIVES } from './types'
 
@@ -186,7 +187,7 @@ export function parseWorld(value: unknown, file = 'world'): World {
 
 export function parseCasting(value: unknown, file = 'casting.json'): Casting {
   const p = new P(file)
-  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
+  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
   p.version(o)
   const casting: Casting = {
     schemaVersion: 1,
@@ -201,6 +202,15 @@ export function parseCasting(value: unknown, file = 'casting.json'): Casting {
       return { board: p.slug(x.board, `${hp}.board`), faction: p.slug(x.faction, `${hp}.faction`), hold: x.hold as 'anchor' | 'collar' | 'none' }
     }, 200),
     minor: o.minor === undefined ? [] : p.list(o.minor, 'minor', (x, xp) => p.slug(x, xp), 200),
+  }
+  if (o.roles !== undefined) {
+    const roles = p.object(o.roles, 'roles', Object.keys((o.roles ?? {}) as Obj), [])
+    const ROLE_IDS = ['vanguard', 'striker', 'gunner', 'netrunner', 'medic']
+    casting.roles = Object.fromEntries(Object.entries(roles).map(([k, v]) => {
+      p.outfit(Number(k), `roles["${k}"]`)
+      if (!ROLE_IDS.includes(v as string)) p.fail(`roles["${k}"]`, `expected one of ${ROLE_IDS.join(', ')}`)
+      return [k, v as Role]
+    }))
   }
   if (o.labels !== undefined) {
     const labels = p.object(o.labels, 'labels', Object.keys((o.labels ?? {}) as Obj), [])
