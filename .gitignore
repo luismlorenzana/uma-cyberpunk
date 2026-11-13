@@ -23,6 +23,7 @@ build
 .claude/settings.local.json
 
 # build and tooling output
+sim/out/
 dev-dist/
 apps/api/.data/
 .firebase/

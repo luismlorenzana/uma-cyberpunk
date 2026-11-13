@@ -15,9 +15,11 @@
     "test:ci": "node --test scripts/check-size.test.mjs scripts/check-private-content.test.mjs scripts/check-hosting-site.test.mjs scripts/make-icons.test.mjs scripts/manual-pages.test.mjs && turbo run test --concurrency=1",
     "web": "pnpm --filter @cyber/web dev",
     "api": "pnpm --filter @cyber/api dev",
-    "docs:update": "UPDATE_DOCS=1 pnpm --filter @cyber/battle exec vitest run src/docs.test.ts && node scripts/manual-pages.mjs"
+    "docs:update": "UPDATE_DOCS=1 pnpm --filter @cyber/battle exec vitest run src/docs.test.ts && node scripts/manual-pages.mjs",
+    "sim": "tsx scripts/sim/battle.ts"
   },
   "devDependencies": {
+    "tsx": "^4.20.6",
     "turbo": "^2.10.13"
   },
   "pnpm": {

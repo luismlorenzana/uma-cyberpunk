@@ -47,6 +47,8 @@ Node 22+ and pnpm 10. The `@luismlorenzana/*` packages come from GitHub Packages
 | `pnpm build` | Build everything; the web build ends with the 180 KB size check |
 | `pnpm api` | The API on :8121, auth off (`AUTH_MODE=disabled`) |
 | `pnpm web` | The web app on :5214, `/api` proxied to :8121 |
+| `pnpm sim all --seeds 500` | The battle simulator: every scenario in `scenarios/`, AI against AI; the report goes to the ignored `sim/out/` (`--compare <report.json>` for a before-and-after) |
+| `pnpm docs:update` | Rewrites the manual's live tables and its desktop pages |
 
 The preview pane starts both from `.claude/launch.json` (`cyber-api`, `cyber-web`). To try the guard locally, run the
 built API with `ALLOWED_EMAIL` set and no `AUTH_MODE`.
