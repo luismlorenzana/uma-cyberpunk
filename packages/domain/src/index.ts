@@ -1,2 +1,4 @@
-// uma-cyberpunk's rules start here. CY1 is placeholders only; CY3 brings save v1 and CY4 the battle package.
+// uma-cyberpunk's rules: pure, no I/O. CY3 brings save v1; CY4 adds the battle package beside this one.
 export const GAME = 'uma-cyberpunk' as const
+
+export * from './save/save'

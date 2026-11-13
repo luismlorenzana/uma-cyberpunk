@@ -1,8 +1,10 @@
 # The uma-cyberpunk manual
 
-What the game **is**, as built. **It is empty for now: there are no rules yet.** CY3 writes its first page
-(`architecture.md`: the app, the save, sync, deploy and local setup), and every packet that ships a rule writes or
-updates its page in the same commit.
+What the game **is**, as built. Every packet that ships a rule writes or updates its page in the same commit.
+
+| Page | What | Visual page |
+|---|---|---|
+| [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
 
 Specs and intent live in [docs/design/](../design/). Where they differ from this manual, the manual and the code win.
 

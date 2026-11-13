@@ -29,12 +29,12 @@ Never run `gcloud config set …`, and never touch the other apps' pieces: `(def
 |---|---|
 | Repo | `luismlorenzana/uma-cyberpunk`, private |
 | Site | `https://uma-cyberpunk.web.app`, Hosting site `uma-cyberpunk`, 20 versions kept |
-| Firebase web app | Uma Cyberpunk web (`1:727687479415:web:783eab238dc074ff684672`); its public config goes in `apps/web/.env.production` in CY3, auth domain `uma-cyberpunk.web.app` |
+| Firebase web app | Uma Cyberpunk web (`1:727687479415:web:783eab238dc074ff684672`); its public config is in `apps/web/.env.production` (CY3), auth domain `uma-cyberpunk.web.app` |
 | Sign-in domain | `uma-cyberpunk.web.app`, added to Auth's authorized domains (the list was read and appended to, never replaced) |
 | API URL | `https://cyber-api-727687479415.us-central1.run.app` |
 | API | Cloud Run `cyber-api`, `us-central1`, min 0, max 1, 512 MiB, 1 CPU, public at the edge, owner guard on every route but `/api/health` |
 | Runtime account | `cyber-api-runtime`: `datastore.user` only on `projects/uma-rpg/databases/cyber` (condition `cyber-database-only`); `storage.objectViewer` on `gs://uma-platform-master-data` |
-| Database | Firestore `cyber`, Native, `us-central1`, delete protection and point-in-time recovery on. CY3 adds `saves/{uid}`, `saveRescues/{uid}` and `saveBackups/{uid}-v{n}` |
+| Database | Firestore `cyber`, Native, `us-central1`, delete protection and point-in-time recovery on: `saves/{uid}`, `saveRescues/{uid}`, `saveBackups/{uid}-v{n}` (CY3) |
 | Images | Artifact Registry `cyber` (Docker, `us-central1`), keeping the last 3 and deleting what's older than a day |
 | Deployer | `cyber-deploy`: writer on `cyber` images, admin of `cyber-api`, user of `cyber-api-runtime`; on the project, Hosting admin (project-wide, so the workflow names its site and CI checks it, IN7), service usage consumer and API keys viewer |
 | Deploy sign-in | Provider `projects/727687479415/locations/global/workloadIdentityPools/github-actions/providers/uma-cyberpunk`: `main` of `luismlorenzana/uma-cyberpunk` only |
@@ -102,10 +102,19 @@ Every API in the project is public at the edge (`allUsers` invoker), and each gu
 | Image builds | In GitHub Actions on the private repo's minutes | $0 |
 | **Total** | | **Under 10 cents a month.** The $5 alert covers every app |
 
-## Production saves (from CY3)
+## Production saves (live since CY3)
 
-CY3 adds save v1 and its sync, and writes the save's shape and the sync rules here. uma-rpg's rules, from its 2026-10-30
-incident, where a hand grant wiped unsynced progress:
+Save v1 syncs through `GET`/`PUT /api/save` into the `cyber` database ([the manual](../game/architecture.md#the-save)):
+
+| Document | Holds |
+|---|---|
+| `saves/{uid}` | `{ revision, save, storedAt }`: the save as JSON text; `storedAt` is the server's write time, never `updatedAt`, so no server field shares the protected name |
+| `saveRescues/{uid}` | The newest upload the server refused, as sent, with the reason |
+| `saveBackups/{uid}-v{n}` | The stored document, copied whenever the save's version changes |
+
+The save's own `account.updatedAt` is the device's and is never touched here. A stale revision or an older save version
+gets 409 with what's stored. With `PERSISTENCE=firestore` the API refuses to start without `FIRESTORE_DATABASE`.
+uma-rpg's rules, from its 2026-10-30 incident, where a hand grant wiped unsynced progress:
 - never move `save.account.updatedAt`;
 - no server ever writes into a save;
 - a stale server date means stop and ask the owner.

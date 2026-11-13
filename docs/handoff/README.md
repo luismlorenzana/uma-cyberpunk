@@ -12,20 +12,18 @@
 >   [the story brief](../design/story-brief.md) (SB1–SB11, [page](../design/previews/story-brief.html)),
 >   [the world's first pass](../design/world.md) (WD1–WD24, [page](../design/previews/world.html)) and
 >   [the references](../design/references.md) ([page](../design/previews/references.html)).
-> - **The manual of the game as built** will be [docs/game/](../game/README.md). It starts with CY3.
+> - **The manual of the game as built** is [docs/game/](../game/README.md), from CY3's [app as built](../game/architecture.md).
 > - Each task is a self-contained packet in [tasks/](tasks/). Start a worker, Claude or ChatGPT, with uma-platform's
 >   [master prompt](https://github.com/luismlorenzana/uma-platform/blob/main/docs/handoff/master-prompt.md) and name the
 >   packet: "Take CY1".
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D7.
+Packet ids run CY1–CY12; decision numbers continue from D8.
 
 ## Phase 1: the foundation
 
-| Id | What | Who | Size | Needs | State |
-|---|---|---|---|---|---|
-| CY3 | [The hello app](tasks/CY3-hello-app.md): uma-quest's wiring, Google sign-in, save v1 synced, the update prompt, master data, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | Next |
+Done: see the Done table.
 
 ## Phase 2: the combat, tested three ways
 
@@ -91,7 +89,7 @@ packet, or says why not.
 | When | What |
 |---|---|
 | Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
-| CY3 | The two sign-in entries for `uma-cyberpunk.web.app` (the packet names the pages); then the phone check: install, sign in, see the save sync |
+| CY3 | The two sign-in entries for `uma-cyberpunk.web.app`: in the [uma-rpg OAuth client](https://console.cloud.google.com/apis/credentials?project=uma-rpg) "Web client (auto created by Google Service)", add `https://uma-cyberpunk.web.app/__/auth/handler` (redirect URIs) and `https://uma-cyberpunk.web.app` (JavaScript origins); then the phone check: open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, sign in, see the save synced on Home |
 | CY8 | One play of the sandbox on the phone |
 | CY12 | One play-through of the Chapter 1 loop on the phone |
 
@@ -101,7 +99,8 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
-| CY2 | The cloud (D6): database `cyber`, `cyber-api-runtime`, images `cyber`, Cloud Run `cyber-api`, `cyber-deploy`, the provider `uma-cyberpunk`, site [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app), the web app and its sign-in domain, all in `uma-rpg`; the variables and the deploy job on; isolation checked in every cell; [infrastructure](../technical/infrastructure.md). First deploy: [run 43337345934](https://github.com/luismlorenzana/uma-cyberpunk/actions/runs/43337345934) | `5a4430b` |
+| CY3 | The hello app (D7): uma-quest's hello-app wiring (cc42fd1) with uma-farm's shell at the night tint; Google sign-in through "Uma Cyberpunk web"; save v1 synced to `cyber` with five safety copies and a Restore; master data through `/api/master`; the update prompt, the PWA and a neon ring icon; [the manual's first page](../game/architecture.md) ([page](../game/previews/architecture.html)). Main JS 134 KB of 180 | `CY3SHA` |
+| CY2 | The cloud (D6): database `cyber`, `cyber-api-runtime`, images `cyber`, Cloud Run `cyber-api`, `cyber-deploy`, the provider `uma-cyberpunk`, site [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app), the web app and its sign-in domain, all in `uma-rpg`; the variables and the deploy job on; isolation checked in every cell; [infrastructure](../technical/infrastructure.md). First green deploy: [run 43337938264](https://github.com/luismlorenzana/uma-cyberpunk/actions/runs/43337938264) | `ae47a91` |
 | CY1 | The workspace and its checks (D5): pnpm 10.33.0 and turbo; `@cyber/web`, `@cyber/api` and `@cyber/domain`, installing uma-data 1.5.0, uma-kit 0.19.0, uma-work 0.1.0, uma-server 0.2.0, uma-art 2.27.0 and uma-stage 0.3.0 with three 0.187.0; lint, tests, build, the 180 KB size check (69.4 KB, three.js marked lazy) and the private-content guard; CI's verify job. Locally with the guard on: health 200, save 401; the page and its proxied health on :5214 | `f2cc71b` |
 
 ## How a packet reads

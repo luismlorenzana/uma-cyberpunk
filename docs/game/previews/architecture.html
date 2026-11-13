@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The app as built</title>
+<!-- The manual's first page (docs/game/architecture.md, CY3, D7) as a desktop page. Self-contained, light and dark. No character art. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #fff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #0aa5c2; --accent-wash: #dff6fb; --info: #2f6fe0; --info-wash: #e3ecfc; --success: #2f7a4f;
+    --success-wash: #e1f1e7; --danger: #c23b33; --danger-wash: #fbe7e5;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16);
+    --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0b0d17; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+      --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+      --accent: #2ee6ff; --accent-wash: #0e2a33; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+      --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2c1513;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0b0d17; --panel: #17202b; --raised: #1f2a37; --sunken: #0b1118;
+    --ink: #e9eef4; --ink-soft: #a6b3c2; --ink-faint: #6f7d8e;
+    --accent: #2ee6ff; --accent-wash: #0e2a33; --info: #5b8def; --info-wash: #16233a; --success: #4fb37a;
+    --success-wash: #13261b; --danger: #e0645c; --danger-wash: #2c1513;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.45 system-ui, -apple-system, 'Inter', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font: 700 24px/1.2 ui-rounded, 'SF Pro Rounded', system-ui, sans-serif; margin: 0 0 6px; }
+  h2 { font: 700 17px/1.25 ui-rounded, system-ui, sans-serif; margin: 0 0 10px; }
+  p, li { color: var(--ink-soft); max-width: 86ch; }
+  a { color: var(--info); }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--sunken); padding: 1px 5px; border-radius: 5px; color: var(--ink); }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 20px; }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  .card { background: var(--panel); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .scroll { overflow-x: auto; }
+  svg { display: block; width: 100%; height: auto; min-width: 860px; }
+  svg text { font: 12px system-ui, sans-serif; fill: var(--ink); }
+  svg .soft { fill: var(--ink-soft); font-size: 11px; }
+  svg .title { font: 700 13px system-ui, sans-serif; }
+  .box { fill: var(--raised); stroke: var(--hairline-strong); }
+  .box.phone { fill: var(--accent-wash); stroke: color-mix(in srgb, var(--accent) 50%, transparent); }
+  .box.cloud { fill: var(--info-wash); stroke: color-mix(in srgb, var(--info) 40%, transparent); }
+  .box.data { fill: var(--success-wash); stroke: color-mix(in srgb, var(--success) 40%, transparent); }
+  .wire { stroke: var(--ink-faint); stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+  th { font: 700 12px system-ui; color: var(--ink-soft); background: var(--raised); }
+  td.step { font-weight: 700; white-space: nowrap; }
+  .tag { display: inline-block; font: 700 11px system-ui; padding: 2px 8px; border-radius: 999px; }
+  .tag.push { background: var(--info-wash); color: var(--info); }
+  .tag.adopt { background: var(--success-wash); color: var(--success); }
+  .tag.none { background: var(--sunken); color: var(--ink-soft); }
+  .tag.new { background: var(--accent-wash); color: var(--accent); }
+  .rule { border-left: 3px solid var(--danger); padding: 6px 12px; background: var(--danger-wash); border-radius: 0 8px 8px 0; margin: 6px 0; color: var(--ink); }
+  .phone-mock { width: 260px; border-radius: 28px; background: var(--sunken); padding: 14px; margin: 0 auto; border: 1px solid var(--hairline-strong); }
+  .phone-mock .bar { display: flex; align-items: center; gap: 8px; padding: 6px; border-bottom: 1px solid var(--hairline); }
+  .phone-mock .disc { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #0b0d17; display: grid; place-items: center; font-weight: 700; font-size: 13px; }
+  .phone-mock h3 { text-align: center; font: 700 20px ui-rounded, system-ui; margin: 14px 0 10px; }
+  .phone-mock .rows { background: var(--panel); border-radius: 10px; padding: 2px 10px; }
+  .phone-mock .row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--hairline); font-size: 12px; }
+  .phone-mock .row:last-child { border-bottom: 0; }
+  .phone-mock .row span:first-child { color: var(--ink-soft); }
+  .phone-mock .btn { margin-top: 10px; text-align: center; padding: 9px; border-radius: 10px; background: var(--panel); font-size: 12px; font-weight: 600; border: 1px solid var(--hairline-strong); }
+  .note { font-size: 12px; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+<main>
+  <h1>The app as built</h1>
+  <p>The manual's first page (<a href="../architecture.md">architecture.md</a>, CY3, D7): the pages, the save and how it syncs, sign-in, updates and deploys, as running on <a href="https://uma-cyberpunk.web.app">uma-cyberpunk.web.app</a>. No game rules yet: the battle rules arrive with CY4 and the board with CY7.</p> the stage arrives with Q4.</p>
+  <nav><a href="#pieces">The pieces</a><a href="#home">Home</a><a href="#save">The save</a><a href="#sync">How it syncs</a><a href="#rules">Production-save rules</a><a href="#deploy">Updates and deploys</a></nav>
+
+  <section class="card" id="pieces">
+    <h2>The pieces</h2>
+    <div class="scroll">
+    <svg viewBox="0 0 1100 300" role="img" aria-label="The iPhone app talks to Hosting, which sends /api to cyber-api, which reads and writes the cyber database and reads master data">
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor" style="color:var(--ink-faint)"/></marker></defs>
+      <rect class="box phone" x="10" y="40" width="240" height="220" rx="14"/>
+      <text class="title" x="26" y="66">iPhone, Home Screen app</text>
+      <text x="26" y="94">React 19 · uma-kit, night tint</text>
+      <text x="26" y="118">Dexie: the save, safety copies</text>
+      <text x="26" y="142">Service worker: precache,</text>
+      <text x="26" y="160">Update ready · Restart</text>
+      <text x="26" y="188">Sign-in: Google (Firebase)</text>
+      <text class="soft" x="26" y="236">Plays without the network</text>
+
+      <rect class="box cloud" x="330" y="90" width="230" height="120" rx="14"/>
+      <text class="title" x="346" y="116">Hosting: uma-cyberpunk.web.app</text>
+      <text x="346" y="142">Shell no-cache, assets 1 year</text>
+      <text x="346" y="166">/api/** → Cloud Run</text>
+      <text class="soft" x="346" y="192">/__/auth: the sign-in handler</text>
+
+      <rect class="box cloud" x="640" y="70" width="210" height="160" rx="14"/>
+      <text class="title" x="656" y="96">cyber-api (Cloud Run)</text>
+      <text x="656" y="122">Owner guard on every route</text>
+      <text x="656" y="142">but /api/health</text>
+      <text x="656" y="168">/api/save</text>
+      <text x="656" y="188">/api/master/…</text>
+      <text class="soft" x="656" y="214">Runtime: cyber-api-runtime</text>
+
+      <rect class="box data" x="920" y="20" width="170" height="80" rx="12"/>
+      <text class="title" x="934" y="46">Firestore `cyber`</text>
+      <text class="soft" x="934" y="68">saves · saveRescues</text>
+      <text class="soft" x="934" y="86">saveBackups</text>
+      <rect class="box data" x="920" y="115" width="170" height="70" rx="12"/>
+      <text class="title" x="934" y="141">Master data bucket</text>
+      <text class="soft" x="934" y="163">uma-platform, read only</text>
+
+      <path class="wire" d="M250 150 H330"/>
+      <path class="wire" d="M560 150 H640"/>
+      <path class="wire" d="M850 110 C885 110 885 60 920 60"/>
+      <path class="wire" d="M850 150 H920"/>
+    </svg>
+    </div>
+  </section>
+
+  <div class="grid2">
+    <section class="card" id="home">
+      <h2>Home</h2>
+      <div class="phone-mock" aria-label="Home as drawn">
+        <div class="bar"><div class="disc">L</div></div>
+        <h3>uma-cyberpunk</h3>
+        <div class="rows">
+          <div class="row"><span>Account</span><span>owner@…</span></div>
+          <div class="row"><span>Save</span><span>Synced · 12:50</span></div>
+          <div class="row"><span>Revision</span><span>1</span></div>
+          <div class="row"><span>Master data</span><span>release id</span></div>
+        </div>
+        <div class="btn">Sync now</div>
+      </div>
+      <p class="note">The initial opens Account (safety copies with a Restore each, Sign out); the bottom bar's Menu opens Home, Account, Sign out and the build id. Other paths go to Home.</p>
+    </section>
+
+    <section class="card" id="save">
+      <h2>The save</h2>
+      <p><b>Save v1</b>: <code>{ version: 1, account: { uid, createdAt, updatedAt } }</code>. Parsing is strict: unknown keys and newer versions are refused. Every change is a new version with its migration (v2 in CY9, v3 in CY10). Nothing carries over from any other game.</p>
+      <table>
+        <tr><th>Where</th><th>What</th></tr>
+        <tr><td>Phone · IndexedDB <code>uma-cyberpunk</code></td><td>Row <code>main</code>: the save, its uid, the revision it's based on, dirty, last synced. Up to five safety copies an account, each with a Restore.</td></tr>
+        <tr><td><code>saves/{uid}</code></td><td><code>{ revision, save, storedAt }</code>, the save as JSON text</td></tr>
+        <tr><td><code>saveRescues/{uid}</code></td><td>The newest upload the server refused, as sent</td></tr>
+        <tr><td><code>saveBackups/{uid}-v{n}</code></td><td>The stored document before the first write of a newer version</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <section class="card" id="sync">
+    <h2>How it syncs</h2>
+    <p>uma-rpg's rules (its D32, D45, D260), copied through uma-quest's hello app (cc42fd1). Boot opens the phone's save at once and syncs behind it; a change writes the phone, then syncs. Each round reads <code>GET /api/save</code> and decides:</p>
+    <table>
+      <tr><th>Phone</th><th>Server</th><th>Step</th><th>Why</th></tr>
+      <tr><td>No save</td><td>A save</td><td class="step"><span class="tag adopt">Adopt</span></td><td>A new phone opens the account's save</td></tr>
+      <tr><td>A save</td><td>Empty</td><td class="step"><span class="tag push">Push</span></td><td>The first upload, revision 1</td></tr>
+      <tr><td>Clean</td><td>Newer revision</td><td class="step"><span class="tag adopt">Adopt</span></td><td>Another phone changed it</td></tr>
+      <tr><td>Clean</td><td>Same revision</td><td class="step"><span class="tag none">Nothing</span></td><td>Up to date</td></tr>
+      <tr><td>Changed</td><td>Same revision</td><td class="step"><span class="tag push">Push</span></td><td>Its changes go up</td></tr>
+      <tr><td>Changed</td><td>Moved on</td><td class="step"><span class="tag push">Push</span> or <span class="tag adopt">Adopt</span></td><td>The save changed last wins whole (<code>account.updatedAt</code>); a tie keeps the phone's. An adopt keeps the phone's as a safety copy first</td></tr>
+      <tr><td>Started offline (revision 0)</td><td>A save</td><td class="step"><span class="tag new">Adopt</span></td><td>An account started offline never replaces the server's; it's kept as a safety copy</td></tr>
+    </table>
+    <p class="note">A stale push answers 409 with what's stored and the round decides again (three tries). A refused upload is kept in <code>saveRescues</code> before the error returns. Triggers: a change, the app returning to the foreground, the network coming back, Sync now.</p>
+  </section>
+
+  <div class="grid2">
+    <section class="card" id="rules">
+      <h2>The production-save rules</h2>
+      <p>From uma-rpg's 2026-10-30 incident, where a hand grant wiped unsynced progress. They hold from CY3:</p>
+      <div class="rule">Never move <code>save.account.updatedAt</code>.</div>
+      <div class="rule">No server ever writes into a save.</div>
+      <div class="rule">A stale server date means stop and ask the owner.</div>
+    </section>
+    <section class="card" id="deploy">
+      <h2>Updates and deploys</h2>
+      <ul>
+        <li><b>Install:</b> Safari → Share → Add to Home Screen. The icon is a neon ring with a gap, drawn in code.</li>
+        <li><b>Update:</b> a waiting build shows <b>Update ready · Restart</b>; the shell is <code>no-cache</code>.</li>
+        <li><b>Deploy:</b> every code push to <code>main</code>: lint, tests, the 180 KB check, then Cloud Run and Hosting, then health with the commit, <code>/api/save</code> 401 and uma-rpg still answering.</li>
+        <li><b>Local:</b> <code>pnpm api</code> on :8121 (auth off) and <code>pnpm web</code> on :5214.</li>
+      </ul>
+    </section>
+  </div>
+</main>
+</body>
+</html>
