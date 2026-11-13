@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyberpunk Story Sandbox</title>
+<!-- docs/design/story-sandbox.md on one page: the local page where the owner reads, plays and judges uma-cyberpunk's
+     story, how it reads the story with the game's own code, its eleven pages, its player and its calls SX1–SX10.
+     Self-contained, light and dark. No character names, art or story text. -->
+<style>
+  :root {
+    --page: #edf1f6; --panel: #ffffff; --raised: #f3f6fa; --sunken: #e4eaf2;
+    --ink: #101a24; --ink-soft: #5a6b84; --ink-faint: #8a98ac;
+    --accent: #0a84a8; --accent-wash: #dff2f8; --hot: #c2237f; --hot-wash: #fbe3f1; --gold: #9a6a00; --gold-wash: #fbf1dd;
+    --hairline: rgb(16 26 36 / 0.08); --hairline-strong: rgb(16 26 36 / 0.16); --radius: 12px; color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0b0d1a; --panel: #151a33; --raised: #1c2242; --sunken: #0f1226;
+      --ink: #e8ecff; --ink-soft: #b3bbe0; --ink-faint: #7d85ad;
+      --accent: #4fe3ff; --accent-wash: #10283a; --hot: #ff5fc4; --hot-wash: #33142a; --gold: #ffd166; --gold-wash: #2e2512;
+      --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0b0d1a; --panel: #151a33; --raised: #1c2242; --sunken: #0f1226;
+    --ink: #e8ecff; --ink-soft: #b3bbe0; --ink-faint: #7d85ad;
+    --accent: #4fe3ff; --accent-wash: #10283a; --hot: #ff5fc4; --hot-wash: #33142a; --gold: #ffd166; --gold-wash: #2e2512;
+    --hairline: rgb(255 255 255 / 0.08); --hairline-strong: rgb(255 255 255 / 0.16); color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  main { max-width: 1180px; margin: 0 auto; padding: 28px 16px 56px; }
+  .eyebrow { font-size: 10px; letter-spacing: .16em; font-weight: 750; color: var(--ink-faint); text-transform: uppercase; margin: 0 0 10px; }
+  h1 { font-size: clamp(28px, 4vw, 44px); letter-spacing: -.04em; line-height: 1.08; margin: 0 0 12px; font-weight: 650; }
+  h1 span { color: var(--hot); }
+  h2 { font-size: 20px; letter-spacing: -.02em; margin: 0 0 6px; font-weight: 650; }
+  p, li { color: var(--ink-soft); max-width: 88ch; }
+  .lead { font-size: 16px; }
+  code { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0 22px; }
+  nav a { font: 600 12px system-ui; padding: 6px 12px; border-radius: 999px; background: var(--sunken); color: var(--ink-soft); text-decoration: none; }
+  section.card { background: var(--panel); border-radius: var(--radius); padding: 18px 20px; box-shadow: 0 1px 0 var(--hairline-strong); margin-bottom: 16px; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 18px 0; }
+  .tile { background: var(--panel); border-radius: var(--radius); padding: 12px 14px; box-shadow: 0 1px 0 var(--hairline-strong); }
+  .tile b { display: block; font-size: 26px; letter-spacing: -.04em; line-height: 1.1; color: var(--ink); font-weight: 650; }
+  .tile span { font-size: 12px; color: var(--ink-soft); }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { padding: 7px 9px; border-bottom: 1px solid var(--hairline); text-align: left; vertical-align: top; }
+  thead th { color: var(--ink-faint); font-weight: 600; font-size: 11px; letter-spacing: .04em; }
+  td { color: var(--ink-soft); } td b { color: var(--ink); }
+  td.id { font: 700 12px ui-monospace, Menlo, Consolas, monospace; white-space: nowrap; color: var(--ink); }
+  .pages { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; }
+  .pages div { background: var(--raised); border-radius: 10px; padding: 12px 14px; border: 1px solid var(--hairline); }
+  .pages b { color: var(--ink); }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .note { font-size: 12px; color: var(--ink-faint); }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">uma-cyberpunk · the story · D17 · built 2026-11-13</p>
+  <h1>The Cyberpunk Story Sandbox<span>.</span></h1>
+  <p class="lead">A local page where you read, play and judge Uma Cyberpunk's story, beside uma-quest's and uma-farm's Story Sandboxes. It reads the story with the game's own code, so what it shows is what the game plays, and your verdicts go back to the story session.</p>
+  <nav><a href="#fits">How it fits</a><a href="#pages">The pages</a><a href="#player">The player</a><a href="#calls">Calls</a><a href="#built">As built</a><a href="../story-sandbox.md">Markdown</a></nav>
+  <div class="tiles">
+    <div class="tile"><b>:4322</b><span><code>pnpm stories</code>, beside uma-quest's 4320 and uma-farm's 4321</span></div>
+    <div class="tile"><b>11</b><span>pages, from the story's state to the format</span></div>
+    <div class="tile"><b>15</b><span>step kinds, all played</span></div>
+    <div class="tile"><b>0</b><span>formats of its own: the game's parser and check</span></div>
+    <div class="tile"><b>154 · 833</b><span>Umas and heroines named in the private cast pack</span></div>
+    <div class="tile"><b>10</b><span>calls, SX1–SX10</span></div>
+  </div>
+
+  <section class="card" id="fits">
+    <h2>How it fits</h2>
+    <p>The story session writes files; the game reads them; the sandbox reads them with the game's own code; you judge them there.</p>
+    <svg viewBox="0 0 1100 330" role="img" aria-label="The story session writes the private story files; the sandbox reads them with the game's parser and check and shows them to the owner, whose verdicts go back to the story session">
+      <rect x="20" y="30" width="250" height="90" rx="12" style="fill: var(--hot-wash)"/>
+      <text x="38" y="62" style="fill: var(--hot); font-weight: 700; font-size: 15px">The story session</text>
+      <text x="38" y="86" style="fill: var(--ink-soft); font-size: 12px">writes the world, the casting,</text>
+      <text x="38" y="104" style="fill: var(--ink-soft); font-size: 12px">chapters, Log Files and Calls</text>
+      <line x1="270" y1="75" x2="400" y2="75" style="stroke: var(--ink-faint); stroke-width: 1.5"/>
+      <rect x="400" y="30" width="300" height="90" rx="12" style="fill: var(--raised); stroke: var(--hairline-strong)"/>
+      <text x="418" y="62" style="fill: var(--ink); font-weight: 700; font-size: 15px">content/stories/ (private)</text>
+      <text x="418" y="86" style="fill: var(--ink-soft); font-size: 12px">casting.json · worlds/ · chapters/ · log/ · calls/</text>
+      <text x="418" y="104" style="fill: var(--ink-soft); font-size: 12px">cast-pack/ · reviews.json</text>
+      <rect x="830" y="30" width="250" height="90" rx="12" style="fill: var(--gold-wash)"/>
+      <text x="848" y="62" style="fill: var(--gold); font-weight: 700; font-size: 15px">The game</text>
+      <text x="848" y="86" style="fill: var(--ink-soft); font-size: 12px">packages/domain/src/story/:</text>
+      <text x="848" y="104" style="fill: var(--ink-soft); font-size: 12px">format, parser, check, stand-in</text>
+      <line x1="700" y1="75" x2="830" y2="75" style="stroke: var(--ink-faint); stroke-width: 1.5; stroke-dasharray: 4 4"/>
+      <line x1="550" y1="120" x2="550" y2="190" style="stroke: var(--ink-faint); stroke-width: 1.5"/>
+      <line x1="955" y1="120" x2="955" y2="225" style="stroke: var(--accent); stroke-width: 2"/>
+      <line x1="955" y1="225" x2="700" y2="225" style="stroke: var(--accent); stroke-width: 2"/>
+      <text x="760" y="215" style="fill: var(--accent); font-size: 11px; font-weight: 700">imported in place</text>
+      <rect x="400" y="190" width="300" height="90" rx="12" style="fill: var(--accent-wash)"/>
+      <text x="418" y="222" style="fill: var(--accent); font-weight: 700; font-size: 15px">The Story Sandbox</text>
+      <text x="418" y="246" style="fill: var(--ink-soft); font-size: 12px">pnpm stories · 127.0.0.1:4322</text>
+      <text x="418" y="264" style="fill: var(--ink-soft); font-size: 12px">read · play · check · judge</text>
+      <line x1="400" y1="235" x2="270" y2="235" style="stroke: var(--hot); stroke-width: 2"/>
+      <rect x="20" y="190" width="250" height="90" rx="12" style="fill: var(--hot-wash)"/>
+      <text x="38" y="222" style="fill: var(--hot); font-weight: 700; font-size: 15px">Your verdicts</text>
+      <text x="38" y="246" style="fill: var(--ink-soft); font-size: 12px">reviews.json, read by the story</text>
+      <text x="38" y="264" style="fill: var(--ink-soft); font-size: 12px">session before the next layer</text>
+    </svg>
+  </section>
+
+  <section class="card" id="pages">
+    <h2>The pages</h2>
+    <div class="pages">
+      <div><b>Story</b><p>Totals, the five deliverables (SB9) read off the files, every layer, each world with its chapters.</p></div>
+      <div><b>Worlds and a world</b><p>The star map; each world's look, mood, factions, leads and its place map, with locked places and the scenes at each.</p></div>
+      <div><b>Chapters and a chapter</b><p>Danger order; each scene's place, trigger, cast, reading time (over three minutes flagged) and script; battles' briefs; the debrief.</p></div>
+      <div><b>Player</b><p>A scene one step at a time, below.</p></div>
+      <div><b>Cast</b><p>Leads and where each comes aboard; the crew's order; heroines by faction and Hold; the Ranker's Umas by batch.</p></div>
+      <div><b>Log</b><p>Each File's lines and what fills each in; every Lead, Anomaly and flag, and where.</p></div>
+      <div><b>Calls</b><p>The question, the arguments, the branches, where it's held.</p></div>
+      <div><b>Checks, Format, Notes</b><p><code>pnpm story:check</code>'s findings exactly; the files and fifteen step kinds; the private world notes and the world doc.</p></div>
+    </div>
+  </section>
+
+  <section class="card" id="player">
+    <h2>The player</h2>
+    <p>One step at a time: Back, Next, Auto, Restart and the arrow keys. Choices and a Call's branches are one-tap picks, and Back takes a pick back. Story changes (a Lead, a File line, an Anomaly, a flag, a join, coming aboard, a battle) show as cards. The script sits beside it with the current step marked.</p>
+    <p><b>Interjection slots are resolved by a squad you set:</b> the line plays for the first lead in the crew's order who's in the squad and has one (TC51), else the fallback, so you hear who would speak.</p>
+  </section>
+
+  <section class="card" id="calls">
+    <h2>The calls</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Id</th><th>Call</th></tr></thead>
+      <tbody>
+        <tr><td class="id">SX1</td><td><b>A local page in this repo,</b> <code>tools/story-sandbox/</code>, <code>pnpm stories</code> at 127.0.0.1:4322; loopback only; code in git with no names</td></tr>
+        <tr><td class="id">SX2</td><td><b>The game's own code reads the story:</b> its parser, check and stand-in, imported in place; a file that doesn't parse is an error, and the rest still shows</td></tr>
+        <tr><td class="id">SX3</td><td><b>The stand-in until the first file;</b> verdicts are refused on it</td></tr>
+        <tr><td class="id">SX4</td><td><b>Eleven pages,</b> as above</td></tr>
+        <tr><td class="id">SX5</td><td><b>The player:</b> picks that can be taken back, story changes as cards, interjection slots resolved by a squad you set</td></tr>
+        <tr><td class="id">SX6</td><td><b>Verdicts</b> on any item, to <code>content/stories/reviews.json</code>, in the siblings' shape; the story session reads it before each next layer</td></tr>
+        <tr><td class="id">SX7</td><td><b>The cast pack:</b> names and faces by id, private, built by <code>pnpm stories:import-cast</code> from the Ranker's plan and uma-quest's pictures; nothing downloaded</td></tr>
+        <tr><td class="id">SX8</td><td><b>Lengths with the game's own measure:</b> reading time by <code>sceneSeconds</code>, words per scene and chapter</td></tr>
+        <tr><td class="id">SX9</td><td><b>Safety, as the siblings':</b> loopback, a same-origin policy, pictures only when the pack lists them, one write</td></tr>
+        <tr><td class="id">SX10</td><td><b>Local first</b> (uma-platform P150): no Uma Story book; this replaces the brief's "read it in the game"</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section class="card" id="built">
+    <h2>As built</h2>
+    <div class="scroll"><table>
+      <thead><tr><th>What</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td><b>The server</b></td><td><code>tools/story-sandbox/server.ts</code></td></tr>
+        <tr><td><b>The page</b></td><td><code>tools/story-sandbox/public/</code></td></tr>
+        <tr><td><b>The model and its tests</b></td><td><code>tools/story-sandbox/lib/model.mjs</code>, <code>model.test.mjs</code>, in <code>pnpm test</code></td></tr>
+        <tr><td><b>The cast import and its tests</b></td><td><code>tools/story-sandbox/import-cast.mjs</code>, <code>import-cast.test.mjs</code>, in <code>pnpm test</code></td></tr>
+        <tr><td><b>The private files</b></td><td><code>content/stories/</code>, <code>cast-pack/</code>, <code>reviews.json</code></td></tr>
+        <tr><td><b>Launch</b></td><td><code>.claude/launch.json</code>: <code>cyber-story-sandbox</code>, here and in uma-platform</td></tr>
+      </tbody>
+    </table></div>
+    <p class="note">Checked on 2026-11-13 on the stand-in: every page renders with no console error; the player walks a scene through its slot, its choice and its pickup; a verdict on the stand-in is refused; at 375 px no page scrolls sideways.</p>
+  </section>
+</main>
+</body>
+</html>

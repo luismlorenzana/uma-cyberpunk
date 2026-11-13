@@ -74,8 +74,9 @@ The owner gave every session full autonomy to commit, publish and deploy (2026-1
 
 ## Building and running
 
-The workspace's commands are in `AGENTS.md`; `.claude/launch.json` starts the API (`cyber-api`, :8121) and the web app
-(`cyber-web`, :5214). The preview pane can't screenshot WebGL: once the board arrives (CY7), check scenes headless through
+The workspace's commands are in `AGENTS.md`; `.claude/launch.json` starts the API (`cyber-api`, :8121), the web app
+(`cyber-web`, :5214) and **the Cyberpunk Story Sandbox** (`cyber-story-sandbox`, `pnpm stories`, :4322), where the owner
+reads, plays and judges the story, beside uma-quest's and uma-farm's sandboxes ([its design](docs/design/story-sandbox.md)). The preview pane can't screenshot WebGL: once the board arrives (CY7), check scenes headless through
 `?debug` and `step()` or on a canvas fallback, or ask the owner for a phone check. Never validate in the iOS Simulator
 (uma-platform P60).
 

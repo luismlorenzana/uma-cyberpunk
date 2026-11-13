@@ -296,9 +296,11 @@ checks are proven ones.
 **The stand-in.** Git holds an invented stand-in world and chapter with made-up ids (as uma-farm's 9000001–9000003),
 so the game runs end to end before your first file lands, and the dev server falls back to it when `content/` is empty.
 
-**Review.** Until a fourth Uma Story book exists (TC13), the owner reads chapters in the game itself, through the dev
-server or the deployed app reading the private pack. The validator writes Uma Story's `checks.json` shape from day one,
-so a book can follow without rework.
+**Review (D17).** The owner reads, plays and judges the story in **the Cyberpunk Story Sandbox**, a local page in this
+repo ([its design](story-sandbox.md)): `pnpm stories`, then http://127.0.0.1:4322. It reads `content/stories/` with the
+game's own parser and check, so what it shows is what the game plays, and the owner's verdicts land in
+`content/stories/reviews.json`, which you read before each next layer. It's the sibling of uma-quest's and uma-farm's
+sandboxes. The game itself still plays the story end to end through the dev server.
 
 ## 9. What you deliver, and when (SB9)
 

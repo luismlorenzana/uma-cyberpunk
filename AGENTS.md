@@ -50,6 +50,8 @@ Node 22+ and pnpm 10. The `@luismlorenzana/*` packages come from GitHub Packages
 | `pnpm sim all --seeds 500` | The battle simulator: every scenario in `scenarios/`, AI against AI; the report goes to the ignored `sim/out/` (`--compare <report.json>` for a before-and-after) |
 | `pnpm docs:update` | Rewrites the manual's live tables and its desktop pages |
 | `pnpm story:check` | Validates `content/stories/` (or the stand-in), prints the findings, writes `checks.json` beside a real story |
+| `pnpm stories` | The Cyberpunk Story Sandbox on http://127.0.0.1:4322: the story in `content/stories/` (or the stand-in), read, played and checked with the game's own code, and the owner's verdicts saved to `content/stories/reviews.json` |
+| `pnpm stories:import-cast` | Builds the sandbox's private cast pack (names and faces by id) from the Ranker's plan and uma-quest's pictures |
 | `pnpm story:pack` | Packs a clean story into the ignored `content/story-release/`, which the API serves locally |
 
 The preview pane starts both from `.claude/launch.json` (`cyber-api`, `cyber-web`). To try the guard locally, run the

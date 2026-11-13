@@ -605,9 +605,9 @@ are.
 
 **TC13 (amended D4), the story.** The story session writes it (TC53). Its world doc is in git, original and nameless,
 as [world.md](world.md) is. Who plays which part, the chapters and every line of dialogue are private, in the ignored
-`content/` and a private bucket once the cloud exists. When the owner wants it readable beside the other games' stories,
-it becomes a fourth book in the platform's Story App (uma-platform P141), which needs its own uma-platform decision, its
-own format and validator, and a home for the heroines' profiles, since the Cast book holds Umas only.
+`content/` and a private bucket once the cloud exists. **The owner reads and judges it in this repo's local Story Sandbox**
+(D17, [story-sandbox.md](story-sandbox.md)), beside uma-quest's and uma-farm's; uma-platform's Story App is parked
+(its P150).
 
 **TC53 (new D4), the story session and the content contract.**
 - **A separate session authors the world and the story** from [the story brief](story-brief.md) (SB1–SB11). This page
@@ -649,7 +649,7 @@ Phase 2 starts as soon as CY1 is in, beside the cloud.
 | TC10 | *(amended D4)* Battles are an HD-2D diorama in Triangle Strategy's look, a game-owned scene from uma-stage 0.3.0's parts at a fixed 35°, night and neon, rendered only when something moves; proved by CY7; the fallback is a Phaser 4 isometric board | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 | TC11 | uma-rpg's stack and the six platform packages; the cloud in the `uma-rpg` project with every piece its own, created on the owner's go | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 | TC12 | *(amended D4)* Art by kind with stand-ins first: chibi sets and renders for the Umas, the Ranker's images as standees for the heroines, Combat Adult keys and enemies from ChatGPT, map kits and marks drawn in code by Claude (P147) | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
-| TC13 | *(amended D4)* The story session writes the story; its world doc is in git, nameless; casting, chapters and dialogue are private; a fourth Story App book later | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
+| TC13 | *(amended D4)* The story session writes the story; its world doc is in git, nameless; casting, chapters and dialogue are private; read and judged in the local Story Sandbox (D17) | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
 | TC14 | It stands alone: its own save, rules and economy; no parcels at the start | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 | TC15 | *(amended D4)* Seven phases: the repo; the foundation; the combat tested three ways; the app on test content; the first worlds; progression; worlds as waves | [9](#9-phases-tc15) |
 | TC16 | *(amended D3)* Deferred, for discussion only: ship battles, permadeath, camera rotation, difficulty modes, recruiting beyond the story, franchise monsters as summons. Never: multiplayer | [Deferred](#deferred) |

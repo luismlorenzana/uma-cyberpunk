@@ -1,6 +1,6 @@
 # Handoff: open work
 
-> **Status: 2026-11-12, after D16.** CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
+> **Status: 2026-11-13, after D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322).** 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
 > to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
 > below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
 > the story session delivers its first world** ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)). The owner split the work (D4): **the story has its own session,** which writes the world
@@ -59,7 +59,8 @@ packet, or says why not.
 ## Across the repos
 
 - **The story session** works in this repo from [the story brief](../design/story-brief.md). **Its check is live (CY9):**
-  `pnpm story:check` validates `content/stories/`. It starts with one line:
+  `pnpm story:check` validates `content/stories/`. **Its review page is live (D17):** `pnpm stories` opens the
+  [Cyberpunk Story Sandbox](../design/story-sandbox.md) on :4322, where the owner reads each layer and leaves verdicts. It starts with one line:
   "Read CLAUDE.md and docs/design/story-brief.md in ~/workspace/uma-cyberpunk, then take the story brief."
 - **uma-platform:** P144 logs this repo as Phase 10. Shared changes go there as requests, never forks here:
   - **`uma-stage`:** one request at a time, each proven by the board's checks (TC48). **Filed (CY7, D11):**
@@ -71,7 +72,8 @@ packet, or says why not.
     session's world outline, in Phase 4;
   - **the heroines' delivery** from the franchise boards and the Ranker's images (TC7, TC12), when Phase 4 needs its
     first;
-  - **a fourth Uma Story book,** when the owner wants the story readable beside the others (TC13).
+  - **no Uma Story book:** the story is read in this repo's own [Story Sandbox](../design/story-sandbox.md) (D17);
+    uma-platform's Story App is parked (its P150).
 - **uma-rpg:** CY2 adds this game's pieces to its project, touching none of the other apps' pieces.
 - **The Character Art Studio** already has an "Uma Cyberpunk: Combat Adult Character" category (P143). ChatGPT's art
   for this game starts there: each Uma in her rig, side-on, facing left, for the cut-in (TC12, TC28).
@@ -92,6 +94,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| — | **The Cyberpunk Story Sandbox** (D17, no packet: the owner asked for "a third app"): `tools/story-sandbox/`, `pnpm stories` on :4322, the sibling of uma-quest's and uma-farm's. It reads `content/stories/` with the game's own parser and `pnpm story:check`'s findings, falling back to the stand-in; pages for the story's state and its five deliverables (SB9), worlds with their maps, chapters, the scene player (a squad picker for interjection slots, choices and Calls as picks, story changes as cards), the cast (leads, crew order, heroines by Hold, the Ranker's Umas by batch), the Log's Files, Leads, Anomalies and flags, Calls, Checks, Format and Notes; the owner's verdicts to `content/stories/reviews.json`. `pnpm stories:import-cast` builds the private cast pack (154 Umas, 833 heroines, pictures from uma-quest's pack). [Design](../design/story-sandbox.md) | this commit |
 | CY12 | The Chapter 1 loop (D16): the stand-in's two worlds and two Chapter 1s, the headless loop test, debriefs on the ship and in the Timeline, slots that hear the real squad, newcomers at the squad's level, the map's available-means-playable rule, a new game straight into its first scene, the Continue card's four cases; story.md's loop and ship.md's rooms opening with leads. **Phase 3's code is done** | `4e4c1bb` |
 | CY11 | The crew and the Hangar (D15): save v4 with each crew member's record, the master-data adapter (bands, Stride, the fallback role), the casting's `roles` tag, 32 starter parts, best for her role, role change, Strain and XP after a mission, the Quarters with profiles, the Hangar (slots, Capacity bar, swap preview, saved loadouts), deploy in the crew's own rigs; [the crew](../game/crew.md) and [the Hangar](../game/hangar.md) in the manual | `10764d4` |
 | CY10 | The ship and the mission flow (D14): the ship as the home screen with seven rooms and their keys, the Bridge's star map and a world's node map, the Log's Timeline, Files and Anomalies, the director, briefing to deploy to battle to results to the scene aboard, resume at every step, save v3 with its migration; [the ship and the worlds](../game/ship.md) and [the mission flow](../game/missions.md) in the manual | `8f20d90` |

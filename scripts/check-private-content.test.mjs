@@ -24,6 +24,9 @@ test('master data, art, review work and private content all remain ignored', () 
     'content/stories/chapter-1/mission-1.json',
     'content/stories/bibles/act-1.md',
     'content/guests/roster.json',
+    'content/stories/cast-pack/pack.json',
+    'content/stories/cast-pack/images/unit-face.png',
+    'content/stories/reviews.json',
   ]
   const ignored = git(root, ['check-ignore', '--no-index', '--stdin'], { input: paths.join('\n') + '\n' }).trimEnd().split('\n')
   assert.deepEqual(ignored, paths, 'Private content must stay under the ignored content/ folder')

@@ -1,0 +1,163 @@
+// The Cyberpunk Story Sandbox: a local-only page for reading, playing and reviewing uma-cyberpunk's story, the sibling
+// of uma-quest's and uma-farm's Story Sandboxes. It binds to loopback and reads, on every request:
+// - the story session's private files in content/stories/ (the story brief's SB8 layout), parsed and checked by the
+//   game's own code in packages/domain/src/story/, so the sandbox and the game always agree on the format;
+// - the game's invented stand-in story, while content/stories/ holds no story yet;
+// - the private cast pack (content/stories/cast-pack/, built by import-cast.mjs), for names and faces by id.
+// Its only write is the owner's verdicts, to the private content/stories/reviews.json. No name or line is in git.
+import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
+import { mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises'
+import { dirname, extname, join, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import {
+  checksReport, LAYERS, layersOf, LINE_MAX, MISSION_OBJECTIVES, parseCall, parseCasting, parseChapter, parseLogFile, parsePack, parseWorld,
+  sceneSeconds, STAND_IN_FILES, STEP_KINDS, StoryParseError, type Finding, type StoryPack,
+} from '../../packages/domain/src/story/index'
+import { readStoryFiles } from '../../scripts/story/files'
+import { packImages, parseCastPack, parseReviews, parseVerdict, withVerdict } from './lib/model.mjs'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const repo = resolve(here, '../..')
+/** The private side (ignored by git): the story, the cast pack and the verdicts. */
+const content = resolve(process.env.UMA_CYBER_STORIES ?? join(repo, 'content/stories'))
+const port = Number(process.env.UMA_CYBER_STORY_PORT ?? 4322)
+if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
+
+const types: Record<string, string> = {
+  '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.png': 'image/png', '.webp': 'image/webp', '.jpg': 'image/jpeg',
+}
+/** The page's files; the model is the tested one, shared with the server. */
+const pages: Record<string, string> = {
+  '/': 'public/index.html', '/app.js': 'public/app.js', '/app.css': 'public/app.css', '/views.js': 'public/views.js', '/player.js': 'public/player.js',
+  '/model.js': 'lib/model.mjs',
+}
+
+const code = (e: unknown) => (e as NodeJS.ErrnoException).code
+const maybeText = async (path: string): Promise<string | null> => { try { return await readFile(path, 'utf8') } catch (e) { if (code(e) === 'ENOENT') return null; throw e } }
+const maybeJson = async (path: string): Promise<unknown> => { const text = await maybeText(path); return text === null ? null : JSON.parse(text) }
+
+async function inside(root: string, path: string): Promise<string> {
+  const [base, file] = await Promise.all([realpath(root), realpath(resolve(root, path))])
+  if (!file.startsWith(base + sep)) throw Object.assign(new Error('Outside the content folder'), { status: 403 })
+  return file
+}
+
+/** Every file that parses on its own, so one broken chapter doesn't blank the rest while it's being written. */
+function bestEffort(files: Record<string, unknown>): StoryPack {
+  const pack: StoryPack = { casting: { schemaVersion: 1, leads: [], crewOrder: [], heroines: [], minor: [] }, worlds: {}, chapters: {}, files: {}, calls: {} }
+  for (const [path, value] of Object.entries(files)) {
+    try {
+      if (path === 'casting.json') pack.casting = parseCasting(value, path)
+      else if (path.startsWith('worlds/')) { const w = parseWorld(value, path); pack.worlds[w.id] = w }
+      else if (path.startsWith('chapters/')) { const c = parseChapter(value, path); pack.chapters[c.id] = c }
+      else if (path.startsWith('log/')) { const f = parseLogFile(value, path); pack.files[f.id] = f }
+      else if (path.startsWith('calls/')) { const c = parseCall(value, path); pack.calls[c.id] = c }
+    } catch (e) { if (!(e instanceof StoryParseError)) throw e }
+  }
+  return pack
+}
+
+/** The cast pack, with each picture as the server serves it; null before `pnpm stories:import-cast` has run. */
+async function castPack() {
+  const raw = await maybeJson(join(content, 'cast-pack/pack.json'))
+  if (raw === null) return { pack: null, problem: null }
+  try {
+    const pack = parseCastPack(raw)
+    const served = (c: { images?: Record<string, string> }) => ({ ...c, images: Object.fromEntries(Object.entries(c.images ?? {}).map(([k, p]) => [k, `/img/${p.slice(7)}`])) })
+    return { pack: { ...pack, umas: pack.umas.map(served), heroines: pack.heroines.map(served) }, problem: null }
+  } catch (e) { return { pack: null, problem: e instanceof Error ? e.message : String(e) } }
+}
+
+/** Everything the page draws, read fresh. */
+async function state() {
+  const read = readStoryFiles(content)
+  const standIn = read === null
+  const files = read?.files ?? STAND_IN_FILES
+  const strict = parsePack(files)
+  const parseFindings: Finding[] = [
+    ...(read?.problems ?? []).map((p) => ({ level: 'error' as const, file: p.file, where: '', message: p.message })),
+    ...strict.errors.map((e) => ({ level: 'error' as const, file: e.file, where: e.path, message: e.message.slice(e.file.length + e.path.length + 4) })),
+  ]
+  // The findings are exactly `pnpm story:check`'s; the view also shows whatever parses while errors remain.
+  const report = checksReport(strict.pack, parseFindings, new Date().toISOString())
+  const pack = strict.pack ?? bestEffort(files)
+  const seconds: Record<string, number> = {}
+  for (const chapter of Object.values(pack.chapters)) {
+    for (const scene of chapter.scenes) seconds[scene.id] = sceneSeconds(scene)
+    seconds[`${chapter.id}/debrief`] = sceneSeconds({ steps: chapter.debrief.steps })
+  }
+  const cast = await castPack()
+  let reviews = { schemaVersion: 1, items: {} }, reviewsProblem: string | null = null
+  try { reviews = parseReviews(await maybeJson(join(content, 'reviews.json'))) } catch (e) { reviewsProblem = e instanceof Error ? e.message : String(e) }
+  return {
+    dir: content, standIn, clean: strict.pack !== null, paths: Object.keys(files).sort(),
+    pack, findings: report.findings, layers: strict.pack ? report.layers : layersOf(pack), counts: report.counts, seconds,
+    format: { stepKinds: STEP_KINDS, objectives: MISSION_OBJECTIVES, layers: LAYERS, lineMax: LINE_MAX },
+    cast: cast.pack, castProblem: cast.problem,
+    notes: await maybeText(join(content, 'world-notes.md')), worldDoc: await maybeText(join(repo, 'docs/design/world.md')),
+    reviews, reviewsProblem,
+  }
+}
+
+async function body(request: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = []; let size = 0
+  for await (const chunk of request) { size += chunk.length; if (size > 64 * 1024) throw Object.assign(new Error('Too large'), { status: 413 }); chunks.push(chunk as Buffer) }
+  return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+}
+
+let reviewWrite: Promise<unknown> = Promise.resolve()
+/** The owner's verdict on an item, to the private reviews.json. One save at a time; a file it can't read is never replaced. */
+function saveReview(input: unknown) {
+  const verdict = parseVerdict(input)
+  const work = reviewWrite.then(async () => {
+    if (readStoryFiles(content) === null) throw Object.assign(new Error('This is the game’s stand-in story. Verdicts start with the story’s first file.'), { status: 409 })
+    const path = join(content, 'reviews.json')
+    const next = withVerdict(parseReviews(await maybeJson(path)), verdict, new Date().toISOString())
+    await mkdir(content, { recursive: true })
+    await writeFile(`${path}.part`, `${JSON.stringify(next, null, 2)}\n`)
+    await rename(`${path}.part`, path)
+    return next
+  })
+  reviewWrite = work.catch(() => undefined)
+  return work
+}
+
+function send(response: ServerResponse, status: number, data: unknown) {
+  response.writeHead(status, { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' })
+  response.end(JSON.stringify(data))
+}
+
+const server = createServer((request, response) => {
+  (async () => {
+    const host = request.headers.host
+    if (host !== `127.0.0.1:${port}` && host !== `localhost:${port}`) return send(response, 403, { error: 'Use the loopback URL' })
+    response.setHeader('x-content-type-options', 'nosniff')
+    response.setHeader('content-security-policy', "default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
+    const url = new URL(request.url ?? '/', `http://${host}`)
+    if (request.method === 'PUT' && url.pathname === '/api/reviews') {
+      const sameOrigin = (!request.headers.origin || request.headers.origin === `http://${host}`) && request.headers['sec-fetch-site'] !== 'cross-site'
+      if (!sameOrigin || request.headers['content-type']?.split(';')[0] !== 'application/json') return send(response, 403, { error: 'Save from the local page' })
+      return send(response, 200, await saveReview(await body(request)))
+    }
+    if (request.method !== 'GET') return send(response, 405, { error: 'Method not allowed' })
+    if (url.pathname === '/api/state') return send(response, 200, await state())
+    // A picture, only when the cast pack lists it.
+    const img = url.pathname.match(/^\/img\/([A-Za-z0-9._-]+\.(?:png|webp|jpg))$/)
+    if (img) {
+      const pack = parseCastPack(await maybeJson(join(content, 'cast-pack/pack.json')))
+      if (!packImages(pack).has(`images/${img[1]}`)) return send(response, 404, { error: 'Not a pack image' })
+      const file = await inside(join(content, 'cast-pack/images'), img[1]!)
+      response.writeHead(200, { 'content-type': types[extname(file)]!, 'cache-control': 'max-age=86400' })
+      return response.end(await readFile(file))
+    }
+    const page = pages[url.pathname]
+    if (!page) return send(response, 404, { error: 'Not found' })
+    response.writeHead(200, { 'content-type': types[extname(page)]!, 'cache-control': 'no-cache' })
+    response.end(await readFile(join(here, page)))
+  })().catch((error: Error & { status?: number; code?: string }) => {
+    if (response.headersSent) return response.end()
+    send(response, error.status ?? (error.code === 'ENOENT' ? 404 : 500), { error: error.message })
+  })
+})
+server.listen(port, '127.0.0.1', () => console.log(`Cyberpunk Story Sandbox: http://127.0.0.1:${port}  (story: ${content})`))

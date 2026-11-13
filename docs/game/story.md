@@ -14,6 +14,8 @@
 - **`pnpm story:pack`** turns a clean story into hash-named files the API serves; the game falls back to an invented
   **stand-in** story when none is served (production until Phase 4's bucket).
 - **The scene player** shows a scene as busts and a text box; the story's changes go into the synced save (v2).
+- **The owner reviews the story in the Cyberpunk Story Sandbox** (`pnpm stories`, :4322; D17,
+  [story-sandbox.md](../design/story-sandbox.md)), which reads the same files with this same parser and check.
 
 ```mermaid
 flowchart LR

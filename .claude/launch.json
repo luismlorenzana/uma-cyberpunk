@@ -20,6 +20,14 @@
         "dev"
       ],
       "port": 5214
+    },
+    {
+      "name": "cyber-story-sandbox",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "stories"
+      ],
+      "port": 4322
     }
   ]
 }
