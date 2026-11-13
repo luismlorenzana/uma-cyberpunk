@@ -150,7 +150,7 @@ jobs:
 
       - name: Verify hosted application
         run: |
-          curl --fail --show-error --silent --retry 10 --retry-delay 3 "${HOSTING_URL}/" > /dev/null
+          curl --fail --show-error --silent --retry 12 --retry-delay 5 --retry-all-errors "${HOSTING_URL}/" > /dev/null
           curl --silent --head "${HOSTING_URL}/" | grep -i '^cache-control: no-cache'
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "${HOSTING_URL}/api/health" > /dev/null
           test "$(curl --silent "${HOSTING_URL}/api/health" | python3 -c 'import json,sys; print(json.load(sys.stdin)["build"])')" = "${GITHUB_SHA}"

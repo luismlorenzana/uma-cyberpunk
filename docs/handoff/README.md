@@ -1,10 +1,11 @@
 # Handoff: open work
 
-> **Status: 2026-11-12, after D4.** The repo exists with its concept, its build plan, its story brief, its references,
-> the world's first pass and its private-content guard. There is no code yet. The owner split the work (D4): **the
-> story has its own session,** which writes the world and the story from [the story brief](../design/story-brief.md),
-> and **this queue starts with the app and the combat testing,** on test content, so the story drops into a finished
-> game. The world is now interplanetary: each lead Uma's Chapter 1 on her own world, then the ship as the hub.
+> **Status: 2026-11-12, after D6.** CY1's workspace and CY2's cloud are done: every push to `main` deploys to
+> [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). The owner approved every deployment and asked for CY3 to CY12
+> in number order, end to end. The owner split the work (D4): **the story has its own session,** which writes the world
+> and the story from [the story brief](../design/story-brief.md), and **this queue builds the app and the combat
+> testing,** on test content, so the story drops into a finished game. The world is now interplanetary: each lead Uma's Chapter 1 on her
+> own world, then the ship as the hub.
 >
 > - **The design:** [the concept](../design/concept.md) (TC1–TC54, [page](../design/previews/concept.html)),
 >   [the build plan](../design/build-plan.md) (BP1–BP9, [page](../design/previews/build-plan.html)),
@@ -18,14 +19,13 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY12; decision numbers continue from D6.
+Packet ids run CY1–CY12; decision numbers continue from D7.
 
 ## Phase 1: the foundation
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY2 | [The cloud](tasks/CY2-cloud.md) in the `uma-rpg` project: site `uma-cyberpunk`, Cloud Run `cyber-api`, Firestore `cyber`, the deploy job, with its cost table | Claude | M | CY1; the owner's go | Written |
-| CY3 | [The hello app](tasks/CY3-hello-app.md): uma-quest's wiring, Google sign-in, save v1 synced, the update prompt, master data, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | Written |
+| CY3 | [The hello app](tasks/CY3-hello-app.md): uma-quest's wiring, Google sign-in, save v1 synced, the update prompt, master data, the Home Screen | Claude | M | CY2; the owner's two sign-in entries | Next |
 
 ## Phase 2: the combat, tested three ways
 
@@ -91,7 +91,6 @@ packet, or says why not.
 | When | What |
 |---|---|
 | Now | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
-| CY2 | The go for the cloud, on its cost table |
 | CY3 | The two sign-in entries for `uma-cyberpunk.web.app` (the packet names the pages); then the phone check: install, sign in, see the save sync |
 | CY8 | One play of the sandbox on the phone |
 | CY12 | One play-through of the Chapter 1 loop on the phone |
@@ -102,6 +101,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY2 | The cloud (D6): database `cyber`, `cyber-api-runtime`, images `cyber`, Cloud Run `cyber-api`, `cyber-deploy`, the provider `uma-cyberpunk`, site [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app), the web app and its sign-in domain, all in `uma-rpg`; the variables and the deploy job on; isolation checked in every cell; [infrastructure](../technical/infrastructure.md). First deploy: [run 43337345934](https://github.com/luismlorenzana/uma-cyberpunk/actions/runs/43337345934) | `5a4430b` |
 | CY1 | The workspace and its checks (D5): pnpm 10.33.0 and turbo; `@cyber/web`, `@cyber/api` and `@cyber/domain`, installing uma-data 1.5.0, uma-kit 0.19.0, uma-work 0.1.0, uma-server 0.2.0, uma-art 2.27.0 and uma-stage 0.3.0 with three 0.187.0; lint, tests, build, the 180 KB size check (69.4 KB, three.js marked lazy) and the private-content guard; CI's verify job. Locally with the guard on: health 200, save 401; the page and its proxied health on :5214 | `f2cc71b` |
 
 ## How a packet reads

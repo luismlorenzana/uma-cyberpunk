@@ -51,6 +51,10 @@ Node 22+ and pnpm 10. The `@luismlorenzana/*` packages come from GitHub Packages
 The preview pane starts both from `.claude/launch.json` (`cyber-api`, `cyber-web`). To try the guard locally, run the
 built API with `ALLOWED_EMAIL` set and no `AUTH_MODE`.
 
+**Deploys:** a push to `main` deploys the API to Cloud Run `cyber-api` and the web app to `uma-cyberpunk.web.app`, after
+the verify job, then checks both (`docs/technical/infrastructure.md`). `infra/bootstrap.sh` creates the cloud and is
+safe to re-run, always scoped: `CLOUDSDK_ACTIVE_CONFIG_NAME=default CLOUDSDK_CORE_PROJECT=uma-rpg bash infra/bootstrap.sh`.
+
 ## Conventions
 
 - TypeScript strict with `noUncheckedIndexedAccess`; Vitest next to the code; no network in tests.
