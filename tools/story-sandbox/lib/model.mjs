@@ -80,6 +80,21 @@ export function parseFoeFile(value) {
   return value
 }
 
+/** The Uma-to-boss ties (`content/stories/ties.json`, private): each Uma (an outfit id) with a boss (a board id), a kind,
+ * a heat of 1 to 3, a world, and the conflict and its turn as text. Checked for the shape the Ties page reads. */
+export function parseTies(value) {
+  if (!object(value) || value.schemaVersion !== 1 || value.kind !== 'uma-foe-ties' || !Array.isArray(value.ties) || !Array.isArray(value.kinds)) {
+    throw new Error('Not a ties file (kind uma-foe-ties, schemaVersion 1)')
+  }
+  const kinds = new Set(value.kinds.map((k) => k?.id))
+  for (const t of value.ties) {
+    if (!object(t) || !Number.isSafeInteger(t.uma) || !text(t.foe) || !HEROINE_ID.test(t.foe) || !kinds.has(t.kind) || ![1, 2, 3].includes(t.heat)) {
+      throw new Error('A tie needs an Uma’s outfit id, a boss’s board id, a known kind and a heat of 1 to 3')
+    }
+  }
+  return value
+}
+
 /** Every image file a pack lists. */
 export function packImages(pack) {
   return new Set([...pack.umas, ...pack.heroines].flatMap((c) => Object.values(c.images ?? {})))

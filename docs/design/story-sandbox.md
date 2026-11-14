@@ -1,9 +1,9 @@
 # Uma Cyberpunk: the Story Sandbox
 
-> **Status: 2026-11-14, built (D17); the Bibles page added (D30), the Foes page (D35) and Profiles (D36).** The owner asked for "a third app" for Uma Cyberpunk, beside the Story Sandboxes
+> **Status: 2026-11-14, built (D17); the Bibles page added (D30), the Foes page (D35), Profiles (D36) and Ties (D37).** The owner asked for "a third app" for Uma Cyberpunk, beside the Story Sandboxes
 > uma-quest's and uma-farm's sessions built, where they author and review their stories locally (uma-platform P150).
 > This game's story had a format, a check and a player in the game (CY9), but no page to read it, judge it and leave
-> verdicts for the story session. This page records the sandbox as built and its calls, **SX1–SX14**. No name or line
+> verdicts for the story session. This page records the sandbox as built and its calls, **SX1–SX15**. No name or line
 > of story is in git. Visual page: [previews/story-sandbox.html](previews/story-sandbox.html).
 
 ## The short answer
@@ -12,8 +12,8 @@
   4321). Run `pnpm stories:import-cast` once for names and faces.
 - **It reads the story with the game's own code,** so it shows exactly what `pnpm story:check` reports and what the game
   plays. Until the story session's first file lands, it shows the game's invented stand-in.
-- **Fifteen pages:** the story's state and its five deliverables, the worlds and their maps, the bibles, the foes, the
-  profiles, the chapters, a scene player, the cast, the Log, the Calls, the checks, the format, the notes and the combat sprites.
+- **Sixteen pages:** the story's state and its five deliverables, the worlds and their maps, the bibles, the foes, the
+  profiles, the ties, the chapters, a scene player, the cast, the Log, the Calls, the checks, the format, the notes and the combat sprites.
 - **Your verdicts** (liked, rework or question, and a note) go to the private `content/stories/reviews.json`, which the
   story session reads before writing the next layer.
 
@@ -44,12 +44,13 @@
 | **Worlds** | The star map, each world where its file places it; each world's look, places, factions and leads |
 | **A world** | Its look, mood and factions; its place map with links and locked places; which scenes happen where; its chapters |
 | **Bibles** | *(D30)* The story session's private bibles, `content/stories/bibles/*.md`: the casting first, then the worlds in the Circuit's order, each a card with its words and your verdict mark; one bible read in full (headings, tables, lists, quotes) with a verdict box; the foes' bibles grouped apart |
-| **Foes** | *(D35)* The private look data in `content/stories/foes/`: the Standard every foe shares (colour roles, ranks, the Holds' marks, the lights, the roles' back units); each faction's kit, variants, roles, machines and prompt; every ranked unit as a tile with her face, role, variant, light and palette, filtered by variant and role; a unit's page with her art, her palette and accent, her other fittings and her brief to copy. Verdicts on a faction and on a unit |
+| **Foes** | *(D35)* The private look data in `content/stories/foes/`: the Standard every foe shares (colour roles, ranks, the Holds' marks, the lights, the roles' back units); each faction's kit, variants, roles, machines and prompt; every pre-ranked boss *(D37)* as a tile with her face, role, variant, light and palette, filtered by variant and role; a unit's page with her art, her palette and accent, her other fittings and her brief to copy. Verdicts on a faction and on a unit |
 | **Chapters** | Every chapter in danger order: leads, number, danger, layer, scenes, battles, words, reading time, and your verdict mark |
 | **A chapter** | Its leads, keys and length; each scene with its place, trigger, cast, reading time (over three minutes flagged, TC36) and script; each battle's brief, enemies and side objectives; the debrief aboard |
 | **Player** | One scene a step at a time, as below |
 | **Cast** | The leads with their worlds, rooms, talents, roles, chapters and where each comes aboard; the crew's order; the heroines by faction and Hold; minor characters; the Ranker's Umas by batch, marked lead or crew; every name links to her profile |
-| **Profiles** | *(D36)* Everyone the Ranker gives the story, found by name: the Umas by batch, then the NPCs; the heroines by franchise, a franchise the story dropped marked. An Uma's profile: her art, tier, batch and running style, a sister's own profile, uma-quest's personality, story and class tags with their reasons, and her place in this story (lead, crew, role, tastes). A heroine's: her figure art and splash, her franchise's details, the Ranker's board and tier, her casting, her foe rank, variant and part, and her other fittings |
+| **Profiles** | *(D36)* Everyone the Ranker gives the story, found by name: the Umas by batch, then the NPCs; the heroines by franchise, a franchise the story dropped marked. An Uma's profile: her art, tier, batch and running style, a sister's own profile, uma-quest's personality, story and class tags with their reasons, and her place in this story (lead, crew, role, tastes). A heroine's: her figure art and splash, her franchise's details, the Ranker's board and tier, her casting, her foe rank, variant and part, and her other fittings; *(D37)* each profile shows her ties |
+| **Ties** | *(D37)* The private `ties.json`: every Uma's boss, one each for the Ranker's 100, by heat and the Ranker's order, filtered by faction, kind and heat; each tie's kind, heat, world, conflict and turn; the bosses left free; a verdict box on the whole |
 | **Log** | Each Log File's lines, which are redacted, and which scene fills each in; every Lead and where it's gained; every Anomaly, where it opens and where it's explained; every flag |
 | **Calls** | Each Call's question, the voters' arguments, the branches and where it's held |
 | **Checks** | Exactly `pnpm story:check`'s errors, to-dos and counts |
@@ -64,7 +65,7 @@
 | SX1 | **A local page in this repo,** `tools/story-sandbox/`, run with `pnpm stories` at http://127.0.0.1:4322: plain modules and Node's `http`, through the repo's `tsx`; loopback only; code in git with no names |
 | SX2 | **The game's own code reads the story:** the server imports `packages/domain/src/story/` (parser, check, stand-in) and `scripts/story/files.ts`, so the sandbox and the game never disagree on the format. A file that doesn't parse is listed as an error, and the rest still shows while it's being written |
 | SX3 | **The stand-in until the first file:** with no story in `content/stories/`, the page shows the game's invented stand-in and says so; verdicts are refused on it |
-| SX4 | **Fifteen pages** *(D24: Sprites; D30: Bibles; D35: Foes; D36: Profiles)*, as the table above |
+| SX4 | **Sixteen pages** *(D24: Sprites; D30: Bibles; D35: Foes; D36: Profiles; D37: Ties)*, as the table above |
 | SX5 | **The player:** a scene or a debrief one step at a time, with Back, Next, Auto, Restart and the arrow keys; choices and a Call's branches are one-tap picks, and Back takes a pick back; **interjection slots are resolved by a squad you set,** using the casting's crew order (TC51), so you hear who would speak; story changes (a Lead, a File line, an Anomaly, a flag, a join, coming aboard, a battle) show as cards; the script beside it marks the current step |
 | SX6 | **Verdicts:** liked, rework or question, and a note, on any item (a file, `chapters/<id>.json#<scene>`), saved to the private `content/stories/reviews.json` in the shape uma-quest's and uma-farm's sandboxes write; the story session reads it before each next layer (SB9) |
 | SX7 | **The cast pack, for names and faces:** `pnpm stories:import-cast` builds the private `content/stories/cast-pack/` from the Ranker's plan (the Playable Umas in the ten batches by outfit id, a sister under her own name; the Uma NPCs; every unit on the boss, key and regular boards by board id) and copies the pictures uma-quest's pack already holds for those ids; *(D35)* for every heroine still without one, it copies her face and figure art from the Ranker's own local mirror (`UMA_RANKER_DIR`); *(D36)* it fills in any face, art or splash a heroine lacks from that mirror, and adds the profiles' facts: each Uma's running style, a sister's own profile (the Ranker's `profiles.json`), uma-quest's personality, story and class tags (its `tags.json`, read in place) and each heroine's franchise details. Nothing is downloaded. Without a pack, ids show as themselves, or as the stand-in's labels |
@@ -75,6 +76,7 @@
 | SX12 | *(D30)* **The Bibles page:** the story session's prose layer (the casting's reasons, each world's bible) is read and judged where everything else is. Read-only, from `content/stories/bibles/`, file names `[a-z0-9-]` only; the page's small Markdown reader draws headings, tables, nested lists, quotes, bold, code and a link's words as DOM nodes, never as HTML; a verdict is keyed `bibles/<name>.md` |
 | SX13 | *(D35)* **The Foes page:** the story session's foe data, read-only, from `content/stories/foes/*.json` (the Standard and one file a faction, checked for their shape; a file that doesn't read is listed and the rest still shows). Colours are painted only from six-digit hexes. A verdict is keyed `foes/<faction>.json`, or `foes/<faction>.json#<board id>` for one unit |
 | SX14 | *(D36)* **Profiles:** Uma Studio's art and facts beside what the story does with each character, read-only from the cast pack. Every name the pages show links to her profile; a franchise the story dropped is marked, never hidden |
+| SX15 | *(D37)* **Ties:** the story session's Uma-to-boss ties, read-only from `content/stories/ties.json` (checked for its shape: an outfit id, a board id, a known kind, a heat of 1 to 3); a file that doesn't read is shown as a problem. Profiles and the Foes page show the same ties from both sides |
 
 ## As built
 

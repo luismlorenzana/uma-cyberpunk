@@ -2,8 +2,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  castIndex, countWords, deliverables, enemyWords, hexOrNull, PACK_KIND, packImages, parseCastPack, parseFoeFile, parseReviews, parseVerdict, slotLine, storyIndex, walk, withVerdict,
+  castIndex, countWords, deliverables, enemyWords, hexOrNull, PACK_KIND, packImages, parseCastPack, parseFoeFile, parseReviews, parseTies, parseVerdict, slotLine, storyIndex, walk, withVerdict,
 } from './model.mjs'
+
+test('a ties file pairs an Uma’s outfit id with a boss’s board id, of a known kind and a heat of 1 to 3', () => {
+  const ties = { schemaVersion: 1, kind: 'uma-foe-ties', kinds: [{ id: 'rival' }], ties: [{ uma: 9000001, foe: 'stand-in-1', kind: 'rival', heat: 2 }] }
+  assert.equal(parseTies(ties), ties)
+  assert.throws(() => parseTies({ ...ties, kind: 'other' }), /Not a ties file/)
+  assert.throws(() => parseTies({ ...ties, ties: [{ uma: '9000001', foe: 'stand-in-1', kind: 'rival', heat: 2 }] }), /needs an Uma/)
+  assert.throws(() => parseTies({ ...ties, ties: [{ uma: 9000001, foe: 'stand-in-1', kind: 'feud', heat: 2 }] }), /known kind/)
+  assert.throws(() => parseTies({ ...ties, ties: [{ uma: 9000001, foe: 'stand-in-1', kind: 'rival', heat: 4 }] }), /heat of 1 to 3/)
+})
 
 test('a foe file is the Standard or a faction, with board ids and ranks; colours are six-digit hexes only', () => {
   const faction = { schemaVersion: 1, kind: 'foe-faction', id: 'f1', title: 'Faction One', palette: { base: ['Base', '#112233'] }, variants: [], units: [{ id: 'stand-in-1', rank: 'boss' }] }

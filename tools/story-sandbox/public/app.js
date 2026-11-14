@@ -1,7 +1,7 @@
 // The Cyberpunk Story Sandbox's entry: loads the story from the local server and routes between views.
 import { playerView } from '/player.js'
 import { sheetView, spritesView } from '/sprites.js'
-import { biblesView, callsView, castView, chaptersView, chapterView, checksView, D, foesView, formatView, h, index, logView, notesView, profilesView, storyView, worldsView, worldView } from '/views.js'
+import { biblesView, callsView, castView, chaptersView, chapterView, checksView, D, foesView, formatView, h, index, logView, notesView, profilesView, tiesView, storyView, worldsView, worldView } from '/views.js'
 
 const app = document.getElementById('app')
 let loadedAt = 0
@@ -25,7 +25,7 @@ async function saveReview(input) {
 
 function route() {
   const [head, a, b] = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent)
-  const nav = { '': 'story', worlds: 'worlds', w: 'worlds', chapters: 'chapters', ch: 'chapters', play: 'chapters', cast: 'cast', log: 'log', calls: 'calls', checks: 'checks', format: 'format', notes: 'notes', sprites: 'sprites', bibles: 'bibles', foes: 'foes', profiles: 'profiles', profile: 'profiles' }[head] ?? 'story'
+  const nav = { '': 'story', worlds: 'worlds', w: 'worlds', chapters: 'chapters', ch: 'chapters', play: 'chapters', cast: 'cast', log: 'log', calls: 'calls', checks: 'checks', format: 'format', notes: 'notes', sprites: 'sprites', bibles: 'bibles', foes: 'foes', profiles: 'profiles', profile: 'profiles', ties: 'ties' }[head] ?? 'story'
   for (const link of document.querySelectorAll('[data-nav]')) link.classList.toggle('on', link.dataset.nav === nav)
   let view
   try {
@@ -44,6 +44,7 @@ function route() {
     else if (head === 'foes') view = foesView(a, b, saveReview)
     else if (head === 'profiles') view = profilesView(null)
     else if (head === 'profile' && a) view = profilesView(a)
+    else if (head === 'ties') view = tiesView(saveReview)
     else if (head === 'sprites' && a && b) view = sheetView(a, b)
     else if (head === 'sprites') view = spritesView()
     else view = storyView()

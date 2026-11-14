@@ -156,3 +156,10 @@ select { background: var(--panel); color: var(--ink); border: 1px solid var(--li
 input[type="search"] { min-width: min(320px, 100%); background: var(--panel); color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px; padding: 6px 10px; font: inherit; }
 .units [hidden], .unit[hidden], div[hidden] { display: none; }
 img.splash { display: block; width: 100%; height: auto; border-radius: var(--radius); }
+
+/* Ties */
+.ties { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin: 12px 0; }
+.ties .card { margin: 0; }
+.tie .vs { color: var(--hot); font: 700 18px var(--head); }
+.heat { color: var(--hot); letter-spacing: 1px; font-size: 12px; }
+@media (max-width: 760px) { .ties { grid-template-columns: 1fr; } }

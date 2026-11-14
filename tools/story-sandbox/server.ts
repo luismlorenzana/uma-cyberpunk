@@ -16,7 +16,7 @@ import {
   sceneSeconds, STAND_IN_FILES, STEP_KINDS, StoryParseError, type Finding, type StoryPack,
 } from '../../packages/domain/src/story/index'
 import { readStoryFiles } from '../../scripts/story/files'
-import { FOE_ORDER, packImages, parseCastPack, parseFoeFile, parseReviews, parseVerdict, withVerdict } from './lib/model.mjs'
+import { FOE_ORDER, packImages, parseCastPack, parseFoeFile, parseReviews, parseTies, parseVerdict, withVerdict } from './lib/model.mjs'
 import { latestSheets, parseSheetName, REQUESTED } from './lib/sprites.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -77,7 +77,7 @@ async function castPack() {
 
 /** The story's bibles (`content/stories/bibles/*.md`, private): the casting first, then the worlds in the Circuit's
  * order, then the foes (the Standard, then each faction as the Circuit meets them), then the rest by name. */
-const BIBLE_ORDER = ['casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink', 'foes', ...FOE_ORDER.map((f) => `foes-${f}`)]
+const BIBLE_ORDER = ['casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink', 'foes', ...FOE_ORDER.map((f) => `foes-${f}`), 'ties']
 async function bibles(): Promise<{ name: string; path: string; text: string }[]> {
   const names = (await readdir(join(content, 'bibles')).catch(() => [] as string[])).filter((n) => /^[a-z0-9][a-z0-9-]{0,60}\.md$/.test(n)).map((n) => n.slice(0, -3))
   const rank = (n: string) => (BIBLE_ORDER.includes(n) ? BIBLE_ORDER.indexOf(n) : BIBLE_ORDER.length)
@@ -102,6 +102,14 @@ async function foes() {
   const rank = (id: string) => (FOE_ORDER.includes(id) ? FOE_ORDER.indexOf(id) : FOE_ORDER.length)
   factions.sort((a, b) => rank(a.id) - rank(b.id) || a.id.localeCompare(b.id))
   return { standard, factions, problems }
+}
+
+/** The Uma-to-boss ties (`content/stories/ties.json`, private), or null; a file that doesn't read is a problem. */
+async function ties(): Promise<{ doc: unknown; problem: string | null }> {
+  try {
+    const raw = await maybeJson(join(content, 'ties.json'))
+    return { doc: raw === null ? null : parseTies(raw), problem: null }
+  } catch (e) { return { doc: null, problem: `ties.json: ${e instanceof Error ? e.message : String(e)}` } }
 }
 
 /** Everything the page draws, read fresh. */
@@ -133,6 +141,7 @@ async function state() {
     notes: await maybeText(join(content, 'world-notes.md')), worldDoc: await maybeText(join(repo, 'docs/design/world.md')),
     bibles: await bibles(),
     foes: await foes(),
+    ties: await ties(),
     reviews, reviewsProblem,
   }
 }

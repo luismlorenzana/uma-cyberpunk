@@ -9,6 +9,11 @@ export function index(data) {
   D.cast = castIndex(data.cast, data.pack?.casting)
   D.index = storyIndex(data.pack)
   D.foes = new Map((data.foes?.factions ?? []).flatMap((f) => f.units.map((u) => [u.id, { faction: f, unit: u }])))
+  D.ties = { byUma: new Map(), byFoe: new Map() }
+  for (const t of data.ties?.doc?.ties ?? []) {
+    (D.ties.byUma.get(String(t.uma)) ?? D.ties.byUma.set(String(t.uma), []).get(String(t.uma))).push(t)
+    ;(D.ties.byFoe.get(t.foe) ?? D.ties.byFoe.set(t.foe, []).get(t.foe)).push(t)
+  }
 }
 
 /** A DOM element: h('div', { class: 'card', text: 'x', onclick }, child, …). */
@@ -117,7 +122,7 @@ function md(text) {
 export function biblesView(name, saveReview) {
   const list = D.data.bibles ?? []
   if (!name) {
-    const isFoe = (b) => b.name === 'foes' || b.name.startsWith('foes-')
+    const isFoe = (b) => b.name === 'foes' || b.name.startsWith('foes-') || b.name === 'ties'
     const cards = (group) => h('div', { class: 'grid' }, group.map((b) => {
       const title = /^#\s+(.*)$/m.exec(b.text)?.[1] ?? b.name
       return h('div', { class: 'card' }, h('h3', {}, verdictMark(b.path), ' ', h('a', { href: `#/bibles/${b.name}`, text: title })),
@@ -185,7 +190,8 @@ function factionCard(f) {
     h('h3', {}, verdictMark(f.path), ' ', h('a', { href: `#/foes/${f.id}`, text: f.title })),
     h('p', { class: 'muted', text: `${f.frameLine ?? ''} · ${f.franchise ?? ''}` }),
     h('div', {}, Object.values(f.palette).map(namedChip)),
-    h('p', {}, FOE_RANKS.map((r) => [pill('bible', `${counts[r] ?? 0} ${RANK_NAMES[r]}`), ' ']), counts.leftOut ? pill('placeholder', `${counts.leftOut} left out`) : null),
+    h('p', {}, FOE_RANKS.filter((r) => counts[r]).map((r) => [pill('bible', `${counts[r]} ${RANK_NAMES[r]}`), ' ']), counts.featured ? [pill('bible', `${counts.featured} with a part`), ' '] : null,
+      counts.notPreRanked ? pill('placeholder', `${counts.notPreRanked} not ranked yet`) : null),
     h('p', { class: 'muted', text: f.variants.map((v) => v.name).join(' · ') }),
     h('p', {}, h('a', { href: `#/bibles/foes-${f.id}`, text: 'Its bible ›' })))
 }
@@ -252,6 +258,7 @@ function foeUnit(f, uid, saveReview) {
       h('div', {}, who.art ? h('img', { class: 'foe-art', src: who.art, alt: '' }) : face(u.id, 160)),
       h('div', { class: 'card' }, rows([
         ['Story', u.story],
+        ['Her Umas', orNull((D.ties.byFoe.get(u.id) ?? []).map((t) => h('div', {}, tieLine(t, String(t.uma)))))],
         ['Role', `${ROLE_NAMES[u.role] ?? u.role}: ${f.roleLooks?.[u.role] ?? ''}${u.hull ? ` (${u.hull})` : ''} · ${u.roleFrom === 'source' ? 'from her class' : u.roleFrom === 'story' ? 'set by the story' : u.roleFrom === 'default' ? 'a default by her type' : 'a stable pick: check her weapon'}`],
         ['Variant', v ? [h('b', { text: v.name }), `: ${v.look}`] : u.variant],
         ['Light', light ? [swatch(light.hex, light.name), ` ${light.name} `, h('code', { text: light.hex })] : 'Her accent (no element)'],
@@ -277,7 +284,7 @@ export function foesView(fid, uid, saveReview) {
   }
   const total = F.factions.reduce((n, f) => n + f.units.length, 0)
   return h('div', {}, h('h1', { text: 'Foes' }),
-    h('p', { class: 'muted' }, `Every foe wears the Standard. ${total} ranked units in ${F.factions.length} factions, from the Ranker's boards, in `, h('code', { text: 'content/stories/foes/' }), '.'),
+    h('p', { class: 'muted' }, `Every foe wears the Standard. ${total} of the owner's pre-ranked bosses in ${F.factions.length} factions, in `, h('code', { text: 'content/stories/foes/' }), '; each Uma’s boss is on the ', h('a', { href: '#/ties', text: 'Ties' }), ' page.'),
     problems, standardCard(F.standard), h('h2', { text: 'The factions' }), h('div', { class: 'grid' }, F.factions.map(factionCard)))
 }
 
@@ -350,6 +357,7 @@ function umaProfile(who) {
         ['Class (uma-quest’s)', tag(r.about?.tags?.class)],
         ['In this story', lead ? [h('b', { text: 'Lead' }), ` of `, link(`#/w/${lead.world}`, lead.world), lead.opens ? ` · opens the ${lead.opens}` : '']
           : crewAt >= 0 ? `Crew, #${crewAt + 1} in the crew’s order${D.index.joins[key] ? ` · joins in ${D.index.joins[key].scene}` : ''}` : 'Not cast yet'],
+        ['Her boss', orNull((D.ties.byUma.get(key) ?? []).map((t) => h('div', {}, tieLine(t, t.foe))))],
         ['Role', casting.roles?.[key] ?? null],
         ['Tastes', tastes ? `favourite ${tastes.favourite} · dislikes ${tastes.disliked} · gift ${tastes.gift} · topics ${(tastes.topics ?? []).join(', ')}` : null],
       ]))))
@@ -375,10 +383,51 @@ function heroineProfile(who) {
           : foe?.unit.story ? 'A part in her faction’s foe bible, drawn as a Boss; not in the casting yet'
           : foe ? 'In the foe pool, by the Ranker’s order' : 'Not in the foe data'],
         ['Her part', foe?.unit.story ?? null],
+        ['Her Umas', orNull((D.ties.byFoe.get(r.id) ?? []).map((t) => h('div', {}, tieLine(t, String(t.uma)))))],
         ['As a foe', foe ? [h('a', { href: `#/foes/${foe.faction.id}/${encodeURIComponent(r.id)}`, text: foe.faction.title }), ` · ${{ boss: 'Boss', key: 'Key', regular: 'Regular' }[foe.unit.rank]} · ${v?.name ?? foe.unit.variant} · ${ROLE_NAMES[foe.unit.role] ?? foe.unit.role}${lightOf(foe.unit.light) ? ` · ${lightOf(foe.unit.light).name}` : ''}`] : null],
         ['Other fittings', fittings.length ? fittings.map((x) => [h('a', { href: profileHref(x.id), text: D.cast.name(x.id) }), ' ']) : null],
       ]))),
     r.images?.splash ? h('div', { class: 'card' }, h('h4', { text: 'Her splash art' }), h('img', { class: 'splash', src: who.record.images.splash, alt: '', loading: 'lazy' })) : null)
+}
+
+// --- the ties: each Uma's boss, the conflict and its turn
+
+const orNull = (list) => (list.length ? list : null)
+const kindName = (id) => D.data.ties?.doc?.kinds?.find((k) => k.id === id)?.name ?? id
+const heatMark = (n) => h('span', { class: `heat h${n}`, title: `Heat ${n} of 3`, text: '●'.repeat(n) + '○'.repeat(3 - n) })
+const tieLine = (t, other) => [h('a', { href: profileHref(other), text: D.cast.name(other) }), ' ', pill('bible', kindName(t.kind)), ' ', heatMark(t.heat), ' ', h('b', { text: t.title }), h('br'), h('small', { class: 'muted', text: t.why })]
+
+function tieCard(t) {
+  const el = h('div', { class: 'card tie' },
+    h('div', { class: 'row' }, person(String(t.uma)), h('span', { class: 'vs', text: '×' }), person(t.foe)),
+    h('p', {}, pill('bible', kindName(t.kind)), ' ', heatMark(t.heat), ' ', link(`#/w/${t.world}`, t.world), ' · ', h('b', { text: t.title })),
+    h('p', { text: t.why }),
+    h('p', { class: 'muted' }, h('b', { text: 'The turn: ' }), t.turn))
+  Object.assign(el.dataset, { kind: t.kind, faction: t.faction ?? '', heat: String(t.heat) })
+  return el
+}
+
+/** The ties: every Uma with her boss, by heat and the Ranker's order, filtered by faction, kind and heat. */
+export function tiesView(saveReview) {
+  const T = D.data.ties
+  if (T?.problem) return h('div', { class: 'error-box', text: `The ties can’t be read: ${T.problem}` })
+  if (!T?.doc) return h('div', {}, h('h1', { text: 'Ties' }), h('div', { class: 'card muted', text: 'No ties yet: the story session writes content/stories/ties.json.' }))
+  const order = (t) => D.cast.umas.get(String(t.uma))?.order ?? 999
+  const ties = [...T.doc.ties].sort((a, b) => b.heat - a.heat || order(a) - order(b))
+  const cards = ties.map(tieCard)
+  const filter = () => { for (const c of cards) c.hidden = (faction.value && c.dataset.faction !== faction.value) || (kind.value && c.dataset.kind !== kind.value) || (heat.value && c.dataset.heat !== heat.value) }
+  const select = (label, options) => h('select', { 'aria-label': label, onchange: () => filter() }, h('option', { value: '', text: `Every ${label.toLowerCase()}` }), options.map(([value, text]) => h('option', { value, text })))
+  const faction = select('Faction', (D.data.foes?.factions ?? []).map((f) => [f.id, f.title]))
+  const kind = select('Kind', T.doc.kinds.map((k) => [k.id, k.name]))
+  const heat = select('Heat', [['3', 'Heat 3: a lead’s'], ['2', 'Heat 2: open'], ['1', 'Heat 1: simmering']])
+  return h('div', {}, h('h1', { text: 'Ties' }),
+    h('p', { class: 'muted', text: T.doc.about ?? '' }),
+    h('div', { class: 'card' }, h('h4', { text: 'The kinds' }), T.doc.kinds.map((k) => h('p', { class: 'li' }, h('b', { text: k.name }), `: ${k.what}`)),
+      T.doc.unpaired?.length ? h('p', { class: 'muted' }, 'Free for later: ', T.doc.unpaired.map((id) => [h('a', { href: profileHref(id), text: D.cast.name(id) }), ' '])) : null,
+      h('p', {}, h('a', { href: '#/bibles/ties', text: 'Read the ties’ bible ›' }))),
+    h('div', { class: 'row' }, faction, kind, heat),
+    h('div', { class: 'ties' }, cards),
+    reviewPanel('ties.json', saveReview))
 }
 
 /** Profiles: everyone the Ranker gives the story, by Umas' batch and heroines' franchise, each with her art and facts. */

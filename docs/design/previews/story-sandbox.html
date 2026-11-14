@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cyberpunk Story Sandbox</title>
 <!-- docs/design/story-sandbox.md on one page: the local page where the owner reads, plays and judges uma-cyberpunk's
-     story, how it reads the story with the game's own code, its fifteen pages, its player and its calls SX1–SX14.
+     story, how it reads the story with the game's own code, its sixteen pages, its player and its calls SX1–SX15.
      Self-contained, light and dark. No character names, art or story text. -->
 <style>
   :root {
@@ -67,11 +67,11 @@
   <nav><a href="#fits">How it fits</a><a href="#pages">The pages</a><a href="#player">The player</a><a href="#calls">Calls</a><a href="#built">As built</a><a href="../story-sandbox.md">Markdown</a></nav>
   <div class="tiles">
     <div class="tile"><b>:4322</b><span><code>pnpm stories</code>, beside uma-quest's 4320 and uma-farm's 4321</span></div>
-    <div class="tile"><b>15</b><span>pages, from the story's state to the format</span></div>
+    <div class="tile"><b>16</b><span>pages, from the story's state to the format</span></div>
     <div class="tile"><b>15</b><span>step kinds, all played</span></div>
     <div class="tile"><b>0</b><span>formats of its own: the game's parser and check</span></div>
     <div class="tile"><b>154 · 833</b><span>Umas and heroines named in the private cast pack</span></div>
-    <div class="tile"><b>14</b><span>calls, SX1–SX14</span></div>
+    <div class="tile"><b>15</b><span>calls, SX1–SX15</span></div>
   </div>
 
   <section class="card" id="fits">
@@ -119,6 +119,7 @@
       <div><b>Player</b><p>A scene one step at a time, below.</p></div>
       <div><b>Cast</b><p>Leads and where each comes aboard; the crew's order; heroines by faction and Hold; the Ranker's Umas by batch; every name links to her profile.</p></div>
       <div><b>Profiles <span class="tag">D36</span></b><p>Everyone the Ranker gives the story, found by name: Uma Studio's art (figure and splash) and facts beside her casting and her foe data.</p></div>
+      <div><b>Ties <span class="tag">D37</span></b><p>Every Uma's boss: the conflict, its kind and heat, where it bites and how it can turn, filtered by faction, kind and heat.</p></div>
       <div><b>Log</b><p>Each File's lines and what fills each in; every Lead, Anomaly and flag, and where.</p></div>
       <div><b>Calls</b><p>The question, the arguments, the branches, where it's held.</p></div>
       <div><b>Checks, Format, Notes</b><p><code>pnpm story:check</code>'s findings exactly; the files and fifteen step kinds; the private world notes and the world doc.</p></div>
@@ -140,7 +141,7 @@
         <tr><td class="id">SX1</td><td><b>A local page in this repo,</b> <code>tools/story-sandbox/</code>, <code>pnpm stories</code> at 127.0.0.1:4322; loopback only; code in git with no names</td></tr>
         <tr><td class="id">SX2</td><td><b>The game's own code reads the story:</b> its parser, check and stand-in, imported in place; a file that doesn't parse is an error, and the rest still shows</td></tr>
         <tr><td class="id">SX3</td><td><b>The stand-in until the first file;</b> verdicts are refused on it</td></tr>
-        <tr><td class="id">SX4</td><td><b>Fifteen pages</b> (D24 added Sprites, D30 Bibles, D35 Foes, D36 Profiles), as above</td></tr>
+        <tr><td class="id">SX4</td><td><b>Sixteen pages</b> (D24 added Sprites, D30 Bibles, D35 Foes, D36 Profiles, D37 Ties), as above</td></tr>
         <tr><td class="id">SX5</td><td><b>The player:</b> picks that can be taken back, story changes as cards, interjection slots resolved by a squad you set</td></tr>
         <tr><td class="id">SX6</td><td><b>Verdicts</b> on any item, to <code>content/stories/reviews.json</code>, in the siblings' shape; the story session reads it before each next layer</td></tr>
         <tr><td class="id">SX7</td><td><b>The cast pack:</b> names and faces by id, private, built by <code>pnpm stories:import-cast</code> from the Ranker's plan and uma-quest's pictures; nothing downloaded</td></tr>
@@ -151,6 +152,7 @@
         <tr><td class="id">SX12</td><td><b>The Bibles page</b> (D30): read-only, from <code>content/stories/bibles/</code>; a small Markdown reader that draws tables and lists as DOM nodes, never HTML; a verdict per bible</td></tr>
         <tr><td class="id">SX13</td><td><b>The Foes page</b> (D35): read-only, from <code>content/stories/foes/</code>; colours painted only from six-digit hexes; verdicts on a faction and on a unit</td></tr>
         <tr><td class="id">SX14</td><td><b>Profiles</b> (D36): read-only from the cast pack; every name links to one; a dropped franchise marked, never hidden</td></tr>
+        <tr><td class="id">SX15</td><td><b>Ties</b> (D37): read-only from <code>content/stories/ties.json</code>, checked for its shape; shown on profiles and foe pages too</td></tr>
       </tbody>
     </table></div>
   </section>
