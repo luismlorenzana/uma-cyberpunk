@@ -53,6 +53,33 @@ export function parseCastPack(value) {
   return value
 }
 
+// --- the foes: the Standard and one kit per faction, private, written by the story session in content/stories/foes/
+
+/** The factions, in the order the Circuit meets them. */
+export const FOE_ORDER = ['steel-muster', 'neon-commission', 'tideline-armada', 'sevenfold-envoys', 'starward-contractors', 'lantern-wardens', 'iron-vigil', 'ember-bastion']
+export const FOE_RANKS = ['boss', 'key', 'regular']
+const HEX = /^#[0-9A-Fa-f]{6}$/
+
+/** A colour the page may paint with: a six-digit hex, else nothing. */
+export const hexOrNull = (value) => (text(value) && HEX.test(value) ? value : null)
+
+/** A foe file: the Standard every foe shares (`foe-standard`), or one faction's kit, variants and ranked units
+ * (`foe-faction`). Checked for the shape the Foes page reads; the rest is shown as text. */
+export function parseFoeFile(value) {
+  if (!object(value) || value.schemaVersion !== 1 || (value.kind !== 'foe-standard' && value.kind !== 'foe-faction')) {
+    throw new Error('Not a foe file (kind foe-standard or foe-faction, schemaVersion 1)')
+  }
+  if (value.kind === 'foe-faction') {
+    if (!text(value.id) || !/^[a-z0-9-]{1,40}$/.test(value.id) || !text(value.title) || !object(value.palette) || !Array.isArray(value.variants) || !Array.isArray(value.units)) {
+      throw new Error('A faction needs an id, a title, a palette, variants and units')
+    }
+    for (const u of value.units) {
+      if (!object(u) || !text(u.id) || !HEROINE_ID.test(u.id) || !FOE_RANKS.includes(u.rank)) throw new Error('A foe unit needs a board id and a rank')
+    }
+  }
+  return value
+}
+
 /** Every image file a pack lists. */
 export function packImages(pack) {
   return new Set([...pack.umas, ...pack.heroines].flatMap((c) => Object.values(c.images ?? {})))

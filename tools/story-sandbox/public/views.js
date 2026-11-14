@@ -1,6 +1,6 @@
 // The Cyberpunk Story Sandbox's pages. Everything shown is the server's state: the story as the game's parser reads it,
 // the game's own findings, the cast pack's names, and the owner's verdicts. No name or line lives in this file.
-import { castIndex, countWords, deliverables, enemyWords, storyIndex, VERDICTS, walk } from '/model.js'
+import { castIndex, countWords, deliverables, enemyWords, FOE_RANKS, hexOrNull, storyIndex, VERDICTS, walk } from '/model.js'
 
 /** The loaded state and what's derived from it. */
 export const D = { data: null, cast: null, index: null }
@@ -84,7 +84,7 @@ const cells = (row) => row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|
 
 /** Markdown as the page shows it: headings, nested list lines, tables, quotes and paragraphs, with inline marks. */
 function md(text) {
-  const out = h('div', { class: 'md' }); let para = [], table = []
+  const out = h('div', { class: 'md' }); let para = [], table = [], item = null
   const flushTable = () => {
     if (!table.length) return
     const rows = table.filter((r) => !/^\s*\|?\s*:?-{2,}/.test(r)).map(cells)
@@ -94,35 +94,188 @@ function md(text) {
       h('tbody', {}, (head && head.some((c) => c) ? body : rows).map((r) => h('tr', {}, r.map((c) => h('td', {}, inline(c)))))))))
     table = []
   }
-  const flush = () => { if (para.length) out.append(h('p', {}, inline(para.join(' ')))); para = []; flushTable() }
+  // A list item runs on over its indented lines, so a bold that wraps stays one bold.
+  const flushItem = () => { if (item) out.append(h('p', { class: 'li', style: `padding-left:${1 + item.indent / 2}em` }, '• ', inline(item.text))); item = null }
+  const flush = () => { flushItem(); if (para.length) out.append(h('p', {}, inline(para.join(' ')))); para = []; flushTable() }
   for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
-    const head = /^(#{1,4})\s+(.*)$/.exec(line), item = /^(\s*)[-*]\s+(.*)$/.exec(line), quote = /^>\s?(.*)$/.exec(line)
+    const head = /^(#{1,4})\s+(.*)$/.exec(line), bullet = /^(\s*)[-*]\s+(.*)$/.exec(line), quote = /^>\s?(.*)$/.exec(line)
     if (head) { flush(); out.append(h(`h${Math.min(4, head[1].length + 1)}`, {}, inline(head[2]))) }
     else if (line.trim() === '') flush()
-    else if (line.trimStart().startsWith('|')) { if (para.length) { out.append(h('p', {}, inline(para.join(' ')))); para = [] } table.push(line) }
-    else if (item) { flush(); out.append(h('p', { class: 'li', style: `padding-left:${1 + item[1].length / 2}em` }, '• ', inline(item[2]))) }
+    else if (line.trimStart().startsWith('|')) { flushItem(); if (para.length) { out.append(h('p', {}, inline(para.join(' ')))); para = [] } table.push(line) }
+    else if (bullet) { flush(); item = { indent: bullet[1].length, text: bullet[2] } }
     else if (quote) { flush(); out.append(h('p', { class: 'quote' }, inline(quote[1]))) }
-    else { flushTable(); para.push(line.trim()) }
+    else if (item && /^\s+\S/.test(line)) item.text += ` ${line.trim()}`
+    else { flushTable(); flushItem(); para.push(line.trim()) }
   }
   flush()
   return out
 }
 
-/** The story's bibles: the casting and each world's, read and judged one file at a time. */
+/** The story's bibles: the casting and each world's, then the foes', read and judged one file at a time. */
 export function biblesView(name, saveReview) {
   const list = D.data.bibles ?? []
   if (!name) {
+    const isFoe = (b) => b.name === 'foes' || b.name.startsWith('foes-')
+    const cards = (group) => h('div', { class: 'grid' }, group.map((b) => {
+      const title = /^#\s+(.*)$/m.exec(b.text)?.[1] ?? b.name
+      return h('div', { class: 'card' }, h('h3', {}, verdictMark(b.path), ' ', h('a', { href: `#/bibles/${b.name}`, text: title })),
+        h('p', { class: 'muted', text: `${b.path} · ${b.text.trim().split(/\s+/).length} words` }))
+    }))
+    const story = list.filter((b) => !isFoe(b)), foes = list.filter(isFoe)
     return h('div', {}, h('h1', { text: 'Bibles' }),
-      h('p', { class: 'muted' }, 'The story’s private bibles in ', h('code', { text: 'content/stories/bibles/' }), ': the casting, then each world in depth.'),
-      list.length ? h('div', { class: 'grid' }, list.map((b) => {
-        const title = /^#\s+(.*)$/m.exec(b.text)?.[1] ?? b.name
-        return h('div', { class: 'card' }, h('h3', {}, verdictMark(b.path), ' ', h('a', { href: `#/bibles/${b.name}`, text: title })),
-          h('p', { class: 'muted', text: `${b.path} · ${b.text.trim().split(/\s+/).length} words` }))
-      })) : h('div', { class: 'card muted', text: 'No bible yet: content/stories/bibles/<name>.md.' }))
+      h('p', { class: 'muted' }, 'The story’s private bibles in ', h('code', { text: 'content/stories/bibles/' }), ': the casting and each world in depth, then the foes, faction by faction.'),
+      list.length ? [
+        story.length ? [h('h2', { text: 'The story' }), cards(story)] : null,
+        foes.length ? [h('h2', { text: 'The foes' }), h('p', { class: 'muted' }, 'Their looks and every unit are on the ', h('a', { href: '#/foes', text: 'Foes' }), ' page.'), cards(foes)] : null,
+      ] : h('div', { class: 'card muted', text: 'No bible yet: content/stories/bibles/<name>.md.' }))
   }
   const bible = list.find((b) => b.name === name)
   if (!bible) return h('div', { class: 'error-box', text: `No bible ${name}.` })
   return h('div', {}, h('p', {}, h('a', { href: '#/bibles', text: '‹ Bibles' })), h('div', { class: 'card' }, md(bible.text)), reviewPanel(bible.path, saveReview))
+}
+
+// --- the foes: the Standard every foe shares, each faction's kit and variants, and every ranked unit with a brief
+
+const RANK_NAMES = { boss: 'Bosses', key: 'Keys', regular: 'Regulars' }
+const ROLE_NAMES = { vanguard: 'Vanguard', striker: 'Striker', gunner: 'Gunner', netrunner: 'Netrunner', medic: 'Medic' }
+function swatch(hex, label = '', size = 18, extra = '') {
+  const colour = hexOrNull(hex)
+  return h('span', { class: `swatch ${extra}`, title: label ? `${label} · ${hex}` : String(hex ?? 'none'), style: `width:${size}px;height:${size}px;background:${colour ?? 'transparent'}` })
+}
+const chip = (label, hex) => h('span', { class: 'chip' }, swatch(hex, label), label, ' ', h('code', { text: String(hex ?? '') }))
+const namedChip = (pair) => (Array.isArray(pair) && pair.length === 2 ? chip(pair[0], pair[1]) : null)
+const lightOf = (id) => D.data.foes?.standard?.lights?.find((l) => l.id === id) ?? null
+const variantOf = (faction, id) => faction.variants.find((v) => v.id === id) ?? null
+const rows = (pairs) => h('div', { class: 'scroll' }, h('table', {}, h('tbody', {}, pairs.filter(([, v]) => v !== null && v !== undefined && v !== '').map(([k, v]) => h('tr', {}, h('th', { text: k }), h('td', {}, v))))))
+function copyBox(label, value) {
+  const box = h('textarea', { class: 'brief', readonly: true, 'aria-label': label })
+  box.value = value ?? ''
+  const state = h('span', { class: 'muted', role: 'status' })
+  const copy = h('button', { class: 'btn', type: 'button', text: 'Copy', onclick: async () => {
+    try { await navigator.clipboard.writeText(box.value); state.textContent = 'Copied' } catch { box.select(); state.textContent = 'Selected: copy it with Ctrl+C' }
+  } })
+  return h('div', { class: 'card' }, h('h4', { text: label }), box, h('div', { class: 'row' }, copy, state))
+}
+
+function standardCard(std) {
+  if (!std) return h('div', { class: 'card muted', text: 'No standard.json yet.' })
+  const holds = Object.entries(std.holds ?? {}).map(([id, x]) => h('tr', {}, h('th', { text: x.name ?? id }), h('td', {}, Object.entries(x.colours ?? {}).map(([k, c]) => chip(k, c)), h('p', { text: x.look ?? '' }))))
+  return h('div', { class: 'card' },
+    h('h2', { text: std.title ?? 'The Standard' }), h('p', { text: std.summary ?? '' }),
+    h('p', {}, h('a', { href: '#/bibles/foes', text: 'Read the Standard’s bible ›' })),
+    h('h4', { text: 'Four colour roles' }),
+    h('div', { class: 'scroll' }, h('table', {}, h('thead', {}, h('tr', {}, ['Role', 'Whose', 'Where', 'From'].map((t) => h('th', { text: t })))),
+      h('tbody', {}, (std.colourRoles ?? []).map((r) => h('tr', {}, h('td', {}, h('b', { text: r.role })), h('td', { text: r.who }), h('td', { text: r.where }), h('td', { text: r.from })))))),
+    h('h4', { text: 'Ranks' }),
+    h('div', { class: 'scroll' }, h('table', {}, h('thead', {}, h('tr', {}, ['Rank', 'Helmet', 'Marks', 'Her art'].map((t) => h('th', { text: t })))),
+      h('tbody', {}, FOE_RANKS.map((k) => std.ranks?.[k]).filter(Boolean).map((r) => h('tr', {}, h('td', {}, h('b', { text: r.name })), h('td', { text: r.helmet }), h('td', { text: r.marks }), h('td', { text: r.art })))))),
+    h('p', { class: 'muted', text: std.rankFromBoards ?? '' }),
+    h('h4', { text: 'The Holds' }), h('div', { class: 'scroll' }, h('table', {}, h('tbody', {}, holds))),
+    h('h4', { text: 'The lights' }), h('div', {}, (std.lights ?? []).map((l) => chip(l.name, l.hex))),
+    h('h4', { text: 'Roles, by the back unit' }), (std.roles ?? []).map((r) => h('p', { class: 'li' }, h('b', { text: `${r.name} · ${r.back}` }), `: ${r.look}`)),
+    h('h4', { text: 'Never' }), h('p', { text: (std.never ?? []).join(' · ') }),
+    h('p', { class: 'muted', text: std.crewContrast ?? '' }))
+}
+
+function factionCard(f) {
+  const counts = f.counts ?? {}
+  return h('div', { class: 'card' },
+    h('h3', {}, verdictMark(f.path), ' ', h('a', { href: `#/foes/${f.id}`, text: f.title })),
+    h('p', { class: 'muted', text: `${f.frameLine ?? ''} · ${f.franchise ?? ''}` }),
+    h('div', {}, Object.values(f.palette).map(namedChip)),
+    h('p', {}, FOE_RANKS.map((r) => [pill('bible', `${counts[r] ?? 0} ${RANK_NAMES[r]}`), ' ']), counts.leftOut ? pill('placeholder', `${counts.leftOut} left out`) : null),
+    h('p', { class: 'muted', text: f.variants.map((v) => v.name).join(' · ') }),
+    h('p', {}, h('a', { href: `#/bibles/foes-${f.id}`, text: 'Its bible ›' })))
+}
+
+function unitTile(f, u) {
+  const v = variantOf(f, u.variant), light = lightOf(u.light)
+  return h('a', { class: 'unit', href: `#/foes/${f.id}/${encodeURIComponent(u.id)}`, 'data-variant': u.variant ?? '', 'data-role': u.role ?? '' },
+    face(u.id, 46),
+    h('span', {},
+      h('b', { text: D.cast.name(u.id) }),
+      h('small', { text: `${ROLE_NAMES[u.role] ?? u.role} · ${v?.name ?? u.variant ?? ''}${light ? ` · ${light.name}` : ''}` }),
+      u.story ? h('small', { class: 'story', text: u.story }) : null,
+      h('span', { class: 'sw' }, light ? swatch(light.hex, `Light: ${light.name}`, 12, 'light') : null, (u.palette ?? []).map((c) => swatch(c.hex, `${Math.round(c.share * 100)}%`, 12, c.hex === u.accent ? 'accent' : '')))))
+}
+
+function foeFaction(f, saveReview) {
+  const tiles = []
+  const select = (label, options, key) => {
+    const s = h('select', { 'aria-label': label, onchange: () => filter() }, h('option', { value: '', text: `Every ${label.toLowerCase()}` }), options.map(([value, text]) => h('option', { value, text })))
+    s.dataset.key = key
+    return s
+  }
+  const variantSelect = select('Variant', f.variants.map((v) => [v.id, v.name]), 'variant')
+  const roleSelect = select('Role', Object.entries(ROLE_NAMES), 'role')
+  const filter = () => { for (const t of tiles) t.hidden = (variantSelect.value && t.dataset.variant !== variantSelect.value) || (roleSelect.value && t.dataset.role !== roleSelect.value) }
+  const sections = FOE_RANKS.map((rank) => {
+    const units = f.units.filter((u) => u.rank === rank)
+    if (!units.length) return null
+    const made = units.map((u) => unitTile(f, u)); tiles.push(...made)
+    return [h('h3', { text: `${RANK_NAMES[rank]} · ${units.length}` }), h('div', { class: 'units' }, made)]
+  })
+  const kit = rows([['Silhouette', f.silhouette], ['Helmet', f.helmet], ['Mantle (Boss)', f.mantle], ['Emblem', f.emblem], ['Materials', f.materials], ['Tell', f.tell], ['Hold', f.holdLook], ['Ships', f.ships], ['Machines', (f.machines ?? []).join(' · ')]])
+  return h('div', {},
+    h('p', {}, h('a', { href: '#/foes', text: '‹ Foes' })),
+    h('h1', { text: f.title }),
+    h('p', { class: 'muted' }, `${f.frameLine} · ${f.where ?? ''} · `, h('a', { href: `#/bibles/foes-${f.id}`, text: 'its bible' })),
+    h('div', { class: 'card' }, h('h4', { text: 'The kit' }), h('div', {}, Object.values(f.palette).map(namedChip)), kit),
+    h('h2', { text: 'Variants' }),
+    h('div', { class: 'grid' }, f.variants.map((v) => h('div', { class: 'card' },
+      h('h3', { text: v.name }),
+      h('div', {}, namedChip(v.base), namedChip(v.trim), v.tabard ? chip('Tabard', v.tabard) : null, v.lapel ? chip('Lapel', v.lapel) : null),
+      h('p', { text: v.look }),
+      h('p', { class: 'muted', text: `${f.units.filter((u) => u.variant === v.id).length} units` })))),
+    h('div', { class: 'card' }, h('h4', { text: 'The five roles in this kit' }),
+      Object.entries(f.roleLooks ?? {}).map(([r, look]) => h('p', { class: 'li' }, h('b', { text: `${ROLE_NAMES[r] ?? r}${f.hulls?.[r] ? ` (${f.hulls[r]})` : ''}` }), `: ${look}`))),
+    copyBox('The faction’s prompt', f.prompt),
+    h('h2', { text: 'Every unit' }),
+    h('div', { class: 'row' }, variantSelect, roleSelect),
+    sections,
+    reviewPanel(f.path, saveReview))
+}
+
+function foeUnit(f, uid, saveReview) {
+  const u = f.units.find((x) => x.id === uid)
+  if (!u) return h('div', { class: 'error-box', text: `No unit ${uid} in ${f.title}.` })
+  const who = D.cast.who(u.id), v = variantOf(f, u.variant), light = lightOf(u.light)
+  const fittings = f.units.filter((x) => x.model === u.model && x.id !== u.id)
+  return h('div', {},
+    h('p', {}, h('a', { href: `#/foes/${f.id}`, text: `‹ ${f.title}` })),
+    h('h1', {}, verdictMark(`${f.path}#${u.id}`), ' ', who.name),
+    h('p', { class: 'muted', text: `${f.title} · ${{ boss: 'Boss', key: 'Key', regular: 'Regular' }[u.rank] ?? u.rank}${u.drawnAs !== u.rank ? ', drawn as a Boss for the story' : ''} · ${u.board} ${u.tier} · ${u.id}` }),
+    h('div', { class: 'two' },
+      h('div', {}, who.art ? h('img', { class: 'foe-art', src: who.art, alt: '' }) : face(u.id, 160)),
+      h('div', { class: 'card' }, rows([
+        ['Story', u.story],
+        ['Role', `${ROLE_NAMES[u.role] ?? u.role}: ${f.roleLooks?.[u.role] ?? ''}${u.hull ? ` (${u.hull})` : ''} · ${u.roleFrom === 'source' ? 'from her class' : u.roleFrom === 'story' ? 'set by the story' : u.roleFrom === 'default' ? 'a default by her type' : 'a stable pick: check her weapon'}`],
+        ['Variant', v ? [h('b', { text: v.name }), `: ${v.look}`] : u.variant],
+        ['Light', light ? [swatch(light.hex, light.name), ` ${light.name} `, h('code', { text: light.hex })] : 'Her accent (no element)'],
+        ['Accent', u.accent ? [swatch(u.accent, 'Accent', 18, 'accent'), ' ', h('code', { text: u.accent }), u.accentFrom === 'muted' ? ' · muted: check it by eye' : ''] : 'Pick from her reference'],
+        ['Her colours', [(u.palette ?? []).map((c) => [swatch(c.hex, `${Math.round(c.share * 100)}%`, 22, c.hex === u.accent ? 'accent' : ''), ' ']), h('small', { class: 'muted', text: ` read from her ${u.paletteFrom ?? 'art'}` })]],
+        ['Hold', u.hold],
+        ['Other fittings', fittings.length ? fittings.map((x) => [h('a', { href: `#/foes/${f.id}/${encodeURIComponent(x.id)}`, text: D.cast.name(x.id) }), ' ']) : null],
+        ['The Ranker’s data', (u.details ?? []).join(' · ')],
+      ]))),
+    copyBox('Her brief, for the design', u.brief),
+    reviewPanel(`${f.path}#${u.id}`, saveReview))
+}
+
+/** The foes: the Standard, the eight factions' kits and variants, and every ranked unit with her palette and brief. */
+export function foesView(fid, uid, saveReview) {
+  const F = D.data.foes
+  const problems = F?.problems?.length ? h('div', { class: 'error-box' }, F.problems.map((p) => h('p', { text: p }))) : null
+  if (!F?.factions?.length) return h('div', {}, h('h1', { text: 'Foes' }), problems, h('div', { class: 'card muted', text: 'No foe data yet: the story session writes content/stories/foes/.' }))
+  if (fid) {
+    const faction = F.factions.find((f) => f.id === fid)
+    if (!faction) return h('div', { class: 'error-box', text: `No faction ${fid}.` })
+    return uid ? foeUnit(faction, uid, saveReview) : foeFaction(faction, saveReview)
+  }
+  const total = F.factions.reduce((n, f) => n + f.units.length, 0)
+  return h('div', {}, h('h1', { text: 'Foes' }),
+    h('p', { class: 'muted' }, `Every foe wears the Standard. ${total} ranked units in ${F.factions.length} factions, from the Ranker's boards, in `, h('code', { text: 'content/stories/foes/' }), '.'),
+    problems, standardCard(F.standard), h('h2', { text: 'The factions' }), h('div', { class: 'grid' }, F.factions.map(factionCard)))
 }
 
 const sceneKey = (chapter, id) => (id === 'debrief' ? `${chapter.id}/debrief` : id)

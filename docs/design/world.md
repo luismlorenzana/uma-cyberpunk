@@ -468,6 +468,29 @@ battle's and fixed. Each now has a world where it's met first, its ships (WD44),
 
 What moves each faction is below. Standing is shown on the Bridge (TC71).
 
+**WD49, the Standard: every foe wears the crew's Frame** *(new D35)*.
+- **Crossing drift:** power that crosses an outer Gate comes loose in the Circuit, whose light belongs to the
+  siphons. Only a core grounds it. The first expeditions went quiet, and their hulls are boarding sites now.
+- **Licensed cores:** the Authority copied the Homestretch's first Frames into one skeleton (core housing, plates,
+  mounts, emitter, projector, back unit), forges it at Anvil, and licenses every core through its grid. A licence is a
+  feed and a leash:
+  - it pays the Commission and the Contractors;
+  - it carries the Muster's Collar;
+  - it holds the Armada's treaty bloc.
+
+  The crew's cores are the only unlicensed ones in the Circuit (layer 3).
+- **Paint is identity:** every army wears the same skeleton, so who someone is shows in the paint and the details:
+  - **her faction:** the base and trim, its customs and its helmet;
+  - **her:** her accent, taken from her own original colours;
+  - **her rank:** her helmet and marks;
+  - **her power:** her core's light, or her Hold's mark in its place.
+
+  Salvage fits anything.
+- **Each faction's Frame line, variants and who's who** are in the story's private foe bibles, with look data for
+  every ranked unit, for the character art.
+- **The ending:** when the siphons shut, every licensed core goes dark at once, and the freed lend their own light
+  (WD24).
+
 ### 11.1 The Steel Muster (NIKKE)
 
 | | |
@@ -700,3 +723,4 @@ is the owner's own note; the game decides the rules and when.
 | WD46 | Faction standing from hostile to wary to allied, and what moves each faction |
 | WD47 | Five acts across eight worlds, one layer each |
 | WD48 | Five story requests for the game: ship battles, boarding, maintenance, walkable cities, the Track |
+| WD49 | *(new D35)* The Standard: one licensed Frame skeleton for every army; crossing drift; paint is identity (faction base and trim, her accent, rank by helmet and marks, her light or her Hold); the crew's cores the only unlicensed ones |

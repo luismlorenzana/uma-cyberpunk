@@ -3,12 +3,15 @@
 // - the Umas: the Ranker's ten batches (its 100 Playable Umas, each outfit as the Uma she is, a sister under her own
 //   name) and the Uma NPCs board, keyed by outfit id as the story keys them;
 // - the heroines: every unit on the Ranker's boss, key and regular boards, keyed by board id;
-// - the pictures uma-quest's cast pack already holds for those ids (never downloaded again).
+// - the pictures uma-quest's cast pack already holds for those ids (never downloaded again);
+// - for every heroine still without one, her face and figure art from the Ranker's own local mirror (copied, never
+//   downloaded), so the Foes page shows every unit.
 //
 //   node tools/story-sandbox/import-cast.mjs
 //
 // Sources: the Ranker's plan as `pnpm ranker:pull` leaves it in uma-platform (UMA_RANKER_PLAN, default
-// ../uma-platform/content/authoring/tiers/plan.json) and uma-quest's stories folder (UMA_QUEST_STORIES, default
+// ../uma-platform/content/authoring/tiers/plan.json), the mirror beside it (UMA_RANKER_DIR, default
+// ../uma-platform/content/authoring/ranker) and uma-quest's stories folder (UMA_QUEST_STORIES, default
 // ../uma-quest/content/stories). Target: content/stories/cast-pack/ here (UMA_CYBER_STORIES). All of it is ignored by git.
 import { copyFile, mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -19,6 +22,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const repo = resolve(here, '../..')
 const planPath = resolve(process.env.UMA_RANKER_PLAN ?? join(repo, '../uma-platform/content/authoring/tiers/plan.json'))
 const quest = resolve(process.env.UMA_QUEST_STORIES ?? join(repo, '../uma-quest/content/stories'))
+const ranker = resolve(process.env.UMA_RANKER_DIR ?? join(repo, '../uma-platform/content/authoring/ranker'))
 const target = join(resolve(process.env.UMA_CYBER_STORIES ?? join(repo, 'content/stories')), 'cast-pack')
 
 /** The pack's Umas and heroines from the Ranker's plan. Pure, so it can be tested on an invented plan. */
@@ -59,6 +63,36 @@ export function picturesFrom(questPack, cast) {
   return found
 }
 
+const RANKER_IMAGE = /^assets\/[A-Za-z0-9._/-]+\.(png|webp|jpg)$/
+
+/** For each heroine still without a picture, her face and figure art from the Ranker's mirror (`units` are its catalog
+ * and imports, each with `images` relative to the mirror). Sets her images and returns the copies to make. */
+export function picturesFromRanker(units, cast) {
+  const byId = new Map((units ?? []).map((u) => [u.id, u.images ?? {}]))
+  const copies = []
+  for (const x of cast.heroines) {
+    if (x.images) continue
+    const images = {}
+    for (const kind of ['face', 'art']) {
+      const from = byId.get(x.id)?.[kind]
+      const ext = typeof from === 'string' && RANKER_IMAGE.test(from) && !from.includes('..') ? RANKER_IMAGE.exec(from)[1] : null
+      if (!ext) continue
+      images[kind] = `images/${x.id}-${kind}.${ext}`
+      copies.push({ from, to: images[kind] })
+    }
+    if (Object.keys(images).length) x.images = images
+  }
+  return copies
+}
+
+async function rankerUnits() {
+  const units = []
+  const read = async (path) => { try { units.push(...(JSON.parse(await readFile(path, 'utf8')).units ?? [])) } catch { /* not there */ } }
+  await read(join(ranker, 'catalog/enemies.json'))
+  for (const name of await readdir(join(ranker, 'imports')).catch(() => [])) if (name.endsWith('.json')) await read(join(ranker, 'imports', name))
+  return units
+}
+
 async function newestQuestPack() {
   const packs = []
   for (const name of await readdir(join(quest, 'packs')).catch(() => [])) {
@@ -73,16 +107,22 @@ async function main() {
   const cast = castFromPlan(plan)
   const source = await newestQuestPack()
   const withPictures = picturesFrom(source?.pack, cast)
+  const fromQuest = new Set([...cast.umas, ...cast.heroines].flatMap((c) => Object.values(c.images ?? {})))
+  const fromRanker = picturesFromRanker(await rankerUnits(), cast)
   const pack = parseCastPack({ schemaVersion: 1, kind: PACK_KIND, id: `ranker-${new Date().toISOString().slice(0, 10)}`, builtAt: new Date().toISOString(), pictures: source?.pack.id ?? null, ...cast })
 
   await mkdir(join(target, 'images'), { recursive: true })
   let copied = 0, missing = 0
-  for (const path of new Set([...pack.umas, ...pack.heroines].flatMap((c) => Object.values(c.images ?? {})))) {
+  for (const path of fromQuest) {
     try { await copyFile(join(quest, 'packs', source.name, path), join(target, path)); copied++ } catch { missing++ }
+  }
+  for (const { from, to } of fromRanker) {
+    try { await copyFile(join(ranker, from), join(target, to)); copied++ } catch { missing++ }
   }
   await writeFile(join(target, 'pack.json.part'), `${JSON.stringify(pack, null, 2)}\n`)
   await rename(join(target, 'pack.json.part'), join(target, 'pack.json'))
-  console.log(`Cast pack ${pack.id}: ${pack.umas.length} Umas, ${pack.heroines.length} heroines, ${withPictures} with pictures (${copied} files${missing ? `, ${missing} missing` : ''}) → ${target}`)
+  const pictured = pack.heroines.filter((x) => x.images).length + pack.umas.filter((u) => u.images).length
+  console.log(`Cast pack ${pack.id}: ${pack.umas.length} Umas, ${pack.heroines.length} heroines, ${pictured} with pictures (${withPictures} from uma-quest's pack, the rest of the heroines' from the Ranker's mirror; ${copied} files${missing ? `, ${missing} missing` : ''}) → ${target}`)
   if (!source) console.log('No uma-quest cast pack found, so there are no pictures yet: ids show as initials.')
 }
 

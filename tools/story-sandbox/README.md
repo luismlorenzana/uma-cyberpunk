@@ -2,7 +2,7 @@
 
 A local page for reading, playing, checking and judging uma-cyberpunk's story: the worlds, the chapters and their
 scenes, the battles' briefs, the cast, the Log and the Calls. It's the sibling of uma-quest's and uma-farm's Story
-Sandboxes. The design and its calls (SX1–SX12) are in [docs/design/story-sandbox.md](../../docs/design/story-sandbox.md).
+Sandboxes. The design and its calls (SX1–SX13) are in [docs/design/story-sandbox.md](../../docs/design/story-sandbox.md).
 
 ```bash
 pnpm stories:import-cast   # once, and after a Ranker pass: names and faces by id (private)
@@ -20,6 +20,10 @@ pnpm stories               # http://127.0.0.1:4322
 - **Bibles** (`#/bibles`, D30): the story session's private `content/stories/bibles/*.md` (the casting's reasons, each
   world's bible), the casting first and then the worlds in the Circuit's order, rendered by the page's small Markdown
   reader as DOM nodes, each with a verdict box.
+- **Foes** (`#/foes`, D35): the story session's private look data in `content/stories/foes/*.json`: the Standard every
+  foe shares, each faction's kit and variants, and every ranked unit with her face, palette and a brief, each with a
+  verdict box. The cast import copies a face and figure art for every heroine from the Ranker's local mirror
+  (`UMA_RANKER_DIR`, default `../uma-platform/content/authoring/ranker`) when uma-quest's pack has none.
 - **Sprites** (`#/sprites`, D24): ChatGPT's combat sprite sheets from `content/design/character-looks/combat-masters/`,
   cut by the request's grid and measured, on a night tile at the phone's size beside her approved chibi (read from
   uma-platform's private `content/authoring/sprites/`). `UMA_CYBER_SPRITES` and `UMA_PLATFORM_SPRITES` move them.

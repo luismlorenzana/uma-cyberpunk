@@ -2,8 +2,21 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  castIndex, countWords, deliverables, enemyWords, PACK_KIND, packImages, parseCastPack, parseReviews, parseVerdict, slotLine, storyIndex, walk, withVerdict,
+  castIndex, countWords, deliverables, enemyWords, hexOrNull, PACK_KIND, packImages, parseCastPack, parseFoeFile, parseReviews, parseVerdict, slotLine, storyIndex, walk, withVerdict,
 } from './model.mjs'
+
+test('a foe file is the Standard or a faction, with board ids and ranks; colours are six-digit hexes only', () => {
+  const faction = { schemaVersion: 1, kind: 'foe-faction', id: 'f1', title: 'Faction One', palette: { base: ['Base', '#112233'] }, variants: [], units: [{ id: 'stand-in-1', rank: 'boss' }] }
+  assert.equal(parseFoeFile(faction), faction)
+  assert.equal(parseFoeFile({ schemaVersion: 1, kind: 'foe-standard' }).kind, 'foe-standard')
+  assert.throws(() => parseFoeFile({ schemaVersion: 1, kind: 'other' }), /Not a foe file/)
+  assert.throws(() => parseFoeFile({ ...faction, id: 'Bad Id' }), /needs an id/)
+  assert.throws(() => parseFoeFile({ ...faction, units: [{ id: 'stand-in-1', rank: 'captain' }] }), /board id and a rank/)
+  assert.throws(() => parseFoeFile({ ...faction, units: [{ id: '../x', rank: 'boss' }] }), /board id and a rank/)
+  assert.equal(hexOrNull('#A1b2C3'), '#A1b2C3')
+  assert.equal(hexOrNull('red;background:url(x)'), null)
+  assert.equal(hexOrNull('#FFF'), null)
+})
 
 const pack = () => ({
   casting: {

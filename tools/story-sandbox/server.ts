@@ -16,7 +16,7 @@ import {
   sceneSeconds, STAND_IN_FILES, STEP_KINDS, StoryParseError, type Finding, type StoryPack,
 } from '../../packages/domain/src/story/index'
 import { readStoryFiles } from '../../scripts/story/files'
-import { packImages, parseCastPack, parseReviews, parseVerdict, withVerdict } from './lib/model.mjs'
+import { FOE_ORDER, packImages, parseCastPack, parseFoeFile, parseReviews, parseVerdict, withVerdict } from './lib/model.mjs'
 import { latestSheets, parseSheetName, REQUESTED } from './lib/sprites.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
@@ -76,13 +76,32 @@ async function castPack() {
 }
 
 /** The story's bibles (`content/stories/bibles/*.md`, private): the casting first, then the worlds in the Circuit's
- * order, then the rest by name. */
-const BIBLE_ORDER = ['casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink']
+ * order, then the foes (the Standard, then each faction as the Circuit meets them), then the rest by name. */
+const BIBLE_ORDER = ['casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink', 'foes', ...FOE_ORDER.map((f) => `foes-${f}`)]
 async function bibles(): Promise<{ name: string; path: string; text: string }[]> {
   const names = (await readdir(join(content, 'bibles')).catch(() => [] as string[])).filter((n) => /^[a-z0-9][a-z0-9-]{0,60}\.md$/.test(n)).map((n) => n.slice(0, -3))
   const rank = (n: string) => (BIBLE_ORDER.includes(n) ? BIBLE_ORDER.indexOf(n) : BIBLE_ORDER.length)
   names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
   return Promise.all(names.map(async (name) => ({ name, path: `bibles/${name}.md`, text: await readFile(join(content, 'bibles', `${name}.md`), 'utf8') })))
+}
+
+/** The foe data (`content/stories/foes/*.json`, private): the Standard, and one faction file each, in the Circuit's
+ * order. A file that doesn't read is listed as a problem, and the rest still shows. */
+async function foes() {
+  const dir = join(content, 'foes')
+  const names = (await readdir(dir).catch(() => [] as string[])).filter((n) => /^[a-z0-9][a-z0-9-]{0,60}\.json$/.test(n))
+  let standard: unknown = null
+  const factions: { id: string; path: string }[] = [], problems: string[] = []
+  for (const name of names) {
+    try {
+      const doc = parseFoeFile(JSON.parse(await readFile(join(dir, name), 'utf8')))
+      if (doc.kind === 'foe-standard') standard = doc
+      else factions.push({ ...doc, path: `foes/${name}` })
+    } catch (e) { problems.push(`foes/${name}: ${e instanceof Error ? e.message : String(e)}`) }
+  }
+  const rank = (id: string) => (FOE_ORDER.includes(id) ? FOE_ORDER.indexOf(id) : FOE_ORDER.length)
+  factions.sort((a, b) => rank(a.id) - rank(b.id) || a.id.localeCompare(b.id))
+  return { standard, factions, problems }
 }
 
 /** Everything the page draws, read fresh. */
@@ -113,6 +132,7 @@ async function state() {
     cast: cast.pack, castProblem: cast.problem,
     notes: await maybeText(join(content, 'world-notes.md')), worldDoc: await maybeText(join(repo, 'docs/design/world.md')),
     bibles: await bibles(),
+    foes: await foes(),
     reviews, reviewsProblem,
   }
 }

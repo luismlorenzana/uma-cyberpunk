@@ -132,3 +132,22 @@ details > summary { cursor: pointer; color: var(--accent-2); }
 .findings li.error { color: var(--danger); } .findings li.warn { color: var(--warn); }
 .pill.ok { color: var(--ok); } .pill.muted { color: var(--muted); }
 .sprites p.ok { color: var(--ok); }
+
+/* Foes: swatches, unit tiles and a unit's page */
+.swatch { display: inline-block; flex: none; vertical-align: middle; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.35); }
+.swatch.accent { outline: 2px solid var(--ink); outline-offset: 1px; }
+.swatch.light { border-radius: 50%; }
+.chip { display: inline-flex; align-items: center; gap: 5px; margin: 0 12px 6px 0; font-size: 13px; color: var(--ink-2); }
+.units { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-bottom: 16px; }
+.unit { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); }
+.unit:hover { border-color: var(--line-2); }
+.unit[hidden] { display: none; }
+.unit b { display: block; font-size: 14px; }
+.unit small { display: block; color: var(--muted); font-size: 12px; }
+.unit small.story { color: var(--gold); }
+.unit .sw { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+.two { display: grid; grid-template-columns: minmax(220px, 340px) 1fr; gap: 16px; align-items: start; margin-bottom: 14px; }
+.foe-art { width: 100%; height: auto; border-radius: var(--radius); background: var(--panel-2); border: 1px solid var(--line); }
+textarea.brief { width: 100%; min-height: 150px; background: var(--bg); color: var(--ink); border: 1px solid var(--line-2); border-radius: 9px; padding: 8px; font: 13px/1.5 var(--sans); }
+select { background: var(--panel); color: var(--ink); border: 1px solid var(--line-2); border-radius: 8px; padding: 5px 8px; font: inherit; }
+@media (max-width: 760px) { .two { grid-template-columns: 1fr; } }

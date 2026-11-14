@@ -1,7 +1,31 @@
 // The cast pack's import, on an invented Ranker plan and an invented uma-quest pack.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { castFromPlan, picturesFrom } from './import-cast.mjs'
+import { castFromPlan, picturesFrom, picturesFromRanker } from './import-cast.mjs'
+
+test('the Ranker’s own pictures fill in the heroines uma-quest’s pack has none for, face and art only', () => {
+  const cast = castFromPlan(planForRanker())
+  picturesFrom({ characters: [{ role: 'boss', id: 'al-two', images: { face: 'images/al-two-face.png' } }] }, cast)
+  const copies = picturesFromRanker([
+    { id: 'al-one', images: { face: 'assets/enemies/al-one-face.ab12.webp', art: 'assets/enemies/al-one-art.cd34.webp', splash: 'assets/enemies/al-one-splash.ef56.webp' } },
+    { id: 'al-two', images: { face: 'assets/enemies/al-two-face.0000.webp' } },
+    { id: 'al-three', images: { face: '../outside/al-three-face.webp', art: 'assets/enemies/al-three-art.gif' } },
+  ], cast)
+  assert.deepEqual(copies, [
+    { from: 'assets/enemies/al-one-face.ab12.webp', to: 'images/al-one-face.webp' },
+    { from: 'assets/enemies/al-one-art.cd34.webp', to: 'images/al-one-art.webp' },
+  ])
+  assert.deepEqual(cast.heroines.map((x) => x.images ?? null), [{ face: 'images/al-one-face.webp', art: 'images/al-one-art.webp' }, { face: 'images/al-two-face.png' }, null])
+  assert.deepEqual(picturesFromRanker(null, castFromPlan(planForRanker())), [])
+})
+
+function planForRanker() {
+  return { kind: 'tier-plan', boards: [
+    { id: 'alpha-bosses', order: [{ order: 1, id: 'al-one', tier: 'SS', name: 'Foe One', franchise: 'alpha' }] },
+    { id: 'key-enemies', order: [{ order: 1, id: 'al-two', tier: 'A', name: 'Foe Two', franchise: 'alpha' }] },
+    { id: 'regular-enemies', order: [{ order: 1, id: 'al-three', tier: 'B', name: 'Foe Three', franchise: 'alpha' }] },
+  ] }
+}
 
 const plan = {
   kind: 'tier-plan', generatedAt: '2026-11-12T00:00:00.000Z', profilesRevision: 6,
