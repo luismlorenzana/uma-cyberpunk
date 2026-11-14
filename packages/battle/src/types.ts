@@ -192,6 +192,10 @@ export interface BattleInput {
   meal?: string
   /** The captain's Orders this battle: how many, and which kinds. */
   orders?: { slots: number; kinds: readonly OrderKind[] }
+  /** The deployed squad's cohesion (CY18): its level, its leader and its members' unit ids. */
+  cohesion?: { level: number; leader: string; members: readonly string[] }
+  /** A finale's harsh conditions for each unmet readiness need (CY18): fog, hull-breach hazards, no reinforcements. */
+  conditions?: readonly ('fog' | 'hazards' | 'no-reinforcements')[]
 }
 
 // --- The state ------------------------------------------------------------------------------------------------------
@@ -308,6 +312,8 @@ export interface V3State {
   spent: string[]
   /** The Shield Projector's shield on each squad unit: damage it still absorbs. */
   shields: Record<string, number>
+  /** Members who took cohesion level 5's free Cover. */
+  cohered: string[]
 }
 
 // --- Actions --------------------------------------------------------------------------------------------------------
@@ -433,7 +439,7 @@ export type Cue =
   | { kind: 'strikeMarked'; tiles: Tile[]; at: number }
   | { kind: 'endure'; unit: string }
   | { kind: 'freeJoin'; unit: string; why: 'partner' | 'resonance' }
-  | { kind: 'freeCover'; unit: string; why: 'steadfast' | 'partner' }
+  | { kind: 'freeCover'; unit: string; why: 'steadfast' | 'partner' | 'cohesion' }
   | { kind: 'duo'; unit: string; partner: string; target: string; tech: string }
   | { kind: 'sweep'; unit: string }
   | { kind: 'drone'; unit: string; target: string; part: PartId; hp: number }

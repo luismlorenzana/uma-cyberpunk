@@ -9,6 +9,7 @@ import type { Topic } from '../cabins/items'
 import type { Look } from '../looks'
 import type { ModuleId } from '../ship/modules'
 import type { ShipEvent } from '../ship/watch'
+import type { ReadinessNeed } from '../crew/squads'
 
 export type Speaker = number | string
 export type Layer = 'placeholder' | 'skeleton' | 'bible' | 'scripted' | 'published'
@@ -34,6 +35,8 @@ export type Step =
   | { kind: 'aboard'; outfit: number }
   /** A story refit (CY15): the ship gains a deck. */
   | { kind: 'refit' }
+  /** A faction's standing with the ship moves (CY18), −2 to +2. */
+  | { kind: 'standing'; faction: string; by: number }
   | { kind: 'call'; call: string }
   /** Plays a mission of the same chapter. */
   | { kind: 'battle'; mission: string }
@@ -43,8 +46,8 @@ export type Step =
   | { kind: 'path'; trust: Step[]; heart: Step[] }
 export type StepKind = Step['kind']
 /** The steps that change the save as they play: the story state, the crew, the ship. */
-export type EffectStep = Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' | 'refit' }>
-export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path', 'refit']
+export type EffectStep = Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' | 'refit' | 'standing' }>
+export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path', 'refit', 'standing']
 
 export interface ChoiceOption { text: string; lead?: string; then: Step[] }
 
@@ -87,6 +90,9 @@ export interface Mission {
   side: { kind: string; gives: string }[]
   /** The scenario the game built for it (the game's, in scenarios/). */
   scenario?: string
+  /** A finale (CY18): its readiness needs; each unmet one adds its harsh condition to the battle. */
+  finale?: boolean
+  readiness?: ReadinessNeed[]
 }
 
 export interface Chapter {
@@ -109,7 +115,9 @@ export interface Chapter {
 export interface Location { id: string; danger: number; needs: string[]; links: string[]; x?: number; y?: number }
 
 /** `region` (CY16): the event pool its jumps draw from (`events/<region>.json`); none, the game's generic pool. */
-export interface World { schemaVersion: 1; id: string; look?: string; mood?: string; locations: Location[]; factions: string[]; layer?: Layer; x?: number; y?: number; region?: string }
+/** `operations` (CY18): story operations its Comms offers beside the generic ones. */
+export interface WorldOperation { id: string; title: string; faction?: string; danger: number; watches: number; reward: { credits: number; alloy: number; data: number; standing: number }; needs?: string[] }
+export interface World { schemaVersion: 1; id: string; look?: string; mood?: string; locations: Location[]; factions: string[]; layer?: Layer; x?: number; y?: number; region?: string; operations?: WorldOperation[] }
 
 export interface Lead { outfit: number; world: string; opens?: string; talent?: string }
 
@@ -126,6 +134,10 @@ export interface Casting {
   tastes?: Record<string, Tastes>
   /** Station chiefs (CY16): an Uma's room, by outfit id; at its post she brings a chief's extra. */
   chiefs?: Record<string, ModuleId>
+  /** Canonical squads (CY18), seeded when all their members are aboard. */
+  squads?: { id: string; name: string; banner: string; leader: number; members: number[] }[]
+  /** Each faction's standing at the start (CY18), −2 to +2; one not named starts at −1. */
+  standing?: Record<string, number>
   heroines: { board: string; faction: string; hold: 'anchor' | 'collar' | 'none' }[]
   minor: string[]
   /** Stand-in only: plain labels for invented ids, since no name comes from master data for them. */

@@ -115,6 +115,10 @@ export const TUNING = {
    * a Sure shot only on an attack below `autoSureBelow` % to hit. */
   shield: { absorb: 4, perLevel: 2 },
   autoSureBelow: 40,
+  /** Cohesion (CY18): the leader's Charge at level 1, members' Crossfire reach at 3, a free Cover each at 5; the finale's
+   * fog (rounds of lights out) and hazards (lasting Fire on a row of the map's middle). */
+  cohesion: { charge: 1, reachLevel: 3, reach: 1, coverLevel: 5 },
+  conditions: { fogRounds: 3, hazardTiles: 4 },
   engines: { clockPct: 10 },
   meals: {
     noodles: { hit: 5 }, stew: { coreHpPct: 10 }, skewers: { melee: 1 }, curry: { charge: 1 }, salad: { skills: 5 }, feast: { hit: 5, charge: 1 },

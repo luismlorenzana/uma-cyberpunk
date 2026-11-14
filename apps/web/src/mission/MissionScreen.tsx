@@ -20,9 +20,11 @@ import { outfitName, useStory } from '../ship/useStory'
 import { ScenePlayer } from '../story/ScenePlayer'
 import { lifeAboardInput, missionInput, SCENARIOS } from './battleInput'
 import {
-  afterMission, applyStep, cantDeploy, chapterOf, closeResults, deploy, finishBattle, finishMission, lockedMembers, markSeen, recordAction, retry, rewards, sceneSquad,
+  afterMission, applyStep, cantDeploy, chapterOf, closeResults, deploy, finaleConditions, finaleNeeds, finishBattle, finishMission, lockedMembers, markSeen, recordAction, retry, rewards, sceneSquad,
   setSquad, toDeploy,
 } from './director'
+import { BANNER_COLOR, cohesionWords } from '../crew/SquadsPanel'
+import { CONDITION_NAME, needWords } from '../ship/Readiness'
 
 export default function MissionScreen() {
   return <TurnedStage>{(layout) => <Mission layout={layout} />}</TurnedStage>
@@ -64,6 +66,15 @@ function Mission({ layout }: { layout: StageLayout }) {
         <div><b>Side objectives</b><div className="text-white/80">{mission.side.length ? mission.side.map((s) => s.kind).join(', ') : 'None'}</div></div>
       </div>
       <p className="mt-2 text-[13px] text-white/60">{mission.brief}</p>
+      {mission.finale && (
+        <div data-finale-needs className="mt-2 rounded-lg bg-white/5 p-2 text-[13px]">
+          <b className="font-display">A finale: the ship's readiness</b>
+          {finaleNeeds(pack, save, mission).map((n, i) => (
+            <div key={i} data-need={n.met ? 'met' : 'unmet'} className={n.met ? 'text-[#7ef0b0]' : 'text-[#ffb84d]'}>{n.met ? '✓' : '✗'} {needWords(n.need)}{n.met ? '' : ` · unmet: ${CONDITION_NAME[n.need.else]}`}</div>
+          ))}
+          <div className="mt-1 text-[12px] text-white/50">Each unmet need makes the battle harder; nothing is ever lost for good.</div>
+        </div>
+      )}
       <div className="mt-3 flex gap-2"><button type="button" className={primary} onClick={() => void updateSave(toDeploy)}>Deploy</button><button type="button" className={secondary} onClick={() => void navigate('/')}>Ship</button></div>
     </div>,
   )
@@ -76,7 +87,8 @@ function Mission({ layout }: { layout: StageLayout }) {
     // Rules version 3 (CY17): bonds, partners, Orders, the powered systems and the meal (eaten) go into the frozen input.
     const all = [...squad, ...bench]
     const bandOfPost = (post: PostKind) => { const h = all.find((v) => v.member.post && postKind(v.member.post) === post); return h ? Math.max(...POSTS[post].bands.map((b) => h.bands[b])) as Band : null }
-    void updateSave((s) => ({ ...deploy(setSquad(s, squad.map((v) => v.outfit)), lifeAboardInput(base, s, bandOfPost)), meal: null }))
+    // A finale's unmet readiness needs (CY18) add their harsh conditions; the squad's cohesion goes in too.
+    void updateSave((s) => ({ ...deploy(setSquad(s, squad.map((v) => v.outfit)), lifeAboardInput(base, s, bandOfPost, finaleConditions(pack, s, mission))), meal: null }))
   }} />)
 
   if (m.step === 'battle' && m.battle) return <MissionBattle layout={layout} input={m.battle.input as BattleInput} actions={m.battle.actions as BattleAction[]} />
@@ -158,6 +170,21 @@ function Deploy({ pack, squad, locked, fixed, onDeploy }: { pack: StoryPack; squ
         })}
         <div className="flex min-h-20 items-center justify-center rounded-lg border border-[#7ef0b0]/40 p-2 text-center text-[13px] text-white/60">Guest slot</div>
       </div>
+      {save.squads.length > 0 && !fixed && (
+        <div data-squad-picker className="mt-2 flex flex-wrap items-center gap-2 text-[13px]">
+          <span className="text-white/50">Squads:</span>
+          {save.squads.map((sq) => {
+            const away = save.operations.some((r) => r.squad === sq.id)
+            return (
+              <button key={sq.id} type="button" data-pick-squad={sq.id} disabled={away} title={cohesionWords(sq)}
+                onClick={() => setChosen([...new Set([...locked, ...sq.members.filter((o) => !why(view(o)))])].slice(0, 4))}
+                className="min-h-10 rounded-md bg-white/10 px-3 font-semibold disabled:opacity-40" style={{ borderLeft: `4px solid ${BANNER_COLOR[sq.banner] ?? '#2ee6ff'}` }}>
+                {sq.name}{away ? ' (away)' : ''}
+              </button>
+            )
+          })}
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         {pool.map((v) => {
           const reason = chosen.includes(v.outfit) ? null : why(v)

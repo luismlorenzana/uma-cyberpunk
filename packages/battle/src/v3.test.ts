@@ -144,4 +144,22 @@ describe('rules version 3', () => {
   })
 })
 
+describe('cohesion and the finale’s conditions (CY18)', () => {
+  it('cohesion 1 gives the leader +1 Charge; 5 gives each member a free Cover once', () => {
+    const units = [unit('a', 'squad', 0, { bands: { speed: 1, stamina: 3, power: 3, guts: 3, wit: 3 } }), unit('b', 'squad', 1, { bands: { speed: 1, stamina: 3, power: 3, guts: 3, wit: 3 } }), unit('x', 'enemy', 0, { bands: { speed: 5, stamina: 3, power: 3, guts: 3, wit: 3 } })]
+    const base = startBattle(battle(units, { ...V3 })).state
+    const led = startBattle({ ...battle(units, { ...V3 }), cohesion: { level: 1, leader: 'a', members: ['a', 'b'] } }).state
+    expect(led.units.find((u) => u.id === 'a')!.charge).toBe(base.units.find((u) => u.id === 'a')!.charge + 1)
+    const five = startBattle({ ...battle(units, { ...V3 }), cohesion: { level: 5, leader: 'a', members: ['a', 'b'] } }).state
+    void import('./v3').then(({ freeCover }) => { expect(freeCover(five, 'b', 'a')).toBe('cohesion') })
+  })
+  it('fog is lights out for the first rounds; hazards set Fire on the middle row; no reinforcements closes the bench', () => {
+    const units = [unit('a', 'squad', 0), unit('x', 'enemy', 0)]
+    const s = startBattle({ ...battle(units, { ...V3 }), bench: ['gunner'], conditions: ['fog', 'hazards', 'no-reinforcements'] }).state
+    expect(s.field!.lightsOutUntil).toBeGreaterThan(0)
+    expect(Object.values(s.field!.states).some((t) => t.kind === 'fire')).toBe(true)
+    expect(s.field!.benchUsed).toBe(true)
+  })
+})
+
 export { squadOf }

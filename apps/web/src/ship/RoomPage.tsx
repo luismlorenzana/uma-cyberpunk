@@ -1,9 +1,12 @@
-// A room's page at /room/:id (CY10, CY11): the Bridge's star map and a world's map, the Log, the Hangar and the Quarters
-// (CY11), and placeholders for the rooms later packets fill. Loaded on demand. Landscape, on the turned stage.
-import { fillCaptain, openRooms, ROOMS, roomView, worldNodes, type RoomId, type Scene, type StoryPack } from '@cyber/domain'
+// A room's page at /room/:id (CY10, CY11, CY18): the Bridge's star map and a world's map with the readiness meter, the
+// Log with the factions' Files, the Hangar and the Quarters (CY11), Comms' operations (CY18), and placeholders for the
+// rooms later packets fill. Loaded on demand. Landscape, on the turned stage.
+import { fillCaptain, heroinesFreed, openRooms, ROOMS, roomView, STANDING_NAME, standingNow, worldNodes, type RoomId, type Scene, type StoryPack } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
+import { CommsRoom } from './CommsRoom'
+import { ReadinessCard } from './Readiness'
 import { Hangar } from '../crew/Hangar'
 import { Quarters } from '../crew/Quarters'
 import { useCrew } from '../crew/useCrew'
@@ -37,13 +40,14 @@ function Room() {
           : room.id === 'log' ? <LogRoom pack={pack} />
             : room.id === 'hangar' ? <Hangar />
               : room.id === 'quarters' ? <Quarters />
+                : room.id === 'comms' ? <CommsRoom pack={pack} save={save} nameOf={(o) => outfitName(pack, o)} />
             : <Placeholder text={PLACEHOLDER[room.id]} />}
     </div>
   )
 }
 
 const PLACEHOLDER: Partial<Record<RoomId, string>> = {
-  store: 'The Store opens with progression (Phase 5).', comms: 'Comms open with Calls and messages (Phase 5).', simpod: 'The Sim Pod opens with practice battles (Phase 5).',
+  store: 'The Store opens with progression (Phase 5).', simpod: 'The Sim Pod opens with practice battles (Phase 5).',
 }
 
 function Placeholder({ text }: { text?: string }) {
@@ -101,6 +105,7 @@ function Bridge({ pack }: { pack: StoryPack }) {
     const worlds = [...known, ...open].map((id) => pack.worlds[id]).filter((w) => !!w)
     return (
       <div data-star-map className="absolute inset-0">
+        <ReadinessCard pack={pack} save={save} />
         <svg viewBox="0 0 100 60" className="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-label="The star map">
           {worlds.map((w) => {
             const x = w!.x ?? 50, y = (w!.y ?? 50) * 0.6
@@ -132,6 +137,7 @@ function Bridge({ pack }: { pack: StoryPack }) {
   const colour = { locked: '#6d7590', available: '#2ee6ff', cleared: '#7ef0b0' } as const
   return (
     <div data-world-map={world.id} className="absolute inset-0">
+      <ReadinessCard pack={pack} save={save} />
       <svg viewBox="0 0 100 60" className="h-full w-full" preserveAspectRatio="xMidYMid meet" aria-label={`The map of ${world.id}`}>
         {nodes.flatMap((n) => n.links.filter((l) => l > n.id).map((l) => {
           const m = nodes.find((x) => x.id === l)
@@ -157,13 +163,13 @@ function Bridge({ pack }: { pack: StoryPack }) {
 /** The Log: the Timeline of scenes and debriefs seen (each replayable), the Files with their lines filled in, the Anomalies. */
 function LogRoom({ pack }: { pack: StoryPack }) {
   const save = useGame((g) => g.save)!
-  const [tab, setTab] = useState<'timeline' | 'files' | 'anomalies' | 'bonds'>('timeline')
+  const [tab, setTab] = useState<'timeline' | 'files' | 'factions' | 'anomalies' | 'bonds'>('timeline')
   const [replay, setReplay] = useState<Scene | { id: string; place: string; steps: Scene['steps'] } | null>(null)
   const scenes = timeline(pack, save)
   if (replay) return <div className="absolute inset-0 z-20"><ScenePlayer key={replay.id} pack={pack} scene={replay} squad={sceneSquad(pack, save)} onEffect={() => {}} onBattle={async () => {}} onDone={() => setReplay(null)} /></div>
   return (
     <div className="absolute inset-0 overflow-y-auto p-4" style={{ paddingTop: 'calc(var(--inset-top) + 64px)', paddingLeft: 'calc(var(--inset-left) + 16px)' }}>
-      <div className="mb-3 flex gap-2">{(['timeline', 'files', 'anomalies', 'bonds'] as const).map((t) => (
+      <div className="mb-3 flex gap-2">{(['timeline', 'files', 'factions', 'anomalies', 'bonds'] as const).map((t) => (
         <button key={t} type="button" onClick={() => setTab(t)} className={`min-h-11 rounded-md px-4 font-bold capitalize ${tab === t ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>{t}</button>
       ))}</div>
       {tab === 'timeline' && (scenes.length === 0 ? <p className="text-white/60">No scenes yet.</p> : scenes.map((s) => (
@@ -178,6 +184,20 @@ function LogRoom({ pack }: { pack: StoryPack }) {
           </div>
         )
       })}
+      {tab === 'factions' && (() => {
+        // Each faction's File (CY18, TC71): its standing with the ship, its worlds, its heroines freed.
+        const standing = standingNow(pack, save), freed = heroinesFreed(pack, save.worlds.missions)
+        return Object.entries(standing).map(([f, v]) => {
+          const heroines = pack.casting.heroines.filter((h) => h.faction === f)
+          return (
+            <div key={f} data-faction={f} data-standing={v} className="mb-2 rounded-lg bg-[#141827] p-3">
+              <b>{f}</b> <span className={v < 0 ? 'text-[#ff8fae]' : 'text-[#7ef0b0]'}>{STANDING_NAME[String(v)]} ({v > 0 ? '+' : ''}{v})</span>
+              <div className="text-[12px] text-white/60">Worlds: {Object.values(pack.worlds).filter((w) => w.factions.includes(f)).map((w) => w.id).join(', ') || 'none known'}
+                {heroines.length ? ` · heroines freed: ${heroines.filter((h) => freed.includes(h.board)).length} of ${heroines.length} (three bring +1)` : ''}</div>
+            </div>
+          )
+        })
+      })()}
       {tab === 'bonds' && (() => {
         const rows = save.crew.flatMap((m) => {
           const file = pack.bonds[String(m.outfit)]

@@ -1,6 +1,6 @@
-// The ship's two cards (CY16): the ship-log card after a watch (every post's output, already applied: one tap closes
-// it) and a jump's event card (two or three choices, each resolved by who holds a named post; skippable).
-import { postKind, POSTS, type Save, type StoryPack } from '@cyber/domain'
+// The ship's two cards (CY16): the ship-log card after a watch (every post's output, already applied, and the
+// operations back this watch, CY18: one tap closes it) and a jump's event card (two or three choices, each resolved by who holds a named post; skippable).
+import { awayMembers, postKind, POSTS, type Save, type StoryPack } from '@cyber/domain'
 import { useState } from 'react'
 import type { CrewView } from '../crew/view'
 import { updateSave, useGame } from '../save/game'
@@ -14,6 +14,8 @@ export function LogCard({ save, nameOf }: { save: Save; nameOf: (outfit: number)
   const log = save.log
   if (!log || log.read) return null
   const g = log.gains
+  // Half for an Uma away on an operation (CY18): her squad is still away, or came back on this card.
+  const away = new Set([...awayMembers(save.operations, save.squads), ...(log.reports ?? []).flatMap((r) => save.squads.find((s) => s.id === r.squad)?.members ?? [])])
   return (
     <div data-ship-log={log.watch} className={frame}>
       <h2 className="font-display text-[20px] font-bold">Ship log · watch {log.watch}</h2>
@@ -21,9 +23,18 @@ export function LogCard({ save, nameOf }: { save: Save; nameOf: (outfit: number)
       <ul className="space-y-1 text-[14px]">
         {log.lines.map((l, i) => (
           <li key={i} data-log-line={l.post} className="flex gap-2"><b className="w-28 shrink-0 truncate">{nameOf(l.outfit)}</b><span className="text-white/60">{POSTS[l.post].name}</span>
-            <span className="ml-auto text-right">{l.text}{l.half ? <span className="text-[#ffb84d]"> (half: deployed)</span> : null}</span></li>
+            <span className="ml-auto text-right">{l.text}{l.half ? <span className="text-[#ffb84d]"> (half: {away.has(l.outfit) ? 'away' : 'deployed'})</span> : null}</span></li>
         ))}
       </ul>
+      {log.reports?.length ? (
+        <div data-log-reports className="mt-2 space-y-1">
+          {log.reports.map((r) => (
+            <div key={r.op} data-report={r.op} data-outcome={r.outcome} className="rounded-md bg-white/5 p-2 text-[13px]">
+              <b style={{ color: r.outcome === 'full' ? '#7ef0b0' : r.outcome === 'partial' ? '#ffb84d' : '#ff8fae' }}>Operation · {r.outcome}</b> {r.text}
+            </div>
+          ))}
+        </div>
+      ) : null}
       {(g.credits || g.alloy || g.data) ? <div className="mt-2 text-[13px] text-[#7cf2c8]">The wallet: {[g.credits && `+${g.credits} cr`, g.alloy && `+${g.alloy} alloy`, g.data && `+${g.data} data`].filter(Boolean).join(' · ')}</div> : null}
       <button type="button" data-log-done className={`${primary} mt-3`} onClick={() => void updateSave((s) => (s.log ? { ...s, log: { ...s.log, read: true } } : s), { quiet: true })}>Done</button>
     </div>

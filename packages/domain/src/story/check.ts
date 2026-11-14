@@ -2,7 +2,7 @@
 // `aboard` and only a Chapter 1 has one; every key in `needs` is real; a slot keys only leads), todos (a scene likely
 // over three minutes, TC36; a lead in fewer than two crossed paths; a Chapter 1 with more than two battles, TC51) and
 // notes (counts). It builds Uma Story's `checks.json` (uma-platform P141) less the files' hashes, which the script adds.
-import { CAPABILITY_NAME } from '../ship/modules'
+import { CAPABILITY_NAME, SYSTEM_IDS } from '../ship/modules'
 import type { Chapter, Layer, Scene, Step, StoryPack } from './types'
 
 export interface Finding { level: 'error' | 'todo' | 'note'; file: string; where: string; message: string }
@@ -59,9 +59,10 @@ export function checkPack(pack: StoryPack): Finding[] {
   const todo = (file: string, where: string, message: string) => out.push({ level: 'todo', file, where, message })
   const leads = new Set(pack.casting.leads.map((l) => l.outfit))
   const missionIds = new Set(Object.values(pack.chapters).flatMap((c) => c.missions.map((m) => m.id)))
+  const factions = new Set([...Object.values(pack.worlds).flatMap((w) => w.factions), ...pack.casting.heroines.map((h) => h.faction)])
   const key = (k: string): boolean => {
     const [kind, id] = k.split(':') as [string, string]
-    return kind === 'chapter' ? !!pack.chapters[id] : kind === 'mission' ? missionIds.has(id) : kind === 'ship' ? id in CAPABILITY_NAME : !!pack.files[id]
+    return kind === 'chapter' ? !!pack.chapters[id] : kind === 'mission' ? missionIds.has(id) : kind === 'ship' ? id in CAPABILITY_NAME : kind === 'standing' ? factions.has(id) : !!pack.files[id]
   }
   for (const l of pack.casting.leads) if (!pack.worlds[l.world]) err('casting.json', `leads[${pack.casting.leads.indexOf(l)}].world`, `no world ${l.world}`)
   for (const w of Object.values(pack.worlds)) {
@@ -144,6 +145,28 @@ export function checkPack(pack: StoryPack): Finding[] {
   const regions = new Set(Object.values(pack.worlds).map((w) => w.region).filter(Boolean))
   for (const w of Object.values(pack.worlds)) if (w.region && !pack.events[w.region]) todo(`worlds/${w.id}.json`, 'region', `no events/${w.region}.json yet: its jumps draw the generic pool`)
   for (const r of Object.keys(pack.events)) if (!regions.has(r)) todo(`events/${r}.json`, 'region', `no world names the region ${r}`)
+  // Squads, standing and finales (CY18): squad members aboard; standing factions known; a finale's systems known.
+  for (const [i, q] of (pack.casting.squads ?? []).entries()) for (const m of q.members) if (!crew.has(m)) todo('casting.json', `squads[${i}].members`, `${m} isn't a lead or in the crew order`)
+  for (const f of Object.keys(pack.casting.standing ?? {})) if (!factions.has(f)) err('casting.json', `standing["${f}"]`, `no faction ${f} in the worlds or the heroines`)
+  for (const c of Object.values(pack.chapters)) c.missions.forEach((m, i) => (m.readiness ?? []).forEach((r, j) => {
+    if ('system' in r && !SYSTEM_IDS.includes(r.system as never)) err(`chapters/${c.id}.json`, `missions[${i}].readiness[${j}].system`, `no system ${r.system}`)
+    if ('standing' in r && !factions.has(r.standing)) err(`chapters/${c.id}.json`, `missions[${i}].readiness[${j}].standing`, `no faction ${r.standing}`)
+    if (!m.finale) todo(`chapters/${c.id}.json`, `missions[${i}].readiness`, 'readiness only counts on a finale')
+  }))
+  // Operations (CY18): ids unique across the worlds, a known faction, keys that exist, standing only with a faction.
+  const opIds = new Set<string>()
+  for (const w of Object.values(pack.worlds)) (w.operations ?? []).forEach((o, i) => {
+    const file = `worlds/${w.id}.json`
+    if (opIds.has(o.id)) err(file, `operations[${i}].id`, `${o.id} is already an operation`)
+    opIds.add(o.id)
+    if (o.faction && !factions.has(o.faction)) err(file, `operations[${i}].faction`, `no faction ${o.faction} in the worlds or the heroines`)
+    if (o.reward.standing && !o.faction) err(file, `operations[${i}].reward.standing`, 'standing moves only with a faction')
+    for (const n of o.needs ?? []) if (!key(n)) err(file, `operations[${i}].needs`, `no ${n}`)
+  })
+  // The standing step names a known faction.
+  for (const c of Object.values(pack.chapters)) for (const sc of [...c.scenes, { id: 'debrief', steps: c.debrief.steps }]) sc.steps.forEach((st, i) => {
+    if (st.kind === 'standing' && !factions.has(st.faction)) err(`chapters/${c.id}.json`, `${sc.id}.steps[${i}].standing`, `no faction ${st.faction}`)
+  })
   // The captain's placeholders (TC55), anywhere a line is written.
   const placeholder = /\{([^}]*)\}/g
   const okWord = /^(captain|they|them|their|theirs|they're)$/i

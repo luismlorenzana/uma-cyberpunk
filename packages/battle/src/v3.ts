@@ -9,8 +9,8 @@ import { TUNING } from './tuning'
 import type { BattleState, Cue, DuoAction, OrderAction, Role, SystemInput, SystemKind, Tile, UnitState, V3State } from './types'
 
 export const v3 = (state: Pick<BattleState, 'input'>): boolean => state.input.rulesVersion >= 3
-export const newV3 = (): V3State => ({ orders: 0, resonance: false, resonating: null, sure: null, strike: null, sweep: false, endured: [], steadfast: [], joined: [], covered: [], spent: [], shields: {} })
-export const cloneV3 = (v: V3State): V3State => ({ ...v, strike: v.strike && { ...v.strike, tiles: [...v.strike.tiles] }, endured: [...v.endured], steadfast: [...v.steadfast], joined: [...v.joined], covered: [...v.covered], spent: [...v.spent], shields: { ...v.shields } })
+export const newV3 = (): V3State => ({ orders: 0, resonance: false, resonating: null, sure: null, strike: null, sweep: false, endured: [], steadfast: [], joined: [], covered: [], spent: [], shields: {}, cohered: [] })
+export const cloneV3 = (v: V3State): V3State => ({ ...v, strike: v.strike && { ...v.strike, tiles: [...v.strike.tiles] }, endured: [...v.endured], steadfast: [...v.steadfast], joined: [...v.joined], covered: [...v.covered], spent: [...v.spent], shields: { ...v.shields }, cohered: [...v.cohered] })
 
 /** Her bond rank in this battle: 0 below version 3, or without one. */
 export const rankOf = (state: Pick<BattleState, 'input'>, id: string): number => (v3(state) ? inputOf(state, id).bond?.rank ?? 0 : 0)
@@ -53,6 +53,23 @@ export function startV3(state: BattleState): void {
     const shield = systemOf(state, 'shield')
     if (shield) state.v3.shields[u.id] = TUNING.shield.absorb + TUNING.shield.perLevel * (shield.level - 1)
   }
+  // Cohesion level 1 (CY18): the squad's leader starts with +1 Charge.
+  const c = state.input.cohesion
+  if (c && c.level >= 1) { const lead = state.units.find((u) => u.id === c.leader && u.side === 'squad'); if (lead) lead.charge = Math.min(inputOf(state, lead.id).chargeCap, lead.charge + TUNING.cohesion.charge) }
+  // A finale's harsh conditions (CY18): fog is lights out for the first rounds; hazards are lasting Fire on the middle row;
+  // no reinforcements closes the bench.
+  const cond = state.input.conditions ?? []
+  if (state.field && cond.includes('fog')) state.field.lightsOutUntil = TUNING.conditions.fogRounds * TUNING.roundTicks
+  if (state.field && cond.includes('no-reinforcements')) state.field.benchUsed = true
+  if (state.field && cond.includes('hazards')) {
+    const board = boardOf(state), y = Math.floor(state.input.map.depth / 2)
+    let placed = 0
+    for (let x = 1; x < state.input.map.width - 1 && placed < TUNING.conditions.hazardTiles; x += 2) {
+      if (!board.open(x, y) || state.units.some((u) => u.x === x && u.y === y)) continue
+      state.field.states[`${x},${y}`] = { kind: 'fire', until: 0 }
+      placed++
+    }
+  }
   // The Engines: a head start on the clock for the whole squad, so it usually moves first in round 1.
   if (systemOf(state, 'engines')) for (const u of state.units) if (u.side === 'squad') u.clock = Math.floor((TUNING.clockFull * TUNING.engines.clockPct) / 100)
 }
@@ -88,15 +105,24 @@ export function answer(state: BattleState, broken: UnitState, cues: Cue[]): void
 }
 
 /** A free Cover (Steadfast at rank 9, or a level-2 partner), once a battle each: who, and why, or null. */
-export function freeCover(state: Pick<BattleState, 'input' | 'v3'>, coverer: string, target: string): 'steadfast' | 'partner' | null {
+export function freeCover(state: Pick<BattleState, 'input' | 'v3'>, coverer: string, target: string): 'steadfast' | 'partner' | 'cohesion' | null {
   const v = state.v3
   if (!v) return null
   if (rankOf(state, coverer) >= TUNING.bond.steadfast && !v.steadfast.includes(coverer)) return 'steadfast'
   if (arePartners(state, coverer, target) >= 2 && !v.covered.includes(coverer)) return 'partner'
+  // Cohesion level 5 (CY18): one free Cover for each member of the squad.
+  const c = state.input.cohesion
+  if (c && c.level >= TUNING.cohesion.coverLevel && c.members.includes(coverer) && !v.cohered.includes(coverer)) return 'cohesion'
   return null
 }
-export function useFreeCover(state: BattleState, coverer: string, why: 'steadfast' | 'partner', cues: Cue[]): void {
+/** Cohesion level 3 (CY18): a member's Crossfire reach, +1. */
+export const cohesionReach = (state: Pick<BattleState, 'input'>, unit: string): number => {
+  const c = v3(state) ? state.input.cohesion : undefined
+  return c && c.level >= TUNING.cohesion.reachLevel && c.members.includes(unit) ? TUNING.cohesion.reach : 0
+}
+export function useFreeCover(state: BattleState, coverer: string, why: 'steadfast' | 'partner' | 'cohesion', cues: Cue[]): void {
   if (why === 'steadfast') state.v3!.steadfast.push(coverer)
+  else if (why === 'cohesion') state.v3!.cohered.push(coverer)
   else state.v3!.covered.push(coverer)
   cues.push({ kind: 'freeCover', unit: coverer, why })
 }
@@ -144,6 +170,7 @@ export function orderError(state: BattleState, a: OrderAction): string | null {
     }
     case 'drone': return t && t.side === 'squad' && t.status === 'active' ? null : 'the drone takes a standing ally'
     case 'reinforce': {
+      if ((state.input.conditions ?? []).includes('no-reinforcements')) return 'no reinforcements in this battle'
       if (!a.role || !ROLES.includes(a.role) || !(state.input.bench ?? []).includes(a.role)) return 'no such Uma resting'
       if (!a.at || !inMap(state, a.at)) return 'the drop needs a tile on the map'
       return null

@@ -1,5 +1,6 @@
-// The invented stand-in story (CY9, CY12), in git: two worlds and two leads' Chapter 1s, each with a battle, an
-// interjection slot, a crew Uma who joins and a debrief, two Log Files and a Call; every step kind is used. CY12's loop
+// The invented stand-in story (CY9, CY12, CY18), in git: two worlds and two leads' Chapter 1s, each with a battle, an
+// interjection slot, a crew Uma who joins and a debrief, two Log Files and a Call; every step kind is used. CY18 adds a
+// canonical squad, two story operations, a second faction and a standing step, and a finale behind the storm shielding. CY12's loop
 // plays it end to end: Lead A's Chapter 1 on World sw1, her pickup and room, the jump to sw2, Lead B's, and hers. Invented ids in uma-farm's style (Umas 9000001–9000004, the heroine `stand-in-1`,
 // slugs `sw1-…`) and plain labels, never a name. The game falls back to it until the story session's files are served.
 const LEAD = 9000001
@@ -19,11 +20,17 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       '9000004': { favourite: 'wild', disliked: 'tech', gift: 'plants', topics: ['nature', 'stars'] },
     },
     heroines: [{ board: 'stand-in-1', faction: 'steel-muster', hold: 'collar' }],
+    squads: [{ id: 'sw-vanguard', name: 'Vanguard', banner: 'amber', leader: LEAD, members: [LEAD, 9000003, 9000004] }],
+    standing: { 'steel-muster': -2, 'dock-union': 0 },
     minor: ['sw1-dockhand'],
     labels: { '9000001': 'Lead A', '9000002': 'Lead B', '9000003': 'Crew C', '9000004': 'Crew D', 'stand-in-1': 'Heroine A', 'sw1-dockhand': 'Dockhand' },
   },
   'worlds/sw1.json': {
-    schemaVersion: 1, id: 'sw1', look: 'A stand-in world: a ring of docks under a dark sky.', mood: 'Quiet before the alarm.', factions: ['steel-muster'], x: 30, y: 55, region: 'ring',
+    schemaVersion: 1, id: 'sw1', look: 'A stand-in world: a ring of docks under a dark sky.', mood: 'Quiet before the alarm.', factions: ['steel-muster', 'dock-union'], x: 30, y: 55, region: 'ring',
+    operations: [
+      { id: 'sw1-op-patrol', title: 'Patrol the ring for the dock union', faction: 'dock-union', danger: 1, watches: 2, reward: { credits: 80, alloy: 5, data: 5, standing: 1 } },
+      { id: 'sw1-op-lines', title: "Cut the muster's supply lines", faction: 'steel-muster', danger: 2, watches: 3, reward: { credits: 150, alloy: 20, data: 10, standing: -1 }, needs: ['chapter:sw1-ch1'] },
+    ],
     locations: [
       { id: 'sw1-docks', danger: 1, links: ['sw1-market'], x: 20, y: 70 },
       { id: 'sw1-market', danger: 1, links: ['sw1-docks', 'sw1-underlevels'], x: 45, y: 50 },
@@ -86,7 +93,11 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       enemies: [{ slot: 'boss', pool: ['stand-in-1'] }, { slot: 'regular', job: 'gunner', count: 5, faction: 'steel-muster' }],
       fixedSquad: null, side: [{ kind: 'hack', gives: 'sw1-lead-terminal' }], scenario: 'sandbox-muster',
     }],
-    debrief: { steps: [{ line: { speaker: LEAD, text: 'So this is the ship. It smells like ozone and old coffee.' } }] },
+    debrief: { steps: [
+      { line: { speaker: LEAD, text: 'So this is the ship. It smells like ozone and old coffee.' } },
+      { narrate: 'Word comes from the docks: the union saw who cleared the underlevels.' },
+      { standing: { faction: 'dock-union', by: 1 } },
+    ] },
   },
   'chapters/sw2-ch1.json': {
     schemaVersion: 1, id: 'sw2-ch1', world: 'sw2', leads: [9000002], number: 1, danger: 2, needs: ['chapter:sw1-ch1'],
@@ -131,6 +142,34 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       { line: { speaker: 9000002, text: 'A store aboard? Good. I need parts more than I need sleep.' } },
       { slot: { lines: { [String(LEAD)]: 'Welcome aboard. Bunks are wherever you fall asleep.' }, fallback: 'The ship hums under her feet.' } },
     ] },
+  },
+  'chapters/sw2-ch2.json': {
+    schemaVersion: 1, id: 'sw2-ch2', world: 'sw2', leads: [9000002], number: 2, danger: 4, needs: ['chapter:sw2-ch1', 'ship:storm'],
+    scenes: [
+      {
+        id: 'sw2-ch2-s1', place: 'sw2-storm-ridge', trigger: { arrive: 'sw2-storm-ridge' }, cast: [{ outfit: 9000002 }, { outfit: LEAD }],
+        steps: [
+          { narrate: "The storm ridge: the muster's last yard under a sky of static." },
+          { line: { speaker: 9000002, text: 'Everything we built aboard comes down to this ridge.' } },
+          { battle: 'sw2-ch2-m1' },
+        ],
+      },
+      {
+        id: 'sw2-ch2-s2', place: 'sw2-storm-ridge', trigger: { after: 'sw2-ch2-m1' }, cast: [{ outfit: 9000002 }, { outfit: LEAD }],
+        steps: [
+          { line: { speaker: LEAD, text: 'The ridge is quiet. The ship held.' } },
+          { standing: { faction: 'steel-muster', by: 1 } },
+        ],
+      },
+    ],
+    missions: [{
+      id: 'sw2-ch2-m1', place: 'sw2-storm-ridge', objective: { kind: 'defeat-all' }, finale: true,
+      brief: "The muster's last yard on the ridge: the ship's sensors see through the static, and the union keeps the yard's fires out.",
+      enemies: [{ slot: 'regular', job: 'gunner', count: 5, faction: 'steel-muster' }],
+      fixedSquad: null, side: [], scenario: 'high-ground',
+      readiness: [{ system: 'sensors', else: 'fog' }, { standing: 'dock-union', at: 1, else: 'hazards' }],
+    }],
+    debrief: { steps: [{ line: { speaker: 9000002, text: 'Patch the hull first. Then we celebrate.' } }] },
   },
   'events/ring.json': {
     schemaVersion: 1, region: 'ring',

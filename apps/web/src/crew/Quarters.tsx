@@ -1,5 +1,6 @@
 // The Quarters deck (CY11, CY14, TC42, TC60): a door for each Uma aboard (her face, her bond rank, her cabin's Comfort, a
-// badge when her bond scene waits or she's asked for something), who rests next mission, and a door that opens her cabin.
+// badge when her bond scene waits or she's asked for something), the squads (CY18), who rests next mission, and a door
+// that opens her cabin.
 import { comfortOf, privateCabins, STRAIN_REST } from '@cyber/domain'
 import { AlbumArtProvider, FaceTile } from '@luismlorenzana/uma-kit/album'
 import { useMemo, useState } from 'react'
@@ -11,6 +12,7 @@ import { updateSave, useGame } from '../save/game'
 import { useStory } from '../ship/useStory'
 import { ScenePlayer } from '../story/ScenePlayer'
 import { albumArt } from './art'
+import { SquadsPanel } from './SquadsPanel'
 import { useCrew } from './useCrew'
 
 export function Quarters() {
@@ -67,6 +69,7 @@ export function Quarters() {
           })}
         </div>
       </AlbumArtProvider>
+      {save && <SquadsPanel save={save} nameOf={(o) => crew.find((c) => c.outfit === o)?.name ?? `Uma ${o}`} />}
       <div data-resting className="mt-3 rounded-lg bg-[#141827] p-3 text-[13px] ring-1 ring-white/10">
         <div className="mb-1 font-display font-bold">Resting next mission</div>
         {resting.length ? resting.map((c) => <div key={c.outfit}>{c.name} (Strain {STRAIN_REST})</div>) : <div className="text-white/60">No one: every Uma is under Strain {STRAIN_REST}.</div>}

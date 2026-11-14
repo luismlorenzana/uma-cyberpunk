@@ -51,11 +51,13 @@ function weaponOf(input: BattleInput, unit: string, mount: Mount): Weapon | null
 }
 
 /** The squad profiles (CY17): bare, as Phases 2 and 3 played; and life aboard, rules version 3 with bond ranks 3, 7 and 10,
- * the first two as level-2 partners, three powered systems, two Orders the allies' Auto may take, and a meal. */
-export type Profile = 'bare' | 'life'
+ * the first two as level-2 partners, three powered systems, two Orders the allies' Auto may take, and a meal. CY18 adds
+ * cohesion: life aboard with the whole squad at cohesion level 5. */
+export type Profile = 'bare' | 'life' | 'cohesion'
 export function withProfile(input: BattleInput, profile: Profile): BattleInput {
   if (profile === 'bare') return input
   const squad = input.units.filter((u) => u.side === 'squad').map((u) => u.id)
+  if (profile === 'cohesion') return { ...withProfile(input, 'life'), cohesion: { level: 5, leader: squad[0]!, members: squad } }
   const ranks = [3, 7, 10]
   return {
     ...input, rulesVersion: 3, meal: 'curry', systems: ['sensors', 'shield', { id: 'battery', level: 1, band: 3 }], orders: { slots: 2, kinds: ['sure', 'reboot'] },
@@ -218,21 +220,25 @@ function main(): void {
 export function balance(seeds: number): void {
   const { maps, scenarios } = loadScenarios(ROOT)
   const rows = scenarios.map((s) => {
-    const bare = simulate(s, maps[s.map]!, seeds, 'bare'), life = simulate(s, maps[s.map]!, seeds, 'life')
-    const b = (bare.wins.squad / seeds) * 100, l = (life.wins.squad / seeds) * 100
-    const met = l >= b && l < 100
-    console.log(`${s.id}: bare ${b.toFixed(1)}%, life aboard ${l.toFixed(1)}% (${l - b >= 0 ? '+' : ''}${(l - b).toFixed(1)})${met ? '' : '  ← off target'}`)
-    return { id: s.id, bare: b, life: l, gain: l - b, met }
+    const bare = simulate(s, maps[s.map]!, seeds, 'bare'), life = simulate(s, maps[s.map]!, seeds, 'life'), coh = simulate(s, maps[s.map]!, seeds, 'cohesion')
+    const b = (bare.wins.squad / seeds) * 100, l = (life.wins.squad / seeds) * 100, c = (coh.wins.squad / seeds) * 100
+    const met = l >= b && l < 100 && c < 100
+    console.log(`${s.id}: bare ${b.toFixed(1)}%, life aboard ${l.toFixed(1)}% (${l - b >= 0 ? '+' : ''}${(l - b).toFixed(1)}), cohesion 5 ${c.toFixed(1)}% (${c - l >= 0 ? '+' : ''}${(c - l).toFixed(1)})${met ? '' : '  ← off target'}`)
+    return { id: s.id, bare: b, life: l, gain: l - b, cohesion: c, cohesionGain: c - l, met }
   })
   const mean = rows.reduce((n, r) => n + r.gain, 0) / rows.length
+  const cohMean = rows.reduce((n, r) => n + r.cohesionGain, 0) / rows.length
   mkdirSync(OUT, { recursive: true })
   const md = ['# Balance pass: bare and life aboard', '', `${seeds} seeds a scenario. Life aboard: rules version 3, bond ranks 3, 7, 10, the first two as level-2 partners, the Sensors, the Shield Projector and the Battery powered, Sure shot and Reboot for the allies' Auto, a curry.`, '',
-    '| Scenario | Bare | Life aboard | Gain | On target |', '|---|---|---|---|---|', ...rows.map((r) => `| ${r.id} | ${r.bare.toFixed(1)}% | ${r.life.toFixed(1)}% | ${r.gain >= 0 ? '+' : ''}${r.gain.toFixed(1)} | ${r.met ? 'yes' : 'no'} |`), '',
-    `Mean gain: ${mean >= 0 ? '+' : ''}${mean.toFixed(1)} points (target: about one battle in five, 10 to 30 points; every scenario gaining, none at 100%).`].join('\n')
+    '| Scenario | Bare | Life aboard | Gain | Cohesion 5 | Its gain | On target |', '|---|---|---|---|---|---|---|',
+    ...rows.map((r) => `| ${r.id} | ${r.bare.toFixed(1)}% | ${r.life.toFixed(1)}% | ${r.gain >= 0 ? '+' : ''}${r.gain.toFixed(1)} | ${r.cohesion.toFixed(1)}% | ${r.cohesionGain >= 0 ? '+' : ''}${r.cohesionGain.toFixed(1)} | ${r.met ? 'yes' : 'no'} |`), '',
+    `Mean gain: ${mean >= 0 ? '+' : ''}${mean.toFixed(1)} points (target: about one battle in five, 10 to 30 points; every scenario gaining, none at 100%).`,
+    `Cohesion 5 over life aboard: ${cohMean >= 0 ? '+' : ''}${cohMean.toFixed(1)} points (target CY18: small, −2 to +8; none at 100%).`].join('\n')
   writeFileSync(join(OUT, 'balance.md'), `${md}\n`)
-  writeFileSync(join(OUT, 'balance.json'), `${JSON.stringify({ seeds, rows, mean }, null, 1)}\n`)
-  const meanMet = mean >= 10 && mean <= 30
+  writeFileSync(join(OUT, 'balance.json'), `${JSON.stringify({ seeds, rows, mean, cohesionMean: cohMean }, null, 1)}\n`)
+  const meanMet = mean >= 10 && mean <= 30, cohMet = cohMean >= -2 && cohMean <= 8
   console.log(`\nMean gain ${mean.toFixed(1)} points${meanMet ? ' (on target: about one battle in five)' : ' ← off target'} → sim/out/balance.md`)
+  console.log(`Cohesion 5 adds ${cohMean.toFixed(1)} points${cohMet ? ' (on target: small)' : ' ← off target'}`)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main()

@@ -11,7 +11,7 @@ import { dirTo, distance, facingOf, inReach, pincerTile, sameTile } from './sigh
 import { boardOf, cross, lightsOut, setState, type Board } from './terrain'
 import { inputOf, rateOf, ticksToTurn } from './timeline'
 import { TUNING } from './tuning'
-import { freeCover, freeJoin, mealOf, rankOf, useFreeCover } from './v3'
+import { cohesionReach, freeCover, freeJoin, mealOf, rankOf, useFreeCover } from './v3'
 import type { V3State, AimAt, AttackRole, BattleState, ChanceSkill, Cue, Facing, Mount, PartId, Prop, Tile, UnitState, Weapon } from './types'
 import { PARTS } from './types'
 
@@ -179,12 +179,13 @@ const fires = (state: BattleState, unitId: string, skill: ChanceSkill): boolean 
 // --- Eligibility ------------------------------------------------------------------------------------------------------
 
 /** The first mount, in the fixed order, that can fire on a target from a tile, limited to some bands. */
-export function mountFor(state: Pick<BattleState, 'input' | 'units' | 'field'>, unitId: string, from: Tile, targetId: string, bands: readonly Weapon['band'][]): Mount | null {
+export function mountFor(state: Pick<BattleState, 'input' | 'units' | 'field'>, unitId: string, from: Tile, targetId: string, bands: readonly Weapon['band'][], extra = 0): Mount | null {
   const u = unitById(state, unitId), t = unitById(state, targetId)
   const board = boardOf(state)
   for (const mount of MOUNTS) {
     const arm = armed(inputOf(state, unitId), u, mount)
-    if (arm && bands.includes(arm.weapon.band) && inReach(board, arm.weapon, from, tileOf(t))) return mount
+    const weapon = extra ? { ...arm?.weapon!, range: [arm?.weapon.range[0] ?? 0, (arm?.weapon.range[1] ?? 0) + extra] as const } : arm?.weapon
+    if (arm && weapon && bands.includes(arm.weapon.band) && inReach(board, weapon, from, tileOf(t))) return mount
   }
   return null
 }
@@ -228,7 +229,7 @@ export function crossfireFor(state: Pick<BattleState, 'input' | 'units' | 'turn'
     const pincer = sameTile(at, far) ? mountFor(state, u.id, at, targetId, ['melee', 'short']) : null
     if (pincer) found.set(u.id, { unit: u.id, mount: pincer, how: 'pincer' })
     else {
-      const link = mountFor(state, u.id, at, targetId, ['short', 'long'])
+      const link = mountFor(state, u.id, at, targetId, ['short', 'long'], cohesionReach(state, u.id))
       if (link) found.set(u.id, { unit: u.id, mount: link, how: 'link' })
     }
   }

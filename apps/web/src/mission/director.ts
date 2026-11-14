@@ -4,20 +4,21 @@
 import type { BattleInput } from '@cyber/battle'
 import {
   addCamaraderie, addDeck, addItem, afterMission as crewAfterMission, PARTNER_TUNING, settlePartners, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
-  drawEvent, GENERIC_EVENTS, runDuties, setAnomaly, setFlag, shipCapabilities, type Chapter, type DutyInfo, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
+  drawEvent, GENERIC_EVENTS, runDuties, setAnomaly, setFlag, shipCapabilities, awayMembers, cohesionAfter, keyMet, moveStandingIn, placeNewcomer, readinessNow, returnOperations, standingNow, systemsBuilt, unmetNeeds, type Chapter, type FinaleCondition, type ReadinessNeed, type DutyInfo, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
 import { afterBattleBonds, giveRapport } from '../bonds/bonds'
 
 export type Due = { kind: 'scene'; chapter: Chapter; scene: Scene } | { kind: 'mission'; chapter: Chapter; mission: Mission } | { kind: 'none' }
 
-export const progressOf = (pack: StoryPack, save: Save): WorldProgress => ({ missions: save.worlds.missions, chapters: finishedChapters(pack, save.story), capabilities: shipCapabilities(save.ship) })
+export const progressOf = (pack: StoryPack, save: Save): WorldProgress =>
+  ({ missions: save.worlds.missions, chapters: finishedChapters(pack, save.story), capabilities: shipCapabilities(save.ship), standing: standingNow(pack, save) })
 
 const chaptersOn = (pack: StoryPack, world: string): Chapter[] =>
   Object.values(pack.chapters).filter((c) => c.world === world).sort((a, b) => a.number - b.number || a.id.localeCompare(b.id))
 
 const needsMet = (pack: StoryPack, save: Save, c: Chapter): boolean => {
   const p = progressOf(pack, save)
-  return c.needs.every((k) => { const [kind, id] = k.split(':') as [string, string]; return kind === 'chapter' ? p.chapters.includes(id) : kind === 'mission' ? p.missions.includes(id) : (save.story.files[id]?.length ?? 0) > 0 })
+  return c.needs.every((k) => keyMet(k, save.story, p))
 }
 
 const matches = (t: Trigger, want: Trigger): boolean =>
@@ -63,15 +64,19 @@ export function joiningXp(save: Save, outfit: number): number {
   return Math.max(mean, fought)
 }
 
-/** A story step's change: the story state, the crew (join, aboard: she joins at the squad's level), whose coming
- * aboard opens her modules (placed at once where a slot is free, CY15), or the ship (a refit adds a deck). */
+/** A story step's change: the story state, the crew (join, aboard: she joins at the squad's level and takes her place
+ * in a squad, CY18), whose coming aboard opens her modules (placed at once where a slot is free, CY15), the ship (a refit
+ * adds a deck), or a faction's standing (CY18). */
 export function applyStep(save: Save, pack: StoryPack, step: EffectStep): Save {
   if (step.kind === 'join' || step.kind === 'aboard') {
-    const crew = save.crew.some((m) => m.outfit === step.outfit) ? save.crew : [...save.crew, { ...newMember(step.outfit), xp: joiningXp(save, step.outfit) }]
+    const fresh = !save.crew.some((m) => m.outfit === step.outfit)
+    const crew = fresh ? [...save.crew, { ...newMember(step.outfit), xp: joiningXp(save, step.outfit) }] : save.crew
     const ship = step.kind === 'aboard' ? modulesOpenedBy(pack.casting, step.outfit).reduce(openModule, save.ship) : save.ship
-    return { ...save, crew, ship }
+    const squads = fresh ? placeNewcomer(save.squads, pack.casting.squads ?? [], crew.map((m) => m.outfit), step.outfit) : save.squads
+    return { ...save, crew, ship, squads }
   }
   if (step.kind === 'refit') return { ...save, ship: addDeck(save.ship) }
+  if (step.kind === 'standing') return moveStandingIn(pack, save, step.faction, step.by)
   const s = save.story
   const story = step.kind === 'flag' ? setFlag(s, step.flag, step.set) : step.kind === 'lead' ? gainLead(s, step.lead) : step.kind === 'file' ? fillFile(s, step.file, step.line) : setAnomaly(s, step.anomaly, step.open)
   return { ...save, story }
@@ -115,14 +120,22 @@ export function ensureWorld(save: Save, pack: StoryPack): Save {
  * and the squad of the battle that ends the watch. Without it, every Uma works at band 3. */
 export interface WatchContext { info?: (outfit: number) => DutyInfo | null; deployed?: readonly number[] }
 
-/** A watch passes (CY13, CY15, CY16): the counter; every build and the Lab's project a watch on; every post's output on
- * one ship-log card, and a liked duty's rapport through the bonds' rules. */
+/** A watch passes (CY13, CY15, CY16, CY18): the counter; every build and the Lab's project a watch on; every post's
+ * output on one ship-log card (a squad away holds its posts at half), and a liked duty's rapport through the bonds'
+ * rules; then the squads due back return, each with its report on the card. */
 export function passAWatch(save: Save, pack: StoryPack | null = null, ctx: WatchContext = {}): Save {
   const ticked: Save = { ...save, watch: save.watch + 1, ship: passWatch(save.ship).ship }
-  const r = runDuties(ticked, ctx.info ?? (() => null), pack?.casting.chiefs ?? {}, ctx.deployed ?? [])
+  const away = awayMembers(save.operations, save.squads)
+  const r = runDuties(ticked, ctx.info ?? (() => null), pack?.casting.chiefs ?? {}, [...(ctx.deployed ?? []), ...away])
   let next = r.save
   for (const [outfit, amount] of r.rapport) next = giveRapport(next, pack, outfit, amount)
-  return next
+  if (!pack || !next.operations.some((o) => o.back <= next.watch)) return next
+  const back = returnOperations(pack, next, progressOf(pack, next))
+  const log = back.save.log?.watch === next.watch ? back.save.log : { watch: next.watch, lines: [], gains: { credits: 0, alloy: 0, data: 0 }, read: false }
+  // The card's wallet line counts what the operations brought back too.
+  const w = back.save.wallet, was = next.wallet
+  const gains = { credits: log.gains.credits + w.credits - was.credits, alloy: log.gains.alloy + w.alloy - was.alloy, data: log.gains.data + w.data - was.data }
+  return { ...back.save, log: { ...log, gains, read: false, reports: [...(log.reports ?? []), ...back.reports] } }
 }
 
 /** A jump: the ship is at the world, which is known from now on, a watch passes (CY13), and one jump in three draws an
@@ -142,26 +155,27 @@ export function travel(save: Save, world: string, pack: StoryPack | null = null,
  * them once reachable. */
 export function reachableWorlds(save: Save, pack: StoryPack): string[] {
   const known = new Set(Object.keys(save.worlds.known))
-  const open = Object.values(pack.worlds).filter((w) => !known.has(w.id) && w.locations.some((l) => l.needs.length > 0 && l.needs.every((k) => {
-    const [kind, id] = k.split(':') as [string, string]
-    const p = progressOf(pack, save)
-    return kind === 'chapter' ? p.chapters.includes(id) : kind === 'mission' ? p.missions.includes(id) : (save.story.files[id]?.length ?? 0) > 0
-  })))
-  return open.map((w) => w.id)
+  const p = progressOf(pack, save)
+  return Object.values(pack.worlds).filter((w) => !known.has(w.id) && w.locations.some((l) => l.needs.length > 0 && l.needs.every((k) => keyMet(k, save.story, p)))).map((w) => w.id)
 }
 
 // --- The mission -------------------------------------------------------------------------------------------------------
 
-/** The squad a mission starts with: its fixed squad (a flash-forward, TC32), else the chapter's leads, then the crew not
- * resting (Strain 3, TC27), four at most. */
+/** The squad a mission starts with: its fixed squad (a flash-forward, TC32), else the chapter's leads, then their squads'
+ * members (CY18), then the crew not resting (Strain 3, TC27) and not away on an operation, four at most. */
 export function defaultSquad(save: Save, chapter: Chapter, mission: Mission): number[] {
   if (mission.fixedSquad) return [...mission.fixedSquad]
-  return [...new Set([...chapter.leads, ...save.crew.filter((m) => !resting(m)).map((m) => m.outfit)])].slice(0, 4)
+  const away = awayMembers(save.operations, save.squads)
+  const free = (o: number) => !away.includes(o) && !resting(save.crew.find((m) => m.outfit === o) ?? newMember(o))
+  const theirs = save.squads.filter((s) => s.members.some((m) => chapter.leads.includes(m))).flatMap((s) => s.members)
+  return [...new Set([...chapter.leads, ...theirs.filter(free), ...save.crew.map((m) => m.outfit).filter(free)])].slice(0, 4)
 }
 
 /** Why a member can't join the squad now, or null: resting at Strain 3 (a locked lead deploys anyway), or a rig problem
  * (over Capacity, a two-handed weapon with a full left hand). */
 export function cantDeploy(save: Save, outfit: number, locked: readonly number[], rigProblem: string | null): string | null {
+  const run = save.operations.find((r) => save.squads.find((s) => s.id === r.squad)?.members.includes(outfit))
+  if (run) return `Away on an operation until watch ${run.back}: recall her squad from Comms`
   const m = save.crew.find((x) => x.outfit === outfit)
   if (m && resting(m) && !locked.includes(outfit)) return 'Resting: Strain 3, she sits this mission out'
   return rigProblem ? `${rigProblem}: fix her rig in the Hangar` : null
@@ -206,7 +220,9 @@ export function closeResults(save: Save, pack: StoryPack | null = null, rapport:
   const watched = passAWatch({ ...save, crew, wallet: earn(save.wallet, resultsPay(r.credits, r.salvage, !!m.won)) }, pack, { info: info ?? undefined, deployed: m.squad })
   // Camaraderie from the battle (CY17), and partners levelled to it.
   const cam = camaraderie ? addCamaraderie(watched.camaraderie, camaraderie) : watched.camaraderie
-  const bonded = afterBattleBonds({ ...watched, camaraderie: cam, partners: settlePartners(watched.partners, cam, watched.ship.research.done.includes(PARTNER_TUNING.level3)) }, pack, rapport)
+  // Cohesion (CY18): +1 for each squad that fought with three or more of its members, won or lost.
+  const bonded = afterBattleBonds({ ...watched, camaraderie: cam, squads: m.battle ? cohesionAfter(watched.squads, m.squad) : watched.squads,
+    partners: settlePartners(watched.partners, cam, watched.ship.research.done.includes(PARTNER_TUNING.level3)) }, pack, rapport)
   if (!m.won) return { ...bonded, mission: null }
   const first = !save.worlds.missions.includes(m.id)
   const missions = first ? [...save.worlds.missions, m.id] : save.worlds.missions
@@ -246,5 +262,26 @@ export function waiting(pack: StoryPack, save: Save): { text: string; to: string
   if (place) return { text: `Next: ${place} on ${save.worlds.current}`, to: `/room/bridge?node=${place}` }
   const open = reachableWorlds(save, pack)
   if (open[0]) return { text: `Next: jump to ${open[0]} from the Bridge's star map`, to: '/room/bridge?view=stars' }
+  return null
+}
+
+// --- Readiness (CY18, TC64) --------------------------------------------------------------------------------------------
+
+/** A finale's readiness needs, each met or not now; an unmet one adds its harsh condition to the battle. */
+export function finaleNeeds(pack: StoryPack, save: Save, mission: Mission): { need: ReadinessNeed; met: boolean }[] {
+  if (!mission.finale) return []
+  const ctx = { systems: systemsBuilt(save), standing: standingNow(pack, save), total: readinessNow(pack, save) }
+  const unmet = unmetNeeds(mission.readiness ?? [], ctx)
+  return (mission.readiness ?? []).map((need) => ({ need, met: !unmet.includes(need) }))
+}
+export const finaleConditions = (pack: StoryPack, save: Save, mission: Mission): FinaleCondition[] => finaleNeeds(pack, save, mission).filter((n) => !n.met).map((n) => n.need.else)
+
+/** The next finale waiting in the story (a chapter's finale mission not won yet whose world is known or reachable), for
+ * the Bridge's readiness meter: its needs and the total it measures. */
+export function nextFinale(pack: StoryPack, save: Save): { chapter: Chapter; mission: Mission } | null {
+  for (const c of Object.values(pack.chapters).sort((a, b) => a.number - b.number || a.id.localeCompare(b.id))) {
+    const m = c.missions.find((x) => x.finale && !save.worlds.missions.includes(x.id))
+    if (m) return { chapter: c, mission: m }
+  }
   return null
 }

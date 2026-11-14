@@ -299,7 +299,8 @@ Rules version 3 (D28) brings the ship's life into the fight, all of it frozen in
 - each Uma's bond rank and path, and her partner when both are in the squad;
 - the captain's Orders the ship offers;
 - the powered battle systems, with their levels and their post holders' bands;
-- the cook's meal.
+- the cook's meal;
+- the squad's cohesion and a finale's harsh conditions (CY18).
 
 A version-2 battle replays exactly as before (a test plays one with these fields present and gets the same state).
 Missions deploy at version 3; the sandbox's scenarios stay at version 2.
@@ -358,6 +359,25 @@ The fifteen pairs of roles each have a technique (`DUO_TECHS`). Each adds one ef
 - **Mend:** both partners +12 Core;
 - **Charge:** both partners +1 Charge.
 
+### Cohesion and a finale's conditions (CY18)
+
+`cohesion: { level, leader, members }` is the squad fighting together (three or more of its members deployed); see
+[squads](squads.md):
+
+| Level | In play |
+|---|---|
+| 1 | The leader starts with +1 Charge |
+| 3 | Each member's Crossfire reach +1 |
+| 5 | Each member covers once free a battle (no Charge) |
+
+`conditions` holds a finale's unmet readiness needs:
+
+| Condition | In play |
+|---|---|
+| `fog` | Lights out for the first 3 rounds |
+| `hazards` | Up to 4 tiles of lasting Fire across the map's middle row, every other tile |
+| `no-reinforcements` | The bench support call is refused all battle |
+
 ### Ally Auto and the balance
 
 **Ally Auto** takes a free Order before her turn: Reboot on a kneeling ally, or Sure shot when the attack she means to make
@@ -371,7 +391,9 @@ is under 40% to hit. Auto never calls Resonance.
 - a curry.
 
 At 80 seeds a scenario, the bare squad is unchanged (version 2, frozen), the mean gain is **+23 points**, every scenario
-gains, and none reaches 100%. The targets are about one battle in five more often and never every battle.
+gains, and none reaches 100%. The targets are about one battle in five more often and never every battle. At 200 seeds
+(CY18) the mean gain is +20.6, and **cohesion 5** on top of life aboard adds −0.4 points: within noise, inside its target
+of −2 to +8.
 
 Two findings changed the rules on the way:
 - The Shield Projector's first form, barriers before the spawns, blocked the squad's own path and lost battles. It became

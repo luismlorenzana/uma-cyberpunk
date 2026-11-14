@@ -97,6 +97,11 @@ function checkV3(input: BattleInput): void {
     if (typeof s !== 'string' && !(Number.isSafeInteger(s.level) && s.level >= 1 && s.level <= 3 && isBand(s.band))) throw new BattleInputError(`systems[${i}]`, 'expected a level 1–3 and a band')
   }
   if (input.meal !== undefined && !(input.meal in TUNING.meals)) throw new BattleInputError('meal', 'unknown meal')
+  if (input.cohesion !== undefined) {
+    const c = input.cohesion
+    if (!(Number.isSafeInteger(c.level) && c.level >= 0 && c.level <= 5) || !ids.has(c.leader) || !c.members.every((m) => ids.has(m))) throw new BattleInputError('cohesion', 'expected a level 0–5, a leader and members in the battle')
+  }
+  for (const [i, k] of (input.conditions ?? []).entries()) if (!['fog', 'hazards', 'no-reinforcements'].includes(k)) throw new BattleInputError(`conditions[${i}]`, 'unknown condition')
 }
 
 function checkObjective(input: BattleInput, map: BattleInput['map']): void {

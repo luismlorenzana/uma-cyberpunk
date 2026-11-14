@@ -5,10 +5,24 @@ import type { BondFile, Call, CaptainOption, CastMember, Casting, Chapter, Choic
 import { LAYERS, MISSION_OBJECTIVES, TONES } from './types'
 import { DECOR_STYLES, GIFT_KINDS, TOPICS, type GiftKind, type Style, type Topic } from '../cabins/items'
 import { LOOKS, type Look } from '../looks'
+import type { ReadinessNeed } from '../crew/squads'
 import { MODULE_POSTS, POST_KINDS, type PostKind } from '../ship/duties'
 import type { ModuleId } from '../ship/modules'
 import type { EventChoice, Reward, ShipEvent } from '../ship/watch'
 import { ITEMS_BY_ID } from '../cabins/items'
+
+/** A finale's readiness need (CY18): a system built, a faction's standing at a level, or the readiness total; with the
+ * harsh condition an unmet need adds. */
+function readinessNeed(p: P, v: unknown, path: string): ReadinessNeed {
+  const o = p.object(v, path, ['system', 'standing', 'at', 'total', 'else'], ['else'])
+  const cond = o.else as string
+  if (!['fog', 'hazards', 'no-reinforcements'].includes(cond)) p.fail(`${path}.else`, 'expected fog, hazards or no-reinforcements')
+  const c = cond as ReadinessNeed['else']
+  if (o.system !== undefined) return { system: p.slug(o.system, `${path}.system`), else: c }
+  if (o.standing !== undefined) return { standing: p.slug(o.standing, `${path}.standing`), at: p.int(o.at, `${path}.at`, -2, 2), else: c }
+  if (o.total !== undefined) return { total: p.int(o.total, `${path}.total`, 0, 999), else: c }
+  return p.fail(path, 'expected a system, a standing or a total')
+}
 
 /** A scene's `look` (D24): one of the five, or nothing. */
 function look(p: P, v: unknown, path: string): { look?: Look } {
@@ -29,7 +43,14 @@ export class StoryParseError extends Error {
 }
 
 /** A key in `needs`: a chapter, a mission or a File the story names, or (CY15) a ship capability, `ship:storm`. */
-const NEEDS_KEY = /^(chapter|mission|file|ship):[a-z0-9][a-z0-9-]{0,63}$/
+const NEEDS_KEY = /^((chapter|mission|file|ship):[a-z0-9][a-z0-9-]{0,63}|standing:[a-z0-9][a-z0-9-]{0,63}:-?[0-2])$/
+/** A list of keys in `needs`: chapter:, mission:, file:, ship: and a slug, or standing:<faction>:<−2..2> (CY18). */
+function needsKeys(p: P, v: unknown, path: string, max = 6): string[] {
+  return p.list(v, path, (x, xp) => {
+    if (typeof x !== 'string' || !NEEDS_KEY.test(x)) p.fail(xp, 'expected chapter:, mission:, file: or ship: and a slug, or standing:<faction>:<level>')
+    return x as string
+  }, max)
+}
 
 /** A line's longest text (TC36's short beats). */
 export const LINE_MAX = 160
@@ -106,6 +127,7 @@ class P {
       case 'join': case 'aboard': return { kind, outfit: this.outfit(x, p) }
       case 'call': return { kind, call: this.slug(x, p) }
       case 'refit': if (x !== true) this.fail(p, 'expected true'); return { kind }
+      case 'standing': { const o = this.object(x, p, ['faction', 'by']); return { kind, faction: this.slug(o.faction, `${p}.faction`), by: this.int(o.by, `${p}.by`, -4, 4) } }
       case 'battle': return { kind, mission: this.slug(x, p) }
       case 'captain': {
         const options = this.list(x, p, (c, cp) => this.captainOption(c, cp), 3)
@@ -157,7 +179,7 @@ function enemy(p: P, v: unknown, path: string): EnemySlot {
 }
 
 function mission(p: P, v: unknown, path: string): Mission {
-  const o = p.object(v, path, ['id', 'place', 'objective', 'brief', 'enemies', 'fixedSquad', 'side', 'scenario'], ['id', 'place', 'objective', 'brief', 'enemies'])
+  const o = p.object(v, path, ['id', 'place', 'objective', 'brief', 'enemies', 'fixedSquad', 'side', 'scenario', 'finale', 'readiness'], ['id', 'place', 'objective', 'brief', 'enemies'])
   const obj = p.object(o.objective, `${path}.objective`, ['kind'])
   if (!MISSION_OBJECTIVES.includes(obj.kind as never)) p.fail(`${path}.objective.kind`, `expected one of ${MISSION_OBJECTIVES.join(', ')}`)
   return {
@@ -166,6 +188,8 @@ function mission(p: P, v: unknown, path: string): Mission {
     fixedSquad: o.fixedSquad === undefined || o.fixedSquad === null ? null : p.list(o.fixedSquad, `${path}.fixedSquad`, (x, xp) => p.outfit(x, xp), 5),
     side: o.side === undefined ? [] : p.list(o.side, `${path}.side`, (x, xp) => { const s = p.object(x, xp, ['kind', 'gives']); return { kind: p.slug(s.kind, `${xp}.kind`), gives: p.slug(s.gives, `${xp}.gives`) } }, 6),
     ...(o.scenario !== undefined ? { scenario: p.slug(o.scenario, `${path}.scenario`) } : {}),
+    ...(o.finale === true ? { finale: true } : {}),
+    ...(o.readiness !== undefined ? { readiness: p.list(o.readiness, `${path}.readiness`, (r, rp) => readinessNeed(p, r, rp), 4) } : {}),
   }
 }
 
@@ -176,10 +200,7 @@ export function parseChapter(value: unknown, file = 'chapter'): Chapter {
   const debrief = o.debrief === undefined ? { steps: [] } : (() => { const d = p.object(o.debrief, 'debrief', ['steps']); return { steps: p.steps(d.steps, 'debrief.steps') } })()
   const chapter: Chapter = {
     schemaVersion: 1, id: p.slug(o.id, 'id'), world: p.slug(o.world, 'world'), leads: p.list(o.leads, 'leads', (x, xp) => p.outfit(x, xp), 2),
-    number: p.int(o.number, 'number', 1, 99), danger: p.int(o.danger, 'danger', 1, 99), needs: o.needs === undefined ? [] : p.list(o.needs, 'needs', (x, xp) => {
-      if (typeof x !== 'string' || !NEEDS_KEY.test(x)) p.fail(xp, 'expected chapter:, mission:, file: or ship: and a slug')
-      return x as string
-    }, 12),
+    number: p.int(o.number, 'number', 1, 99), danger: p.int(o.danger, 'danger', 1, 99), needs: o.needs === undefined ? [] : needsKeys(p, o.needs, 'needs', 12),
     scenes: p.list(o.scenes, 'scenes', (s, sp) => scene(p, s, sp), 40), missions: o.missions === undefined ? [] : p.list(o.missions, 'missions', (m, mp) => mission(p, m, mp), 12),
     debrief,
   }
@@ -191,15 +212,12 @@ export function parseChapter(value: unknown, file = 'chapter'): Chapter {
 
 export function parseWorld(value: unknown, file = 'world'): World {
   const p = new P(file)
-  const o = p.object(value, 'world', ['schemaVersion', 'id', 'look', 'mood', 'locations', 'factions', 'layer', 'x', 'y', 'region'], ['schemaVersion', 'id', 'locations', 'factions'])
+  const o = p.object(value, 'world', ['schemaVersion', 'id', 'look', 'mood', 'locations', 'factions', 'layer', 'x', 'y', 'region', 'operations'], ['schemaVersion', 'id', 'locations', 'factions'])
   p.version(o)
   const locations = p.list(o.locations, 'locations', (l, lp): Location => {
     const x = p.object(l, lp, ['id', 'danger', 'needs', 'links', 'x', 'y'], ['id', 'danger'])
     return {
-      id: p.slug(x.id, `${lp}.id`), danger: p.int(x.danger, `${lp}.danger`, 1, 99), needs: x.needs === undefined ? [] : p.list(x.needs, `${lp}.needs`, (n, np) => {
-        if (typeof n !== 'string' || !NEEDS_KEY.test(n)) p.fail(np, 'expected chapter:, mission:, file: or ship: and a slug')
-        return n as string
-      }, 6), links: x.links === undefined ? [] : p.list(x.links, `${lp}.links`, (n, np) => p.slug(n, np), 8),
+      id: p.slug(x.id, `${lp}.id`), danger: p.int(x.danger, `${lp}.danger`, 1, 99), needs: x.needs === undefined ? [] : needsKeys(p, x.needs, `${lp}.needs`), links: x.links === undefined ? [] : p.list(x.links, `${lp}.links`, (n, np) => p.slug(n, np), 8),
       ...(x.x !== undefined ? { x: p.int(x.x, `${lp}.x`, 0, 100) } : {}), ...(x.y !== undefined ? { y: p.int(x.y, `${lp}.y`, 0, 100) } : {}),
     }
   }, 40)
@@ -211,12 +229,22 @@ export function parseWorld(value: unknown, file = 'world'): World {
   const layer = p.layer(o.layer, 'layer')
   if (layer) world.layer = layer
   if (o.region !== undefined) world.region = p.slug(o.region, 'region')
+  if (o.operations !== undefined) world.operations = p.list(o.operations, 'operations', (q, qp) => {
+    const x = p.object(q, qp, ['id', 'title', 'faction', 'danger', 'watches', 'reward', 'needs'], ['id', 'title', 'danger', 'watches', 'reward'])
+    const r = p.object(x.reward, `${qp}.reward`, ['credits', 'alloy', 'data', 'standing'])
+    return {
+      id: p.slug(x.id, `${qp}.id`), title: p.text(x.title, `${qp}.title`, 60), ...(x.faction !== undefined ? { faction: p.slug(x.faction, `${qp}.faction`) } : {}),
+      danger: p.int(x.danger, `${qp}.danger`, 1, 9), watches: p.int(x.watches, `${qp}.watches`, 1, 3),
+      reward: { credits: p.int(r.credits, `${qp}.reward.credits`, 0, 2000), alloy: p.int(r.alloy, `${qp}.reward.alloy`, 0, 500), data: p.int(r.data, `${qp}.reward.data`, 0, 500), standing: p.int(r.standing, `${qp}.reward.standing`, -1, 1) },
+      ...(x.needs !== undefined ? { needs: needsKeys(p, x.needs, `${qp}.needs`) } : {}),
+    }
+  }, 6)
   return world
 }
 
 export function parseCasting(value: unknown, file = 'casting.json'): Casting {
   const p = new P(file)
-  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'bondGates', 'tastes', 'chiefs', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
+  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'bondGates', 'tastes', 'chiefs', 'squads', 'standing', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
   p.version(o)
   const casting: Casting = {
     schemaVersion: 1,
@@ -269,6 +297,19 @@ export function parseCasting(value: unknown, file = 'casting.json'): Casting {
       if (typeof v !== 'string' || !MODULE_POSTS[v as ModuleId]) p.fail(`chiefs["${k}"]`, 'expected a module with posts')
       return [k, v as ModuleId]
     }))
+  }
+  if (o.squads !== undefined) {
+    casting.squads = p.list(o.squads, 'squads', (q, qp) => {
+      const x = p.object(q, qp, ['id', 'name', 'banner', 'leader', 'members'])
+      const members = p.list(x.members, `${qp}.members`, (m, mp) => p.outfit(m, mp), 4)
+      const leader = p.outfit(x.leader, `${qp}.leader`)
+      if (!members.includes(leader)) p.fail(`${qp}.leader`, 'expected one of the members')
+      return { id: p.slug(x.id, `${qp}.id`), name: p.text(x.name, `${qp}.name`, 24), banner: p.slug(x.banner, `${qp}.banner`), leader, members }
+    }, 4)
+  }
+  if (o.standing !== undefined) {
+    const st = p.object(o.standing, 'standing', Object.keys((o.standing ?? {}) as Obj), [])
+    casting.standing = Object.fromEntries(Object.entries(st).map(([f, v]) => [p.slug(f, `standing["${f}"]`), p.int(v, `standing["${f}"]`, -2, 2)]))
   }
   if (o.labels !== undefined) {
     const labels = p.object(o.labels, 'labels', Object.keys((o.labels ?? {}) as Obj), [])

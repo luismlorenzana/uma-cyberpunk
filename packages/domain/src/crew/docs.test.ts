@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { BACK_ROLE, loadOfPart, STARTER_PARTS, type Part } from './parts'
 import { ROLE_NAME } from './crew'
+import { SQUAD_TUNING } from './squads'
 
 const DOC = join(__dirname, '../../../../docs/game/hangar.md')
 const SLOT: Record<Part['slot'], string> = { core: 'Core', arm: 'Arm', legs: 'Legs', back: 'Back unit', visor: 'Visor', hand: 'Hand', coat: 'Coat' }
@@ -42,6 +43,32 @@ describe('the manual', () => {
     const doc = readFileSync(DOC, 'utf8')
     const current = live(doc, partsTable())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DOC, current)
+    else expect(doc).toBe(current)
+  })
+})
+
+// The squads' numbers (CY18): docs/game/squads.md holds SQUAD_TUNING between `<!-- live:squads -->` and `<!-- /live -->`.
+const SQUADS_DOC = join(__dirname, '../../../../docs/game/squads.md')
+export function squadsTable(): string {
+  const t = SQUAD_TUNING
+  return [
+    '| Number | Value |',
+    '|---|---|',
+    `| Squads, members | ${t.maxSquads} squads of ${t.maxMembers} at most |`,
+    `| Cohesion levels 1–5 | ${t.cohesion.join(', ')} battles together (three or more members deployed) |`,
+    `| Operations on offer | ${t.offered.min} to ${t.offered.max} |`,
+    `| Power | level × ${t.power.level} + bond rank × ${t.power.bond} each; cohesion level × ${t.power.cohesion}; ${t.power.partners} a partner pair |`,
+    `| Outcome | full at ${t.outcome.full} × danger, partial at ${t.outcome.partial} × danger, else thin |`,
+    `| Pay | partial ${t.share.partial * 100}%, thin ${t.share.thin * 100}%; +${t.strain.partial} Strain each for either |`,
+    `| Standing | ${t.standing.min} to +${t.standing.max}, start ${t.standing.start} unless the story says; +1 at ${t.freedForStanding} heroines freed |`,
+    `| Readiness | ${t.readiness.standing} a standing level above Hostile, ${t.readiness.operation} an operation won in full, ${t.readiness.system} a battle system built |`,
+  ].join('\n')
+}
+describe('the squads manual', () => {
+  it('holds the current squad numbers', () => {
+    const doc = readFileSync(SQUADS_DOC, 'utf8')
+    const current = doc.replace(/<!-- live:squads -->[\s\S]*?<!-- \/live -->/, `<!-- live:squads -->\n${squadsTable()}\n<!-- /live -->`)
+    if (process.env.UPDATE_DOCS === '1') writeFileSync(SQUADS_DOC, current)
     else expect(doc).toBe(current)
   })
 })

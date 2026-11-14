@@ -2,7 +2,7 @@
 // the squad slots, in order, each with her bands, her rig as a loadout and her Stride; the crew left aboard is the bench
 // (its roles for the one bench support call). Slots the squad doesn't fill keep their stand-ins.
 import { parseScenario, scenarioInput, type Band, type Bands, type BattleInput, type BattleMap, type Loadout, type Role, type Scenario, type Stride, type UnitInput } from '@cyber/battle'
-import { partnershipOf, sortieOrders, sortieSystems, type PostKind, type Save } from '@cyber/domain'
+import { cohesionLevel, partnershipOf, sortieOrders, sortieSystems, type FinaleCondition, type PostKind, type Save } from '@cyber/domain'
 
 const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import.meta.glob<{ default: BattleMap }>('../../../../scenarios/maps/*.json', { eager: true }))
   .map(([path, m]) => [path.split('/').pop()!.replace('.json', ''), m.default]))
@@ -36,9 +36,10 @@ export function missionInput(scenarioId: string, squad: readonly SquadUnit[], be
 /**
  * A mission's battle at rules version 3 (CY17): each Uma's bond (rank and path) and her partner when both are in the
  * squad, the captain's Orders the ship offers, the powered systems with their levels and their post holders' bands, and
- * the cook's meal. Built from the save, frozen into the input: the rules never read the save.
+ * the cook's meal; and (CY18) the deployed squad's cohesion and a finale's harsh conditions. Built from the save, frozen
+ * into the input: the rules never read the save.
  */
-export function lifeAboardInput(base: BattleInput, save: Save, bandOfPost: (post: PostKind) => Band | null): BattleInput {
+export function lifeAboardInput(base: BattleInput, save: Save, bandOfPost: (post: PostKind) => Band | null, conditions: readonly FinaleCondition[] = []): BattleInput {
   const unitOf = new Map(base.units.filter((u) => u.side === 'squad' && u.ref?.kind === 'uma').map((u) => [Number(u.ref!.id), u.id]))
   const units = base.units.map((u) => {
     if (u.side !== 'squad' || u.ref?.kind !== 'uma') return u
@@ -47,10 +48,22 @@ export function lifeAboardInput(base: BattleInput, save: Save, bandOfPost: (post
     const mate = p ? unitOf.get(p.a === outfit ? p.b : p.a) : undefined
     return { ...u, ...(m ? { bond: { rank: m.bond.rank, path: m.bond.path } } : {}), ...(p && mate ? { partner: { unit: mate, level: p.level } } : {}) }
   })
-  const { systems: _systems, meal: _meal, ...rest } = base
+  const { systems: _systems, meal: _meal, cohesion: _cohesion, conditions: _conditions, ...rest } = base
   const systems = sortieSystems(save.ship, bandOfPost)
+  const cohesion = squadCohesion(save, unitOf)
   return {
     ...rest, rulesVersion: 3, units, orders: sortieOrders(save.ship, (base.bench ?? []).length > 0),
-    ...(systems.length ? { systems } : {}), ...(save.meal ? { meal: save.meal } : {}),
+    ...(systems.length ? { systems } : {}), ...(save.meal ? { meal: save.meal } : {}), ...(cohesion ? { cohesion } : {}),
+    ...(conditions.length ? { conditions: [...new Set(conditions)] } : {}),
   }
+}
+
+/** The squad that fights together (three or more of its members deployed, the most if two): its cohesion level, its
+ * leader (or its first member deployed when she isn't) and its members' unit ids. Level 0 gives nothing. */
+export function squadCohesion(save: Save, unitOf: ReadonlyMap<number, string>): BattleInput['cohesion'] | null {
+  const fielded = save.squads.map((s) => ({ s, here: s.members.filter((m) => unitOf.has(m)) })).filter((x) => x.here.length >= 3)
+    .sort((a, b) => b.here.length - a.here.length || b.s.cohesion - a.s.cohesion)[0]
+  if (!fielded || cohesionLevel(fielded.s.cohesion) === 0) return null
+  const leader = unitOf.get(fielded.here.includes(fielded.s.leader) ? fielded.s.leader : fielded.here[0]!)!
+  return { level: cohesionLevel(fielded.s.cohesion), leader, members: fielded.here.map((m) => unitOf.get(m)!) }
 }

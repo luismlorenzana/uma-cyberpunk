@@ -3,6 +3,7 @@
 import type { Scene, StoryPack, World } from '../story/types'
 import type { StoryState } from '../story/state'
 import { CAPABILITY_NAME } from '../ship/modules'
+import { STANDING_NAME } from '../crew/squads'
 
 export type NodeState = 'locked' | 'available' | 'cleared'
 
@@ -13,6 +14,8 @@ export interface WorldProgress {
   chapters: readonly string[]
   /** The ship's capabilities (CY15, TC66): `ship:<capability>` keys. */
   capabilities?: readonly string[]
+  /** Each faction's standing (CY18): `standing:<faction>:<level>` keys. */
+  standing?: Readonly<Record<string, number>>
 }
 
 /** Whether a key in `needs` is met. */
@@ -21,6 +24,7 @@ export function keyMet(key: string, story: StoryState, progress: WorldProgress):
   if (kind === 'chapter') return progress.chapters.includes(id)
   if (kind === 'mission') return progress.missions.includes(id)
   if (kind === 'ship') return progress.capabilities?.includes(id) ?? false
+  if (kind === 'standing') { const level = Number(key.split(':')[2]); return (progress.standing?.[id] ?? -1) >= level }
   return (story.files[id]?.length ?? 0) > 0
 }
 
@@ -30,6 +34,7 @@ export function keyWords(key: string, pack: StoryPack): string {
   if (kind === 'chapter') { const c = pack.chapters[id]; return c ? `Finish Chapter ${c.number}${c.leads.length ? '' : ''} (${id})` : `Finish ${id}` }
   if (kind === 'mission') return `Win the mission ${id}`
   if (kind === 'ship') return `Needs ${CAPABILITY_NAME[id] ?? id}`
+  if (kind === 'standing') return `Needs ${id} at ${STANDING_NAME[key.split(':')[2]!] ?? key.split(':')[2]}`
   return `Find the Log File ${id}`
 }
 

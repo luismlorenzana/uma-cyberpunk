@@ -1,6 +1,7 @@
 // A watch's duties (CY16, TC67): every held post makes its output, all of it applied at once and listed on one ship-log
 // card; mastery grows, Umas posted together build camaraderie, a liked duty pays a little rapport. And the jump's event
 // card (TC66): one in three jumps, a short choice resolved by who holds a named post. Pure and deterministic.
+import type { OpReport } from '../crew/operations'
 import type { Bands, Role } from '@cyber/battle'
 import type { Strategy } from '@luismlorenzana/uma-data'
 import { addItem } from '../cabins/cabins'
@@ -12,7 +13,8 @@ import type { ModuleId } from './modules'
 
 export interface DutyInfo { bands: Bands; role: Role; style: Strategy | null; liked: PostKind | null }
 export interface LogLine { outfit: number; post: PostKind; text: string; half: boolean }
-export interface ShipLog { watch: number; lines: LogLine[]; gains: Wallet; read: boolean }
+/** A watch's ship-log card: every post's line, the watch's gains, and the operations back this watch (CY18). */
+export interface ShipLog { watch: number; lines: LogLine[]; gains: Wallet; read: boolean; reports?: OpReport[] }
 
 const ZERO: Wallet = { credits: 0, alloy: 0, data: 0 }
 const DEFAULT_INFO: DutyInfo = { bands: { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 }, role: 'striker', style: null, liked: null }

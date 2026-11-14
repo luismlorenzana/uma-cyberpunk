@@ -12,6 +12,7 @@ import { MAX_PRESETS, newMember, PRESET_NAME_MAX, ROLES, STRAIN_REST, type CrewM
 import { PARTS_BY_ID, RIG_SLOTS, SLOT_KIND, type Rig } from '../crew/parts'
 import { MEALS, MODULE_POSTS, POST_KINDS, type HeldPost, type Meal, type Post, type PostKind } from '../ship/duties'
 import type { Partnership } from '../crew/partners'
+import { firstSquad, type OperationRun, type Outcome, type Squad } from '../crew/squads'
 import { HULL_TUNING, shipWith, type PlacedModule, type Ship, type Wallet } from '../ship/hull'
 import type { ShipLog } from '../ship/watch'
 import { MODULE_IDS, MODULES_BY_ID, PROJECTS_BY_ID, SYSTEM_IDS, type ModuleId, type SystemId } from '../ship/modules'
@@ -21,8 +22,9 @@ import { emptyStory, type StoryState } from '../story/state'
 /** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
  * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
  * item stock and the visits (CY14); 7 the ship as a build and the wallet (CY15); 8 duties: posts, presets, the meal,
- * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17). */
-export const SAVE_VERSION = 9
+ * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17); 10 squads, operations and faction
+ * standing (CY18). */
+export const SAVE_VERSION = 10
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -135,8 +137,18 @@ export interface SaveV9 extends Omit<SaveV8, 'version'> {
   partners: Partnership[]
 }
 
+/** v10 (CY18): squads with their cohesion, operations under way, and each faction's standing once it has moved. */
+export interface SaveV10 extends Omit<SaveV9, 'version'> {
+  version: 10
+  squads: Squad[]
+  operations: OperationRun[]
+  /** Operations won in full (each once): readiness counts them, and a story operation isn't offered again. */
+  operationsWon: string[]
+  standing: Record<string, number>
+}
+
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV9
+export type Save = SaveV10
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -163,7 +175,13 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() })))))))
+  return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }))))))))
+}
+
+/** v9 to v10: one squad of the crew aboard (up to four), no operations, every standing at the story's start (none stored
+ * until it moves); the rest as it was (`updatedAt` untouched). Pure; runs on the device. */
+export function migrateV9(save: SaveV9): SaveV10 {
+  return { ...save, version: 10, account: { ...save.account }, squads: firstSquad(save.crew.map((m) => m.outfit)), operations: [], operationsWon: [], standing: {} }
 }
 
 /** v8 to v9: no partners yet; the rest as it was (`updatedAt` untouched). Pure; runs on the device. */
@@ -391,11 +409,18 @@ function parseCamaraderie(value: unknown, path: string): Record<string, number> 
   return Object.fromEntries(Object.entries(o).map(([k, v]) => { if (!/^\d+-\d+$/.test(k)) throw new SaveParseError(`${path}.${k}`, 'expected a pair of outfit ids'); return [k, count(v, `${path}.${k}`)] }))
 }
 function parseLog(value: unknown, path: string): ShipLog {
-  const o = object(value, path, ['watch', 'lines', 'gains', 'read'])
+  const o = object(value, path, ['watch', 'lines', 'gains', 'read', 'reports'])
   if (!Array.isArray(o.lines) || o.lines.length > 80) throw new SaveParseError(`${path}.lines`, 'expected a list')
+  if (o.reports !== undefined && (!Array.isArray(o.reports) || o.reports.length > 4)) throw new SaveParseError(`${path}.reports`, 'expected a list')
+  const reports = (o.reports as unknown[] | undefined)?.map((r, i) => {
+    const x = object(r, `${path}.reports[${i}]`, ['op', 'title', 'squad', 'outcome', 'text'])
+    if (!['full', 'partial', 'thin'].includes(x.outcome as string)) throw new SaveParseError(`${path}.reports[${i}].outcome`, 'expected full, partial or thin')
+    for (const k of ['title', 'text'] as const) if (typeof x[k] !== 'string' || (x[k] as string).length > 160) throw new SaveParseError(`${path}.reports[${i}].${k}`, 'expected text')
+    return { op: id(x.op, `${path}.reports[${i}].op`), title: x.title as string, squad: id(x.squad, `${path}.reports[${i}].squad`), outcome: x.outcome as Outcome, text: x.text as string }
+  })
   if (typeof o.read !== 'boolean') throw new SaveParseError(`${path}.read`, 'expected true or false')
   return {
-    watch: count(o.watch, `${path}.watch`), gains: parseWallet(o.gains, `${path}.gains`), read: o.read,
+    watch: count(o.watch, `${path}.watch`), gains: parseWallet(o.gains, `${path}.gains`), read: o.read, ...(reports ? { reports } : {}),
     lines: o.lines.map((l, i) => {
       const x = object(l, `${path}.lines[${i}]`, ['outfit', 'post', 'text', 'half'])
       if (!POST_KINDS.includes(x.post as PostKind)) throw new SaveParseError(`${path}.lines[${i}].post`, 'expected a post')
@@ -417,6 +442,42 @@ function parsePartners(value: unknown, path: string, aboard: readonly number[]):
     if (![1, 2, 3].includes(o.level as number)) throw new SaveParseError(`${path}[${i}].level`, 'expected 1–3')
     return { a: a!, b: b!, level: o.level as 1 | 2 | 3 }
   })
+}
+
+function parseSquads(value: unknown, path: string, aboard: readonly number[]): Squad[] {
+  if (!Array.isArray(value) || value.length > 4) throw new SaveParseError(path, 'expected four squads at most')
+  const seen = new Set<number>(), ids = new Set<string>()
+  return value.map((v, i) => {
+    const p = `${path}[${i}]`
+    const o = object(v, p, ['id', 'name', 'banner', 'leader', 'members', 'cohesion'])
+    const sid = id(o.id, `${p}.id`)
+    if (ids.has(sid)) throw new SaveParseError(`${p}.id`, 'already a squad')
+    ids.add(sid)
+    const name = id(o.name, `${p}.name`)
+    if (name.length > 24) throw new SaveParseError(`${p}.name`, 'expected 24 characters at most')
+    const members = outfits(o.members, `${p}.members`)
+    if (members.length < 1 || members.length > 4) throw new SaveParseError(`${p}.members`, 'expected one to four')
+    for (const m of members) { if (!aboard.includes(m)) throw new SaveParseError(`${p}.members`, `${m} isn't aboard`); if (seen.has(m)) throw new SaveParseError(`${p}.members`, `${m} is in two squads`); seen.add(m) }
+    const [leader] = outfits([o.leader], `${p}.leader`)
+    if (!members.includes(leader!)) throw new SaveParseError(`${p}.leader`, 'expected a member')
+    return { id: sid, name, banner: id(o.banner, `${p}.banner`), leader: leader!, members, cohesion: count(o.cohesion, `${p}.cohesion`) }
+  })
+}
+function parseRuns(value: unknown, path: string, squads: readonly Squad[]): OperationRun[] {
+  if (!Array.isArray(value) || value.length > 4) throw new SaveParseError(path, 'expected a list')
+  return value.map((v, i) => {
+    const o = object(v, `${path}[${i}]`, ['id', 'squad', 'back'])
+    const squad = id(o.squad, `${path}[${i}].squad`)
+    if (!squads.some((s) => s.id === squad)) throw new SaveParseError(`${path}[${i}].squad`, 'expected a squad')
+    return { id: id(o.id, `${path}[${i}].id`), squad, back: count(o.back, `${path}[${i}].back`) }
+  })
+}
+function parseStanding(value: unknown, path: string): Record<string, number> {
+  const o = object(value, path, Object.keys((value ?? {}) as Obj))
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => {
+    if (typeof v !== 'number' || !Number.isInteger(v) || v < -2 || v > 2) throw new SaveParseError(`${path}.${k}`, 'expected −2 to 2')
+    return [id(k, path), v]
+  }))
 }
 
 function parseEvent(value: unknown, path: string): PendingEvent {
@@ -539,30 +600,33 @@ export function parseSave(value: unknown, path = 'save'): Save {
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version === 1) {
     const o = object(value, path, ['version', 'account'])
-    return migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) }))))))))
+    return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) })))))))))
   }
   if (version === 2) {
     const o = object(value, path, ['version', 'account', 'story'])
-    return migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) })))))))
+    return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) }))))))))
   }
   if (version < 3 || version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
   const base = ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission']
   const o = object(value, path, [...base, ...(version >= 5 ? ['captain', 'watch', 'inbox'] : []), ...(version >= 6 ? ['items', 'visits'] : []), ...(version >= 7 ? ['wallet'] : []),
-    ...(version >= 8 ? ['dutyPresets', 'meal', 'camaraderie', 'log', 'event'] : []), ...(version >= 9 ? ['partners'] : [])])
+    ...(version >= 8 ? ['dutyPresets', 'meal', 'camaraderie', 'log', 'event'] : []), ...(version >= 9 ? ['partners'] : []), ...(version >= 10 ? ['squads', 'operations', 'operationsWon', 'standing'] : [])])
   if (version >= 7) {
     const v7 = {
       account: parseAccount(o.account, `${path}.account`), worlds: parseWorlds(o.worlds, `${path}.worlds`), story: parseStory(o.story, `${path}.story`), mission: parseMission(o.mission, `${path}.mission`),
       captain: parseCaptain(o.captain, `${path}.captain`), watch: count(o.watch, `${path}.watch`), inbox: outfits(o.inbox, `${path}.inbox`),
     }
     const v7rest = { items: parseItems(o.items, `${path}.items`), visits: parseVisits(o.visits, `${path}.visits`), ship: parseShip(o.ship, `${path}.ship`), wallet: parseWallet(o.wallet, `${path}.wallet`) }
-    if (version === 7) return migrateV8(migrateV7({ version: 7, ...v7, ...v7rest, crew: parseCrew(o.crew, `${path}.crew`, 6) }))
+    if (version === 7) return migrateV9(migrateV8(migrateV7({ version: 7, ...v7, ...v7rest, crew: parseCrew(o.crew, `${path}.crew`, 6) })))
     const v8 = {
       version: 8 as const, ...v7, ...v7rest, crew: parseCrew(o.crew, `${path}.crew`, 8), dutyPresets: parsePresets(o.dutyPresets, `${path}.dutyPresets`),
       meal: o.meal === null ? null : parseMeal(o.meal, `${path}.meal`), camaraderie: parseCamaraderie(o.camaraderie, `${path}.camaraderie`),
       log: o.log === null ? null : parseLog(o.log, `${path}.log`), event: o.event === null ? null : parseEvent(o.event, `${path}.event`),
     }
-    if (version === 8) return migrateV8(v8)
-    return { ...v8, version: 9, partners: parsePartners(o.partners, `${path}.partners`, v8.crew.map((m) => m.outfit)) }
+    if (version === 8) return migrateV9(migrateV8(v8))
+    const v9 = { ...v8, version: 9 as const, partners: parsePartners(o.partners, `${path}.partners`, v8.crew.map((m) => m.outfit)) }
+    if (version === 9) return migrateV9(v9)
+    const aboard = v9.crew.map((m) => m.outfit), squads = parseSquads(o.squads, `${path}.squads`, aboard)
+    return { ...v9, version: 10, squads, operations: parseRuns(o.operations, `${path}.operations`, squads), operationsWon: slugs(o.operationsWon, `${path}.operationsWon`), standing: parseStanding(o.standing, `${path}.standing`) }
   }
   const ship = object(o.ship, `${path}.ship`, ['rooms'])
   const rooms = slugs(ship.rooms, `${path}.ship.rooms`)
@@ -571,11 +635,11 @@ export function parseSave(value: unknown, path = 'save'): Save {
     account: parseAccount(o.account, `${path}.account`), ship: { rooms: rooms as RoomId[] },
     worlds: parseWorlds(o.worlds, `${path}.worlds`), story: parseStory(o.story, `${path}.story`), mission: parseMission(o.mission, `${path}.mission`),
   }
-  if (version === 3) return migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3({ version: 3, ...rest, crew: outfits(o.crew, `${path}.crew`) }))))))
-  if (version === 4) return migrateV8(migrateV7(migrateV6(migrateV5(migrateV4({ version: 4, ...rest, crew: parseCrew(o.crew, `${path}.crew`, 4) })))))
+  if (version === 3) return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3({ version: 3, ...rest, crew: outfits(o.crew, `${path}.crew`) })))))))
+  if (version === 4) return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4({ version: 4, ...rest, crew: parseCrew(o.crew, `${path}.crew`, 4) }))))))
   const v5 = { ...rest, captain: parseCaptain(o.captain, `${path}.captain`), watch: count(o.watch, `${path}.watch`), inbox: outfits(o.inbox, `${path}.inbox`) }
-  if (version === 5) return migrateV8(migrateV7(migrateV6(migrateV5({ version: 5, ...v5, crew: parseCrew(o.crew, `${path}.crew`, 5) }))))
-  return migrateV8(migrateV7(migrateV6({ version: 6, ...v5, crew: parseCrew(o.crew, `${path}.crew`, 6), items: parseItems(o.items, `${path}.items`), visits: parseVisits(o.visits, `${path}.visits`) })))
+  if (version === 5) return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5({ version: 5, ...v5, crew: parseCrew(o.crew, `${path}.crew`, 5) })))))
+  return migrateV9(migrateV8(migrateV7(migrateV6({ version: 6, ...v5, crew: parseCrew(o.crew, `${path}.crew`, 6), items: parseItems(o.items, `${path}.items`), visits: parseVisits(o.visits, `${path}.visits`) }))))
 }
 
 /** The body of `PUT /api/save`. */
