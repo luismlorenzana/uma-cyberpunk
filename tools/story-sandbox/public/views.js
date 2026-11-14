@@ -138,7 +138,8 @@ function nodeMap(nodes, links, hrefOf) {
     links.filter(([a, b]) => at.has(a) && at.has(b)).map(([a, b]) => s('line', { x1: at.get(a).x, y1: at.get(a).y * 0.6, x2: at.get(b).x, y2: at.get(b).y * 0.6 })),
     placed.map((n) => s('a', { href: hrefOf(n) ?? '#/worlds' },
       s('circle', { cx: n.x, cy: n.y * 0.6, r: 2.2, class: n.locked ? 'locked' : '' }),
-      s('text', { x: n.x + 3.2, y: n.y * 0.6 + 1, text: n.label }))))
+      // A node on the right half takes its label on its left, so a long label never runs off the map.
+      s('text', { x: n.x > 50 ? n.x - 3.2 : n.x + 3.2, y: n.y * 0.6 + 1, 'text-anchor': n.x > 50 ? 'end' : 'start', text: n.label }))))
 }
 
 export function worldsView() {

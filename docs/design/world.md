@@ -1,287 +1,702 @@
-# Uma Cyberpunk: the world and its factions
+# Uma Cyberpunk: the world
 
-> **Status: 2026-11-12, the owner's direction (D3).** The owner asked for the lore and story to draw on *13 Sentinels:
-> Aegis Rim* and League of Legends' *Star Guardian*, and for the other franchises on the platform to be the enemy
-> factions, tied to the plot. This page is the world bible that answers both: what the Ring is, what the Gates really
-> do, why heroines from eight other worlds arrive as enemies, how each can be won back, and the five acts that carry it.
-> Its calls are **WD1–WD24**, each a recommendation, adopted until the owner changes one. The research behind it is
-> [references.md](references.md); the battle and the build are [the concept](concept.md).
-> Visual page: [previews/world.html](previews/world.html).
+> **Status: 2026-11-13, the world v2 (D28): the story's base elements, for the owner's read.** The owner asked to start
+> the story with full worldbuilding, around six notes: an interplanetary adventure exploring cities on planets with
+> different environments; ship travel and time with the captain at base camp; ship maintenance and each character's
+> aptitudes; ship-to-ship combat; team combat on the ground with cybernetic weapons; and boarding enemy ships. This page
+> answers them, and the second story brief's prompts (SB13: the big plot, the factions in depth, the ship, the captain,
+> the squads, life aboard, the relationships), on top of the first pass (D3, D4), whose truth it keeps.
 >
-> **What's here and what's private (WD22).** Everything on this page is original and names no character: no Uma, no
-> heroine, and no franchise's own terms beyond its title. Who plays which part (which Uma leads which route, which
-> heroine leads which faction), the chapters and every line of dialogue are the story, kept in the ignored `content/`
-> (TC13).
->
-> **D4: now the story session's first pass.** The owner moved the world and the story to their own session and made the
-> world interplanetary: this page's Ring becomes the **first world**, each lead Uma's Chapter 1 plays on her own world,
-> and she then joins **the ship**, the hub, *Octopath Traveler*'s way. The story session starts from this page and may
-> keep, change or drop any WD call; [the story brief](story-brief.md) says what the game fixes and what it needs back.
-> The single-city structure (the Hideout, five acts on one ring) is superseded; the three Holds (WD9) and the faction
-> mechanics (WD11) are fixed by the battle.
+> - **Calls:** WD1–WD24 from the first pass, each marked kept, amended or superseded, and **WD25–WD48**, new. Each is a
+>   recommendation, adopted until the owner changes it.
+> - **Nameless (WD22):** no Uma, no heroine, nothing from a franchise beyond its title. Places, ships, factions and squads
+>   have our own names. Who leads which world, which heroine leads which faction, and every line are the story's
+>   private files, written next, after this read.
+> - **Read it** here, on [its page](previews/world.html), or world by world in the Story Sandbox (`pnpm stories`), where
+>   each world has a verdict box.
+> - **What the game is asked for** is in §14 and the handoff's story requests: ship battles, boarding enemy ships,
+>   maintenance and walkable cities are new to the game.
 
 ## The short answer
 
-- **The Ring runs on stolen light.** The megacity on the orbital ring glows because its Authority opens Gates into
-  other worlds and siphons their power. The Gates aren't natural rifts, and the people they pull in aren't accidents
-  (WD1).
-- **The siphons let something in.** In the dark between worlds lives **the Blackout**, a hunger that eats and rewrites
-  memory. Every siphon is a door for it, and the Authority's board has made a bargain with it (WD2).
-- **The squad fights on the same sin.** The Umas' combat rigs run on prototype siphon **cores**, stolen from the
-  Authority. They don't know that yet (WD3).
-- **The heroines come to stop the theft.** Heroines from eight worlds come through the Gates hired, bound, corrupted
-  or simply lied to, and the Authority points them at the squad. Each is held by one of three **Holds**, and each Hold
-  has its own way to free her (WD9).
-- **Eight factions,** one per franchise, each with an original name, a reason to be on the Ring, a way to turn and one
-  new battle mechanic (WD10, WD11).
-- **Five acts,** from the Ring's underlevels out along the Lanes to a dead sister ring and back to the Gate Heart. Each
-  act peels back one layer of the truth (WD15).
-- **The last layer is the squad's own.** The Umas dream of running on a sunlit track under a sky they've never seen.
-  They came through the first Gate as children, and the Blackout took the rest (WD8).
-- **The tone is Star Guardian's:** candy-bright neon over a tragic story, a found family, nobody dies on screen, and an
-  Uma is never maimed (WD20).
+- **The Circuit:** the Ring and seven worlds, each a different environment with one city to walk, joined by the Lanes
+  (WD25, WD27). The worlds are an orbital megacity, an ocean, a jungle, a forge world, a gas giant, an ice moon, a dead
+  orbital ring and a glass desert at the edge of the dark (WD28).
+- **The Tithe is the spine:** the Ring glows on power its Authority siphons from every other world in the Circuit. Each
+  world the ship visits shows what's being drained from it: tides, growth, heat, storms, light (WD1).
+- **The Blackout** hunts between the worlds and eats memory. The Authority's board bargains with it (WD2).
+- **The ship is the Homestretch:** the first ship that ever went through a Gate, scrapped in the Ring's Docks and stolen
+  back in the first chapter. It's the crew's home, base camp and stronghold (WD30).
+- **The Steward,** the ship's mind, lost most of its memory to the Blackout. **Repairing the ship brings it back,** so
+  maintenance is also how the mystery unfolds (WD31, WD33).
+- **The captain is "unwritten":** the one person the Blackout can't read. The ship flies for them, and the crew learns to
+  trust them (WD36).
+- **The Umas are the Gatechildren:** twenty years ago the Homestretch came back through the first Gate carrying them as
+  children. The Authority scattered them across the Circuit and scrapped the ship. Each grew up on a different world,
+  which is why the ship finds its leads one world at a time (WD37).
+- **Bonds are the weapon the Blackout can't answer:** a memory two people share is held twice, and it can't be eaten
+  whole. The power of friendship and the power of love are the same power, literally (WD41).
+- **Three ways to fight:** in Frames on the ground (WD42, WD43), from the posts in the Lanes (WD44), and in the corridors
+  of a boarded ship (WD45). Heroines are freed, never killed; a beaten ship strikes, drifts or flees, never explodes with
+  its crew.
+- **Five acts across the eight worlds,** one layer of the truth each, ending back at the Ring's Gate Heart (WD47).
 
-## 1. The setting (WD4, WD5)
+## 1. The owner's six notes, and where each lives
 
-```text
-                     ╭──────────── the Lanes ────────────╮
-     the sister ring ●         ● stations     ● moons     ● Gate-worlds (8)
-      (dead)          ╲        │              │          ╱
-                       ╲  ╭────┴──────────────┴────╮    ╱
-                        ╲ │   THE RING (orbital)   │   ╱
-                          │ the Spires   (Authority)│
-                          │ the Districts (neon)    │
-                          │ the Markets  (the front)│
-                          │ the Underlevels (dark)  │
-                          │ the Docks  (to the Lanes)│
-                          ╰──────────┬──────────────╯
-                                     ● the Gate Heart (the Ring's hub)
-```
-
-**The Ring (WD4)** is a megacity built on an orbital ring around a planet. It stacks in layers:
-
-| Layer | What it is | Who you meet |
-|---|---|---|
-| **The Spires** | The Authority's towers, clean and white, above the light | The Authority's board, the rival squad's handlers |
-| **The Districts** | Neon streets, holo-ads, rain, the city most people know | Crews for hire, fans of the rival squad |
-| **The Markets** | Night markets and back rooms; the Hideout's front business is here | The keeper, fixers, informants |
-| **The Underlevels** | The dark under the city, where the first Gate opened | Gangs, machines, things that came through |
-| **The Docks** | Where ships leave for the Lanes | The fleet, smugglers |
-| **The Gate Heart** | The hub of the Ring, where every siphon meets | The end |
-
-**The Lanes and the Gates (WD5).** The Lanes are the routes between the Ring, its stations and its moons. Along them
-and inside the Ring, **Gates** open: rings of light with a gap in them, each in its own colour. Every Gate-world has a
-glyph, and every faction from it carries that glyph. A Gate that's siphoning hums; one that's only a door is silent.
-That difference is the first clue (WD18).
-
-## 2. The truth, in layers (WD1–WD3, WD8)
-
-The game is a mystery the player assembles, 13 Sentinels' way: each act opens on a flash-forward and peels back one
-layer. The player sees the surface first.
-
-| Layer | What the player believes | What's true | Revealed |
+| The owner's note | In the world | In the game today | What's asked of the game |
 |---|---|---|---|
-| **0. The surface** | Gates are natural rifts; heroines arrive lost and dangerous; the Authority protects the Ring and its licensed hero squad saves the day | — | Act I opens here |
-| **1. The frame** | — | The first Gate was opened on purpose, and the Authority framed the squad for it because the squad saw it happen | Act I |
-| **2. The Tithe** | — | The Gates are siphons. The Ring's light is drained from other worlds' suns, and the heroines who come through are recovery forces, mercenaries the Authority hired, or people it bound | Act II |
-| **3. The cores** | — | The squad's rigs run on stolen prototype siphon cores. Every battle they win drains a little more (WD3) | Act III |
-| **4. The Blackout** | — | The siphons let in the Blackout, which eats memory. The Authority's board bargains with it. The dead sister ring is what the Ring becomes when the bargain comes due (WD2) | Act IV |
-| **5. The squad** | — | The Umas came through the first Gate as children, from a world with a sunlit track. The Blackout trimmed their memories down to dreams of running (WD8) | Act V |
+| **An interplanetary adventure: city exploration on several planets with different environments** | Eight worlds, each one environment and one city with districts to walk (§3) | Each world is a node map with scenes (TC50) | Request 4: a walkable city per world, in the Street look |
+| **Ship travel, and time with the captain at base camp** | The Homestretch as home; the captain; life aboard (§4–§7) | Built: the captain, the watch, bonds, cabins (CY13, CY14) | None new |
+| **Ship maintenance and each character's aptitudes** | Wear and repair as care; the Steward's memory; who's good at which post (§4.3) | Aptitudes built as duties at posts (CY16); "no upkeep" (TC62) | Request 3: maintenance after battles and jumps, never decay with time |
+| **Ship-to-ship combat** | War in the Lanes; every faction's ships (§9.3) | Deferred (TC64) | Request 1: ship battles |
+| **Team combat on the ground with cybernetic weapons** | Frames around cores; five roles (§9.1, §9.2) | Built: the grid battle, rigs and roles (CY4–CY8) | None new |
+| **Boarding enemy ships, with cybernetic weapons** | Boarding frees a fleet, seizes cores, rescues prisoners (§9.4) | Only defending our own decks, in Phase 6 (TC65) | Request 2: boarding enemy ships |
 
-- **WD1, the Tithe.** The central truth, which both research passes reached on their own (references §"Where the
-  references agree"). It makes the enemies right about something, so the factions are never just monsters.
-- **WD2, the Blackout.** The darkness between worlds is a hunger, not an army. It feeds on fear and doubt, as Star
-  Guardian's darkness does, and it eats and rewrites memory, which is 13 Sentinels' theme. A heroine it touches
-  remembers the squad as her own world's enemy. One it takes completely is **Dimmed**: the game's fallen, her colours
-  drained to one sickly accent.
-- **WD3, the cores.** The power is a pact with a price, as in Star Guardian. Overdrive draws harder on the core and
-  builds Strain (TC27). In the finale the squad gives the cores up.
-- **WD8, the squad's own secret.** It ties the game to the Umas: they never race here, but they dream of it. It also
-  makes the heroines their mirror. Everyone on the board was pulled through a Gate.
+## 2. The Circuit (WD25–WD27)
 
-## 3. The squad, the rivals and the double life (WD6, WD7)
+**WD25, the Circuit.** One star system: the Ring and seven worlds, joined by **the Lanes**, the routes ships jump along.
+The Lanes run in four **regions**, each opened by the ship's capability (TC66): the Homestretch can't reach the edge
+until it has been rebuilt for it.
 
-- **The squad** is four Umas plus a guest at a time, drawn from a cast that grows through the story (TC45). By day they
-  live ordinary lives in the Districts; by night they suit up. Their rigs are unlicensed.
-- **The Hideout (WD7)** is behind a front business in the Markets, kept by a civilian who knows the secret. It's the
-  hub between battles (TC42).
-- **Suit-up** is the transformation: the rig's parts snap on, each lit in the Uma's own colour, and the core flares.
-  It plays at the start of each battle (skippable) and at big story moments (TC39).
-- **The rival squad (WD6)** is the Authority's licensed heroes: famous, on every billboard, with fans in the
-  Districts. They're Umas too, from the Uma NPCs board (TC40). They run on overclocked cores that burn their pilots out,
-  and their captain knows the truth and believes the Ring's survival justifies it, so the rivalry is sincere. Act II
-  makes them allies against something bigger; Act III shows what burned out their predecessors.
-
-## 4. The three Holds (WD9)
-
-Every enemy heroine is on the board for a reason, and the reason decides how she's freed. Two of the three run through
-Front Mission's part targeting, so freeing a heroine is a tactical choice, not a cutscene.
-
-| Hold | Why she fights | What it looks like | How she's freed | What she leaves |
-|---|---|---|---|---|
-| **Anchor** (corrupted) | The Blackout has a grip on her | A black core grafted onto her rig, an extra target that glows; her palette swaps to the corruption ramp and flickers | **Break the anchor** (it has its own HP), or a Netrunner **Jacks Out** the corruption (TC26) | Her parts intact, and often her trust |
-| **Collar** (controlled) | The Authority holds her command codes | A collar part on her rig, the Authority's mark | **Break the collar,** or Jack-Out | Her parts intact |
-| **None** (deceived or hired) | She believes the squad is the enemy, or she's being paid | Nothing to break | **Win the battle;** the story brings her over, or a better offer does | What's left of her parts |
-
-- A heroine is never killed. At Core 0 she's beaten and withdraws (a Rig Break, as for the squad, TC25), and only her
-  unbroken parts are salvaged. Freeing her by her Hold or a Jack-Out keeps everything.
-- **Freed heroines** open their File and a short log from their side, recasting the rival the way 13 Sentinels gives its
-  villains context (WD12). Some join as guests after their chapter (TC47).
-
-## 5. The eight factions (WD10–WD14)
-
-Each franchise on the platform's boss and regular-enemy boards becomes one faction. The names are ours, not the
-franchises' terms. Each faction brings **one new mechanic** (WD11), so the campaign teaches one idea at a time, and
-**threatens one rig part**, so each faction changes how the squad loads out.
-
-### 5.1 The table (WD10, WD11)
-
-| Franchise | Our faction | Who they are here | Why hostile | How they turn | Their mechanic (WD11) | Threatens |
-|---|---|---|---|---|---|---|
-| **NIKKE** | **The Steel Muster** | Android squads pulled through a Gate, now the Authority's foot soldiers, in every act | The Authority holds their command codes (Collar); Dimmed squads hunt for the Blackout | The squad steals the codes back one by one; whole units defect in the finale | **Cover and volley:** they hold cover tiles, leave a gap while they reload, and share a volley meter that fires a squad-wide barrage, signalled a turn ahead | Arms (pinning fire cuts accuracy) |
-| **Zenless Zone Zero** | **The Neon Commission** | Crews and agencies for hire in the Underlevels | They take the Underlevels for one of their own disaster zones, and the Authority has a bounty on the squad (None) | Outbid them, or beat the boss and the job's off; the first guests | **Stagger:** hits fill a stagger bar, and a full bar costs a turn; allies next to each other chain follow-ups; rift zones reshuffle their tiles every three turns | Legs (knockdowns) |
-| **Genshin Impact** | **The Sevenfold Envoys** | An honour guard from a world of seven elements, searching for a lost companion | The Blackout speaks to them in their patron's voice (Anchor) | Break the binding sigils on shrine tiles during the battle, then persuade them | **Reactions:** attacks leave an element on the tile, and a second element reacts (Wet and cold make **Frost**; fire and current burst); the squad can use them too | Core (Frost locks it) |
-| **Azur Lane** | **The Tideline Armada** | An invading fleet in two blocs | One bloc signed a treaty with the Authority for a way home; the other blockades the Docks, taking the rigs for their old enemy's work (None) | A flagship duel wins the free bloc; the treaty bloc turns when the Authority betrays it | **Artillery:** back-row ships mark zones that land next turn; escorts shield neighbours; torpedoes run whole rows; aircraft ignore height; sink the flagship and the formation breaks | Back unit (barrages) |
-| **Honkai: Star Rail** | **The Starward Contractors** | Agents from other stars, hired by the Authority | Their contract is to seize the Gate core, which they believe is a cosmic cancer the squad protects (None) | The truth, or a better contract; some simply leave | **Typed shields and time:** shields show which damage type breaks them, and a broken shield delays her; they pull their own turns forward and push the squad's back; mid-battle deals let one walk off the map | The timeline |
-| **Wuthering Waves** | **The Lantern Wardens**, and their cult, **the Tolling** | Survivors of a world that already ended | Near the Gates the Blackout's static overloads their powers (Anchor); the Tolling want the Blackout to finish its work | Keep a Warden alive until her overload burns out, then a Netrunner calms her; the Tolling's leaders never turn | **Remnants and overload:** a beaten unit leaves a Remnant a Warden can call back up, so the order of kills matters; hitting her with her own element fills an overload that strikes everything around her | Order of kills |
-| **Punishing: Gray Raven** | **The Iron Vigil**, and its fallen, **the Transfigured** | The squad's dark mirror: orbital soldiers in combat bodies from the dead sister ring | Their bodies let the Blackout spread through them like a virus (Anchor) | A Netrunner purges the infection at a core tile; then they're natural allies | **Infection:** it spreads to nearby machines and tiles; an infected Core disables another part until cleaned; a three-signal combo shows on the timeline before a big strike | Any part (infection) |
-| **Honkai Impact 3rd** | **The Ember Bastion**, and its fallen, **the Crowned** | A sisterhood that has fought a corruption all its life; the Blackout's generals | The Blackout crowned its strongest (Anchor); the rest hunt the squad, believing the core-powered rigs are the corruption's source (None) | Defeat a Crowned to purge her; persuade the uncrowned | **Phases:** at set HP she crowns again, changing her element, range and suit, calling corruption beasts and breaking the ground | Everything |
-
-### 5.2 Faction hardware (WD14)
-
-Every enemy **character** is a franchise heroine, from the boards (TC38). Each faction also fields **hardware**:
-original machines that fill out a battle, can be hacked, and go in uma-art because they're ours.
-
-| Faction | Hardware |
-|---|---|
-| The Steel Muster | Android troopers, and machine swarms with a glowing core weak point |
-| The Neon Commission | Street drones and scrap bots |
-| The Sevenfold Envoys | Rune constructs that glow in their element |
-| The Tideline Armada | Drone skiffs and floating turrets |
-| The Starward Contractors | Security mechs |
-| The Lantern Wardens | Static phantoms |
-| The Iron Vigil | Infected maintenance machines |
-| The Ember Bastion | Corruption husks |
-| The Authority | Security drones, turrets and gates on every map it controls |
-
-One set of silhouettes covers them all, with a palette and a glyph per faction. The franchises' own monsters stay out:
-they'd be private art in bulk and would pull the story toward retelling each franchise.
-
-### 5.3 Who's behind whom (WD13)
-
-```text
-                         THE BLACKOUT
-            ┌──────────────┼───────────────────────────────┐
-     (the bargain)   (a false voice)  (static)   (infection)   (crowns)
-            │              │              │            │           │
-      THE AUTHORITY   Sevenfold      Lantern Wardens  Iron Vigil  Ember Bastion
-   ┌────┬────┴───┬─────────┐  Envoys    + the Tolling  + the       + the Crowned
- pays  pays   commands  treaty                         Transfigured
-   │     │       │         │
- Neon  Starward Steel   Tideline Armada
- Comm. Contr.   Muster  (treaty bloc)
+```mermaid
+flowchart LR
+  subgraph Inner["Inner region"]
+    Ring["The Ring · orbital megacity"]
+    Tide["Tidewell · ocean"]
+    Verd["Verdance · jungle"]
+  end
+  subgraph Middle["Middle region"]
+    Anvil["Anvil · forge world"]
+    Gale["Gale · gas giant"]
+  end
+  subgraph Outer["Outer region"]
+    Hush["Hush · ice moon"]
+    Hollow["The Hollow Ring · dead ring"]
+  end
+  subgraph Edge["The edge"]
+    Brink["Brink · glass desert"]
+  end
+  Ring --- Tide --- Verd --- Anvil --- Gale --- Hush --- Hollow --- Brink
+  Ring --- Anvil
+  Brink -. "the last jump" .- Ring
 ```
 
-- The Blackout owns the Authority through its bargain. The Authority pays the Commission and the Contractors, commands
-  the Muster and holds the Armada's treaty.
-- The Blackout reaches the other four directly: the Envoys through a false voice, the Wardens and the Tolling through
-  static, the Vigil through infection and the Bastion through crowns.
-- So every faction can be turned: by showing it the truth, or by burning the darkness out.
+**WD26, two kinds of Gate.**
+- **Siphon Gates** sit inside the Circuit, one at each world. They're the Tithe: rings of light with a gap in them, each
+  in its world's colour, humming while they drain. Every one feeds the Gate Heart in the Ring.
+- **Outer Gates** open to other universes. The eight factions came through them: expeditions, mercenaries, the lost and
+  the bound.
+- **The factions' home universes stay beyond the outer Gates and off the star map** (SB3). The worlds are ours, and the
+  factions come to them.
+- The first outer Gate the Authority ever opened is the one the Homestretch went through, twenty years ago (WD37).
 
-### 5.4 Allies and rivals (WD23)
+**WD27, what every world has:**
+- **one environment,** distinct from every other;
+- **one city to walk,** with districts, contacts, shops and investigation leads, explored in the Street look;
+- **one Tithe wound:** what the siphon is draining, visible in the streets;
+- **wild places** beyond the city for ground missions;
+- **space around it** where ships fight;
+- **one or two factions** that are new there, so a world teaches at most two new mechanics (SB3);
+- **one lead:** an Uma who grew up there, whose recruitment arc brings her aboard (private casting);
+- **something for the ship:** a room or an upgrade, and a decor kit for the cabins (WD29).
 
-- **Allies once freed:** the Muster and the Armada (soldiers both), the Commission and the Contractors (mercenaries who
-  trade jobs), the Envoys and the Wardens (lost expeditions), the Vigil and the Bastion (both know how to purge a
-  corruption).
-- **Rivals:** the Vigil is the squad's dark mirror (rigs against combat bodies, and the fall that waits for the Umas);
-  each Crowned has an uncrowned sister; the Armada's two blocs; the Wardens against the Tolling; the Commission against
-  the Muster (the street against the law); the Envoys against the Contractors (an oath against a contract).
+## 3. The eight worlds (WD28, WD29)
 
-## 6. The five acts (WD15–WD17)
+| # | World | Environment | The city | The Tithe takes | New factions (mechanics) | Region | Act |
+|---|---|---|---|---|---|---|---|
+| 1 | **The Ring** | Orbital megacity around a planet nobody visits; rain and neon | The Ring itself, in six layers | Nothing: it's where the stolen power goes | Steel Muster (cover and volley), Neon Commission (stagger) | Inner | I |
+| 2 | **Tidewell** | A world ocean, no land but reefs | **The Moorings:** a floating harbour of locks, stilts and lighthouses | Its tides: the moons' pull is siphoned, and the sea is stilling | Tideline Armada (artillery) | Inner | II |
+| 3 | **Verdance** | Jungle in a deep gorge, glowing at night | **The Terraces:** temple-greenhouses and canopy bridges down the gorge walls | Its growth: the forest greys from the top down | Sevenfold Envoys (reactions) | Inner | II |
+| 4 | **Anvil** | Volcanic: lava rivers, ash sky, calderas | **The Slipways:** a free port of foundries and shipyards in a caldera | Its heat: the forges are cooling and the city rations warmth | None new: a breather, the ship's world | Middle | II |
+| 5 | **Gale** | Gas giant: storm bands, no ground | **Highfall:** platforms riding the storm currents, joined by cable lifts | Its storms: the bands slow, and the platforms sink | Starward Contractors (typed shields and time) | Middle | III |
+| 6 | **Hush** | Ice moon under a black sky, sound-quiet | **The Vaults:** geothermal halls under the ice, where nobody speaks loud | Nothing left: Hush was drained first, long ago | Lantern Wardens and the Tolling (Remnants and overload) | Outer | IV |
+| 7 | **The Hollow Ring** | A dead orbital ring around a dead planet | The Ring's ghost: dark Districts, drowned Spires, ads still flickering | It's what the Ring becomes when the bargain comes due | Iron Vigil and the Transfigured (infection) | Outer | IV |
+| 8 | **Brink** | Glass desert at the edge, where the dark begins in the sky | **The Last Oasis:** a caravan city under the Bastion's convent walls | Its sun: the light is thinning, the sand turning to glass | Ember Bastion and the Crowned (phases) | Edge | V |
 
-### 6.1 The arc (WD15)
+The Steel Muster, the Authority's android foot soldiers, are on every world, so the regular-enemy board pays off when
+they defect (WD47).
 
-| Act | Where | Factions | New mechanics | Tone | Layer revealed | Squad arc (WD16) |
-|---|---|---|---|---|---|---|
-| **I** | The Underlevels and the Districts | Steel Muster (from the first battle), Neon Commission | Cover and volley; stagger | Bright, urban | 1. The frame | The squad forms; one member walks out and comes back |
-| **II** | The upper Districts, then the Docks | Sevenfold Envoys, Tideline Armada, Steel Muster | Reactions; artillery | Bright fantasy, then naval | 2. The Tithe; breaking the blockade opens the Lanes | The rival squad; an uneasy alliance against something bigger |
-| **III** | The Lanes | Starward Contractors, Steel Muster | Typed shields; the timeline | Space opera | 3. The cores | The past returns: the rival squad's burned-out predecessors, Dimmed |
-| **IV** | A silent moon, then the dead sister ring | Lantern Wardens, Iron Vigil, Steel Muster | Remnants; infection | Sad, then grim | 4. The Blackout, and the sister ring as the Ring's future | The enemy in plain sight: a deceiver close to home |
-| **V** | The Gate Heart, back at the Ring | The Crowned, Dimmed from every faction, the Blackout; the Steel Muster defects | Phases | Tragic, then heroic | 5. The squad's own secret | The freed come back; redemption |
+### 3.1 The Ring (world 1, Act I)
 
-**Why this order:**
-- **Difficulty:** one or two new mechanics an act, from cover and stagger to phase bosses.
-- **Tone:** the bright factions come first; the grim ones come once the squad is a family.
-- **Setting:** street, gun and civic factions suit the megacity; the fleet bridges city and space; star-faring agents
-  own the Lanes; the two factions whose worlds already ended carry the darkest reveals; the fallen guardians guard the
-  finale.
-- **A running thread:** the Muster is in every act, so the regular-enemy board has a payoff when it defects.
+- **Look:** a megacity on an orbital ring, stacked in six layers (WD4, kept as this world's city): the **Spires** (the
+  Authority's white towers), the **Districts** (neon streets, holo-ads, rain), the **Markets** (night markets and back
+  rooms), the **Underlevels** (the dark under the city), the **Docks** (where ships leave for the Lanes) and the **Gate
+  Heart** (where every siphon meets).
+- **To walk:** the Districts, the Markets, the Underlevels and the Docks. The Spires and the Gate Heart stay closed until
+  the finale.
+- **The Tithe:** the Ring is its destination. It's the brightest place in the Circuit because every other world is
+  getting darker.
+- **Fights:** the Muster and the Commission in the streets; in orbit, the Authority's patrol cutters hunting a stolen
+  ship (the first ship battle, a breakout).
+- **The arc:** the first lead's recruitment arc. She, the captain and a handful of crew find the Homestretch in the
+  scrapyard Docks and steal it out from under the Authority. Lens: **a heist**.
+- **For the ship:** the Bridge and the first squad.
 
-### 6.2 Arc shapes (WD16)
+### 3.2 Tidewell (world 2, Act II)
 
-The squad arc column takes Star Guardian's four era shapes (references §2.2) in order, one an act, with the finale as
-their redemption: the team that forms and breaks and re-forms; the rival veterans; the past that returns; the enemy in
-plain sight.
+- **Look:** an ocean world with no land, only reefs and storm-white lighthouses. Its city, **the Moorings**, floats on
+  locks, pontoons and stilts in tiers: the Lock Market, the Lantern Piers, the Drydocks, and a Sunken Quarter under glass.
+- **The Tithe:** its moons' pull is siphoned off, so the tides are stopping. The sea goes still and stale, the locks
+  stand dry, and the harbour that lived on the tides is starving.
+- **Fights:** the Tideline Armada's two blocs. One blockades the Moorings; the other holds a treaty with the Authority.
+  Most of the world's battles are at sea and in orbit, against the blockade.
+- **Boarding:** the blockade's flagship, where the free bloc's admiral is held to the treaty. Boarding her ship wins the
+  free bloc over.
+- **The arc:** a lead who grew up running the locks. Lens: **a smuggling run**.
+- **For the ship:** the Galley, and a seaside decor kit.
 
-### 6.3 Flash-forwards (WD17)
+### 3.3 Verdance (world 3, Act II)
 
-Each act opens with one mission from its own climax, played with a fixed squad, as the act's tutorial for its new
-mechanic. The act's chapters then lead back toward it, and when the act's last Operation plays, the player sees the
-flash-forward again with what they now know. The mystery is how, not whether.
+- **Look:** a jungle in a gorge so deep it has its own weather, glowing blue-green at night. The city, **the Terraces**,
+  is cut down the gorge walls: temple-greenhouses, canopy bridges, the Root Galleries underneath, and the Seed Vault at
+  the bottom.
+- **The Tithe:** its growth. The forest is greying from the top of the gorge down, leaves turning to glassy ash.
+- **Fights:** the Sevenfold Envoys, an honour guard from a world of seven elements, searching the gorge for a lost
+  companion. The Blackout speaks to them in their patron's voice (an Anchor). Their shrine terraces are battle maps
+  where elements react.
+- **The arc:** a lead raised in the Terraces. Lens: **a missing-persons search**: the Envoys' lost companion, and the
+  lead's own lost family.
+- **For the ship:** the Garden, grown from Verdance cuttings, and a greenhouse decor kit.
 
-## 7. How the story is told (WD18, WD19)
+### 3.4 Anvil (world 4, the turn of Act II)
 
-The story structure is in [the concept](concept.md) (TC32–TC36): Operations and Routes that gate each other, Leads,
-the Archive and the Call. Two rules belong to the world:
+- **Look:** a volcanic world of lava rivers under an ash sky. Its city, **the Slipways**, fills a caldera: foundries,
+  shipyards, Frame-smiths, and the Cooling Quarter where people who can't afford heat crowd together.
+- **The Tithe:** its heat. The forges are cooling, and the city rations warmth by the hour.
+- **A breather, and the ship's world.** No new faction: Anvil is a free port where the Neon Commission trades and the
+  Muster keeps a depot. It's where the Homestretch is refitted, where Frames are made, and where the Lab buys Data.
+- **The ship's history surfaces:** the Homestretch was built in these yards. The yard's old records, and the first of the
+  Steward's memories restored here, are the first seeds of Act V (WD31).
+- **Fights:** raids on the slipways, including the first time someone boards the Homestretch (TC65), and a rival
+  ship's crew.
+- **The arc:** a lead who grew up a Frame-smith's apprentice. Lens: **a corporate thriller**.
+- **For the ship:** Engineering, and an industrial decor kit.
 
-- **Seeding (WD18).** Every layer in §2 gets at least three seeds across at least two routes, and each act carries at
-  least one deliberate contradiction, logged as an **Anomaly** in the Archive until it's explained. Clues live in the
-  world's own interfaces: the battle HUD's core readout, the Hideout's AI, news tickers, billboards for the rival squad,
-  Gate hum. The genre convention that hides the truth is "Gates pull people in": players file every oddity under it.
-  - Examples: siphoning Gates hum and plain ones don't (layers 1–2); the cores' charge rises after every win (layer 3);
-    heroines remember the squad as enemies they never met (layer 4); Umas dream of a track and a sun (layer 5).
-- **Route lenses (WD19).** Each Uma-led route is told through its own cyberpunk genre: a heist, a noir case, an idol
-  scandal, a street-racing crew, a ghost in the net, a smuggling run, a corporate thriller, a missing-persons search, a
-  courier job, a pirate broadcast. Every route ends on the same beat: the Uma's signature ability unlocks and she joins
-  the act's last Operation.
+### 3.5 Gale (world 5, Act III)
 
-## 8. Tone and names (WD20, WD21, WD24)
+- **Look:** a gas giant with no ground. **Highfall** is a city of platforms riding the storm currents, tied together by
+  cable lifts: the Weather Exchange, the Underdecks, the Storm Shrine, the Tether Docks.
+- **The Tithe:** its storms. The bands are slowing; without the currents, the platforms sink a little lower every year.
+- **Fights:** the Starward Contractors, agents from other stars hired to guard Gale's siphon. They fight with typed
+  shields and bend the timeline. The heaviest ship battles of the game happen here, in lightning and cloud.
+- **Boarding:** a Contractor frigate, to steal the contract itself and rewrite it.
+- **The arc:** a lead raised on the platforms. Lens: **a noir case**.
+- **The layer:** the Contractors' scanners read the crew's Frames, and the Homestretch's own heart, as siphon cores
+  (WD3).
+- **For the ship:** the Sensor deck, and a sky decor kit.
 
-- **Tone (WD20):** a found family; candy-bright neon over a tragic story, as Star Guardian does it; no gore; nobody dies
-  on screen; an Uma is never maimed, and a damaged pose is weary with the costume intact (uma-quest's rule). A purged
-  Crowned may go home through her Gate rather than join, which is the saddest the game gets.
-- **Names (WD21):** every name is ours. No term from 13 Sentinels, Star Guardian, Front Mission or Triangle Strategy,
-  and no franchise's own term for a mechanic or a place. Where a franchise's mechanic inspires a faction's, ours has
-  its own word (stagger, volley, Remnant, overload, Frost).
-- **The ending (WD24):** the squad shuts the siphon at the Gate Heart and gives up its cores. The freed heroines lend
-  their own power for the last battle, so the found family is literal. The Ring dims but lives, and the Gates become
-  doors that open both ways.
+### 3.6 Hush (world 6, Act IV)
 
-## 9. The calls
+- **Look:** an ice moon under a black sky, where sound carries strangely and draws the static. Its city, **the Vaults**,
+  is a run of geothermal halls under the ice. People speak softly there. Above them: the Bell Tower, the ice harbour and
+  a frozen market.
+- **The Tithe:** nothing left to take. Hush was the first world drained, generations ago. It's what every world in the
+  Circuit becomes.
+- **Fights:** the Lantern Wardens, survivors of a world that already ended, sheltering here, and their cult, the Tolling,
+  who ring the Bell Tower to call the Blackout in.
+- **Boarding:** ghost ships frozen into the moon's ice rings.
+- **The arc:** a lead raised in the Vaults. Lens: **a pirate broadcast**.
+- **For the ship:** the Infirmary, and a hushed, snowlit decor kit.
 
-| # | Call | Section |
+### 3.7 The Hollow Ring (world 7, Act IV)
+
+- **Look:** the Ring's sister, dead. A derelict orbital city around a dead planet: dark Districts, drowned Spires, ad
+  screens still flickering for nobody. It's what the Ring becomes when the Authority's bargain comes due.
+- **Fights:** the Iron Vigil, the crew's dark mirror (orbital soldiers in combat bodies), and the Transfigured, Vigil
+  soldiers the Blackout has spread through like an infection.
+- **Boarding is the main way in.** The Hollow Ring is a derelict, taken section by section through airlocks, with
+  helmets sealed.
+- **The arc:** a lead who grew up in a salvage crew working the ring's edge. Lens: **survival**.
+- **For the ship:** the Lab's last branch, and a salvage decor kit.
+
+### 3.8 Brink (world 8, Act V)
+
+- **Look:** a glass desert at the edge of the Circuit, where the dark begins in the sky. **The Last Oasis** is a caravan
+  city sheltering under the walls of the Ember Bastion's convents: the Caravanserai, the Glass Fields, the Convents and
+  the Edge.
+- **The Tithe:** its sun, the hardest-drained of all. The light is thinning, and the sand is turning to glass.
+- **Fights:** the Ember Bastion, a sisterhood that has held the line against corruption all its life, and the Crowned,
+  its strongest, whom the Blackout crowned as its generals.
+- **Boarding:** a Crowned's flagship.
+- **The arc:** the last lead, raised in a convent. Lens: **a pilgrimage**.
+- **For the ship:** the readiness for the last jump.
+
+**WD29, each world gives the ship something:** a room or an upgrade (the Bridge, Galley, Garden, Engineering, Sensor
+deck, Infirmary and the Lab's last branch), a decor kit for the cabins (TC61), and a lead. The game's room plan (TC62)
+can take these as the rooms' story; any can move.
+
+## 4. The ship: the Homestretch (WD30–WD35)
+
+### 4.1 What it is (WD30, WD35)
+
+- **WD30:** the ship is the **Homestretch**, a long-hulled Gate-ship. Twenty years ago it was the first ship sent
+  through an outer Gate. It came back carrying children and none of its crew. The Authority scrapped it in the Ring's
+  Docks and buried the record. In Act I it's stolen back, and it becomes the crew's home, base camp and stronghold. Its
+  name is the last stretch of a race, before the finish.
+- **WD35, why it travels:**
+  - to gather the scattered Gatechildren, one world at a time;
+  - to stop the Tithe;
+  - and, though nobody aboard knows it at first, to go home: the Homestretch remembers the way back through the first
+    Gate, to a world with a sunlit track.
+
+### 4.2 The Steward, and the rooms (WD31, WD32)
+
+- **WD31, the Steward:** the ship's mind. It's warm, dry-humoured, protective, and full of holes, because the Blackout
+  ate most of it in the twenty years in the scrapyard.
+  - **Repairing the ship restores it:** every module brought back to level, and some repairs after battles, return a
+    fragment of its memory, as a Log File (TC34).
+  - The fragments are the seeds of the last layer: the voyage through the first Gate, the crew that didn't come back,
+    the children in the hold.
+  - The Steward never knows more than it has recovered, so it can be wrong, and it's one of the Anomalies (WD18).
+- **WD32, the rooms and what they mean:**
+
+| Room | What it is aboard | Opened by (WD29) |
 |---|---|---|
-| WD1 | The central truth is the Tithe: the Authority opens Gates to siphon other worlds' power, and the Ring's light is stolen | [2](#2-the-truth-in-layers-wd1wd3-wd8) |
-| WD2 | The Blackout: a hunger between worlds that eats and rewrites memory, let in by the siphons, bargained with by the Authority's board; those it takes are the Dimmed | [2](#2-the-truth-in-layers-wd1wd3-wd8) |
-| WD3 | The squad's rigs run on stolen prototype siphon cores: the power is the squad's original sin, given up in the finale | [2](#2-the-truth-in-layers-wd1wd3-wd8) |
-| WD4 | The Ring in six layers: the Spires, the Districts, the Markets, the Underlevels, the Docks and the Gate Heart | [1](#1-the-setting-wd4-wd5) |
-| WD5 | The Lanes and the Gates: a ring of light with a gap, a colour and a glyph per Gate-world; siphoning Gates hum | [1](#1-the-setting-wd4-wd5) |
-| WD6 | The rival squad: the Authority's licensed, famous heroes, Umas from the NPC board, on overclocked cores, with a sincere captain | [3](#3-the-squad-the-rivals-and-the-double-life-wd6-wd7) |
-| WD7 | The double life: the Hideout behind a front business in the Markets, a civilian keeper, scenes by day and missions by night | [3](#3-the-squad-the-rivals-and-the-double-life-wd6-wd7) |
-| WD8 | The last layer: the Umas came through the first Gate as children; they dream of a sunlit track | [2](#2-the-truth-in-layers-wd1wd3-wd8) |
-| WD9 | Three Holds (Anchor, Collar, None) decide why a heroine fights and how she's freed; a heroine is never killed | [4](#4-the-three-holds-wd9) |
-| WD10 | Eight factions, one per franchise, with original names: the Steel Muster, the Neon Commission, the Sevenfold Envoys, the Tideline Armada, the Starward Contractors, the Lantern Wardens, the Iron Vigil and the Ember Bastion | [5.1](#51-the-table-wd10-wd11) |
-| WD11 | Each faction brings one new mechanic and threatens one rig part | [5.1](#51-the-table-wd10-wd11) |
-| WD12 | A freed heroine opens her File and a log from her side; some join as guests | [4](#4-the-three-holds-wd9) |
-| WD13 | Who's behind whom: the Blackout owns the Authority, which pays, commands or binds four factions; the Blackout reaches the other four directly | [5.3](#53-whos-behind-whom-wd13) |
-| WD14 | Faction hardware: every enemy character is a heroine; each faction also fields original machines, in uma-art; the franchises' own monsters stay out | [5.2](#52-faction-hardware-wd14) |
-| WD15 | Five acts: the Underlevels, the Docks, the Lanes, the sister ring, the Gate Heart; one layer of the truth each | [6.1](#61-the-arc-wd15) |
-| WD16 | The squad's arc takes Star Guardian's four era shapes in order, with the finale as their redemption | [6.2](#62-arc-shapes-wd16) |
-| WD17 | Each act opens with a flash-forward to its own climax, as its tutorial | [6.3](#63-flash-forwards-wd17) |
-| WD18 | At least three seeds per layer across at least two routes; at least one contradiction an act, logged as an Anomaly; clues in the world's own interfaces | [7](#7-how-the-story-is-told-wd18-wd19) |
-| WD19 | Every route has its own cyberpunk genre lens and ends on the shared beat: her signature unlocks | [7](#7-how-the-story-is-told-wd18-wd19) |
-| WD20 | Tone: found family, candy-bright neon over tragedy, no gore, no one dies on screen, an Uma is never maimed | [8](#8-tone-and-names-wd20-wd21-wd24) |
-| WD21 | Every name is ours: no term from the references or the franchises | [8](#8-tone-and-names-wd20-wd21-wd24) |
-| WD22 | This page is original and names no character; casting, chapters and dialogue are private in `content/` | [Status](#uma-cyberpunk-the-world-and-its-factions) |
-| WD23 | Allies and rivals among the factions, for alliances and duels | [5.4](#54-allies-and-rivals-wd23) |
-| WD24 | The ending: shut the siphon, give up the cores, the freed lend their power, the Ring dims but lives, the Gates open both ways | [8](#8-tone-and-names-wd20-wd21-wd24) |
+| **The Bridge** | Where the captain gives Orders and the star map lives | The Ring |
+| **The Quarters deck** | Every Uma's cabin (TC60); berths first, private cabins as the deck grows | The Ring |
+| **The Hangar** | Frames racked and refitted; the squads suit up here | The Ring |
+| **The Galley** | The heart of life aboard: the after-jump meal, music, arguments | Tidewell |
+| **The Garden** | Verdance cuttings under grow-lights; the quiet room | Verdance |
+| **Engineering** | Where the ship is kept flying, and the Steward is rebuilt | Anvil |
+| **The Sensor deck** | Reading the Lanes, the storms and the dark | Gale |
+| **The Infirmary** | Strain, rest, and the medic's watch | Hush |
+| **The Lab** | Research in four branches (TC63) | Anvil, its last branch at the Hollow Ring |
+| **The Guest Wing** | Freed heroines, guests and envoys (TC47) | The first freed heroine |
+| **The Observation deck and the Track** | A ring corridor around the observation dome, built long ago. The Umas run laps on it and can't say why (WD40) | The Ring |
+
+### 4.3 Maintenance and aptitudes (WD33, WD34)
+
+- **WD33, maintenance is care, not a chore.** The Homestretch is twenty years scrapped and patched together.
+  - **It wears from what it does:** jumps through damaged Lanes, ship battles, and being boarded. Each leaves damage on
+    the modules that took it.
+  - **The crew repairs it at their posts** over watches: a mission or a jump, never real time (TC67).
+  - **It never decays while it sits.** There's no upkeep, no breakdown from neglect and no failure roll (TC68 kept).
+  - **A damaged module still works,** just weaker in battle, until it's repaired.
+  - **Repair restores the Steward** (WD31).
+  - Taking time aboard to repair after a hard battle is a beat of life aboard, not a tax.
+- **WD34, every Uma has aptitudes.** Her stats and running style make her better at some posts than others (TC67's band
+  thresholds), and she has a post she loves (a liked duty).
+  - **The ship's stations:** the helm, the guns, the shields, engines, sensors, the Hangar's deck crew, the Infirmary,
+    the Galley and the Garden.
+  - **In a ship battle** (WD44), the crew at those posts is the ship's strength.
+  - **In repair** (WD33), the right Uma at the right post fixes it faster.
+  - Which Uma is good at what is the casting's, privately; the game derives it from her stats until then.
+
+## 5. The captain (WD36)
+
+**WD36, the captain is "unwritten":** the one person aboard the Blackout can't read.
+- The Steward won't fly for anyone it can't trust its memory with, and the captain is the only one whose past the
+  Blackout has never touched. That's why the ship answers to them, though they've never commanded anything.
+- **Who the captain was before is the player's to imagine.** The game never shows their face, never fixes their past,
+  and uses the pronouns the player picks (SB15).
+- **The crew's view changes:**
+  - **at first:** a stranger the ship chose. Some Umas resent it; some are curious.
+  - **in time:** the one person who remembers everything for them. When the Blackout takes a memory from an Uma, the
+    captain still has it, and gives it back in a bond scene.
+- **The captain gives Orders from the Bridge** (TC59) and is at the heart of every bond (WD41). They never fight on the
+  board.
+
+## 6. The crew (WD37–WD39)
+
+### 6.1 The Gatechildren (WD37)
+
+**WD37** amends WD8:
+- **Where they came from:** twenty years ago, the Homestretch came back through the first outer Gate with a hold full of
+  sleeping children: the Umas, from a world with a sunlit track.
+- **What the Authority did:** feared what it had found, so it scattered them across the Circuit's worlds as foundlings,
+  one or two to a world, and scrapped the ship.
+- **What the Blackout did:** trimmed their memories down to a dream of running under a sun they've never seen.
+- **Now:** they're adults, grown on different worlds into different lives, and they don't know about each other. That's
+  why the Homestretch finds its leads one world at a time, *Octopath Traveler*'s way.
+- **What they share:** the dream, a pull toward the ship they can't explain, and a way of running they never learned.
+- The crew is Umas only (SB3).
+
+### 6.2 The squads (WD38)
+
+**WD38, up to four squads** (TC69), each with a banner and a way of fighting. Who leads each is the casting's,
+privately. They're named the way the Umas joke, in words from a sport none of them remembers playing.
+
+| Squad | Banner | Their way | Where they shine |
+|---|---|---|---|
+| **Gatebreak** | A starting gate burst open | First in: break the line, hold the breach | Assaults and boarding |
+| **Long Shot** | A single star at long range | Patient and precise: gunners and overwatch | Holding ground, ship gunnery |
+| **Photo Finish** | Two noses at a line | Showy closers who win it at the end | Strikers, duels, finales |
+| **Dark Horse** | A shadowed horse's head | Quiet: infiltration, hacking, recon | City investigations, Jack-Outs, sabotage |
+
+The banners are drawn in code (pixel art, uma-art).
+
+### 6.3 The rival squad (WD39)
+
+**WD39** amends WD6:
+- **Who:** the Authority's licensed heroes, the **Laurel Guard**, famous on every billboard in the Ring. They're Umas from
+  the NPC board (TC40), Gatechildren too, raised by the Authority itself.
+- **Their ship:** the **Laurel**, a sleek hero ship that hunts the Homestretch across the Circuit.
+- **Their cost:** they fly on overclocked cores that burn their pilots out.
+- **Their captain:** knows the truth and believes the Ring's survival justifies it, so the rivalry is sincere.
+- **Their arc:** they're the first ship battle you can't win (the Ring); allies of convenience at the Hollow Ring, against
+  something worse; and in the finale, the squad that chooses.
+
+## 7. Life aboard (WD40)
+
+**WD40, what a day aboard is like:**
+- **Watches, not hours.** Time aboard passes in watches: a mission, or a jump (TC67). After each, the crew comes off duty.
+- **The after-jump meal.** Every jump ends in the Galley, whoever cooked. It's where squads argue, rivalries soften and
+  news from the last world is told.
+- **Laps on the Track.** Off duty, the Umas run the ring corridor around the observation dome. Nobody remembers who built
+  it or why it's exactly that long. It's a seed of the last layer.
+- **Shore leave.** At every world, the crew goes down into the city in street clothes: the markets, a meal, a show, a
+  keepsake for a cabin. It's where city exploration and life aboard meet.
+- **Cabins as memory.** Each Uma's cabin fills with things from the worlds she's been to: decor kits, keepsakes,
+  cuttings from the Garden. Rooms are personal, and what she keeps says who she is (TC61).
+- **The Guest Wing** fills as heroines are freed. Some stay; some go home through their Gate when the ship can open it.
+- **The bell.** The Steward rings the watch with a sound none of the crew can place.
+
+## 8. Bonds: the power of friendship and the power of love (WD41)
+
+**WD41, bonds are the one thing the Blackout can't eat.**
+- **The mechanism:** the Blackout feeds on memory, but a memory two people share is held twice, and it can't be taken
+  whole. Every bond scene is a memory made together, and some give back what was taken.
+- **Friendship and love are the same power.**
+  - Trust and Heart give equal strength (TC56, TC58, SB15).
+  - The story makes either one meaningful, and never makes love the "better" choice.
+- **Resonance at rank 10:** two memories holding each other, strong enough to stand against a Crowned in the finale
+  (TC58).
+- **Partners between Umas** are the same thing between two Gatechildren: a shared childhood neither remembers, found
+  again.
+- **The tone (TC72, SB15):**
+  - everyone is an adult;
+  - it's warm and teasing, never explicit, mutual, and never jealous;
+  - every Uma is open to every captain, never exclusively;
+  - she speaks first at rank 8;
+  - a player can keep it to friendship.
+- **In the plot:** the Blackout's generals are those who lost everything they shared. The finale is won by a crew that
+  remembers each other, with the captain holding what each of them forgot (WD24).
+
+## 9. How the crew fights (WD42–WD45)
+
+### 9.1 Frames (WD42)
+
+**WD42, Frames are the crew's cybernetic weapons:** modular combat suits built around a **core**.
+- **The parts** are the concept's: arms, legs, core and back unit.
+  - The forearm **emitter** fires the core's charge.
+  - The **projector** throws a shield.
+  - Shoulder and forearm mounts take swappable weapon and defence modules.
+- **Helmets:** a sealed **helmet** closes the Frame for vacuum, smoke and boarding.
+- **Pilot suits:** the crew's full-body ship suits link the wearer to the ship's posts, so a pilot suit at the helm is
+  part of the ship.
+- **The art matches:** the approved looks show exactly these (Modular Frame 01, the shared Helmet 01, the
+  ship-operating suit).
+- **The cores are stolen** siphon prototypes, the crew's original sin (WD3), given up in the finale.
+- **Suit-up** is the Frame snapping on, lit in her colour (TC39).
+- **The five roles** (Vanguard, Striker, Gunner, Netrunner, Medic) are the five ways a Frame is fitted (TC5).
+
+### 9.2 On the ground (WD43)
+
+**WD43, ground battles are the grid tactics as built.** They're fought in two kinds of place:
+- **City maps:** streets, markets, docks and rooftops, where investigation leads end;
+- **Wild maps:** reefs, canopy, calderas, platforms, ice and glass.
+
+Each world's maps carry its environment's terrain: Tidewell's locks flood, Verdance's shrines hold elements, Anvil's
+lava vents, Gale's platforms tilt in the wind, Hush's ice cracks, Brink's glass cuts and reflects. Each environment's
+terrain is the game's to choose; the world only says what's there.
+
+### 9.3 In the Lanes: ship battles (WD44)
+
+**WD44, the Lanes are contested, and ships fight in them.**
+
+| Who | Their ships | Why they fight the Homestretch |
+|---|---|---|
+| **The Authority** | Patrol cutters; the **Laurel** | A stolen ship, and the truth it carries |
+| **Steel Muster** | Troop carriers that drop squads | Ordered to |
+| **Neon Commission** | Fast smuggler skiffs | A bounty, or a better offer |
+| **Tideline Armada** | Carriers, destroyers, a flagship; artillery at range | The blockade |
+| **Sevenfold Envoys** | One temple-ship, slow and elemental | They believe the ship hides their lost companion |
+| **Starward Contractors** | Corvettes and frigates that bend the timeline | Their contract |
+| **Lantern Wardens** | Ghostly lantern-ships that call wrecks back | The static near the Gates |
+| **Iron Vigil** | Infected hulks that spread to what they touch | The infection |
+| **Ember Bastion** | Guard-ships; a Crowned's flagship | They take the cores for the corruption's source |
+
+- **The crew fights at their posts** in pilot suits (WD34): helm, guns, shields, engines, sensors, and the captain's
+  Orders from the Bridge.
+- **What's at stake:** passage, salvage, a prisoner, or a chance to board.
+- **Nobody dies on screen:** a beaten ship strikes its colours, drifts, or limps away. It never explodes with its crew
+  aboard (WD20).
+- **Environments shape the fights:** Gale's lightning, the Hollow Ring's debris, Hush's ice rings, the dark at the edge.
+- **The battle's rules are the game's** (request 1).
+
+### 9.4 Boarding (WD45)
+
+**WD45, boarding is how fleets are freed.**
+- **Why board:** a Collar is broadcast from a ship's command core, so breaking that core aboard frees every Collared
+  heroine in the fleet at once. Ships also hold siphon cores worth seizing, prisoners worth rescuing, and contracts worth
+  stealing.
+- **How it plays:** grid battles in the enemy's corridors, cargo holds and reactor rooms, helmets sealed, with the
+  ship's own security as terrain: doors, turrets, vents and decompression.
+- **The reverse:** enemies board the Homestretch too (TC65), first at Anvil's slipways.
+- **What the game decides:** the board and the rules (request 2).
+
+## 10. The truth, in layers (WD1–WD3, WD8)
+
+The game is still a mystery the player assembles, *13 Sentinels*' way: each act opens on a flash-forward (WD17) and
+peels back one layer.
+
+| Layer | What the crew believes | What's true | Revealed |
+|---|---|---|---|
+| **0. The surface** | Gates are natural rifts; the Authority protects the Circuit; the Laurel Guard are heroes | — | Act I opens here |
+| **1. The frame** | — | The Authority framed the first lead for a Gate it opened on purpose, because she saw it happen | Act I, the Ring |
+| **2. The Tithe** | — | The siphon Gates drain every world in the Circuit to light the Ring; the factions are here to stop it, or are paid or bound to guard it | Act II, Tidewell and Verdance |
+| **3. The cores** | — | The crew's Frames, and the Homestretch's heart, run on stolen siphon cores. Every battle won drains a little more | Act III, Gale |
+| **4. The Blackout** | — | The siphons let in the Blackout. The Authority's board bargains with it. Hush is what a drained world becomes; the Hollow Ring is what the Ring becomes | Act IV, Hush and the Hollow Ring |
+| **5. The crew** | — | The Umas are the Gatechildren, carried through the first Gate on this very ship, from a world with a sunlit track | Act V, Brink and the Gate Heart |
+
+- **WD1, amended:** the Tithe drains the Circuit's own worlds through their siphon Gates. Each world's wound shows it
+  first-hand.
+- **WD2, kept:** the Blackout, a hunger between worlds that eats and rewrites memory; those it takes completely are
+  **Dimmed**, their colours drained to one sickly accent.
+- **WD3, amended:** the stolen cores power the crew's Frames, and the Homestretch's heart is the first core of all.
+- **WD8, amended into WD37:** the Gatechildren.
+
+## 11. The factions, in depth (WD9–WD14, WD23, WD46)
+
+The eight factions keep their names, Holds and mechanics from the first pass (WD10, WD11). Their mechanics are the
+battle's and fixed. Each now has a world where it's met first, its ships (WD44), and a standing ladder (WD46).
+
+**WD46, faction standing:** every faction can be moved:
+- **hostile:** fights on sight;
+- **wary:** talks, trades, and won't attack first;
+- **allied:** lends ships, guests and operations.
+
+What moves each faction is below. Standing is shown on the Bridge (TC71).
+
+### 11.1 The Steel Muster (NIKKE)
+
+| | |
+|---|---|
+| **Who** | Android squads pulled through an outer Gate, now the Authority's foot soldiers on every world |
+| **What they want** | Their own command codes back, and a name of their own |
+| **How they live** | In depots and troop carriers, by drill and roster; they keep each fallen unit's number |
+| **Leaders** | A field commander who obeys, and a sergeant who has started to doubt |
+| **What they think of the ship** | A target, and then a rumour: the ship that gives codes back |
+| **Hold** | Collar |
+| **Moving them** | Steal their codes back, squad by squad, by boarding their carriers (wary); the whole Muster defects in the finale (allied) |
+| **Freeing a heroine means** | One more unit that answers to herself |
+| **Mechanic** | Cover and volley |
+
+### 11.2 The Neon Commission (Zenless Zone Zero)
+
+| | |
+|---|---|
+| **Who** | Crews and agencies for hire, working the Ring's Underlevels and Anvil's free port |
+| **What they want** | To get paid, and to get home with their crew whole |
+| **How they live** | Job to job, in back rooms and safehouses, with loud loyalties and quick grudges |
+| **Leaders** | A broker who sells to everyone, and a crew chief who keeps her word |
+| **What they think of the ship** | A good client, a good bounty, or both |
+| **Hold** | None |
+| **Moving them** | Outbid the Authority, or beat their best and the job's off (wary); trade with them at Anvil (allied) |
+| **Freeing a heroine means** | A job she won't take again; the first guests |
+| **Mechanic** | Stagger |
+
+### 11.3 The Tideline Armada (Azur Lane)
+
+| | |
+|---|---|
+| **Who** | A fleet from a sea-world beyond its Gate, split in two blocs at Tidewell |
+| **What they want** | The way home; one bloc thinks the treaty gets it, the other thinks the Ring stole it |
+| **How they live** | Aboard: a navy's ceremony, flags and a long war's habits |
+| **Leaders** | A treaty-bloc admiral held to the Authority's deal, and a blockade captain who won't bow |
+| **What they think of the ship** | A smuggler at first; then the only ship that ran their blockade and didn't sink anyone |
+| **Hold** | None |
+| **Moving them** | Board the flagship and win the duel (the free bloc, allied); the treaty bloc turns when the Authority betrays it (wary, then allied) |
+| **Freeing a heroine means** | A ship that sails for the Homestretch's flag |
+| **Mechanic** | Artillery |
+
+### 11.4 The Sevenfold Envoys (Genshin Impact)
+
+| | |
+|---|---|
+| **Who** | An honour guard from a world of seven elements, searching Verdance for a lost companion |
+| **What they want** | Their companion back, and their oath kept |
+| **How they live** | In shrine terraces they've built in the gorge, by vow and rite |
+| **Leaders** | A captain who hears the patron's voice, and a keeper who suspects it's false |
+| **What they think of the ship** | That it hides their companion |
+| **Hold** | Anchor: the Blackout speaks in their patron's voice |
+| **Moving them** | Break the binding sigils on the shrines (wary); find what happened to the companion (allied) |
+| **Freeing a heroine means** | An oath sworn again, to the right voice |
+| **Mechanic** | Reactions |
+
+### 11.5 The Starward Contractors (Honkai: Star Rail)
+
+| | |
+|---|---|
+| **Who** | Agents from other stars, contracted by the Authority to guard Gale's siphon |
+| **What they want** | A contract honoured, and the truth about what they're guarding |
+| **How they live** | By the contract, aboard corvettes, among themselves, with dry courtesy |
+| **Leaders** | A contract officer who reads every clause, and an agent who's read too much |
+| **What they think of the ship** | A breach of contract with a name |
+| **Hold** | None |
+| **Moving them** | Board a frigate and steal the contract (wary); show them it guards a cancer (allied); some simply leave |
+| **Freeing a heroine means** | A contract torn up |
+| **Mechanic** | Typed shields and time |
+
+### 11.6 The Lantern Wardens and the Tolling (Wuthering Waves)
+
+| | |
+|---|---|
+| **Who** | Survivors of a world that already ended, sheltering in Hush's Vaults; and their cult, the Tolling |
+| **What they want** | The Wardens: never to see it happen again. The Tolling: to let the Blackout finish what it started |
+| **How they live** | Quietly, keeping lanterns lit for the names they lost; the Tolling ring the Bell Tower |
+| **Leaders** | A Warden elder; the Tolling's bell-keeper |
+| **What they think of the ship** | A ship of the drained, come to be drained again |
+| **Hold** | Anchor: near the Gates the static overloads their powers |
+| **Moving them** | Keep a Warden alive until her overload burns out, and calm her with a Jack-Out (wary); silence the bell (allied). The Tolling's leaders never turn |
+| **Freeing a heroine means** | A lantern relit |
+| **Mechanic** | Remnants and overload |
+
+### 11.7 The Iron Vigil and the Transfigured (Punishing: Gray Raven)
+
+| | |
+|---|---|
+| **Who** | Orbital soldiers in combat bodies, holding the Hollow Ring, and the Transfigured, their own fallen to the infection |
+| **What they want** | To purge the infection and take back their ring |
+| **How they live** | In sealed sectors, by quarantine and watch |
+| **Leaders** | A commander who has lost half her unit, and a medic who keeps the rest alive |
+| **What they think of the ship** | A crew that runs on the same kind of power as the thing that infected them: their dark mirror |
+| **Hold** | Anchor: the infection |
+| **Moving them** | Purge the infection at a core tile (wary); clear the Hollow Ring's heart together (allied) |
+| **Freeing a heroine means** | A soldier back from the other side |
+| **Mechanic** | Infection |
+
+### 11.8 The Ember Bastion and the Crowned (Honkai Impact 3rd)
+
+| | |
+|---|---|
+| **Who** | A sisterhood that has fought a corruption all its life, holding Brink's edge; and the Crowned, its strongest, made the Blackout's generals |
+| **What they want** | To hold the line; to free their crowned sisters |
+| **How they live** | In fortress-convents, by vigil and drill, with a hard humour |
+| **Leaders** | An abbess who takes the crew's cores for the corruption's source, and a sister who has seen otherwise |
+| **What they think of the ship** | That it carries the thing they've fought all their lives |
+| **Hold** | Anchor for the Crowned; None for the rest |
+| **Moving them** | Defeat a Crowned to purge her (wary); give up the cores in the finale (allied) |
+| **Freeing a heroine means** | A sister come home, or one who goes home through her Gate: the saddest the game gets |
+| **Mechanic** | Phases |
+
+**Who's behind whom (WD13), and allies and rivals (WD23), stand as the first pass has them:**
+- **The Blackout's hold:** it owns the Authority through its bargain. The Authority pays the Commission and the
+  Contractors, commands the Muster and holds the Armada's treaty bloc.
+- **The Blackout's direct reach:** it reaches the Envoys through a false voice, the Wardens and the Tolling through
+  static, the Vigil through infection and the Bastion through crowns.
+- **Freed heroines** open their File and a log from their side (WD12), and some live in the Guest Wing.
+- **Each faction also fields original machines** (WD14), and now its ships (WD44).
+
+## 12. The big plot: five acts across eight worlds (WD47)
+
+**WD47** amends WD15:
+
+| Act | Worlds | The plot | New mechanics | Tone | Layer | The crew's arc (WD16) |
+|---|---|---|---|---|---|---|
+| **I** | The Ring | Framed, the first lead finds the Homestretch in the scrapyard Docks; she, the captain and a few others steal it and break out past the Laurel | Cover and volley; stagger | Bright, urban, a heist | 1. The frame | The crew forms |
+| **II** | Tidewell, Verdance, then Anvil | Running the Armada's blockade, the gorge's greying forest: the Tithe is everywhere. At Anvil the ship is rebuilt, and its first memory returns | Artillery; reactions | Bright adventure, then a breather | 2. The Tithe | One member walks out, and comes back |
+| **III** | Gale | The Contractors read the crew's cores, and the ship's heart, as siphon cores: the crew runs on what they're fighting | Typed shields and time | Space opera | 3. The cores | The rival veterans: the Laurel Guard's burned-out predecessors |
+| **IV** | Hush, then the Hollow Ring | A world already drained; the Ring's dead sister. The Blackout's bargain, seen for what it costs. The Laurel Guard fight beside the crew, once | Remnants and overload; infection | Sad, then grim | 4. The Blackout | The enemy in plain sight: a deceiver close to home |
+| **V** | Brink, then the Gate Heart | At the edge, the Steward remembers the first Gate; the crew learns who they are. Back at the Ring, the Gate Heart | Phases | Tragic, then heroic | 5. The crew | The freed come back; redemption |
+
+- **Faction standing runs through every act (WD46):** the Muster defects in Act V, the Armada's free bloc sails with the
+  ship from Act II, and the Envoys, Contractors, Wardens, Vigil and Bastion turn in their own worlds.
+- **The leads' recruitment arcs** are short, as the first brief advises (SB5): a lead joins at the crew's level. Later,
+  their personal stories live in bond scenes (TC57).
+- **Crossed paths:** a lead's world can call back an earlier one, as Tidewell's Armada sails again at Brink.
+- **WD16, WD17, WD18, kept:** the arc shapes, flash-forwards and seeding.
+- **WD18 gains** the ship's own interfaces as places for clues: the Steward's gaps, the Track's length, the bell's sound.
+- **WD19, amended:** each world has its genre lens (§3), and every recruitment arc ends with the lead coming aboard.
+
+## 13. Tone, names and the ending (WD20, WD21, WD24)
+
+- **WD20, kept:**
+  - a found family, candy-bright neon over a tragic story;
+  - no gore, and nobody dies on screen;
+  - an Uma is never maimed;
+  - every Uma is an adult (SB15).
+- **WD21, kept:** every name is ours. No term from *13 Sentinels*, *Star Guardian*, *Front Mission*, *Triangle Strategy*
+  or any franchise. This page's names: the Circuit, the Lanes, the Ring, Tidewell and the Moorings, Verdance and the
+  Terraces, Anvil and the Slipways, Gale and Highfall, Hush and the Vaults, the Hollow Ring, Brink and the Last Oasis, the
+  Homestretch, the Steward, the Track, the Gatechildren, the Laurel and the Laurel Guard, Gatebreak, Long Shot, Photo
+  Finish and Dark Horse.
+- **WD24, amended, the ending:**
+  - The crew shuts the siphons at the Gate Heart and gives up their cores.
+  - The freed heroines lend their own power for the last battle, so the found family is literal.
+  - The Ring dims but lives, and the Gates become doors that open both ways.
+  - With its heart given up, the Homestretch makes one last jump on what the crew can give it: back through the first
+    Gate, toward a sunlit track. The game ends before anyone sees it.
+
+## 14. What the game is asked for (WD48)
+
+**WD48:** five story requests, filed in [the handoff](../handoff/README.md#story-requests) for the game session. Each
+is the owner's own note; the game decides the rules and when.
+
+| # | Request | Why | Today |
+|---|---|---|---|
+| 1 | **Ship battles** in the Lanes: the Homestretch against faction ships, fought from the crew's posts and the captain's Orders | The owner's note; WD44 | Deferred (TC64) |
+| 2 | **Boarding enemy ships:** grid battles in their corridors, helmets on; breaking a command core frees a fleet's Collared heroines | The owner's note; WD45 | Only defending our own decks, in Phase 6 (TC65) |
+| 3 | **Maintenance:** ship battles, boarding and hard jumps damage modules; the crew repairs them at posts over watches, by aptitude; never decay with time; repairs can return the Steward's memories as Log Files | The owner's note; WD31, WD33 | No upkeep (TC62) |
+| 4 | **A walkable city per world,** in the Street look: districts, contacts, shops and investigation leads, beyond the node map | The owner's note; WD27 | Node maps with scenes (TC50) |
+| 5 | **The Track:** the ring corridor on the Observation deck, where off-duty Umas run laps; a place for bond scenes | WD40 | No such room |
+
+## 15. The calls
+
+**Kept, amended or superseded from the first pass:**
+
+| Id | Now | Call |
+|---|---|---|
+| WD1 | Amended | The Tithe: the Ring siphons the Circuit's own worlds through their siphon Gates |
+| WD2 | Kept | The Blackout: a hunger between worlds that eats and rewrites memory; the Authority's board bargains with it; the Dimmed |
+| WD3 | Amended | The crew's Frames run on stolen siphon cores, and the Homestretch's heart is the first; given up in the finale |
+| WD4 | Amended | The Ring's six layers are the first world's city |
+| WD5 | Amended | The Lanes join the whole Circuit; Gates are siphon Gates or outer Gates (WD26) |
+| WD6 | Amended | The rival squad is the Laurel Guard on the Laurel (WD39) |
+| WD7 | Superseded | The Hideout is replaced by the Homestretch (WD30) |
+| WD8 | Amended | The crew's secret becomes the Gatechildren (WD37) |
+| WD9 | Kept | Three Holds, Anchor, Collar and None; a heroine is never killed |
+| WD10 | Kept | Eight factions with original names |
+| WD11 | Kept | One new mechanic each; now placed by world (§3) |
+| WD12 | Kept | A freed heroine opens her File; some join as guests and live in the Guest Wing |
+| WD13 | Kept | Who's behind whom |
+| WD14 | Amended | Faction hardware, plus each faction's ships (WD44) |
+| WD15 | Amended | Five acts across eight worlds (WD47) |
+| WD16 | Kept | The crew's arc takes Star Guardian's four era shapes |
+| WD17 | Kept | Each act opens on a flash-forward to its own climax |
+| WD18 | Kept | Seeding and Anomalies, now also in the ship's interfaces |
+| WD19 | Amended | One genre lens a world; every recruitment arc ends with the lead aboard |
+| WD20 | Kept | Tone: found family, neon over tragedy, no gore, no one dies on screen, never maimed, adults |
+| WD21 | Kept | Every name is ours |
+| WD22 | Kept | This page names no character; casting, chapters and lines are private |
+| WD23 | Kept | Allies and rivals among the factions |
+| WD24 | Amended | The ending, with the Homestretch's last jump through the first Gate |
+
+**New:**
+
+| Id | Call |
+|---|---|
+| WD25 | The Circuit: the Ring and seven worlds, joined by the Lanes, in four regions opened by the ship's capability |
+| WD26 | Two kinds of Gate: siphon Gates at each world feeding the Gate Heart; outer Gates to other universes, the factions' way in; their home universes stay off the map |
+| WD27 | Every world has one environment, one city to walk, one Tithe wound, wild places, space to fight in, one or two new factions, one lead and a gift for the ship |
+| WD28 | The eight worlds: the Ring, Tidewell, Verdance, Anvil, Gale, Hush, the Hollow Ring and Brink, as §3 has them |
+| WD29 | Each world gives the ship a room or upgrade, a decor kit and a lead |
+| WD30 | The ship is the Homestretch, the first Gate-ship, scrapped in the Ring's Docks and stolen back in Act I; home, base camp and stronghold |
+| WD31 | The Steward, the ship's half-erased mind; repairs restore its memory as Log Files, the seeds of the last layer |
+| WD32 | The rooms and what they mean, each opened by a world |
+| WD33 | Maintenance is care, not a chore: wear from jumps, battles and boarding, repaired at posts over watches; no decay with time |
+| WD34 | Every Uma has aptitudes for the ship's stations, which matter in ship battles and repair |
+| WD35 | The ship travels to gather the Gatechildren, stop the Tithe and, unknowingly, go home |
+| WD36 | The captain is unwritten: the one the Blackout can't read; never drawn, their past the player's; the crew's keeper of memory |
+| WD37 | The Gatechildren: the Umas came through the first Gate as children on the Homestretch and were scattered across the Circuit; now adults |
+| WD38 | Four squads with banners: Gatebreak, Long Shot, Photo Finish and Dark Horse; leaders private |
+| WD39 | The rival squad, the Laurel Guard, on the Authority's hero ship, the Laurel |
+| WD40 | Life aboard: watches, the after-jump meal, laps on the Track, shore leave, cabins as memory, the Guest Wing, the bell |
+| WD41 | Bonds are the power the Blackout can't eat; friendship and love are equal; Resonance; partners; the tone |
+| WD42 | Frames: modular cybernetic combat suits around a core; helmets for sealed fights; pilot suits link to the ship |
+| WD43 | Ground battles on city and wild maps, each world's terrain from its environment |
+| WD44 | Ship battles in the Lanes against every faction's ships, from the crew's posts; a beaten ship strikes, drifts or flees |
+| WD45 | Boarding frees a fleet by breaking its command core, and seizes cores, prisoners and contracts; enemies board us too |
+| WD46 | Faction standing from hostile to wary to allied, and what moves each faction |
+| WD47 | Five acts across eight worlds, one layer each |
+| WD48 | Five story requests for the game: ship battles, boarding, maintenance, walkable cities, the Track |

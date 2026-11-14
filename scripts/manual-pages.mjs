@@ -12,7 +12,7 @@ export const MANUAL = join(root, 'docs/game')
 const PREVIEWS = join(MANUAL, 'previews')
 const DESIGN_DIR = join(root, 'docs/design')
 /** Design docs whose desktop pages are generated (the rest of docs/design/previews is hand-made). */
-export const DESIGN = ['life-aboard', 'research-life-aboard', 'story-brief-life-aboard', 'character-sprites', 'combat-sprites-request']
+export const DESIGN = ['life-aboard', 'research-life-aboard', 'story-brief-life-aboard', 'character-sprites', 'combat-sprites-request', 'world']
 
 const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 

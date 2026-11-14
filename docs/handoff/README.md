@@ -1,6 +1,6 @@
 # Handoff: open work
 
-> **Status: 2026-11-13, after D27: CY16 is done (duties, the ship log, jump events; save v8; the ship screen loads on demand); CY17 is next.** After D26: CY15 is done (the ship as a build: decks, modules, the wallet, power, the Lab; save v7). After D25: CY14 is done (cabins, decor, visits; save v6; the approved looks served to the game). After D24: sprites are for combat only, as chibis, and ChatGPT's image request is written ([the combat sprites request](../design/combat-sprites-request.md)), with the Story Sandbox's Sprites page for reviewing the sheets. After D22: CY13 is done. After D21: Phase 4's packets are written (CY13–CY19, below). After D20: [life aboard](../design/life-aboard.md) is designed (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
+> **Status: 2026-11-13, after D28: the story's world v2 is in for the owner's read** ([world.md](../design/world.md), [page](../design/previews/world.html); WD25–WD48), with **five story requests** below from the owner's six notes; the game session answers them and revises life-aboard from the world (SB16). After D27: CY16 is done (duties, the ship log, jump events; save v8; the ship screen loads on demand); CY17 is next.** After D26: CY15 is done (the ship as a build: decks, modules, the wallet, power, the Lab; save v7). After D25: CY14 is done (cabins, decor, visits; save v6; the approved looks served to the game). After D24: sprites are for combat only, as chibis, and ChatGPT's image request is written ([the combat sprites request](../design/combat-sprites-request.md)), with the Story Sandbox's Sprites page for reviewing the sheets. After D22: CY13 is done. After D21: Phase 4's packets are written (CY13–CY19, below). After D20: [life aboard](../design/life-aboard.md) is designed (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
 > to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
 > below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
 > the story session delivers its first world** ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)). The owner split the work (D4): **the story has its own session,** which writes the world
@@ -20,7 +20,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY19; decision numbers continue from D28.
+Packet ids run CY1–CY19; decision numbers continue from D29.
 
 ## Phase 1: the foundation
 
@@ -66,6 +66,11 @@ packet, or says why not.
 
 | # | Date | Asked | Answer |
 |---|---|---|---|
+| 1 | 2026-11-13 | **Ship battles** in the Lanes: the Homestretch against faction ships, fought from the crew's posts in pilot suits and the captain's Orders; a beaten ship strikes, drifts or flees, never explodes with its crew. The owner's note "Ship to ship combat" ([world.md](../design/world.md) WD44, D28) | Open: TC64 had deferred them |
+| 2 | 2026-11-13 | **Boarding enemy ships:** grid battles in their corridors, holds and reactor rooms, helmets sealed, with the ship's security as terrain; breaking a command core frees a fleet's Collared heroines at once. The owner's note "In-ship combat by boarding enemy ships" (WD45) | Open: TC65 has only enemies boarding our own decks, in Phase 6 |
+| 3 | 2026-11-13 | **Maintenance:** ship battles, boarding and hard jumps damage modules; the crew repairs them at posts over watches, by aptitude; a damaged module works weaker; never decay with time, never a chore; repairs can return the Steward's memories as Log Files. The owner's note "Ship maintenance and aptitudes for each character" (WD31, WD33, WD34) | Open: TC62 has no upkeep; aptitudes are built (CY16) |
+| 4 | 2026-11-13 | **A walkable city per world** in the Street look: districts, contacts, shops and investigation leads, beyond the node map. The owner's note "City exploration in multiple planetary settings with different environments" (WD27, WD28) | Open: TC50's node maps with scenes |
+| 5 | 2026-11-13 | **The Track:** the ring corridor around the Observation deck where off-duty Umas run laps, a place for bond scenes and a seed of the last layer (WD40) | Open |
 
 ## Across the repos
 
@@ -95,6 +100,7 @@ packet, or says why not.
 
 | When | What |
 |---|---|
+| **D28, now** | **Read the world v2:** [its page](../design/previews/world.html), or world by world in the Cyberpunk Story Sandbox (Worlds), where each world has a verdict box. Then the casting is written |
 | D24 | Hand ChatGPT [the combat sprites request](../design/previews/combat-sprites-request.html) with the private prompts (`content/design/character-looks/combat-sprites-prompts.md`) and reference boards (`sprite-refs/`); it saves the sheets to `content/design/character-looks/combat-masters/`. Then look at each pilot's identity sheet (S1) when it's back, in the Story Sandbox's **Sprites** page (`http://127.0.0.1:4322/#/sprites`), which plays each sheet at the phone's size beside her chibi and flags what's off. The spec is [character-sprites](../design/previews/character-sprites.html) (LK1–LK14) |
 | D20 | Read [life aboard](../design/previews/life-aboard.html) (the captain, bonds, cabins, duties, the ship, squads; TC55–TC74) and say what to change; silence keeps it. Then hand the story session its new line (above) to start [part two](../design/previews/story-brief-life-aboard.html): worldbuilding first |
 | Earlier | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |

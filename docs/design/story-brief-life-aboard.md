@@ -6,6 +6,9 @@
 > doesn't change it. The game's side of the change is [life-aboard.md](life-aboard.md) (TC55–TC74); when your base
 > elements land, the game session revises that design from them before writing its packets. Calls **SB12–SB16**, each a
 > suggestion you can change. Visual page: [previews/story-brief-life-aboard.html](previews/story-brief-life-aboard.html).
+>
+> **D28: the first base elements are in,** as [the world v2](world.md) (WD25–WD48): the plot, the eight worlds, the factions in depth,
+> the ship, the captain, the squads, life aboard and the relationships. Next: the owner's read, then the private casting.
 
 ## The short answer
 
