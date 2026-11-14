@@ -72,7 +72,7 @@ export function applyStep(save: Save, pack: StoryPack, step: EffectStep): Save {
     const fresh = !save.crew.some((m) => m.outfit === step.outfit)
     const crew = fresh ? [...save.crew, { ...newMember(step.outfit), xp: joiningXp(save, step.outfit) }] : save.crew
     const ship = step.kind === 'aboard' ? modulesOpenedBy(pack.casting, step.outfit).reduce(openModule, save.ship) : save.ship
-    const squads = fresh ? placeNewcomer(save.squads, pack.casting.squads ?? [], crew.map((m) => m.outfit), step.outfit) : save.squads
+    const squads = fresh ? placeNewcomer(save.squads, pack.casting.squads ?? [], crew.map((m) => m.outfit), step.outfit, save.operations.map((r) => r.squad)) : save.squads
     return { ...save, crew, ship, squads }
   }
   if (step.kind === 'refit') return { ...save, ship: addDeck(save.ship) }

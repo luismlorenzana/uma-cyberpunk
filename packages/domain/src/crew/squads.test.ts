@@ -56,6 +56,16 @@ describe('squads (TC69)', () => {
     const full = [sq('a', [1, 2, 3, 4]), sq('b', [5, 6, 7, 8]), sq('c', [9, 10, 11, 12]), sq('d', [13, 14, 15, 16])]
     expect(placeNewcomer(full, [], [17], 17)).toEqual(full)
   })
+  it('never takes Umas from a squad away on an operation: the canonical squad doesn’t form, a newcomer skips it (CY19)', () => {
+    const canonical = pack.casting.squads!
+    const away = [{ id: 'squad-1', name: 'First Squad', banner: 'cyan', leader: C, members: [C, A], cohesion: 0 }]
+    const placed = placeNewcomer(away, canonical, [C, A, D], D, ['squad-1'])
+    expect(placed.find((s) => s.id === 'squad-1')!.members).toEqual([C, A])
+    expect(placed.some((s) => s.id === 'sw-vanguard')).toBe(false)
+    expect(squadOf(placed, D)!.id).toBe('squad-2')
+    // With nobody away it would have formed from both squads.
+    expect(seedSquads(placed, canonical, [C, A, D]).map((s) => s.id)).toEqual(['sw-vanguard'])
+  })
   it('names a new squad by its order and a banner not yet flown; a leaver hands over or disbands', () => {
     expect(newSquad([sq('squad-1', [A])], B)).toMatchObject({ id: 'squad-2', name: 'Second Squad', banner: 'magenta', leader: B })
     expect(leaveSquad([sq('a', [A, B]), sq('b', [C])], A)).toEqual([{ ...sq('a', [B]), leader: B }, sq('b', [C])])

@@ -153,7 +153,7 @@ describe('the Chapter 1 loop (Phase 3’s exit)', () => {
     expect(slotLine({ kind: 'slot', lines: { '9000001': 'x' }, fallback: 'y' }, [9000003])).toEqual({ speaker: null, text: 'y' })
   })
 
-  it('names every locked node’s key and danger on both worlds, and every mission’s scenario exists', () => {
+  it('names every locked node’s key and danger on every world, and every mission’s scenario exists', () => {
     const save = ensureWorld(newSave('u', T0), pack)
     const progress = { missions: save.worlds.missions, chapters: [] }
     const keys = Object.values(pack.worlds).flatMap((w) => worldNodes(pack, w, save.story, progress)).filter((n) => n.state === 'locked').map((n) => [n.id, n.danger, n.key])
@@ -163,6 +163,8 @@ describe('the Chapter 1 loop (Phase 3’s exit)', () => {
       ['sw2-yards', 2, expect.stringMatching(/sw1-ch1/)],
       ['sw2-spire', 3, expect.stringMatching(/sw2-ch1-m1/)],
       ['sw2-storm-ridge', 4, 'Needs the storm shielding'], // CY15: a key the ship's build opens (TC66)
+      ['sw3-relay', 2, 'Needs the drive'], // CY19: a third world the Engines reach
+      ['sw3-ice', 3, 'Needs the drive'],
     ])
     for (const c of Object.values(pack.chapters)) for (const m of c.missions) expect(SCENARIOS[m.scenario!], m.id).toBeDefined()
   })

@@ -10,7 +10,7 @@
 - **Squads (TC69):** up to four, each with a name, a banner, a leader and one to four members. An Uma is in one squad
   at a time, or none. The **Quarters deck** shows a row a squad: rename it, move Umas between squads (or to a new one),
   and star a leader. The **deploy screen** picks a squad in one tap, or any four by hand.
-- **Newcomers:** the casting's canonical `squads` form once all their members are aboard. Anyone else joins the first
+- **Newcomers:** the casting's canonical `squads` form when a newcomer completes them aboard. Anyone else joins the first
   squad with room, else a new squad while there are fewer than four.
 - **Cohesion:** +1 for each battle a squad fights with three or more of its members, won or lost. It reaches level 1–5
   at 2, 5, 9, 14 and 20 battles. In battle:
@@ -73,7 +73,7 @@ flowchart LR
 | Size | Four squads at most; one to four members each; the leader is a member |
 | One squad each | An Uma is in one squad or none; moving her into another takes her out of hers |
 | A new game | One squad of the crew aboard, if anyone is (a v9 save migrates the same way) |
-| A newcomer | The casting's canonical squads form first; else she joins the first squad with room; else a new squad ("Second Squad", the next banner) while there are fewer than four; else none |
+| A newcomer | The casting's canonical squads form first, when she completes one aboard (never from a squad away on an operation, and never later: the Quarters arrange it then); else she joins the first squad with room that isn't away; else a new squad ("Second Squad", the next banner) while there are fewer than four; else none |
 | Renaming | 1 to 24 characters, on the Quarters deck |
 | A leader leaving | The next member leads; an empty squad disbands |
 | Away | A squad on an operation can't be changed until it's back |
@@ -190,6 +190,7 @@ The invented stand-in story shows every piece:
   - "Patrol the ring for the dock union": danger 1, 2 watches, dock-union +1;
   - "Cut the muster's supply lines": danger 2, 3 watches, steel-muster −1, after Chapter 1.
 - **A standing step:** Chapter 1's debrief moves dock-union +1.
+- **A third story operation (CY19):** sw3's relay, for the union (+1), once the Engines' drive reaches sw3.
 - **A finale, Chapter 2 on sw2's storm ridge:** it needs the storm shielding to reach. It has two readiness needs: the
   Sensors built (else fog) and dock-union at Friendly (else hazards).
 

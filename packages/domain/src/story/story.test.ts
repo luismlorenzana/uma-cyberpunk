@@ -36,7 +36,7 @@ describe('bond scenes (CY13)', () => {
   const errorsOf = (files: Record<string, unknown>) => { const r = parsePack(files); return r.pack ? checkPack(r.pack).filter((f) => f.level === 'error').map((f) => `${f.file} ${f.where}: ${f.message}`) : r.errors.map((e) => e.message) }
   it('reads the stand-in’s bond files, gates and epilogues', () => {
     const pack = standIn()
-    expect(Object.keys(pack.bonds).sort()).toEqual(['9000001', '9000002'])
+    expect(Object.keys(pack.bonds).sort()).toEqual(['9000001', '9000002', '9000003', '9000004'])
     expect(pack.bonds['9000001']!.scenes.map((s) => s.rank)).toEqual([2, 4, 6, 8, 10])
     expect(pack.casting.bondGates).toEqual({ '4': 'chapter:sw1-ch1', '6': 'chapter:sw2-ch1' })
     expect(pack.bonds['9000002']!.epilogue).toMatch(/med bay/)

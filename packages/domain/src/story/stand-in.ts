@@ -1,6 +1,8 @@
 // The invented stand-in story (CY9, CY12, CY18), in git: two worlds and two leads' Chapter 1s, each with a battle, an
 // interjection slot, a crew Uma who joins and a debrief, two Log Files and a Call; every step kind is used. CY18 adds a
-// canonical squad, two story operations, a second faction and a standing step, and a finale behind the storm shielding. CY12's loop
+// canonical squad, two story operations, a second faction and a standing step, and a finale behind the storm shielding.
+// CY19 adds bond scenes for the two crew Umas and a third world, sw3, reached with the Engines' drive, with its own event
+// pool and an operation: every life-aboard system has something to do. CY12's loop
 // plays it end to end: Lead A's Chapter 1 on World sw1, her pickup and room, the jump to sw2, Lead B's, and hers. Invented ids in uma-farm's style (Umas 9000001–9000004, the heroine `stand-in-1`,
 // slugs `sw1-…`) and plain labels, never a name. The game falls back to it until the story session's files are served.
 const LEAD = 9000001
@@ -44,6 +46,16 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       { id: 'sw2-yards', danger: 2, needs: ['chapter:sw1-ch1'], links: ['sw2-gate', 'sw2-spire'], x: 50, y: 45 },
       { id: 'sw2-spire', danger: 3, needs: ['mission:sw2-ch1-m1'], links: ['sw2-yards', 'sw2-storm-ridge'], x: 80, y: 25 },
       { id: 'sw2-storm-ridge', danger: 4, needs: ['ship:storm'], links: ['sw2-spire'], x: 85, y: 75 },
+    ],
+  },
+  'worlds/sw3.json': {
+    schemaVersion: 1, id: 'sw3', look: 'A third stand-in world: a relay station on a frozen moon.', mood: 'Cold, quiet and very far out.', factions: ['dock-union'], x: 88, y: 80, region: 'outer',
+    locations: [
+      { id: 'sw3-relay', danger: 2, needs: ['ship:drive-1'], links: ['sw3-ice'], x: 30, y: 50 },
+      { id: 'sw3-ice', danger: 3, needs: ['ship:drive-1'], links: ['sw3-relay'], x: 70, y: 45 },
+    ],
+    operations: [
+      { id: 'sw3-op-relay', title: 'Keep the relay running for the union', faction: 'dock-union', danger: 2, watches: 2, reward: { credits: 120, alloy: 10, data: 20, standing: 1 } },
     ],
   },
   'chapters/sw1-ch1.json': {
@@ -182,6 +194,72 @@ export const STAND_IN_FILES: Record<string, unknown> = {
         { text: 'Let it go', pass: {}, passText: 'Not our business.' }] },
       { id: 'ring-lights', title: 'The ring lights up', text: 'The whole ring lights up for a festival as the ship passes.', choices: [
         { text: 'Slow down and watch', pass: { rapport: 5 }, passText: 'The crew presses to the windows.' }] },
+    ],
+  },
+  'events/outer.json': {
+    schemaVersion: 1, region: 'outer',
+    events: [
+      { id: 'outer-ice-field', title: 'An ice field', text: 'The drive drops the ship into a slow river of ice.', choices: [
+        { text: 'Thread it', check: { post: 'pilot', band: 'speed', at: 3 }, pass: { data: 15 }, fail: { alloy: -5 }, passText: 'The sensors log every shard on the way through.', failText: 'A shard chips the hull.' },
+        { text: 'Go around', pass: {}, passText: 'A long way round, and nothing lost.' }] },
+      { id: 'outer-beacon', title: 'An old beacon', text: 'A beacon older than the relay still calls on a dead channel.', choices: [
+        { text: 'Decode it', check: { post: 'navigator', band: 'wit', at: 3 }, pass: { data: 20 }, passText: 'A survey of the moon, decades old and still good.', failText: 'Static all the way down.' },
+        { text: 'Leave it calling', pass: { rapport: 5 }, passText: 'The crew listens a while before the jump.' }] },
+    ],
+  },
+  'bonds/9000003.json': {
+    schemaVersion: 1, outfit: 9000003,
+    epilogue: 'Crew C still keeps the ship’s tools in order, and still lets {captain} borrow them first.',
+    talk: {
+      tech: ['I took the Hangar’s lift motor apart. It’s faster now. Don’t ask how.', 'Give me a broken thing and an evening. That’s my idea of rest.'],
+      training: ['Drills at dawn. You should come. You won’t.', 'The Sim Pod lies about recoil. I’ve filed a complaint with myself.'],
+    },
+    scenes: [
+      { rank: 2, place: 'hangar', steps: [
+        { line: { speaker: 9000003, text: 'Hand me that driver. No, the other one. Thanks, {captain}.' } },
+        { captain: [
+          { tone: 'warm', text: 'Show me what you’re fixing.', rapport: 20 },
+          { tone: 'steady', text: 'Is the rig ready for the next drop?', rapport: 10 },
+        ] },
+      ] },
+      { rank: 4, place: 'cabin', steps: [
+        { line: { speaker: 9000003, text: 'I keep spare parts under the bunk. In case the ship needs me at night.' } },
+        { captain: [
+          { tone: 'wry', text: 'The ship has other engineers.', rapport: 15 },
+          { tone: 'warm', text: 'The ship is lucky, then.', rapport: 25 },
+        ] },
+      ] },
+      { rank: 8, place: 'hangar', steps: [
+        { line: { speaker: 9000003, text: 'You never ask me to be anything but what I am. Do you know how rare that is?' } },
+        { path: {
+          trust: [{ line: { speaker: 9000003, text: 'Then I’ll keep your rig running. Always.' } }],
+          heart: [{ line: { speaker: 9000003, text: 'Then stay. I’ll show you how the lift works. Slowly.' } }],
+        } },
+      ] },
+    ],
+  },
+  'bonds/9000004.json': {
+    schemaVersion: 1, outfit: 9000004,
+    epilogue: 'Crew D still climbs to the highest point of every world they land on, and waves down at {captain}.',
+    talk: {
+      nature: ['The yard cranes had birds nesting on them. I counted forty.', 'Plants on a ship are a kind of hope. Water mine when I’m away.'],
+      stars: ['Out past sw3 the stars stop twinkling. They just stare.', 'I name the ones without names. Don’t tell the navigator.'],
+    },
+    scenes: [
+      { rank: 2, place: 'observation-deck', steps: [
+        { line: { speaker: 9000004, text: 'You found my spot. Fine. You can share it.' } },
+        { captain: [
+          { tone: 'warm', text: 'It’s a good spot.', rapport: 20 },
+          { tone: 'wry', text: 'I’m the captain. Every spot is my spot.', rapport: 10 },
+        ] },
+      ] },
+      { rank: 8, place: 'garden', steps: [
+        { line: { speaker: 9000004, text: 'I climbed every tower on the terraces looking for a way out. This ship is the way.' } },
+        { path: {
+          trust: [{ line: { speaker: 9000004, text: 'So I’m staying. Someone has to watch your back from up high.' } }],
+          heart: [{ line: { speaker: 9000004, text: 'So I’m staying. With you, if you’ll have me.' } }],
+        } },
+      ] },
     ],
   },
   'bonds/9000001.json': {

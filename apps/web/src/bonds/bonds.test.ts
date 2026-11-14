@@ -96,3 +96,16 @@ describe('the runner’s captain and path steps', () => {
     expect(effects).toEqual([{ kind: 'rapport', amount: 10 }])
   })
 })
+
+describe('bond gates on any key (CY19)', () => {
+  it('opens a rank gated on the ship’s capability or a faction’s standing', async () => {
+    const { gateOpenFor } = await import('./bonds')
+    const { newSave, parsePack, STAND_IN_FILES, shipWith } = await import('@cyber/domain')
+    const base = parsePack(STAND_IN_FILES).pack!
+    const pack = { ...base, casting: { ...base.casting, bondGates: { '4': 'ship:sensors', '6': 'standing:dock-union:1' } } }
+    let s = newSave('u', '2026-11-13T00:00:00.000Z')
+    expect([gateOpenFor(pack, s)(4), gateOpenFor(pack, s)(6)]).toEqual([false, false])
+    s = { ...s, ship: { ...shipWith(['bridge', 'hangar', 'quarters', 'log', 'engineering']), modules: [...s.ship.modules, { id: 'sensors', deck: 1, slot: 4, level: 1, building: null }] }, standing: { 'dock-union': 1 } }
+    expect([gateOpenFor(pack, s)(4), gateOpenFor(pack, s)(6)]).toEqual([true, true])
+  })
+})

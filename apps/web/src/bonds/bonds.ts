@@ -1,15 +1,16 @@
 // Bonds between the screens and the save (CY13, TC56): the story's gates, the catch-up, rapport from a battle's cues and
 // from replies, a bond scene's effects, the scene that's ready. Pure, tested headless; the rank rules are the domain's.
 import {
-  addRapport, BOND_TUNING, catchUpFactor, choosePath, finishedChapters, keyMet, readyScene, seeBondScene, settleBond, type BondFile, type CrewMember, type Save,
+  addRapport, BOND_TUNING, catchUpFactor, choosePath, finishedChapters, keyMet, readyScene, seeBondScene, settleBond, shipCapabilities, standingNow, type BondFile, type CrewMember, type Save,
   type StoryPack,
 } from '@cyber/domain'
 import type { BondEffect } from '../story/runner'
 
-/** Whether bond rank `rank` is open: no key named for it, or the key the story names is met. */
+/** Whether bond rank `rank` is open: no key named for it, or the key the story names is met (any kind: a chapter, a
+ * mission, a File, the ship's capability or a faction's standing). */
 export const gateOpenFor = (pack: StoryPack | null, save: Save) => (rank: number): boolean => {
   const key = pack?.casting.bondGates?.[String(rank)]
-  return !key || !pack || keyMet(key, save.story, { missions: save.worlds.missions, chapters: finishedChapters(pack, save.story) })
+  return !key || !pack || keyMet(key, save.story, { missions: save.worlds.missions, chapters: finishedChapters(pack, save.story), capabilities: shipCapabilities(save.ship), standing: standingNow(pack, save) })
 }
 
 const withMember = (save: Save, outfit: number, change: (m: CrewMember) => CrewMember): Save =>

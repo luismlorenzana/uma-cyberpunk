@@ -96,9 +96,14 @@ a look or mood is a `bible`.
   bucket `STORY_BUCKET` and its cost table are Phase 4's.
 - **The web's one seam** (`apps/web/src/story/load.ts`) reads the index through uma-kit's content client, verifies each
   file by its hash and parses the lot. On a 404 (no release locally; production now), or with
-  `VITE_CYBER_STORY=stand-in`, it plays **the stand-in**: two invented worlds (`sw1`, `sw2`) and two leads' Chapter 1s,
-  each with a battle, an interjection slot, a crew Uma who joins and a debrief, two Log Files and a Call, using every
-  step kind, with invented ids (Umas 9000001–9000004, the heroine `stand-in-1`) and plain labels ([the loop](#the-chapter-1-loop-cy12)).
+  `VITE_CYBER_STORY=stand-in`, it plays **the stand-in**: invented worlds and two leads' Chapter 1s, with invented ids
+  (Umas 9000001–9000004, the heroine `stand-in-1`) and plain labels ([the loop](#the-chapter-1-loop-cy12)):
+  - **sw1 and sw2**, each Chapter 1 with a battle, an interjection slot, a crew Uma who joins and a debrief, two Log
+    Files and a Call, using every step kind;
+  - **life aboard** (CY13–CY19): bond scenes and tastes for all four Umas, the Vanguard squad, two factions, three
+    story operations, two event pools, a standing step;
+  - **a storm-ridge finale** on sw2 behind the storm shielding;
+  - **sw3**, a third world the Engines' drive reaches ([the life-aboard loop](#the-life-aboard-loop-cy19)).
 
 ## The player
 
@@ -141,6 +146,43 @@ scene on the map or a debrief, the crew aboard. So in Lead B's chapter, Lead A s
 after the battle only if she was deployed (the test plays both).
 
 **Chapter 1s never run back to back** in the real game (TC51); the stand-in is too small to show it and doesn't try.
+
+## The life-aboard loop (CY19)
+
+Phase 4's exit (TC74). A headless test (`apps/web/src/mission/aboard.test.ts`) plays a new game through the stand-in on
+fixed seeds. It plays both Chapter 1s and the finale, every battle at rules version 3 with the ship's life frozen into
+its input. Between chapters it jumps between known worlds while the builds finish.
+
+**Every stop aboard** does what a player does, counting the taps:
+- closes the ship-log card and answers an event card;
+- runs Auto-assign, and puts someone in the Workshop's artisan post if it's empty;
+- replies to messages;
+- makes three visits: Lead A gets a talk and a decoration (a gift once her cabin glows at three), and the Uma with the
+  lowest bond gets a talk;
+- places a piece in Lead A's favourite style where it raises her Comfort;
+- plays any bond scene that's ready;
+- builds (the Lab, the Sensors, the Shield, the Engines, the Workshop) and researches when the wallet allows;
+- sends a squad on an operation when no story mission waits, but only one Comms shows as a full success;
+- powers the systems built.
+
+**What it proves**, with every save through JSON and the parser:
+
+| Measure | Result |
+|---|---|
+| The story | Both Chapter 1s and the storm-ridge finale won; sw3 reached by the drive |
+| Bonds | Every rank rises (5, 8, 5, 5); Lead A reaches rank 8 and picks Heart |
+| A cabin | Lead A's at Comfort 3, with the Workshop's sporty pieces |
+| The ship log | Every watch pays once the posts are held |
+| Builds and research | The Lab, the Sensors, the Shield Projector, the Engines and the Workshop; three projects |
+| Operations | Reports on the log; four won in full |
+| Standing | The union to Friendly; the muster moved both ways |
+| The finale | Fog listed while the Sensors weren't built, none at the battle; readiness rose |
+| Cohesion | The Vanguard fought together three times |
+| Resume | Mid-build, mid-operation, mid-battle (the replay matches) and mid-scene (it plays again from its start) |
+| Time aboard (TC72) | At most 35 taps and about 100 s a stop at the scene check's pace, under five minutes |
+
+The battle's side is the simulator's balance pass (`pnpm sim balance`, D31): life aboard wins 20.6 points more often on
+average than a bare squad, every scenario gaining and none at 100%.
 
 ## The story state (save v2)
 

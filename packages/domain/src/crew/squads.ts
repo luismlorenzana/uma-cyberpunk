@@ -54,11 +54,14 @@ export function setSquad(squads: readonly Squad[], next: Squad): Squad[] {
   return squads.some((s) => s.id === next.id) ? squads.map((s) => (s.id === next.id ? next : s)) : [...squads, next]
 }
 
-/** Canonical squads (the casting's `squads`): each seeded once all its members are aboard and none is in a squad yet. */
-export function seedSquads(squads: readonly Squad[], canonical: readonly Omit<Squad, 'cohesion'>[], aboard: readonly number[]): Squad[] {
+/** Canonical squads (the casting's `squads`): each seeded when a newcomer completes it aboard, taking its members from
+ * their squads; never from a squad away on an operation (`away`, squad ids), and never later behind the player's back:
+ * the Quarters arrange it then. */
+export function seedSquads(squads: readonly Squad[], canonical: readonly Omit<Squad, 'cohesion'>[], aboard: readonly number[], away: readonly string[] = []): Squad[] {
   let out = [...squads]
   for (const c of canonical) {
     if (out.some((s) => s.id === c.id) || !c.members.every((m) => aboard.includes(m))) continue
+    if (out.some((s) => away.includes(s.id) && s.members.some((m) => c.members.includes(m)))) continue
     // A canonical squad takes its members from wherever they were (the first squad of a new game, usually).
     out = out.map((s) => ({ ...s, members: s.members.filter((m) => !c.members.includes(m)) })).filter((s) => s.members.length > 0)
       .map((s) => (s.members.includes(s.leader) ? s : { ...s, leader: s.members[0]! }))
@@ -70,12 +73,12 @@ export function seedSquads(squads: readonly Squad[], canonical: readonly Omit<Sq
 const ORDINAL = ['First', 'Second', 'Third', 'Fourth'] as const
 export const BANNERS = ['cyan', 'magenta', 'amber', 'lime'] as const
 
-/** A newcomer's squad: canonical squads seed first; else she joins the first squad with room; else a new squad while
- * there are fewer than four; else none (the Quarters place her). */
-export function placeNewcomer(squads: readonly Squad[], canonical: readonly Omit<Squad, 'cohesion'>[], aboard: readonly number[], outfit: number): Squad[] {
-  const out = seedSquads(squads, canonical, aboard)
+/** A newcomer's squad: canonical squads seed first; else she joins the first squad with room that isn't away; else a new
+ * squad while there are fewer than four; else none (the Quarters place her). */
+export function placeNewcomer(squads: readonly Squad[], canonical: readonly Omit<Squad, 'cohesion'>[], aboard: readonly number[], outfit: number, away: readonly string[] = []): Squad[] {
+  const out = seedSquads(squads, canonical, aboard, away)
   if (squadOf(out, outfit)) return out
-  const room = out.find((s) => s.members.length < SQUAD_TUNING.maxMembers)
+  const room = out.find((s) => s.members.length < SQUAD_TUNING.maxMembers && !away.includes(s.id))
   if (room) return out.map((s) => (s === room ? { ...s, members: [...s.members, outfit] } : s))
   return out.length < SQUAD_TUNING.maxSquads ? [...out, newSquad(out, outfit)] : out
 }
