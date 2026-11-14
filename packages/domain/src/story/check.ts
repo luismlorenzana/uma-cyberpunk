@@ -2,6 +2,7 @@
 // `aboard` and only a Chapter 1 has one; every key in `needs` is real; a slot keys only leads), todos (a scene likely
 // over three minutes, TC36; a lead in fewer than two crossed paths; a Chapter 1 with more than two battles, TC51) and
 // notes (counts). It builds Uma Story's `checks.json` (uma-platform P141) less the files' hashes, which the script adds.
+import { CAPABILITY_NAME } from '../ship/modules'
 import type { Chapter, Layer, Scene, Step, StoryPack } from './types'
 
 export interface Finding { level: 'error' | 'todo' | 'note'; file: string; where: string; message: string }
@@ -60,7 +61,7 @@ export function checkPack(pack: StoryPack): Finding[] {
   const missionIds = new Set(Object.values(pack.chapters).flatMap((c) => c.missions.map((m) => m.id)))
   const key = (k: string): boolean => {
     const [kind, id] = k.split(':') as [string, string]
-    return kind === 'chapter' ? !!pack.chapters[id] : kind === 'mission' ? missionIds.has(id) : !!pack.files[id]
+    return kind === 'chapter' ? !!pack.chapters[id] : kind === 'mission' ? missionIds.has(id) : kind === 'ship' ? id in CAPABILITY_NAME : !!pack.files[id]
   }
   for (const l of pack.casting.leads) if (!pack.worlds[l.world]) err('casting.json', `leads[${pack.casting.leads.indexOf(l)}].world`, `no world ${l.world}`)
   for (const w of Object.values(pack.worlds)) {

@@ -34,7 +34,8 @@ export const STAND_IN_FILES: Record<string, unknown> = {
     locations: [
       { id: 'sw2-gate', danger: 2, needs: ['chapter:sw1-ch1'], links: ['sw2-yards'], x: 20, y: 65 },
       { id: 'sw2-yards', danger: 2, needs: ['chapter:sw1-ch1'], links: ['sw2-gate', 'sw2-spire'], x: 50, y: 45 },
-      { id: 'sw2-spire', danger: 3, needs: ['mission:sw2-ch1-m1'], links: ['sw2-yards'], x: 80, y: 25 },
+      { id: 'sw2-spire', danger: 3, needs: ['mission:sw2-ch1-m1'], links: ['sw2-yards', 'sw2-storm-ridge'], x: 80, y: 25 },
+      { id: 'sw2-storm-ridge', danger: 4, needs: ['ship:storm'], links: ['sw2-spire'], x: 85, y: 75 },
     ],
   },
   'chapters/sw1-ch1.json': {
@@ -113,6 +114,8 @@ export const STAND_IN_FILES: Record<string, unknown> = {
           { slot: { lines: { [String(LEAD)]: 'Not bad. The ship could use someone who keeps us standing.' }, fallback: 'Lead B looks up at the ship for a long moment.' } },
           { line: { speaker: 9000002, text: 'Fine. Someone has to patch you all up.' } },
           { file: { file: 'sw2-file-1', line: 1 } },
+          { narrate: 'Before the ship leaves, the yard crews weld a new deck onto its hull.' },
+          { refit: true },
           { aboard: 9000002 },
         ],
       },

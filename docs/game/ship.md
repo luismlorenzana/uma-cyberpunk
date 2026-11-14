@@ -6,7 +6,7 @@
 
 ## The short answer
 
-- **The ship is the home screen:** a side cutaway of its decks, one hotspot a room. Four rooms are open from the start;
+- **The ship is the home screen:** a side cutaway of its decks, which the player builds since CY15 ([ship-build.md](ship-build.md)); a tap on a room opens its quick look. Four rooms are open from the start;
   three open when the lead whose story names them comes aboard.
 - **The Bridge** shows the **star map** (the worlds known; a tap, a jump card, travel, no fuel and no clock), then the
   current **world's map**: each location locked, available or cleared, with its danger and, when locked, its key.
@@ -76,11 +76,13 @@ goes straight to the Bridge and plays the first scene (TC36, [the loop](story.md
 ## Rooms opening with leads (TC49)
 
 Each lead's `casting.json` entry names the room she opens (`opens`). When her `aboard` step plays, she joins the crew
-and the room opens at once; the ship's cutaway lights it, and its quick look turns from "Opens when … comes aboard" to
+and the room opens at once (since CY15, placed at level 1 in the first free slot, else unlocked to build: [ship-build.md](ship-build.md)); the ship's cutaway lights it, and its quick look turns from "Opens when … comes aboard" to
 the room's summary. On the stand-in, Lead A opens **Comms** and Lead B the **Store**; the **Sim Pod** waits for a
 later lead ("Opens later in the story").
 
 ## The save (v3)
+
+> Since CY15 (save v7) `ship` is the build: decks, modules, levels, unlocks, power and research, with a `wallet` beside it ([ship-build.md](ship-build.md#the-save-v7)). The table below is v3's, as older saves hold it.
 
 | Field | Holds |
 |---|---|

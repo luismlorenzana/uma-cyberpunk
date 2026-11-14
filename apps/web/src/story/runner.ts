@@ -3,7 +3,7 @@
 // who has one, else its fallback; a choice and a Call wait for a pick and play its steps; a battle hands the mission to
 // the flow; the rest change the story at once. Skipping passes lines, emotes and waits until the next choice. No three.js
 // and no React: the screen comes in as a small interface, so it's tested headless.
-import type { BondPath, Call, CaptainOption, ChoiceOption, Romance, Scene, Speaker, Step, StoryPack } from '@cyber/domain'
+import type { BondPath, Call, CaptainOption, ChoiceOption, EffectStep, Romance, Scene, Speaker, Step, StoryPack } from '@cyber/domain'
 
 export interface SceneUi {
   /** Shows a line (by its speaker, or narration) and resolves when the player taps on. */
@@ -16,8 +16,8 @@ export interface SceneUi {
   call(call: Call): Promise<number>
   /** Plays a mission (CY10's flow); the scene goes on after it. */
   battle(mission: string): Promise<void>
-  /** A step that changes the story or the crew: flag, lead, file, anomaly, join, aboard. */
-  effect(step: Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' }>): void
+  /** A step that changes the story, the crew or the ship: flag, lead, file, anomaly, join, aboard, refit. */
+  effect(step: EffectStep): void
   /** The captain's choice (CY13): resolves with the option picked. Without it, the first. */
   captain?(options: readonly CaptainOption[]): Promise<number>
   /** Trust or Heart (CY13). Without it, Trust. */

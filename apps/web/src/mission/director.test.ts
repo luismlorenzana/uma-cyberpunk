@@ -1,5 +1,5 @@
 // The director, headless (CY10): the stand-in chapter played through on its rules, every step of a mission, and resume.
-import { newMember, newSave, parsePack, parseSave, STAND_IN_FILES, type Save, type StoryPack } from '@cyber/domain'
+import { newMember, newSave, openRooms, parsePack, parseSave, STAND_IN_FILES, type Save, type StoryPack } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import {
   afterMission, applyStep, atNode, cantDeploy, chapterOf, closeResults, defaultSquad, deploy, ensureWorld, finishBattle, finishMission, lockedMembers, markSeen,
@@ -63,7 +63,7 @@ describe('the director', () => {
     save = applyStep(save, pack, { kind: 'aboard', outfit: 9000001 })
     expect(save.crew).toEqual([newMember(9000003), newMember(9000001)])
     expect(applyStep(save, pack, { kind: 'join', outfit: 9000003 }).crew).toHaveLength(2)
-    expect(save.ship.rooms).toContain('comms')
+    expect(openRooms(save.ship)).toContain('comms')
     save = applyStep(save, pack, { kind: 'lead', lead: 'x' })
     expect(save.story.leads).toEqual(['x'])
   })

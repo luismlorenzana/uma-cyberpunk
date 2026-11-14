@@ -1,6 +1,7 @@
 // The ship's rooms (CY10, TC9, TC49): the game's list and order. Four are open from the start; three open when the lead
 // whose casting names them comes aboard. Which lead opens which is story data (`casting.json`'s `opens`).
 import type { Casting } from '../story/types'
+import { MODULE_IDS, type ModuleId } from './modules'
 
 export type RoomId = 'bridge' | 'hangar' | 'quarters' | 'log' | 'store' | 'comms' | 'simpod'
 export interface Room { id: RoomId; name: string; fromStart: boolean }
@@ -30,3 +31,7 @@ export function roomView(casting: Pick<Casting, 'leads'>, open: readonly RoomId[
 /** The rooms a lead's coming aboard opens. */
 export const roomsOpenedBy = (casting: Pick<Casting, 'leads'>, outfit: number): RoomId[] =>
   casting.leads.filter((l) => l.outfit === outfit && l.opens && ROOM_IDS.includes(l.opens as RoomId)).map((l) => l.opens as RoomId)
+
+/** The modules a lead's coming aboard opens (CY15: `opens` may name any module). */
+export const modulesOpenedBy = (casting: Pick<Casting, 'leads'>, outfit: number): ModuleId[] =>
+  casting.leads.filter((l) => l.outfit === outfit && l.opens && MODULE_IDS.includes(l.opens as ModuleId)).map((l) => l.opens as ModuleId)

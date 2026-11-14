@@ -3,7 +3,7 @@
 // runner, every battle auto-played on fixed seeds. Every save goes through JSON and the parser, as resume would.
 import { applyBattleAction, chooseTurn, startBattle, TUNING, type BattleAction } from '@cyber/battle'
 import {
-  levelOf, loadoutOf, newMember, newSave, parsePack, parseSave, sceneSeconds, STAND_IN_FILES, worldNodes, type Chapter, type Mission, type Save, type Scene,
+  levelOf, loadoutOf, newMember, newSave, openRooms, parsePack, parseSave, sceneSeconds, STAND_IN_FILES, worldNodes, type Chapter, type Mission, type Save, type Scene,
   type StoryPack,
 } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
@@ -116,12 +116,16 @@ describe('the Chapter 1 loop (Phase 3’s exit)', () => {
     expect(log).toEqual(['sw1-ch1-s1', 'sw1-ch1-s2', 'sw1-ch1-s3', 'sw1-ch1-debrief', 'sw2-ch1-s1', 'sw2-ch1-s2', 'sw2-ch1-s3', 'sw2-ch1-debrief'])
     // Lead A aboard, her room open, after her chapter only.
     expect(afterA.crew.map((m) => m.outfit)).toEqual([9000003, 9000001])
-    expect(afterA.ship.rooms).toContain('comms')
-    expect(afterA.ship.rooms).not.toContain('store')
+    expect(openRooms(afterA.ship)).toContain('comms')
+    expect(openRooms(afterA.ship)).not.toContain('store')
     expect(toB).toEqual({ text: "Next: jump to sw2 from the Bridge's star map", to: '/room/bridge?view=stars' })
     // Both leads and both crew Umas aboard, both rooms open, both missions won.
     expect(save.crew.map((m) => m.outfit)).toEqual([9000003, 9000001, 9000004, 9000002])
-    expect(save.ship.rooms).toEqual(expect.arrayContaining(['comms', 'store']))
+    expect(openRooms(save.ship)).toEqual(expect.arrayContaining(['comms', 'store']))
+    // Lead B's refit (CY15) added a deck; the results filled the wallet.
+    expect(save.ship.decks).toBe(3)
+    expect(save.wallet.credits).toBeGreaterThan(500)
+    expect(save.wallet.data).toBeGreaterThan(20)
     expect(save.worlds.missions).toEqual(['sw1-ch1-m1', 'sw2-ch1-m1'])
     expect(timeline(pack, save).map((s) => s.id)).toEqual(log)
     expect(save.mission).toBeNull()
@@ -158,6 +162,7 @@ describe('the Chapter 1 loop (Phase 3’s exit)', () => {
       ['sw2-gate', 2, expect.stringMatching(/sw1-ch1/)],
       ['sw2-yards', 2, expect.stringMatching(/sw1-ch1/)],
       ['sw2-spire', 3, expect.stringMatching(/sw2-ch1-m1/)],
+      ['sw2-storm-ridge', 4, 'Needs the storm shielding'], // CY15: a key the ship's build opens (TC66)
     ])
     for (const c of Object.values(pack.chapters)) for (const m of c.missions) expect(SCENARIOS[m.scenario!], m.id).toBeDefined()
   })

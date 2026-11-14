@@ -7,6 +7,7 @@ What the game **is**, as built. Every packet that ships a rule writes or updates
 | [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
 | [The battle](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break; the roles' Back units, Tech, chance skills, items, Stride, the bench call; objectives, the forecast, and the tuning tables, live (CY4, CY5) | [battle.html](previews/battle.html) |
 | [The ship and the worlds](ship.md) | The rooms and their keys, rooms opening with leads, the star map, a world's map, the Continue card, save v3 (CY10, CY12) | [ship.html](previews/ship.html) |
+| [The ship as a build](ship-build.md) | Decks and modules, levels, building over watches, unlocks, the wallet, the reactor's pips and power per sortie, the Lab, the map by capability, the refit, save v7; the module and project tables, live (CY15) | [ship-build.html](previews/ship-build.html) |
 | [The mission flow](missions.md) | Briefing, deploy, battle, results and aboard; resume at every step (CY10) | [missions.html](previews/missions.html) |
 | [The crew](crew.md) | Bands from 5★ stats, roles, Stride, level and Strain; the Quarters; save v4 (CY11) | [crew.html](previews/crew.html) |
 | [The Hangar](hangar.md) | Slots, Capacity and Load, the swap preview, saved loadouts, best for her role, the starter parts (CY11) | [hangar.html](previews/hangar.html) |

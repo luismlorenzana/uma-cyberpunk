@@ -30,6 +30,8 @@ export type Step =
   | { kind: 'join'; outfit: number }
   /** The lead comes aboard: Chapter 1's last step. */
   | { kind: 'aboard'; outfit: number }
+  /** A story refit (CY15): the ship gains a deck. */
+  | { kind: 'refit' }
   | { kind: 'call'; call: string }
   /** Plays a mission of the same chapter. */
   | { kind: 'battle'; mission: string }
@@ -38,7 +40,9 @@ export type Step =
   /** Trust or Heart (CY13, TC56): only in a bond scene at rank 8 (or 10, to change it), after she says what she hopes for. */
   | { kind: 'path'; trust: Step[]; heart: Step[] }
 export type StepKind = Step['kind']
-export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path']
+/** The steps that change the save as they play: the story state, the crew, the ship. */
+export type EffectStep = Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' | 'refit' }>
+export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path', 'refit']
 
 export interface ChoiceOption { text: string; lead?: string; then: Step[] }
 

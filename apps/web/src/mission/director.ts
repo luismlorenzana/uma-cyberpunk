@@ -3,14 +3,14 @@
 // rooms), and the mission's steps: briefing → deploy → battle → results → aboard. Every function returns a new save.
 import type { BattleInput } from '@cyber/battle'
 import {
-  addItem, afterMission as crewAfterMission, fillFile, finishedChapters, gainLead, newMember, resting, roomsOpenedBy, seeScene, setAnomaly, setFlag, type Chapter,
-  missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
+  addDeck, addItem, afterMission as crewAfterMission, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
+  setAnomaly, setFlag, shipCapabilities, type Chapter, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
 import { afterBattleBonds } from '../bonds/bonds'
 
 export type Due = { kind: 'scene'; chapter: Chapter; scene: Scene } | { kind: 'mission'; chapter: Chapter; mission: Mission } | { kind: 'none' }
 
-export const progressOf = (pack: StoryPack, save: Save): WorldProgress => ({ missions: save.worlds.missions, chapters: finishedChapters(pack, save.story) })
+export const progressOf = (pack: StoryPack, save: Save): WorldProgress => ({ missions: save.worlds.missions, chapters: finishedChapters(pack, save.story), capabilities: shipCapabilities(save.ship) })
 
 const chaptersOn = (pack: StoryPack, world: string): Chapter[] =>
   Object.values(pack.chapters).filter((c) => c.world === world).sort((a, b) => a.number - b.number || a.id.localeCompare(b.id))
@@ -63,14 +63,15 @@ export function joiningXp(save: Save, outfit: number): number {
   return Math.max(mean, fought)
 }
 
-/** A story step's change: the story state, or the crew (join, aboard: she joins at the squad's level), whose coming
- * aboard opens her rooms. */
-export function applyStep(save: Save, pack: StoryPack, step: Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' }>): Save {
+/** A story step's change: the story state, the crew (join, aboard: she joins at the squad's level), whose coming
+ * aboard opens her modules (placed at once where a slot is free, CY15), or the ship (a refit adds a deck). */
+export function applyStep(save: Save, pack: StoryPack, step: EffectStep): Save {
   if (step.kind === 'join' || step.kind === 'aboard') {
     const crew = save.crew.some((m) => m.outfit === step.outfit) ? save.crew : [...save.crew, { ...newMember(step.outfit), xp: joiningXp(save, step.outfit) }]
-    const rooms = step.kind === 'aboard' ? [...new Set([...save.ship.rooms, ...roomsOpenedBy(pack.casting, step.outfit)])] : save.ship.rooms
-    return { ...save, crew, ship: { rooms } }
+    const ship = step.kind === 'aboard' ? modulesOpenedBy(pack.casting, step.outfit).reduce(openModule, save.ship) : save.ship
+    return { ...save, crew, ship }
   }
+  if (step.kind === 'refit') return { ...save, ship: addDeck(save.ship) }
   const s = save.story
   const story = step.kind === 'flag' ? setFlag(s, step.flag, step.set) : step.kind === 'lead' ? gainLead(s, step.lead) : step.kind === 'file' ? fillFile(s, step.file, step.line) : setAnomaly(s, step.anomaly, step.open)
   return { ...save, story }
@@ -110,9 +111,12 @@ export function ensureWorld(save: Save, pack: StoryPack): Save {
   return { ...save, worlds: { ...save.worlds, current: first, known: { [first]: { cleared: [] } } } }
 }
 
+/** A watch passes (CY13, CY15): the counter, and every build and the Lab's project a watch on. */
+export const passAWatch = (save: Save): Save => ({ ...save, watch: save.watch + 1, ship: passWatch(save.ship).ship })
+
 /** A jump: the ship is at the world, which is known from now on, and a watch passes (CY13). */
 export const travel = (save: Save, world: string): Save =>
-  ({ ...save, watch: save.watch + 1, worlds: { ...save.worlds, current: world, known: save.worlds.known[world] ? save.worlds.known : { ...save.worlds.known, [world]: { cleared: [] } } } })
+  ({ ...passAWatch(save), worlds: { ...save.worlds, current: world, known: save.worlds.known[world] ? save.worlds.known : { ...save.worlds.known, [world]: { cleared: [] } } } })
 
 /** Worlds a lead's chapter has opened (any chapter whose needs are met, on a world not yet known), so the star map shows
  * them once reachable. */
@@ -176,7 +180,9 @@ export function closeResults(save: Save, pack: StoryPack | null = null, rapport:
   const input = (m.battle?.input ?? null) as BattleInput | null
   // Resting, an Uma sheds Strain by her cabin's Comfort (CY14): 1 at three lights, all of it at five.
   const crew = crewAfterMission(save.crew, m.squad, rewards(input, !!m.won).xp, lights ? (x) => restedStrain(x.strain, lights(x.outfit)) : undefined)
-  const bonded = afterBattleBonds({ ...save, crew, watch: save.watch + 1 }, pack, rapport)
+  // The results pay into the wallet (CY15): credits, salvage as Alloy, and Data.
+  const r = rewards(input, !!m.won)
+  const bonded = afterBattleBonds({ ...passAWatch(save), crew, wallet: earn(save.wallet, resultsPay(r.credits, r.salvage, !!m.won)) }, pack, rapport)
   if (!m.won) return { ...bonded, mission: null }
   const first = !save.worlds.missions.includes(m.id)
   const missions = first ? [...save.worlds.missions, m.id] : save.worlds.missions

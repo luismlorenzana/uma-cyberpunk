@@ -24,6 +24,9 @@ export class StoryParseError extends Error {
   }
 }
 
+/** A key in `needs`: a chapter, a mission or a File the story names, or (CY15) a ship capability, `ship:storm`. */
+const NEEDS_KEY = /^(chapter|mission|file|ship):[a-z0-9][a-z0-9-]{0,63}$/
+
 /** A line's longest text (TC36's short beats). */
 export const LINE_MAX = 160
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
@@ -98,6 +101,7 @@ class P {
       }
       case 'join': case 'aboard': return { kind, outfit: this.outfit(x, p) }
       case 'call': return { kind, call: this.slug(x, p) }
+      case 'refit': if (x !== true) this.fail(p, 'expected true'); return { kind }
       case 'battle': return { kind, mission: this.slug(x, p) }
       case 'captain': {
         const options = this.list(x, p, (c, cp) => this.captainOption(c, cp), 3)
@@ -169,7 +173,7 @@ export function parseChapter(value: unknown, file = 'chapter'): Chapter {
   const chapter: Chapter = {
     schemaVersion: 1, id: p.slug(o.id, 'id'), world: p.slug(o.world, 'world'), leads: p.list(o.leads, 'leads', (x, xp) => p.outfit(x, xp), 2),
     number: p.int(o.number, 'number', 1, 99), danger: p.int(o.danger, 'danger', 1, 99), needs: o.needs === undefined ? [] : p.list(o.needs, 'needs', (x, xp) => {
-      if (typeof x !== 'string' || !/^(chapter|mission|file):[a-z0-9][a-z0-9-]{0,63}$/.test(x)) p.fail(xp, 'expected chapter:, mission: or file: and a slug')
+      if (typeof x !== 'string' || !NEEDS_KEY.test(x)) p.fail(xp, 'expected chapter:, mission:, file: or ship: and a slug')
       return x as string
     }, 12),
     scenes: p.list(o.scenes, 'scenes', (s, sp) => scene(p, s, sp), 40), missions: o.missions === undefined ? [] : p.list(o.missions, 'missions', (m, mp) => mission(p, m, mp), 12),
@@ -189,7 +193,7 @@ export function parseWorld(value: unknown, file = 'world'): World {
     const x = p.object(l, lp, ['id', 'danger', 'needs', 'links', 'x', 'y'], ['id', 'danger'])
     return {
       id: p.slug(x.id, `${lp}.id`), danger: p.int(x.danger, `${lp}.danger`, 1, 99), needs: x.needs === undefined ? [] : p.list(x.needs, `${lp}.needs`, (n, np) => {
-        if (typeof n !== 'string' || !/^(chapter|mission|file):[a-z0-9][a-z0-9-]{0,63}$/.test(n)) p.fail(np, 'expected chapter:, mission: or file: and a slug')
+        if (typeof n !== 'string' || !NEEDS_KEY.test(n)) p.fail(np, 'expected chapter:, mission:, file: or ship: and a slug')
         return n as string
       }, 6), links: x.links === undefined ? [] : p.list(x.links, `${lp}.links`, (n, np) => p.slug(n, np), 8),
       ...(x.x !== undefined ? { x: p.int(x.x, `${lp}.x`, 0, 100) } : {}), ...(x.y !== undefined ? { y: p.int(x.y, `${lp}.y`, 0, 100) } : {}),

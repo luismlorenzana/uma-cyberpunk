@@ -2,7 +2,7 @@
 // save, so after iOS closes the app it reopens where it was (a battle replays its actions to the same state). The battle
 // is CY8's screen, unchanged. Landscape, on the turned stage, loaded on demand.
 import type { BattleAction, BattleInput } from '@cyber/battle'
-import { ITEMS_BY_ID, loadoutOf, missionItem, newMember, ROLE_NAME, type StoryPack } from '@cyber/domain'
+import { installedSystems, ITEMS_BY_ID, loadoutOf, missionItem, MODULES_BY_ID, newMember, pipsOf, reactorPips, ROLE_NAME, type Save, type StoryPack } from '@cyber/domain'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -10,6 +10,7 @@ import { BattleView } from '../battle/BattleView'
 import { battleRapport } from '../bonds/battleRapport'
 import { ItemIcon } from '../cabins/art'
 import { lightsFrom } from '../cabins/cabins'
+import { togglePower } from '../ship/build'
 import { resume } from '../battle/session'
 import { useMaster } from '../master/master'
 import { crewViews, infoFrom, memberView, type CrewView } from '../crew/view'
@@ -70,8 +71,9 @@ function Mission({ layout }: { layout: StageLayout }) {
     const scenario = mission.scenario ?? 'sandbox-muster'
     if (!SCENARIOS[scenario]) return
     const units = squad.map((v) => ({ outfit: v.outfit, label: v.name, bands: v.bands, loadout: loadoutOf(v.rig), stride: v.stride }))
-    const input = missionInput(scenario, units, bench.map((v) => v.role), `${mission.id}:1`)
-    void updateSave((s) => deploy(setSquad(s, squad.map((v) => v.outfit)), input))
+    const base = missionInput(scenario, units, bench.map((v) => v.role), `${mission.id}:1`)
+    // The powered systems go into the frozen input (CY15); rules version 3 plays them (CY17).
+    void updateSave((s) => deploy(setSquad(s, squad.map((v) => v.outfit)), s.ship.powered.length ? { ...base, systems: [...s.ship.powered] } : base))
   }} />)
 
   if (m.step === 'battle' && m.battle) return <MissionBattle layout={layout} input={m.battle.input as BattleInput} actions={m.battle.actions as BattleAction[]} />
@@ -82,15 +84,15 @@ function Mission({ layout }: { layout: StageLayout }) {
     return frame(
       <div data-mission-results className={panel}>
         <h1 className="font-display text-3xl font-bold" style={{ color: won ? '#2ee6ff' : '#ff3d6e' }}>{won ? 'Mission won' : 'Mission lost'}</h1>
-        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
-          {[['XP', r.xp], ['Credits', r.credits], ['Salvage', r.salvage]].map(([k, v]) => (
+        <div className="mt-2 grid grid-cols-4 gap-2 text-center">
+          {[['XP', r.xp], ['Credits', r.credits], ['Alloy', r.salvage], ['Data', won ? 10 : 5]].map(([k, v]) => (
             <div key={k} className="rounded-lg bg-white/5 p-2"><div className="text-[12px] text-white/60">{k}</div><div className="font-display text-xl font-bold">{v}</div></div>
           ))}
         </div>
         {won && !save.worlds.missions.includes(m.id) && (() => { const item = ITEMS_BY_ID.get(missionItem(m.id)); return item ? (
           <div data-found-item={item.id} className="mt-2 flex items-center gap-2 rounded-lg bg-white/5 p-2 text-[14px]"><ItemIcon id={item.id} size={32} /> Found for the cabins: <b>{item.name}</b></div>
         ) : null })()}
-        <p className="mt-2 text-[12px] text-white/50">The squad takes the XP and a point of Strain; the crew aboard takes half and rests, shedding more Strain in a comfortable cabin. The economy comes in Phase 5: credits and salvage are plain numbers for now.</p>
+        <p className="mt-2 text-[12px] text-white/50">The squad takes the XP and a point of Strain; the crew aboard takes half and rests, shedding more Strain in a comfortable cabin. Credits, Alloy and Data go into the ship's wallet for building and research (CY15).</p>
         <div className="mt-3 flex gap-2">
           {!won && <button type="button" className={primary} onClick={() => void updateSave(retry)}>Retry</button>}
           <button type="button" className={won ? primary : secondary} onClick={() => {
@@ -164,6 +166,7 @@ function Deploy({ pack, squad, locked, fixed, onDeploy }: { pack: StoryPack; squ
           )
         })}
       </div>
+      <PowerPanel save={save} />
       {blocked.length > 0 && <div data-deploy-blocked className="mt-3 rounded-md bg-[#ff3d6e]/15 p-2 text-[13px] text-[#ffb3c6]">{blocked.map((b) => <div key={b.v.outfit}>{b.v.name}: {b.why}</div>)}</div>}
       <div className="mt-3 flex gap-2">
         <button type="button" disabled={blocked.length > 0} className={`${primary} disabled:opacity-40`}
@@ -189,5 +192,30 @@ function MissionBattle({ layout, input, actions }: { layout: StageLayout; input:
       onCommit={(s) => { void updateSave((save) => recordAction(save, s.actions[s.actions.length - 1]), { quiet: true }) }}
       onEnd={(s) => { void updateSave((save) => finishBattle(save, s.state.result?.winner === 'squad')) }}
       onQuit={() => void navigate('/')} />
+  )
+}
+
+/** The sortie's power (CY15, TC62): the installed battle systems with their pips against the reactor's; a toggle that
+ * would go over is refused. The choice goes into the battle's frozen input as `systems` (rules version 3 plays them). */
+function PowerPanel({ save }: { save: Save }) {
+  const installed = installedSystems(save.ship), pips = reactorPips(save.ship), used = pipsOf(save.ship.powered)
+  return (
+    <div data-power className="mt-3 rounded-md bg-white/5 p-2 text-[13px]">
+      <div className="mb-1 font-semibold">Ship systems <span className="font-normal text-white/60">· reactor {used} of {pips} pips</span></div>
+      {installed.length === 0 ? <div className="text-white/50">No battle systems installed: build them on the ship.</div> : (
+        <div className="flex flex-wrap gap-1.5">
+          {installed.map((id) => {
+            const on = save.ship.powered.includes(id), def = MODULES_BY_ID.get(id)!, fits = on || used + (def.pips ?? 0) <= pips
+            return (
+              <button key={id} type="button" data-system={id} aria-pressed={on} disabled={!fits} onClick={() => void updateSave((s) => togglePower(s, id))}
+                className={`min-h-11 rounded-md px-3 font-semibold disabled:opacity-40 ${on ? 'bg-[#ff3dc8]/25 ring-1 ring-[#ff3dc8]' : 'bg-white/10'}`}>
+                {def.name} <span className="text-[12px] font-normal text-white/60">{def.pips} pip{def.pips === 1 ? '' : 's'}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+      <div className="mt-1 text-[12px] text-white/45">Powered systems act in battle from rules version 3 (CY17); the choice is kept for the next sortie.</div>
+    </div>
   )
 }

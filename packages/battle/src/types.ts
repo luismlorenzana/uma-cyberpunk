@@ -173,6 +173,9 @@ export interface BattleInput {
   bench?: readonly Role[]
   /** Factions whose mechanics are on. */
   factions?: readonly Faction[]
+  // --- Rules version 3 (CY17) ---
+  /** The ship's battle systems powered for this sortie (CY15 records them; rules version 3 plays them). */
+  systems?: readonly string[]
 }
 
 // --- The state ------------------------------------------------------------------------------------------------------

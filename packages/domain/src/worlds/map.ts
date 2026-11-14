@@ -2,6 +2,7 @@
 // names its key (a chapter, a mission or a File). A world never closes. Pure.
 import type { Scene, StoryPack, World } from '../story/types'
 import type { StoryState } from '../story/state'
+import { CAPABILITY_NAME } from '../ship/modules'
 
 export type NodeState = 'locked' | 'available' | 'cleared'
 
@@ -10,6 +11,8 @@ export interface WorldProgress {
   missions: readonly string[]
   /** Chapters finished (every scene seen). */
   chapters: readonly string[]
+  /** The ship's capabilities (CY15, TC66): `ship:<capability>` keys. */
+  capabilities?: readonly string[]
 }
 
 /** Whether a key in `needs` is met. */
@@ -17,6 +20,7 @@ export function keyMet(key: string, story: StoryState, progress: WorldProgress):
   const [kind, id] = key.split(':') as [string, string]
   if (kind === 'chapter') return progress.chapters.includes(id)
   if (kind === 'mission') return progress.missions.includes(id)
+  if (kind === 'ship') return progress.capabilities?.includes(id) ?? false
   return (story.files[id]?.length ?? 0) > 0
 }
 
@@ -25,6 +29,7 @@ export function keyWords(key: string, pack: StoryPack): string {
   const [kind, id] = key.split(':') as [string, string]
   if (kind === 'chapter') { const c = pack.chapters[id]; return c ? `Finish Chapter ${c.number}${c.leads.length ? '' : ''} (${id})` : `Finish ${id}` }
   if (kind === 'mission') return `Win the mission ${id}`
+  if (kind === 'ship') return `Needs ${CAPABILITY_NAME[id] ?? id}`
   return `Find the Log File ${id}`
 }
 

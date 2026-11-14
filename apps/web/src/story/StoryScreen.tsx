@@ -1,7 +1,7 @@
 // The story's test route at /story (CY9): plays the loaded story's first chapter, scene by scene and then its debrief, so
 // the player can be checked before the ship exists (CY10 replaces it with the real flow). Each scene's changes go to the
 // synced save's story state, and a scene seen is marked, so progress survives a reload and a sync.
-import { fillFile, gainLead, seeScene, setAnomaly, setFlag, type Step, type StoryPack } from '@cyber/domain'
+import { fillFile, gainLead, seeScene, setAnomaly, setFlag, type EffectStep, type Step, type StoryPack } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
@@ -15,7 +15,7 @@ export default function StoryScreen() {
 }
 
 /** A story step's change to the save: flags, Leads, Files, Anomalies. Crew steps (join, aboard) are CY10's. */
-export function applyEffect(step: Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' }>): void {
+export function applyEffect(step: EffectStep): void {
   void updateStory((s) => step.kind === 'flag' ? setFlag(s, step.flag, step.set) : step.kind === 'lead' ? gainLead(s, step.lead)
     : step.kind === 'file' ? fillFile(s, step.file, step.line) : step.kind === 'anomaly' ? setAnomaly(s, step.anomaly, step.open) : s)
 }

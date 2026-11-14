@@ -12,7 +12,8 @@
   - her face;
   - her bond rank;
   - her cabin's Comfort as five lights;
-  - a badge when her bond scene waits (**!**) or she's asked for something (**?**).
+  - a badge when her bond scene waits (**!**) or she's asked for something (**?**);
+  - whether she has a private cabin or a shared berth, by the Quarters module's level (CY15, [ship-build.md](ship-build.md#modules)).
 
   A door opens her **cabin**.
 - **Her cabin** is a landscape room with six slots (Bed, Desk, Wall, Floor, Light, Keepsake) and a window tinted by the

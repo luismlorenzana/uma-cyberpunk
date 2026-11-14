@@ -43,21 +43,22 @@ the gates, so a waiting build shows on any screen.
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
 the worlds and the mission in CY10, v4 each crew member's record in CY11, v5 the captain, the watch, the inbox and each
-Uma's bond in CY13, v6 each Uma's cabin, the item stock and the visits in CY14):
+Uma's bond in CY13, v6 each Uma's cabin, the item stock and the visits in CY14, v7 the ship as a build and the wallet in CY15):
 
 ```json
-{ "version": 6, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
+{ "version": 7, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
   "captain": { "name": "Captain", "pronouns": "they", "romance": "ask", "named": false }, "watch": 0, "inbox": [],
   "items": { "classic-bed": 2, "…": 2, "gift-buns": 1 }, "visits": { "watch": 0, "used": 0 },
-  "crew": [], "ship": { "rooms": ["bridge", "hangar", "quarters", "log"] },
+  "wallet": { "credits": 500, "alloy": 20, "data": 20 },
+  "crew": [], "ship": { "decks": 2, "width": 5, "modules": [{ "id": "bridge", "deck": 0, "slot": 0, "level": 1, "building": null }, "…"], "unlocked": ["…"], "powered": [], "research": { "done": [], "current": null } },
   "worlds": { "current": null, "known": {}, "missions": [] },
   "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] },
   "mission": null }
 ```
 
-Older saves open as v6 on the device, each step pure and `account.updatedAt` untouched; the fields are on
+Older saves open as v7 on the device, each step pure and `account.updatedAt` untouched; the fields are on
 [story.md](story.md#the-story-state-save-v2), [ship.md](ship.md#the-save-v3), [missions.md](missions.md#the-save),
-[crew.md](crew.md#the-save-v4), [captain-and-bonds.md](captain-and-bonds.md#the-save-v5) and [cabins.md](cabins.md#the-save-v6); a crew member is
+[crew.md](crew.md#the-save-v4), [captain-and-bonds.md](captain-and-bonds.md#the-save-v5), [cabins.md](cabins.md#the-save-v6) and [ship-build.md](ship-build.md#the-save-v7); a crew member is
 `{ outfit, xp, role, rig, presets, strain, bond, cabin }`.
 
 - **`account.updatedAt` is the conflict rule's clock.** Only the player's own change moves it (`touched`); parsing,

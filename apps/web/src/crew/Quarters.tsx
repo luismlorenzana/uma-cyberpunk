@@ -1,6 +1,6 @@
 // The Quarters deck (CY11, CY14, TC42, TC60): a door for each Uma aboard (her face, her bond rank, her cabin's Comfort, a
 // badge when her bond scene waits or she's asked for something), who rests next mission, and a door that opens her cabin.
-import { comfortOf, STRAIN_REST } from '@cyber/domain'
+import { comfortOf, privateCabins, STRAIN_REST } from '@cyber/domain'
 import { AlbumArtProvider, FaceTile } from '@luismlorenzana/uma-kit/album'
 import { useMemo, useState } from 'react'
 import { applyBondEffect, bondFileOf, bondSceneDone, readyBondScene } from '../bonds/bonds'
@@ -45,7 +45,8 @@ export function Quarters() {
       </div>
       <AlbumArtProvider art={art}>
         <div data-roster className="grid grid-cols-5 gap-2">
-          {crew.map((c) => {
+          {crew.map((c, i) => {
+            const own = save ? i < privateCabins(save.ship, crew.length) : false
             const comfort = comfortOf(c.member.cabin, tastesFor(pack, c))
             const bondReady = readyBondScene(pack, c.member) !== null
             return (
@@ -60,6 +61,7 @@ export function Quarters() {
                   }} />
                 <span className="w-full truncate text-[12px] font-semibold">{c.name}</span>
                 <Lights lights={comfort.lights} points={comfort.points} />
+                <span data-berth={own ? 'cabin' : 'shared'} className="text-[10px] uppercase tracking-wider text-white/45">{own ? 'Private cabin' : 'Shared berth'}</span>
               </button>
             )
           })}

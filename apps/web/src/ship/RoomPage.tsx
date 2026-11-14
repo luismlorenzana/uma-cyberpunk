@@ -1,6 +1,6 @@
 // A room's page at /room/:id (CY10, CY11): the Bridge's star map and a world's map, the Log, the Hangar and the Quarters
 // (CY11), and placeholders for the rooms later packets fill. Loaded on demand. Landscape, on the turned stage.
-import { fillCaptain, ROOMS, roomView, worldNodes, type RoomId, type Scene, type StoryPack } from '@cyber/domain'
+import { fillCaptain, openRooms, ROOMS, roomView, worldNodes, type RoomId, type Scene, type StoryPack } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
@@ -23,7 +23,7 @@ function Room() {
   if (!save || !pack) return <div className="flex h-full items-center justify-center bg-[#0b0d17] text-white/60">…</div>
   const room = ROOMS.find((r) => r.id === id)
   if (!room) { void navigate('/'); return null }
-  const view = roomView(pack.casting, save.ship.rooms, room, (o) => outfitName(pack, o))
+  const view = roomView(pack.casting, openRooms(save.ship), room, (o) => outfitName(pack, o))
   const back = <button type="button" onClick={() => void navigate('/')} className="min-h-11 rounded-md bg-[#141827] px-4 font-display font-bold ring-1 ring-white/15">Ship</button>
   return (
     <div data-room={room.id} className="relative h-full w-full overflow-hidden bg-[#0b0d17] text-[#e8ebf5]">

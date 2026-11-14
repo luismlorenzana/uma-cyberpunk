@@ -4,9 +4,10 @@ import { STAND_IN_OUTFITS } from '../crew/stand-in'
 import { parseBondFile, parseCasting, parsePack } from '../story/parse'
 import { STAND_IN_FILES } from '../story/stand-in'
 import {
-  COMFORT_TUNING, comfortOf, decorateRapport, deriveTastes, giftRapport, grantRequest, pickFor, place, restedStrain, takeGift, talkLine, talkRapport, talkTopics,
+  COMFORT_TUNING, comfortOf, decorateRapport, deriveTastes, giftRapport, grantRequest, pickFor, place, restedStrain, takeGift, talkRapport, talkTopics,
   themeKit, useVisit, visitRapport, visitRequest, visitsLeft, VISIT_TUNING, type Tastes,
 } from './cabins'
+import { talkLine } from './lines'
 import { emptyCabin, FURNITURE, GIFTS, ITEMS, ITEMS_BY_ID, KEEPSAKES, LINE_SLOTS, missionItem, STARTER_STOCK, DECOR_STYLES, TOPICS, type Cabin } from './items'
 
 const BANDS = { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 } as const
