@@ -84,7 +84,7 @@ flowchart LR
 **WD26, two kinds of Gate.**
 - **Siphon Gates** sit inside the Circuit, one at each world. They're the Tithe: rings of light with a gap in them, each
   in its world's colour, humming while they drain. Every one feeds the Gate Heart in the Ring.
-- **Outer Gates** open to other universes. The eight factions came through them: expeditions, mercenaries, the lost and
+- **Outer Gates** open to other universes. The factions came through them: expeditions, mercenaries, the lost and
   the bound.
 - **The factions' home universes stay beyond the outer Gates and off the star map** (SB3). The worlds are ours, and the
   factions come to them.
@@ -104,17 +104,16 @@ flowchart LR
 
 | # | World | Environment | The city | The Tithe takes | New factions (mechanics) | Region | Act |
 |---|---|---|---|---|---|---|---|
-| 1 | **The Ring** | Orbital megacity around a planet nobody visits; rain and neon | The Ring itself, in six layers | Nothing: it's where the stolen power goes | Steel Muster (cover and volley), Neon Commission (stagger) | Inner | I |
+| 1 | **The Ring** | Orbital megacity around a planet nobody visits; rain and neon | The Ring itself, in six layers | Nothing: it's where the stolen power goes | The Authority Garrison (cover and volley), Neon Commission (stagger) | Inner | I |
 | 2 | **Tidewell** | A world ocean, no land but reefs | **The Moorings:** a floating harbour of locks, stilts and lighthouses | Its tides: the moons' pull is siphoned, and the sea is stilling | Tideline Armada (artillery) | Inner | II |
 | 3 | **Verdance** | Jungle in a deep gorge, glowing at night | **The Terraces:** temple-greenhouses and canopy bridges down the gorge walls | Its growth: the forest greys from the top down | Sevenfold Envoys (reactions) | Inner | II |
 | 4 | **Anvil** | Volcanic: lava rivers, ash sky, calderas | **The Slipways:** a free port of foundries and shipyards in a caldera | Its heat: the forges are cooling and the city rations warmth | None new: a breather, the ship's world | Middle | II |
 | 5 | **Gale** | Gas giant: storm bands, no ground | **Highfall:** platforms riding the storm currents, joined by cable lifts | Its storms: the bands slow, and the platforms sink | Starward Contractors (typed shields and time) | Middle | III |
 | 6 | **Hush** | Ice moon under a black sky, sound-quiet | **The Vaults:** geothermal halls under the ice, where nobody speaks loud | Nothing left: Hush was drained first, long ago | Lantern Wardens and the Tolling (Remnants and overload) | Outer | IV |
-| 7 | **The Hollow Ring** | A dead orbital ring around a dead planet | The Ring's ghost: dark Districts, drowned Spires, ads still flickering | It's what the Ring becomes when the bargain comes due | Iron Vigil and the Transfigured (infection) | Outer | IV |
+| 7 | **The Hollow Ring** | A dead orbital ring around a dead planet | The Ring's ghost: dark Districts, drowned Spires, ads still flickering | It's what the Ring becomes when the bargain comes due | The Dimmed (infection) | Outer | IV |
 | 8 | **Brink** | Glass desert at the edge, where the dark begins in the sky | **The Last Oasis:** a caravan city under the Bastion's convent walls | Its sun: the light is thinning, the sand turning to glass | Ember Bastion and the Crowned (phases) | Edge | V |
 
-The Steel Muster, the Authority's android foot soldiers, are on every world, so the regular-enemy board pays off when
-they defect (WD47).
+The Authority Garrison, the Authority's own machines, holds the streets and docks of every world (WD50).
 
 ### 3.1 The Ring (world 1, Act I)
 
@@ -126,7 +125,7 @@ they defect (WD47).
   the finale.
 - **The Tithe:** the Ring is its destination. It's the brightest place in the Circuit because every other world is
   getting darker.
-- **Fights:** the Muster and the Commission in the streets; in orbit, the Authority's patrol cutters hunting a stolen
+- **Fights:** the Garrison's machines and the Commission's crews in the streets; in orbit, the Authority's patrol cutters hunting a stolen
   ship (the first ship battle, a breakout).
 - **The arc:** the first lead's recruitment arc. She, the captain and a handful of crew find the Homestretch in the
   scrapyard Docks and steal it out from under the Authority. Lens: **a heist**.
@@ -164,7 +163,7 @@ they defect (WD47).
   shipyards, Frame-smiths, and the Cooling Quarter where people who can't afford heat crowd together.
 - **The Tithe:** its heat. The forges are cooling, and the city rations warmth by the hour.
 - **A breather, and the ship's world.** No new faction: Anvil is a free port where the Neon Commission trades and the
-  Muster keeps a depot. It's where the Homestretch is refitted, where Frames are made, and where the Lab buys Data.
+  Garrison keeps a depot. It's where the Homestretch is refitted, where Frames are made, and where the Lab buys Data.
 - **The ship's history surfaces:** the Homestretch was built in these yards. The yard's old records, and the first of the
   Steward's memories restored here, are the first seeds of Act V (WD31).
 - **Fights:** raids on the slipways, including the first time someone boards the Homestretch (TC65), and a rival
@@ -202,8 +201,8 @@ they defect (WD47).
 
 - **Look:** the Ring's sister, dead. A derelict orbital city around a dead planet: dark Districts, drowned Spires, ad
   screens still flickering for nobody. It's what the Ring becomes when the Authority's bargain comes due.
-- **Fights:** the Iron Vigil, the crew's dark mirror (orbital soldiers in combat bodies), and the Transfigured, Vigil
-  soldiers the Blackout has spread through like an infection.
+- **Fights:** the Dimmed: heroines of every faction the Blackout has taken completely, drawn to the dead ring. They're
+  faces the crew has met on other worlds, drained to one sickly colour, spreading the Blackout's mark like an infection.
 - **Boarding is the main way in.** The Hollow Ring is a derelict, taken section by section through airlocks, with
   helmets sealed.
 - **The arc:** a lead who grew up in a salvage crew working the ring's edge. Lens: **survival**.
@@ -407,13 +406,13 @@ terrain is the game's to choose; the world only says what's there.
 | Who | Their ships | Why they fight the Homestretch |
 |---|---|---|
 | **The Authority** | Patrol cutters; the **Laurel** | A stolen ship, and the truth it carries |
-| **Steel Muster** | Troop carriers that drop squads | Ordered to |
+| **The Authority Garrison** | Drone carriers that drop machine squads | Ordered to |
 | **Neon Commission** | Fast smuggler skiffs | A bounty, or a better offer |
 | **Tideline Armada** | Carriers, destroyers, a flagship; artillery at range | The blockade |
 | **Sevenfold Envoys** | One temple-ship, slow and elemental | They believe the ship hides their lost companion |
 | **Starward Contractors** | Corvettes and frigates that bend the timeline | Their contract |
 | **Lantern Wardens** | Ghostly lantern-ships that call wrecks back | The static near the Gates |
-| **Iron Vigil** | Infected hulks that spread to what they touch | The infection |
+| **The Dimmed** | Drained hulks from every fleet, which spread to what they touch | The Blackout |
 | **Ember Bastion** | Guard-ships; a Crowned's flagship | They take the cores for the corruption's source |
 
 - **The crew fights at their posts** in pilot suits (WD34): helm, guns, shields, engines, sensors, and the captain's
@@ -458,7 +457,8 @@ peels back one layer.
 
 ## 11. The factions, in depth (WD9–WD14, WD23, WD46)
 
-The eight factions keep their names, Holds and mechanics from the first pass (WD10, WD11). Their mechanics are the
+Six franchise factions keep their names, Holds and mechanics from the first pass (WD10, WD11), and since D36 the
+Authority's own Garrison and the Dimmed take the places of the two that left (WD50). Their mechanics are the
 battle's and fixed. Each now has a world where it's met first, its ships (WD44), and a standing ladder (WD46).
 
 **WD46, faction standing:** every faction can be moved:
@@ -475,8 +475,7 @@ What moves each faction is below. Standing is shown on the Bridge (TC71).
   mounts, emitter, projector, back unit), forges it at Anvil, and licenses every core through its grid. A licence is a
   feed and a leash:
   - it pays the Commission and the Contractors;
-  - it carries the Muster's Collar;
-  - it holds the Armada's treaty bloc.
+  - it carries the Armada treaty bloc's Collar.
 
   The crew's cores are the only unlicensed ones in the Circuit (layer 3).
 - **Paint is identity:** every army wears the same skeleton, so who someone is shows in the paint and the details:
@@ -491,18 +490,28 @@ What moves each faction is below. Standing is shown on the Bridge (TC71).
 - **The ending:** when the siphons shut, every licensed core goes dark at once, and the freed lend their own light
   (WD24).
 
-### 11.1 The Steel Muster (NIKKE)
+**WD50, six franchises, not eight** *(new D36)*. NIKKE and Punishing: Gray Raven leave the story: the owner won't use
+them as boss factions. Their roles move:
+- **The Authority Garrison** takes the Muster's place: the Authority's own machines on every world, fighting with cover
+  and volley (§11.1).
+- **The Collar** goes to the Armada's treaty bloc. The treaty's command codes ride its feed, broadcast from the
+  flagship's command core, and when the Authority cuts that feed in Act IV, the Collar falls (§11.3).
+- **The Dimmed** take the Hollow Ring: heroines of every faction the Blackout has taken completely, spreading its mark
+  like an infection (§11.7).
+- **The two franchises' units** stay on the Ranker's boards; the story doesn't cast them.
+
+### 11.1 The Authority Garrison (no franchise; new D36)
 
 | | |
 |---|---|
-| **Who** | Android squads pulled through an outer Gate, now the Authority's foot soldiers on every world |
-| **What they want** | Their own command codes back, and a name of their own |
-| **How they live** | In depots and troop carriers, by drill and roster; they keep each fallen unit's number |
-| **Leaders** | A field commander who obeys, and a sergeant who has started to doubt |
-| **What they think of the ship** | A target, and then a rumour: the ship that gives codes back |
-| **Hold** | Collar |
-| **Moving them** | Steal their codes back, squad by squad, by boarding their carriers (wary); the whole Muster defects in the finale (allied) |
-| **Freeing a heroine means** | One more unit that answers to herself |
+| **Who** | The Authority's own security: walkers, drones, turret posts and drone carriers, run from the Spires by its inspectors |
+| **What they want** | Nothing: they're machines. The inspectors who run them want the stolen ship back |
+| **How they live** | In depots on every world and in the Ring's Spires, on patrol schedules nobody has changed in twenty years |
+| **Leaders** | The Authority's inspectors (original characters, private) |
+| **What they think of the ship** | A stolen asset |
+| **Hold** | None: a machine is nobody (WD14) |
+| **Moving them** | They can't be moved; a world's depot can be shut down by operations |
+| **Freeing a heroine means** | Nothing: the Garrison has no heroines |
 | **Mechanic** | Cover and volley |
 
 ### 11.2 The Neon Commission (Zenless Zone Zero)
@@ -528,8 +537,8 @@ What moves each faction is below. Standing is shown on the Bridge (TC71).
 | **How they live** | Aboard: a navy's ceremony, flags and a long war's habits |
 | **Leaders** | A treaty-bloc admiral held to the Authority's deal, and a blockade captain who won't bow |
 | **What they think of the ship** | A smuggler at first; then the only ship that ran their blockade and didn't sink anyone |
-| **Hold** | None |
-| **Moving them** | Board the flagship and win the duel (the free bloc, allied); the treaty bloc turns when the Authority betrays it (wary, then allied) |
+| **Hold** | Collar for the treaty bloc: the treaty's command codes ride its feed, from the flagship's command core. None for the free bloc |
+| **Moving them** | Board the flagship and win the duel (the free bloc, allied); the treaty bloc's Collar falls when the Authority cuts its feed in Act IV (wary, then allied) |
 | **Freeing a heroine means** | A ship that sails for the Homestretch's flag |
 | **Mechanic** | Artillery |
 
@@ -575,19 +584,19 @@ What moves each faction is below. Standing is shown on the Bridge (TC71).
 | **Freeing a heroine means** | A lantern relit |
 | **Mechanic** | Remnants and overload |
 
-### 11.7 The Iron Vigil and the Transfigured (Punishing: Gray Raven)
+### 11.7 The Dimmed (from every faction; new D36)
 
 | | |
 |---|---|
-| **Who** | Orbital soldiers in combat bodies, holding the Hollow Ring, and the Transfigured, their own fallen to the infection |
-| **What they want** | To purge the infection and take back their ring |
-| **How they live** | In sealed sectors, by quarantine and watch |
-| **Leaders** | A commander who has lost half her unit, and a medic who keeps the rest alive |
-| **What they think of the ship** | A crew that runs on the same kind of power as the thing that infected them: their dark mirror |
-| **Hold** | Anchor: the infection |
-| **Moving them** | Purge the infection at a core tile (wary); clear the Hollow Ring's heart together (allied) |
-| **Freeing a heroine means** | A soldier back from the other side |
-| **Mechanic** | Infection |
+| **Who** | Heroines of every faction the Blackout has taken completely (WD2), drawn to the Hollow Ring like moths to a dark lamp |
+| **What they want** | What the Blackout wants: to finish the Ring as the Hollow Ring was finished |
+| **How they live** | They don't: they wander the dead ring's Districts in the colours they've lost |
+| **Leaders** | Act IV's deceiver close to home (private) |
+| **What they think of the ship** | A light to put out |
+| **Hold** | Anchor: the Dimming, all the way down |
+| **Moving them** | Free them one by one; each goes home to her own faction, which moves that faction's standing toward the ship |
+| **Freeing a heroine means** | A colour coming back |
+| **Mechanic** | Infection: their hits spread the Blackout's mark to a part |
 
 ### 11.8 The Ember Bastion and the Crowned (Honkai Impact 3rd)
 
@@ -605,9 +614,9 @@ What moves each faction is below. Standing is shown on the Bridge (TC71).
 
 **Who's behind whom (WD13), and allies and rivals (WD23), stand as the first pass has them:**
 - **The Blackout's hold:** it owns the Authority through its bargain. The Authority pays the Commission and the
-  Contractors, commands the Muster and holds the Armada's treaty bloc.
+  Contractors, commands the Garrison and collars the Armada's treaty bloc.
 - **The Blackout's direct reach:** it reaches the Envoys through a false voice, the Wardens and the Tolling through
-  static, the Vigil through infection and the Bastion through crowns.
+  static and the Bastion through crowns; the Dimmed it has already eaten.
 - **Freed heroines** open their File and a log from their side (WD12), and some live in the Guest Wing.
 - **Each faction also fields original machines** (WD14), and now its ships (WD44).
 
@@ -623,8 +632,9 @@ What moves each faction is below. Standing is shown on the Bridge (TC71).
 | **IV** | Hush, then the Hollow Ring | A world already drained; the Ring's dead sister. The Blackout's bargain, seen for what it costs. The Laurel Guard fight beside the crew, once | Remnants and overload; infection | Sad, then grim | 4. The Blackout | The enemy in plain sight: a deceiver close to home |
 | **V** | Brink, then the Gate Heart | At the edge, the Steward remembers the first Gate; the crew learns who they are. Back at the Ring, the Gate Heart | Phases | Tragic, then heroic | 5. The crew | The freed come back; redemption |
 
-- **Faction standing runs through every act (WD46):** the Muster defects in Act V, the Armada's free bloc sails with the
-  ship from Act II, and the Envoys, Contractors, Wardens, Vigil and Bastion turn in their own worlds.
+- **Faction standing runs through every act (WD46):** the Armada's free bloc sails with the ship from Act II and its
+  treaty bloc from Act IV; the Envoys, Contractors, Wardens and Bastion turn in their own worlds; the Dimmed come home
+  one by one.
 - **The leads' recruitment arcs** are short, as the first brief advises (SB5): a lead joins at the crew's level. Later,
   their personal stories live in bond scenes (TC57).
 - **Crossed paths:** a lead's world can call back an earlier one, as Tidewell's Armada sails again at Brink.
@@ -679,7 +689,7 @@ is the owner's own note; the game decides the rules and when.
 | WD7 | Superseded | The Hideout is replaced by the Homestretch (WD30) |
 | WD8 | Amended | The crew's secret becomes the Gatechildren (WD37) |
 | WD9 | Kept | Three Holds, Anchor, Collar and None; a heroine is never killed |
-| WD10 | Kept | Eight factions with original names |
+| WD10 | Amended *(D36)* | Six franchise factions with original names, plus the Authority Garrison and the Dimmed (WD50) |
 | WD11 | Kept | One new mechanic each; now placed by world (§3) |
 | WD12 | Kept | A freed heroine opens her File; some join as guests and live in the Guest Wing |
 | WD13 | Kept | Who's behind whom |
@@ -724,3 +734,4 @@ is the owner's own note; the game decides the rules and when.
 | WD47 | Five acts across eight worlds, one layer each |
 | WD48 | Five story requests for the game: ship battles, boarding, maintenance, walkable cities, the Track |
 | WD49 | *(new D35)* The Standard: one licensed Frame skeleton for every army; crossing drift; paint is identity (faction base and trim, her accent, rank by helmet and marks, her light or her Hold); the crew's cores the only unlicensed ones |
+| WD50 | *(new D36)* Six franchises, not eight: NIKKE and Punishing: Gray Raven leave; the Authority Garrison, the treaty bloc's Collar and the Dimmed take their places |

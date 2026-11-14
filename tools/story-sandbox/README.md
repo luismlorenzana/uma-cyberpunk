@@ -2,7 +2,7 @@
 
 A local page for reading, playing, checking and judging uma-cyberpunk's story: the worlds, the chapters and their
 scenes, the battles' briefs, the cast, the Log and the Calls. It's the sibling of uma-quest's and uma-farm's Story
-Sandboxes. The design and its calls (SX1–SX13) are in [docs/design/story-sandbox.md](../../docs/design/story-sandbox.md).
+Sandboxes. The design and its calls (SX1–SX14) are in [docs/design/story-sandbox.md](../../docs/design/story-sandbox.md).
 
 ```bash
 pnpm stories:import-cast   # once, and after a Ranker pass: names and faces by id (private)
@@ -20,6 +20,9 @@ pnpm stories               # http://127.0.0.1:4322
 - **Bibles** (`#/bibles`, D30): the story session's private `content/stories/bibles/*.md` (the casting's reasons, each
   world's bible), the casting first and then the worlds in the Circuit's order, rendered by the page's small Markdown
   reader as DOM nodes, each with a verdict box.
+- **Profiles** (`#/profiles`, D36): everyone the Ranker gives the story, with Uma Studio's art and facts: an Uma's tier,
+  running style, a sister's own profile and uma-quest's tags; a heroine's figure art, splash and franchise details; and
+  what the story does with her. The cast import adds these facts and any missing face, art or splash from the mirror.
 - **Foes** (`#/foes`, D35): the story session's private look data in `content/stories/foes/*.json`: the Standard every
   foe shares, each faction's kit and variants, and every ranked unit with her face, palette and a brief, each with a
   verdict box. The cast import copies a face and figure art for every heroine from the Ranker's local mirror

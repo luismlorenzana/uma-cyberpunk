@@ -55,8 +55,8 @@ export function parseCastPack(value) {
 
 // --- the foes: the Standard and one kit per faction, private, written by the story session in content/stories/foes/
 
-/** The factions, in the order the Circuit meets them. */
-export const FOE_ORDER = ['steel-muster', 'neon-commission', 'tideline-armada', 'sevenfold-envoys', 'starward-contractors', 'lantern-wardens', 'iron-vigil', 'ember-bastion']
+/** The franchise factions, in the order the Circuit meets them (six since D36). */
+export const FOE_ORDER = ['neon-commission', 'tideline-armada', 'sevenfold-envoys', 'starward-contractors', 'lantern-wardens', 'ember-bastion']
 export const FOE_RANKS = ['boss', 'key', 'regular']
 const HEX = /^#[0-9A-Fa-f]{6}$/
 

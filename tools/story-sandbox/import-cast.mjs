@@ -4,8 +4,10 @@
 //   name) and the Uma NPCs board, keyed by outfit id as the story keys them;
 // - the heroines: every unit on the Ranker's boss, key and regular boards, keyed by board id;
 // - the pictures uma-quest's cast pack already holds for those ids (never downloaded again);
-// - for every heroine still without one, her face and figure art from the Ranker's own local mirror (copied, never
-//   downloaded), so the Foes page shows every unit.
+// - for every heroine, the pictures she still lacks (face, figure art, splash) from the Ranker's own local mirror
+//   (copied, never downloaded), so the Foes page and her profile show her;
+// - the profiles' facts: a sister's own profile (the Ranker's profiles.json), each Uma's running style and uma-quest's
+//   personality and story tags (its tags.json, read in place), each heroine's franchise details.
 //
 //   node tools/story-sandbox/import-cast.mjs
 //
@@ -32,12 +34,12 @@ export function castFromPlan(plan) {
   const umas = [], seen = new Set()
   for (const e of board('umas')) {
     if (!Number.isSafeInteger(e.batch) || !Number.isSafeInteger(e.outfitId)) continue // F and the unranked are in no batch
-    umas.push({ outfit: e.outfitId, characterId: e.characterId, name: e.name, title: e.title ?? '', tier: e.tier, batch: e.batch, order: e.order, sister: e.sister === true, board: 'umas' })
+    umas.push({ outfit: e.outfitId, characterId: e.characterId, identity: e.identity ?? String(e.characterId), name: e.name, title: e.title ?? '', tier: e.tier, batch: e.batch, order: e.order, sister: e.sister === true, playstyle: e.playstyle ?? null, board: 'umas' })
     seen.add(e.outfitId)
   }
   for (const e of board('npcs')) {
     if (!Number.isSafeInteger(e.defaultOutfit) || seen.has(e.defaultOutfit)) continue
-    umas.push({ outfit: e.defaultOutfit, characterId: e.characterId, name: e.name, title: '', tier: e.tier, batch: null, order: e.order, sister: false, board: 'npcs' })
+    umas.push({ outfit: e.defaultOutfit, characterId: e.characterId, identity: String(e.characterId), name: e.name, title: '', tier: e.tier, batch: null, order: e.order, sister: false, playstyle: e.playstyle ?? null, board: 'npcs' })
     seen.add(e.defaultOutfit)
   }
   const heroines = [], known = new Set()
@@ -65,24 +67,54 @@ export function picturesFrom(questPack, cast) {
 
 const RANKER_IMAGE = /^assets\/[A-Za-z0-9._/-]+\.(png|webp|jpg)$/
 
-/** For each heroine still without a picture, her face and figure art from the Ranker's mirror (`units` are its catalog
- * and imports, each with `images` relative to the mirror). Sets her images and returns the copies to make. */
+/** For each heroine, the pictures she still lacks (her face, figure art and splash) from the Ranker's mirror (`units`
+ * are its catalog and imports, each with `images` relative to the mirror). Sets her images and returns the copies. */
 export function picturesFromRanker(units, cast) {
   const byId = new Map((units ?? []).map((u) => [u.id, u.images ?? {}]))
   const copies = []
   for (const x of cast.heroines) {
-    if (x.images) continue
-    const images = {}
-    for (const kind of ['face', 'art']) {
+    const images = { ...(x.images ?? {}) }
+    let added = false
+    for (const kind of ['face', 'art', 'splash']) {
+      if (images[kind]) continue
       const from = byId.get(x.id)?.[kind]
       const ext = typeof from === 'string' && RANKER_IMAGE.test(from) && !from.includes('..') ? RANKER_IMAGE.exec(from)[1] : null
       if (!ext) continue
       images[kind] = `images/${x.id}-${kind}.${ext}`
       copies.push({ from, to: images[kind] })
+      added = true
     }
-    if (Object.keys(images).length) x.images = images
+    if (added) x.images = images
   }
   return copies
+}
+
+/** The profiles' facts, from Uma Studio's data: a sister's own profile (the Ranker's `profiles.json`), each Uma's
+ * personality and story tags (uma-quest's `tags.json`, by the Ranker's identity), and each heroine's details from her
+ * franchise's import (or the catalog's source tier). Pure; returns how many records gained something. */
+export function profilesFrom({ sisters, tags, units }, cast) {
+  const sisterBy = new Map((sisters ?? []).map((s) => [s.outfitId, s]))
+  const vocab = (list) => new Map((list ?? []).map((v) => [v.id, v.name]))
+  const names = { class: vocab(tags?.vocabularies?.classes), personality: vocab(tags?.vocabularies?.personalities), story: vocab(tags?.vocabularies?.storyTypes) }
+  const unitBy = new Map((units ?? []).map((u) => [u.id, u]))
+  let found = 0
+  for (const u of cast.umas) {
+    const about = {}
+    const s = sisterBy.get(u.outfit)
+    if (s) about.sister = { relation: String(s.relation ?? ''), era: String(s.age ?? ''), text: String(s.profile ?? '') }
+    const t = tags?.umas?.[u.identity]
+    if (t) {
+      const picked = ['class', 'personality', 'story'].filter((k) => typeof t[k]?.id === 'string')
+      if (picked.length) about.tags = Object.fromEntries(picked.map((k) => [k, { id: t[k].id, name: names[k].get(t[k].id) ?? t[k].id, why: String(t[k].why ?? '') }]))
+    }
+    if (Object.keys(about).length) { u.about = about; found++ }
+  }
+  for (const x of cast.heroines) {
+    const src = unitBy.get(x.id)
+    const details = (Array.isArray(src?.details) ? src.details : src?.sourceTier ? [src.sourceTier] : []).filter((d) => typeof d === 'string')
+    if (details.length) { x.details = details; found++ }
+  }
+  return found
 }
 
 async function rankerUnits() {
@@ -108,7 +140,10 @@ async function main() {
   const source = await newestQuestPack()
   const withPictures = picturesFrom(source?.pack, cast)
   const fromQuest = new Set([...cast.umas, ...cast.heroines].flatMap((c) => Object.values(c.images ?? {})))
-  const fromRanker = picturesFromRanker(await rankerUnits(), cast)
+  const units = await rankerUnits()
+  const fromRanker = picturesFromRanker(units, cast)
+  const json = async (path) => { try { return JSON.parse(await readFile(path, 'utf8')) } catch { return null } }
+  const profiles = profilesFrom({ sisters: (await json(join(ranker, 'profiles.json')))?.sisters, tags: await json(join(quest, 'tags.json')), units }, cast)
   const pack = parseCastPack({ schemaVersion: 1, kind: PACK_KIND, id: `ranker-${new Date().toISOString().slice(0, 10)}`, builtAt: new Date().toISOString(), pictures: source?.pack.id ?? null, ...cast })
 
   await mkdir(join(target, 'images'), { recursive: true })
@@ -122,7 +157,7 @@ async function main() {
   await writeFile(join(target, 'pack.json.part'), `${JSON.stringify(pack, null, 2)}\n`)
   await rename(join(target, 'pack.json.part'), join(target, 'pack.json'))
   const pictured = pack.heroines.filter((x) => x.images).length + pack.umas.filter((u) => u.images).length
-  console.log(`Cast pack ${pack.id}: ${pack.umas.length} Umas, ${pack.heroines.length} heroines, ${pictured} with pictures (${withPictures} from uma-quest's pack, the rest of the heroines' from the Ranker's mirror; ${copied} files${missing ? `, ${missing} missing` : ''}) → ${target}`)
+  console.log(`Cast pack ${pack.id}: ${pack.umas.length} Umas, ${pack.heroines.length} heroines, ${pictured} with pictures (${withPictures} from uma-quest's pack, the heroines' others and splashes from the Ranker's mirror; ${copied} files${missing ? `, ${missing} missing` : ''}), ${profiles} with profile facts → ${target}`)
   if (!source) console.log('No uma-quest cast pack found, so there are no pictures yet: ids show as initials.')
 }
 

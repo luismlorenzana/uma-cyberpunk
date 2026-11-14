@@ -3,11 +3,12 @@
 import { castIndex, countWords, deliverables, enemyWords, FOE_RANKS, hexOrNull, storyIndex, VERDICTS, walk } from '/model.js'
 
 /** The loaded state and what's derived from it. */
-export const D = { data: null, cast: null, index: null }
+export const D = { data: null, cast: null, index: null, foes: new Map() }
 export function index(data) {
   D.data = data
   D.cast = castIndex(data.cast, data.pack?.casting)
   D.index = storyIndex(data.pack)
+  D.foes = new Map((data.foes?.factions ?? []).flatMap((f) => f.units.map((u) => [u.id, { faction: f, unit: u }])))
 }
 
 /** A DOM element: h('div', { class: 'card', text: 'x', onclick }, child, …). */
@@ -38,7 +39,8 @@ export function face(id, size = 34) {
 }
 export function person(id, extra = null) {
   const who = D.cast.who(id)
-  return h('span', { class: 'who' }, face(id), h('span', {}, who.name, who.known ? null : h('small', { text: ' · no name for this id yet' }), extra ? h('small', { text: ` · ${extra}` }) : null))
+  const name = who.record ? h('a', { href: `#/profile/${encodeURIComponent(who.id)}`, text: who.name }) : who.name
+  return h('span', { class: 'who' }, face(id), h('span', {}, name, who.known ? null : h('small', { text: ' · no name for this id yet' }), extra ? h('small', { text: ` · ${extra}` }) : null))
 }
 const verdictMark = (item) => { const r = D.data.reviews.items[item]; return h('span', { class: `mark ${r?.status ?? ''}`, title: r?.status ?? (r?.note ? 'A note' : 'No verdict') }) }
 const findingsFor = (file) => D.data.findings.filter((f) => f.file === file && f.level !== 'note')
@@ -244,7 +246,8 @@ function foeUnit(f, uid, saveReview) {
   return h('div', {},
     h('p', {}, h('a', { href: `#/foes/${f.id}`, text: `‹ ${f.title}` })),
     h('h1', {}, verdictMark(`${f.path}#${u.id}`), ' ', who.name),
-    h('p', { class: 'muted', text: `${f.title} · ${{ boss: 'Boss', key: 'Key', regular: 'Regular' }[u.rank] ?? u.rank}${u.drawnAs !== u.rank ? ', drawn as a Boss for the story' : ''} · ${u.board} ${u.tier} · ${u.id}` }),
+    h('p', { class: 'muted' }, `${f.title} · ${{ boss: 'Boss', key: 'Key', regular: 'Regular' }[u.rank] ?? u.rank}${u.drawnAs !== u.rank ? ', drawn as a Boss for the story' : ''} · ${u.board} ${u.tier} · ${u.id} · `,
+      h('a', { href: `#/profile/${encodeURIComponent(u.id)}`, text: 'her profile' })),
     h('div', { class: 'two' },
       h('div', {}, who.art ? h('img', { class: 'foe-art', src: who.art, alt: '' }) : face(u.id, 160)),
       h('div', { class: 'card' }, rows([
@@ -276,6 +279,114 @@ export function foesView(fid, uid, saveReview) {
   return h('div', {}, h('h1', { text: 'Foes' }),
     h('p', { class: 'muted' }, `Every foe wears the Standard. ${total} ranked units in ${F.factions.length} factions, from the Ranker's boards, in `, h('code', { text: 'content/stories/foes/' }), '.'),
     problems, standardCard(F.standard), h('h2', { text: 'The factions' }), h('div', { class: 'grid' }, F.factions.map(factionCard)))
+}
+
+// --- profiles: what Uma Studio holds on each Uma and heroine (the cast pack), and what the story does with her
+
+const FRANCHISES = {
+  azurlane: ['Azur Lane', ['Source tier']], nikke: ['NIKKE', ['Source tier']],
+  genshin: ['Genshin Impact', ['Rarity', 'Element', 'Weapon', 'Region']], hsr: ['Honkai: Star Rail', ['Rarity', 'Path', 'Element']],
+  zzz: ['Zenless Zone Zero', ['Rank', 'Specialty', 'Attribute', 'Attribute']], wuwa: ['Wuthering Waves', ['Rarity', 'Element', 'Weapon']],
+  pgr: ['Punishing: Gray Raven', ['Rank', 'Class', 'Element', 'Note']], hi3: ['Honkai Impact 3rd', ['Character', 'Rank', 'Type']],
+}
+const PREFIX = { al: 'azurlane', nk: 'nikke', gi: 'genshin', hsr: 'hsr', zzz: 'zzz', ww: 'wuwa', pgr: 'pgr', hi3: 'hi3' }
+const franchiseOf = (x) => x.franchise || PREFIX[String(x.id).split('-')[0]] || ''
+const STYLES = { front: 'Front Runner', pace: 'Pace Chaser', late: 'Late Surger', end: 'End Closer' }
+const styleName = (s) => (s ? s.split('-').map((p) => STYLES[p] ?? p).join(' / ') : null)
+const inStory = () => new Set((D.data.foes?.factions ?? []).map((f) => f.franchise))
+const profileHref = (id) => `#/profile/${encodeURIComponent(id)}`
+
+function profilesIndex() {
+  const pack = D.data.cast
+  if (!pack) return h('div', {}, h('h1', { text: 'Profiles' }), h('div', { class: 'banner' }, h('b', { text: 'No cast pack yet. ' }), h('code', { text: 'pnpm stories:import-cast' }), ' builds it from Uma Studio’s Ranker.'))
+  const cards = [], sections = []
+  const card = (id, sub) => {
+    const el = h('a', { class: 'unit', href: profileHref(id) }, face(id, 40), h('span', {}, h('b', { text: D.cast.name(id) }), sub ? h('small', { text: sub }) : null))
+    el.dataset.name = D.cast.name(id).toLowerCase()
+    cards.push(el)
+    return el
+  }
+  const section = (title, items) => { const el = h('div', {}, h('h3', { text: `${title} · ${items.length}` }), h('div', { class: 'units' }, items)); sections.push(el); return el }
+  const search = h('input', { type: 'search', placeholder: 'Find by name', 'aria-label': 'Find by name', oninput: () => {
+    const q = search.value.trim().toLowerCase()
+    for (const c of cards) c.hidden = Boolean(q) && !c.dataset.name.includes(q)
+    for (const s of sections) s.hidden = ![...s.querySelectorAll('.unit')].some((c) => !c.hidden)
+  } })
+  const batches = {}
+  for (const u of pack.umas) (batches[u.batch ?? 'npcs'] ??= []).push(u)
+  const story = inStory(), byFranchise = {}
+  for (const x of pack.heroines) (byFranchise[franchiseOf(x)] ??= []).push(x)
+  const order = Object.keys(FRANCHISES).sort((a, b) => Number(story.has(b)) - Number(story.has(a)))
+  return h('div', {}, h('h1', { text: 'Profiles' }),
+    h('p', { class: 'muted', text: `Everyone Uma Studio’s Ranker gives the story: ${plural(pack.umas.length, 'Uma')} and ${plural(pack.heroines.length, 'heroine')}, with their art, their facts and what the story does with them.` }),
+    h('div', { class: 'row' }, search),
+    h('h2', { text: 'Umas' }),
+    Object.entries(batches).sort(([a], [b]) => (a === 'npcs') - (b === 'npcs') || a - b).map(([batch, list]) =>
+      section(batch === 'npcs' ? 'Uma NPCs' : `Batch ${batch} · ${list[0].tier}`, list.sort((a, b) => a.order - b.order).map((u) => card(String(u.outfit), u.title || u.tier)))),
+    h('h2', { text: 'Heroines' }),
+    order.filter((f) => byFranchise[f]?.length).map((f) => section(`${FRANCHISES[f][0]}${story.has(f) ? '' : ' (not in the story)'}`,
+      byFranchise[f].map((x) => card(x.id, `${x.board.replace(/-bosses$/, ' bosses').replace(/-enemies$/, ' enemies')} ${x.tier}`)))))
+}
+
+function umaProfile(who) {
+  const r = who.record, casting = D.data.pack.casting, key = String(r.outfit)
+  const lead = casting.leads.find((l) => String(l.outfit) === key)
+  const crewAt = casting.crewOrder.map(String).indexOf(key)
+  const tastes = casting.tastes?.[key]
+  const tag = (t) => (t ? [h('b', { text: t.name.charAt(0).toUpperCase() + t.name.slice(1) }), t.why ? ` · ${t.why}` : ''] : null)
+  return h('div', {},
+    h('p', {}, h('a', { href: '#/profiles', text: '‹ Profiles' })),
+    h('h1', {}, who.name),
+    h('p', { class: 'muted', text: [r.title, `outfit ${r.outfit}`, r.board === 'npcs' ? 'an Uma NPC' : null].filter(Boolean).join(' · ') }),
+    h('div', { class: 'two' },
+      h('div', {}, r.images?.art ? h('img', { class: 'foe-art', src: who.art, alt: '' }) : face(key, 160)),
+      h('div', { class: 'card' }, rows([
+        ['The Ranker', `${r.tier}${r.batch ? ` · batch ${r.batch}` : ''} · #${r.order}${r.sister ? ' · a sister' : ''}`],
+        ['Running style', styleName(r.playstyle)],
+        ['Sister', r.about?.sister ? [h('b', { text: r.about.sister.relation }), r.about.sister.era ? ` · ${r.about.sister.era}` : ''] : null],
+        ['Her profile', r.about?.sister?.text || null],
+        ['Personality', tag(r.about?.tags?.personality)],
+        ['Story type', tag(r.about?.tags?.story)],
+        ['Class (uma-quest’s)', tag(r.about?.tags?.class)],
+        ['In this story', lead ? [h('b', { text: 'Lead' }), ` of `, link(`#/w/${lead.world}`, lead.world), lead.opens ? ` · opens the ${lead.opens}` : '']
+          : crewAt >= 0 ? `Crew, #${crewAt + 1} in the crew’s order${D.index.joins[key] ? ` · joins in ${D.index.joins[key].scene}` : ''}` : 'Not cast yet'],
+        ['Role', casting.roles?.[key] ?? null],
+        ['Tastes', tastes ? `favourite ${tastes.favourite} · dislikes ${tastes.disliked} · gift ${tastes.gift} · topics ${(tastes.topics ?? []).join(', ')}` : null],
+      ]))))
+}
+
+function heroineProfile(who) {
+  const r = who.record, fr = franchiseOf(r), [title, labels] = FRANCHISES[fr] ?? [fr || 'Unknown', []]
+  const cast = D.data.pack.casting.heroines.find((x) => x.board === r.id)
+  const foe = D.foes.get(r.id), story = inStory()
+  const v = foe ? variantOf(foe.faction, foe.unit.variant) : null
+  const fittings = foe ? foe.faction.units.filter((x) => x.model === foe.unit.model && x.id !== r.id) : []
+  return h('div', {},
+    h('p', {}, h('a', { href: '#/profiles', text: '‹ Profiles' })),
+    h('h1', {}, who.name),
+    h('p', { class: 'muted', text: `${title} · ${r.board} ${r.tier} · ${r.id}` }),
+    h('div', { class: 'two' },
+      h('div', {}, r.images?.art ? h('img', { class: 'foe-art', src: who.art, alt: '' }) : face(r.id, 160)),
+      h('div', { class: 'card' }, rows([
+        ...(r.details ?? []).map((d, i) => [labels[i] ?? 'Detail', d]),
+        ['The Ranker', `${r.board} · ${r.tier}${r.category ? ` · ${r.category}` : ''}`],
+        ['In this story', !story.has(fr) ? 'Not in the story: its franchise left (D36)'
+          : cast ? [h('b', { text: 'Cast' }), ` · ${cast.faction} · Hold ${cast.hold}`]
+          : foe?.unit.story ? 'A part in her faction’s foe bible, drawn as a Boss; not in the casting yet'
+          : foe ? 'In the foe pool, by the Ranker’s order' : 'Not in the foe data'],
+        ['Her part', foe?.unit.story ?? null],
+        ['As a foe', foe ? [h('a', { href: `#/foes/${foe.faction.id}/${encodeURIComponent(r.id)}`, text: foe.faction.title }), ` · ${{ boss: 'Boss', key: 'Key', regular: 'Regular' }[foe.unit.rank]} · ${v?.name ?? foe.unit.variant} · ${ROLE_NAMES[foe.unit.role] ?? foe.unit.role}${lightOf(foe.unit.light) ? ` · ${lightOf(foe.unit.light).name}` : ''}`] : null],
+        ['Other fittings', fittings.length ? fittings.map((x) => [h('a', { href: profileHref(x.id), text: D.cast.name(x.id) }), ' ']) : null],
+      ]))),
+    r.images?.splash ? h('div', { class: 'card' }, h('h4', { text: 'Her splash art' }), h('img', { class: 'splash', src: who.record.images.splash, alt: '', loading: 'lazy' })) : null)
+}
+
+/** Profiles: everyone the Ranker gives the story, by Umas' batch and heroines' franchise, each with her art and facts. */
+export function profilesView(id) {
+  if (!id) return profilesIndex()
+  const who = D.cast.who(id)
+  if (!who.record) return h('div', { class: 'error-box', text: `No profile for ${id}: it isn’t in the cast pack.` })
+  return who.kind === 'uma' ? umaProfile(who) : heroineProfile(who)
 }
 
 const sceneKey = (chapter, id) => (id === 'debrief' ? `${chapter.id}/debrief` : id)
@@ -482,7 +593,7 @@ export function castView(saveReview) {
     h('div', { class: 'card' }, h('h3', { text: 'Heroines, by faction and Hold' }),
       h('p', { class: 'muted', text: 'Freed, never killed: an Anchor or a Collar is broken in battle; with no Hold, the story brings her over.' }),
       Object.keys(byFaction).length ? Object.entries(byFaction).map(([faction, list]) => h('div', {}, h('h4', { text: `${faction} · ${list.length}` }),
-        list.map((x) => h('span', { class: 'who' }, face(x.board), h('span', {}, D.cast.name(x.board), ' ', pill(x.hold))))))
+        list.map((x) => h('span', { class: 'who' }, face(x.board), h('span', {}, h('a', { href: `#/profile/${encodeURIComponent(x.board)}`, text: D.cast.name(x.board) }), ' ', pill(x.hold))))))
         : h('p', { class: 'muted', text: 'None cast yet.' })),
     casting.minor.length ? h('div', { class: 'card' }, h('h3', { text: 'Minor characters' }), casting.minor.map((m) => person(m))) : null,
     Object.keys(batches).length ? h('div', { class: 'card' }, h('h3', { text: 'The Ranker’s Umas, by batch' }),
