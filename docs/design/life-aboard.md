@@ -233,7 +233,7 @@ slots** and a window:
 | Keepsake | One unique item: a trophy, a photo, a gift from the captain, something from her world |
 | *Window* | Shows the world the ship orbits (not a slot) |
 
-She appears in her **Quarters look** here, and at her post in her **pilot suit** ([character-sprites.md](character-sprites.md), LK1).
+She appears in her **Quarters look** here, as its approved full-body image over the diorama, and at her post in her **pilot suit**, as its bust on the post's card. Neither look needs sprites ([character-sprites.md](character-sprites.md), LK1, D24).
 
 Slots, not free placement: quick on a phone (Blue Archive's café and Azur Lane's dorm show free placement is a chore at
 this size), and every item can be drawn once at one size.

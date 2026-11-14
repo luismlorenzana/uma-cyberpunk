@@ -20,7 +20,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY19; decision numbers continue from D24.
+Packet ids run CY1–CY19; decision numbers continue from D25.
 
 ## Phase 1: the foundation
 
@@ -95,7 +95,7 @@ packet, or says why not.
 
 | When | What |
 |---|---|
-| D23 | Read [the character sprites spec](../design/previews/character-sprites.html) (five looks per Uma, board sprites, portraits, cut-in keys, LK1–LK14) and the private pilot notes (`content/design/character-looks/index.html`); on your word the [request](../design/art-requests/character-looks.md) goes to uma-platform |
+| D24 | Hand ChatGPT [the combat sprites request](../design/previews/combat-sprites-request.html) with the private prompts (`content/design/character-looks/combat-sprites-prompts.md`) and reference boards (`sprite-refs/`); it saves the sheets to `content/design/character-looks/combat-masters/`. Then look at each pilot's identity sheet (S1) when it's back. The spec is [character-sprites](../design/previews/character-sprites.html) (LK1–LK14) |
 | D20 | Read [life aboard](../design/previews/life-aboard.html) (the captain, bonds, cabins, duties, the ship, squads; TC55–TC74) and say what to change; silence keeps it. Then hand the story session its new line (above) to start [part two](../design/previews/story-brief-life-aboard.html): worldbuilding first |
 | Earlier | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | CY3 | The phone check (the OAuth entries are in, 2026-11-13): open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, open it from there, sign in, and see the ship; **Status** in the menu shows the save synced |

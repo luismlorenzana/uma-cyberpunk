@@ -37,10 +37,11 @@
 > [story-brief-life-aboard.md](story-brief-life-aboard.md). It amends TC8, TC15, TC36, TC42, TC44, TC49, TC50 and
 > TC51, each marked "amended D20" below.
 >
-> **Looks and sprites (D23):** each Uma's five looks (Street, Quarters, Pilot suit, Combat armor, the helmet), the board
-> sprites, portraits and cut-in keys made from them, and how they're authored are their own page,
-> [character-sprites.md](character-sprites.md) (**LK1–LK14**); it refines TC12's art, TC28's cut-in, TC39's suit-up and
-> TC41's hue per Uma.
+> **Looks and sprites (D23, D24):** each Uma's five looks (Street, Quarters, Pilot suit, Combat armor, the helmet) and
+> how they're authored are their own page, [character-sprites.md](character-sprites.md) (**LK1–LK14**). **Only combat
+> gets sprites:** her chibi re-dressed in her combat armor, helmet off and on, drawn from
+> [the combat sprites request](combat-sprites-request.md). Every other look shows as its approved image and bust. It
+> refines TC12's art, TC28's cut-in, TC39's suit-up and TC41's hue per Uma.
 
 ## The short answer
 
@@ -601,7 +602,7 @@ art only (enemies included) and Claude draws everything else in code. Nothing he
 
 | What | Stand-in first | The real art | Who | Where |
 |---|---|---|---|---|
-| Umas on the map | — | Their **chibi sets** from master data, which already walk in four facings | — | Master data's private release |
+| Umas on the map | Their **chibi sets** from master data, which already walk in four facings (D19) | **Their chibis in combat armor**, helmet off and on ([the combat sprites request](combat-sprites-request.md), D24), the pilots first | ChatGPT | Private |
 | Umas in the cut-in | Their **full-body renders** from master data | **Combat Adult Character** keys in a rig, side-on, facing left, from the Character Art Studio's "Uma Cyberpunk" category (P143) | ChatGPT | A private uma-cyberpunk pack, as uma-quest's keys are (its D45) |
 | Heroines on the map | **Standees** from the Ranker's figure images | Drawn map sprites, wave by wave, bosses first | ChatGPT | Private |
 | Heroines in the cut-in | The Ranker's figure and splash images | Combat keys, side-on, facing right | ChatGPT | Private |

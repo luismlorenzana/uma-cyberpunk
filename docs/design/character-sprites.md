@@ -1,12 +1,14 @@
 # Character looks and sprites: the authoring spec
 
-> **Status: 2026-11-13 (D23), for the owner's review.** The owner asked for the character art in the Uma Platform app's
+> **Status: 2026-11-13 (D23, narrowed by D24).** The owner asked for the character art in the Uma Platform app's
 > Character Art (the Cyberpunk universe's approved looks of the first two pilot Umas) to inform the game's looks, and for
-> a spec of how the character sprites are authored from that art and Triangle Strategy's camera. This page is the
-> game's side, **nameless**: Umas are outfit ids, and the per-Uma notes are private (`content/design/character-looks/`).
-> Its calls are **LK1–LK14**, each a recommendation, adopted until the owner changes one. The sprite format it builds on
-> is uma-platform's ([format.md](https://github.com/luismlorenzana/uma-platform/blob/main/docs/sprites/format.md), v1);
-> what it needs from uma-platform is [a request](art-requests/character-looks.md). Visual page:
+> a spec of how the character sprites are authored from that art and Triangle Strategy's camera. On reading it, the
+> owner asked for a focused, image-only sprite request and questioned sprites for every outfit (D24): **sprites are for
+> combat only, as chibis**, and every other look shows as its approved image. This page is the game's side,
+> **nameless**: Umas are outfit ids, and the per-Uma notes are private (`content/design/character-looks/`). Its calls
+> are **LK1–LK14**, each a recommendation, adopted until the owner changes one. The sprite format it builds on is
+> uma-platform's ([format.md](https://github.com/luismlorenzana/uma-platform/blob/main/docs/sprites/format.md), v1),
+> unchanged. What ChatGPT draws is [the combat sprites request](combat-sprites-request.md). Visual page:
 > [previews/character-sprites.html](previews/character-sprites.html).
 
 ## The short answer
@@ -14,35 +16,33 @@
 - **Five looks per Uma, each tied to where she is** (LK1): **Street** when exploring worlds and cities, **Quarters** in
   her cabin and her evenings aboard, **Pilot suit** at her ship station, **Combat armor** on the battle board, and the
   **helmet** closed only when a map is sealed or for the cut-in's strike.
+- **Sprites only for combat** (LK1, LK4, D24). The battle board is the one place she's a small figure that walks and
+  acts, so only the combat armor (helmet off, then on) gets sprites. Street, Quarters and Pilot suit show as **the
+  approved full-body images and their busts**, which already exist.
+- **The sprites are chibis** (LK6): her approved chibi from the platform's sprite set, the same face, head and about
+  three heads of height, **re-dressed in her combat armor**. The platform's format, cell and checks stay as they are,
+  and a drawn pilot stands at the same scale as every other Uma still on her original chibi set.
 - **One template per look, shared by every Uma** (LK3): the same jacket cut, plugsuit, Modular Frame armor and Helmet,
   personalised by her **palette**, her **emblem** and her **head** (hair, ears, eyes, accessory). That's what the ten
   approved looks already do, and it's how a hundred Umas stay consistent and affordable.
-- **Two kinds of character art, split by camera** (LK4):
-  - **Board sprites** stand in the HD-2D diorama: small, four facings, few frames, read at about 69 pt on the phone.
-  - **Portraits and cut-in keys** carry the drama: the approved full-body looks as portraits in scenes, visits and
-    menus, and a few large side-view combat keys for the cut-in. Fire Emblem splits its art the same way (map
-    sprites, battle animations, portraits), and Triangle Strategy and Octopath draw their portraits apart from their
-    sprites.
 - **The board's camera is ours, not Triangle Strategy's** (LK5): Triangle Strategy's camera turns a full circle, which
   had its team build every map for every side. Ours is uma-stage's orthographic view, fixed at 35°, along the grid's
-  axes, so a sprite needs **four facings** (front, back, left, right), never diagonals, and nothing rotates.
-- **The sprite** (LK6–LK9): uma-platform's 256-texel cell and foot point kept, a standing Uma about 212 texels tall,
-  **adult HD-2D proportions of about four heads** (the platform's chibi sets are three), **redrawn at sprite size, never
-  shrunk** from the full body, light from the top front-left, never mirrored. A small set per look, about 64 frames for
-  combat and fewer elsewhere, with held-back motion; the helmet as a **head patch**, not a second set.
-- **Authoring** (LK10–LK13): ChatGPT draws the character art (uma-platform P126, P147) from the approved looks; the
-  pilots' combat set first, then their station, quarters and exploration sets; then the other leads. The game picks the
-  look by context and falls back to the original-outfit chibi set or a face card while a look isn't drawn.
+  axes, so a sprite needs **four facings** (front, back and true side profiles), never diagonals, and nothing rotates.
+- **One combat set per Uma** (LK9): 73 poses helmet off (the identity sheet, walking in four facings, reactions in four
+  facings, a victory), and the same 73 with the helmet, made by **editing only the head** of the approved sheets.
+- **ChatGPT generates images, nothing else** (LK13): pose sheets, from [the request](combat-sprites-request.md) and the
+  private prompts. Cutting, alignment, the atlas, checks, publishing and the game's use come later (LK14).
 
 ```mermaid
 flowchart LR
-  looks[Approved looks: five per Uma, full body 1024 × 1536] --> portraits[Portraits: scenes, visits, menus, deploy]
-  looks --> keys[Cut-in keys: side view, combat armor, helmet on for the strike]
-  looks --> sprites[Board sprites: 4 facings, 256 cell, ~4 heads]
-  sprites --> board[Battle board: combat armor]
-  sprites --> ship[Ship: pilot suit at posts]
-  sprites --> cabin[Cabin: quarters]
-  sprites --> world[World dioramas: street]
+  chibi[Her approved chibi: face, head, proportions] --> sheets[Combat sprite sheets: chibi in armor, helmet off then on]
+  armor[Her approved armor and helmet looks] --> sheets
+  sheets --> board[Battle board: four facings]
+  looks[Approved looks: five per Uma, full body 1024 × 1536] --> portraits[Full-body images and busts]
+  portraits --> cabin[Cabin: Quarters]
+  portraits --> post[Posts and Bridge: Pilot suit]
+  portraits --> world[Node maps and scenes: Street]
+  portraits --> battle[Briefing, deploy, results: Combat armor]
 ```
 
 ## 1. What the approved looks establish
@@ -65,15 +65,16 @@ on one forearm), so sprites are never mirrored.
 
 ## 2. The five looks in the game (LK1, LK2)
 
-**LK1, a look per context.** Each screen or scene shows the Uma in the look her situation calls for:
+**LK1, a look per context.** Each screen or scene shows the Uma in the look her situation calls for. Only combat
+needs sprites (D24):
 
 | Look | When | Where in the game | Art used |
 |---|---|---|---|
-| **Street** | Exploring a world | Scenes on a world's map, Intel scenes (TC35), shore leave outings to a market (TC61), later the world dioramas (Phase 5) | Portrait; board sprites for dioramas |
-| **Quarters** | Off duty aboard | Her cabin (TC60), visits and invitations to the Observation Deck or the Galley (TC61), bond scenes in her cabin, the ship's evening scenes | Portrait; a cabin sprite (standing, sitting, lying) |
-| **Pilot suit** | On duty aboard | At her post (TC67) in the ship's cutaway and her room's page, the Bridge's scenes, a visit at her post, the cut-in of a ship support Order she's posted to (TC64) | Portrait; a station sprite (at the console, standing, walking) |
-| **Combat armor** | In a mission | The battle board, the briefing and deploy screens, the results, the debrief aboard, the Hangar, the timeline and unit card | Board sprites; portrait; cut-in keys |
-| **Helmet on** | A sealed fight | Sealed maps (vacuum, toxic smoke, a boarding in space), the suit-up's last beat (TC39), the cut-in's strike frame | The helmet head patch on the board sprites; cut-in keys |
+| **Street** | Exploring a world | A world's node map and its scenes, Intel scenes (TC35), shore leave outings to a market (TC61) | The approved image and its bust; **no sprites** |
+| **Quarters** | Off duty aboard | Her cabin (TC60), where she stands over the cabin's diorama as in a visual novel; visits and invitations to the Observation Deck or the Galley (TC61); bond scenes in her cabin; the ship's evening scenes | The approved image and its bust; **no sprites** (CY14 stands her bust in until the image is wired) |
+| **Pilot suit** | On duty aboard | Her post (TC67) on the cutaway and her room's page, the Bridge's scenes, a visit at her post, the cut-in of a ship support Order she's posted to (TC64) | The approved image, and its bust on her post's card; **no sprites** |
+| **Combat armor** | In a mission | The battle board; the briefing and deploy screens, the results, the debrief aboard, the Hangar, the timeline and unit card | **Chibi board sprites**; the approved image and bust; cut-in keys |
+| **Helmet on** | A sealed fight | Sealed maps (vacuum, toxic smoke, a boarding in space), the suit-up's last beat (TC39), the cut-in's strike frame | **The helmet sprite sheets**; the approved image; cut-in keys |
 
 There's precedent in part: Octopath shows a character's second-job outfit only in battle and keeps her own clothes on
 the field, while Triangle Strategy keeps one sprite everywhere and changes it on a promotion. This game goes further,
@@ -110,17 +111,17 @@ puts it, is the accent hers).
 
 ## 4. Two kinds of character art (LK4)
 
-**LK4, board sprites for the diorama, portraits and keys for the drama.** Fire Emblem pairs its map sprites with
+**LK4, sprites for the board, the approved images for everything else.** Fire Emblem pairs its map sprites with
 separate battle animations and portraits, and Unicorn Overlord cuts from small map figures to side-on fighters.
 Triangle Strategy and Octopath draw their portraits apart from their sprites (a Triangle Strategy mod swaps one
 heroine's portrait on its own), and Octopath's sprites were converted by hand from the illustrations, finished to look
 best as sprites with stronger colours. This game does the same, with the cut-in's keys as the battle close-up.
 
-| Art | Size | Shows | Made from |
-|---|---|---|---|
-| **Board sprites** | 256-texel cells, about 212 tall | Standing, walking, reacting on the board, the cutaway, the cabin, world dioramas | Each look's approved full body, at about four heads |
-| **Portraits** | The approved 1024 × 1536 looks, and a bust crop of each | Scenes, bond scenes, visits, briefings, deploy, results, menus | Used as published |
-| **Cut-in keys** | Side view, about 360 px tall in a 512 cell | The attack cut-in (TC28): stance, melee, shot, launcher, hack, guard, hurt, Rig Break, victory | The combat armor look, helmet on for the strike |
+| Art | Size | Shows | Made from | Asked |
+|---|---|---|---|---|
+| **Board sprites** | The platform's 256-texel cells, about 208 tall | Her combat armor on the battle board, helmet off and on | Her approved chibi, re-dressed from her approved armor look | **[The combat sprites request](combat-sprites-request.md)** |
+| **Portraits** | The approved 1024 × 1536 looks, and a bust crop of each | Scenes, bond scenes, visits, her cabin, her post, briefings, deploy, results, menus | Used as published | Done: approved 2026-11-13 |
+| **Cut-in keys** | Side view, about 360 px tall in a 512 cell | The attack cut-in (TC28): stance, melee, shot, launcher, hack, guard, hurt, Rig Break, victory | The combat armor look, helmet on for the strike | A separate request, later |
 
 The cut-in keys follow uma-quest's adult travelers (twelve battle keys from the Character Art Studio's Combat Adult
 Character category, P143): a few large poses, not an animation set.
@@ -138,139 +139,157 @@ geometry:
 | **Pitch** | Not published; reads as about 30–40° at the default view (Final Fantasy Tactics' usual camera is about 26.5°) | **35°, fixed** |
 | **Grid on screen** | Any angle, since the camera turns | Axis-aligned: rows run across the screen, the back row at the top |
 | **Facing as a rule** | Four grid facings, chosen as a turn ends; a hit from behind is a critical | Four, the same (TC23: side +25%, back +50%), shown as a wedge on the base ring |
-| **Views drawn** | Not published; with a free camera, the view shown follows her facing against the camera's angle | **Front, back, left, right** (three-quarter turned), each seen from one angle only |
-| **Scale** | Not published; a unit about a tile and a half tall, about 2.5 to 3 heads, by eye | 128 texels a tile; a standing Uma about 212 texels, 1.65 tiles, about four heads |
+| **Views drawn** | Not published; with a free camera, the view shown follows her facing against the camera's angle | **Front, back and true side profiles**, each seen from one angle only |
+| **Scale** | Not published; a unit about a tile and a half tall, about 2.5 to 3 heads, by eye | 128 texels a tile; a standing Uma about 208 texels, 1.6 tiles, about three heads |
 | **Light** | Real light on the sprites, like a diorama (Octopath reworked its point lights to touch the pixel art) | The scene's light and night grade on the quads; drawn light from the top front-left |
 | **Depth** | Tilt-shift, parallax; depth of field as a PC setting | Tilt-shift and bloom (D18), off under the saver; the tilt-shift held at 0.8 so the rows units stand on stay sharp |
 
 Triangle Strategy's free camera was a deliberate cost: Square Enix says a tactics game must let the player see the
 field from every side, so every map had to look right from every angle. On a phone, a fixed camera keeps the board a
-one-hand read and spares building every map for every side, and the facing wedge and the forecast card (TC29) answer what rotation answers
-there, who's behind whom.
+one-hand read and spares building every map for every side, and the facing wedge and the forecast card (TC29) answer
+what rotation answers there, who's behind whom.
 
 **What follows for the sprites:** four facings and no diagonals, each drawn once and seen only from its one angle. If
 90° rotation ever arrives, the same four views still cover it: the game shows the view her facing makes against the
-camera, as Triangle Strategy must. uma-stage stretches each sprite quad by 1/cos 35° so the figure isn't squashed by the
-pitch and one texel lands on one device pixel at DPR 3; sprites are never scaled by a fraction, and never enlarged
-through a smoothing filter (Tactics Ogre Reborn's most criticised change).
+camera, as Triangle Strategy must. The sprites are **drawn at eye level**, like every platform chibi: uma-stage stands
+each one upright and stretches its quad by 1/cos 35°, so the figure isn't squashed by the pitch and one texel lands on
+one device pixel at DPR 3. Sprites are never scaled by a fraction, and never enlarged through a smoothing filter
+(Tactics Ogre Reborn's most criticised change).
 
 ## 6. The sprite (LK6–LK8)
 
-**LK6, the cell and the figure.**
+**LK6, her chibi, in armor, in the platform's format as it is.**
 
 | Rule | Value | From |
 |---|---|---|
 | Cell | 256 × 256 texels, transparent, clear border | format.md §2, unchanged |
 | Foot point | (128, 240); feet on row 240 | Unchanged |
-| Standing height | About 212 texels, ears and shoes included; the helmet about 216 | Close to v1's 208 |
-| **Proportions** | **About four heads** (a head about 52 texels), adult HD-2D, legs long enough to read the armor's leg plates; redrawn at this size from the look, never shrunk | New: v1's sets are three-head chibis |
-| On the phone | One texel a device pixel at DPR 3; a standing Uma about 70 pt | uma-stage |
+| Standing height | About 208 texels, ears and boots included | Unchanged |
+| **Proportions** | **Her approved chibi's:** about 2.6 to 3 heads below the ears, the same head size, face and rendering, drawn fresh at sprite size, never a shrunk illustration | format.md §10, unchanged |
+| **Clothes** | Her approved combat armor look, simplified to chibi scale: chunky plates, her emblem, her one-sided motif, her three colours; seams and slots dropped | New (D24) |
+| On the phone | One texel a device pixel at DPR 3; a standing Uma about 69 pt | uma-stage |
 | Light | From the top front-left, moderate shading, clean antialiased edges, no outline glow, no shadow, no floor | format.md §10 |
-| Colour | Full colour; her three palette roles exact on every frame (a check) | New |
 
-**Why four heads, and why redrawn.** Triangle Strategy's director describes a search for "the right line" of
-deformation: the more heads tall a figure is, the smaller each pixel becomes and the more it reads as a shrunk
-illustration rather than a sprite, so they drew deformed figures first and added realistic light on top. Octopath II
-went the other way for a reason this game shares: its team made the characters taller so they sat right against sharper
-backgrounds and so each skill could have its own motion. This game sits between the two: its sprites are clean,
-antialiased anime at 256 texels (format.md §10), not hard pixel art, and its looks are adults in armor, so about four
-heads keeps the armor's plates and the long legs while the head (about 52 texels, 17 pt on the phone) still carries her
-face. The approved looks are about seven heads; shrinking one to 212 texels would lose the face, so each frame is
-redrawn at sprite size with the head enlarged, as Octopath's artists redrew from the illustrations.
+**Why chibi.** Three reasons, each enough on its own:
+- **The board is mixed for a long time.** Every Uma whose combat set isn't drawn walks the board on her original chibi
+  set (D19). A drawn pilot at the same three heads stands beside them at the same scale. A taller adult figure would
+  jump out of the squad.
+- **Triangle Strategy does it.** Its units are deformed figures, about 2.5 to 3 heads by eye. Its director describes
+  a search for "the right line" of deformation: the taller the figure, the smaller each pixel and the more it reads as
+  a shrunk illustration, so they drew deformed figures and added believable light on top.
+- **Her head carries her identity at 69 pt.** A chibi's head is about a third of her height. It holds the hair, ears,
+  accessory and face that tell twelve armored Umas apart.
 
-**LK7, facings.** Four, each drawn, never mirrored: **front** (toward the camera, row-down), **back** (away, row-up),
-**left** and **right** (three-quarter, turned to image-left and image-right). They're v1's field facings; the board's
-N, S, E and W map to back, front, right and left (uma-stage's `Facing`). There's no separate battle facing on the board:
-the cut-in has its own keys (LK4). Drawing three views and mirroring the side would save a quarter of the frames, but
-anything on one side (a hair ornament, a braid, a crest, a forearm shield, the weapon hand) changes sides when flipped,
-and every approved look has such a detail.
+The chibi also keeps the platform's format, its 14 checks and its prompt templates unchanged, and her approved chibi is
+the exact reference for the face. Octopath II made its figures taller to suit sharper backgrounds and give each skill
+its own motion. This board leaves the big motion to the cut-in, so it doesn't need that.
 
-**LK8, readability at 70 pt.** Each look's sprite keeps, at full size:
+**LK7, five views, each drawn, never mirrored.** The **key** (three-quarter, turned to image-left: the identity
+reference) and the four the board plays:
+- **front** (toward the camera, row-down);
+- **back** (away, row-up);
+- **left** and **right**, which are true side profiles, as the owner asked for the platform's chibi sets (P105).
+
+The board's N, S, E and W map to back, front, right and left (uma-stage's `Facing`). Drawing three views and mirroring
+the side would save a quarter of the frames, but anything on one side changes sides when flipped: a hair ornament, a
+braid, a crest, a forearm shield, the weapon hand. Every approved look has such a detail.
+
+**LK8, readability at 69 pt.** Each sprite keeps, at full size:
 - **the head readable:** hair shape, ears and accessory; the face a few clear marks (eyes, mouth);
-- **her accent colour** in two big areas at least (shoulders and boots on the armor; the jacket or hood on the street look);
+- **her accent colour** in two big areas at least (the shoulders and shins or boots);
 - **the emblem** as one clear mark of four to eight texels;
-- **the template's silhouette:** the armor's shoulder pads and boots must change her outline from the street look;
+- **the armor's silhouette:** chunky shoulder pads and boots change her outline from her chibi's dress;
 - **the tail** always visible, in her colour;
 - **the back view told apart at a glance:** a hit from behind does +50% (TC23), so her back (hair, tail, the armor's
   back plate) must never be mistaken for her front; the wedge carries the rule, the sprite confirms it.
 
-**Two checks on every look's first frame:** filled solid black at 70 pt, the silhouette still says which look it is
-(ears, shoulder pads and weapon at least two texels thick, no one-texel detail); and on the night board, it doesn't
-sink. Her palette passes through the scene's grade: a dark palette keeps a lit accent (crimson, gold) and a lighter rim
-on her lit side, top-left, so she doesn't sink into the terrain; a light one is fine as it is.
+**Two checks on every identity sheet:**
+- **The silhouette:** filled solid black at 69 pt, it still reads as her in armor. Ears, shoulder pads and gauntlets are
+  at least two texels thick, with no one-texel detail.
+- **The night board:** she doesn't sink into it. Her palette passes through the scene's grade. A dark palette keeps a
+  lit accent (crimson, gold) and a lighter edge on her lit side, top-left. A light palette is fine as it is.
 
-## 7. What each look's sprite set holds (LK9)
+## 7. The combat set (LK9)
 
-**LK9, small sets, by context.** Frames per facing are listed; "×4" means each of the four facings.
+**LK9, one combat set per Uma, nothing for the other looks.** It's drawn as pose sheets (the request's S1–S7), and the
+helmet sheets are edits of the approved ones.
 
-| Look | Actions | Frames |
-|---|---|---|
-| **Combat armor** | Standing still ×4 (the turnaround, with a one-texel breathing bob by the game); `walk` ×4 (6); `act` ×4 (3: weapon raised, the moment of an attack or a skill; the cut-in plays the rest); `hurt` ×4 (2); `kneel` ×4 (3: Rig Break, kneeling, weary, held; played backwards it's a reboot); `guard` ×4 (2: Cover and a shield up); `victory` front (4) | about 64 |
-| **Helmet on** | No second set: a **helmet head patch** per facing, placed on every frame by its head box and offset (format.md §5's machinery, widened to the whole head box), plus helmet drawings for the `hurt` and `kneel` frames, whose heads are free | 4 patches + about 20 heads |
-| **Pilot suit** | Standing still ×4; `walk` ×4 (6); `console` back three-quarter (4: seated at a station, working; loops); `salute` front (2) | about 34 |
-| **Quarters** | Standing still ×4; `sit` front (2); `lie` (2: asleep, loops); `walk` ×4 (6, for the deck) | about 32 |
-| **Street** | Standing still ×4; `walk` ×4 (6); `run` ×4 (6); the six emotes front (v1's `nod`, `surprise`, `laugh`, `sad`, `angry`, `wave`, 16) | about 68 |
+| Batch | What | Sheets | Frames |
+|---|---|---|---|
+| **1. Standing and walking**, helmet off | The key and the four standing views; `walk` in four facings (6 each) | S1, S2, S3 | 29 |
+| **2. Reactions**, helmet off | Per facing: `act` (3: the moment of an attack; the cut-in plays the rest), `hurt` (2), `guard` (2: Cover, a shield up), `kneel` (3: the Rig Break, held; played backwards it's a reboot); `victory` front (4) | S4–S7 | 44 |
+| **3. The helmet** | The same sheets with only the head replaced by her helmet: same poses, scale and positions | S1h–S7h | 73 |
+| | | **Per Uma** | **146** |
 
-**Per Uma, all five: about 220 frames,** against v1's Traveler profile of 130 for one outfit. That's why the sets are
-tiered (LK12) and the combat set comes first.
+That's against v1's Traveler profile of 130 frames for one outfit. The board plays batch 1 today: standing stills and
+walking. Batch 2 waits for a board that shows reactions, and batch 3 for the first sealed map. Both are drawn now so the
+set is whole.
 
 **Motion held back, on purpose.** Octopath kept its frame counts low to keep the stepped feel of sprites, and the
-board's sprites do the same: a six-frame walk at about 100 ms a frame, a still stand with the game's breathing bob, and
-the big motion left to the cut-in.
+board's sprites do the same: a six-frame walk at about 110 ms a frame (v1's timing), a still stand with the game's
+breathing bob, and the big motion left to the cut-in.
 
 ## 8. Portraits and cut-in keys (LK10, LK11)
 
 **LK10, the approved looks are the portraits.** Each 1024 × 1536 look shows full size where a scene or screen is about
-her (a visit, a bond scene, the deploy screen's selected Uma, the results), and a **bust crop** (head to chest, fixed
-per look) in the text box, the unit card and the timeline chip. In the context's look: her quarters bust in a cabin
-scene, her pilot bust at a post, her armor bust in battle. They're read from the Uma Platform app's universe looks
-(CA4) at run time, the same private way as master data's art, never in git; until a look exists, master data's bust or
-render stands in.
+her: a visit, a bond scene, her cabin (standing over its diorama), the deploy screen's selected Uma, the results. A
+**bust crop** (head to chest, fixed per look) shows in the text box, on her post's card, on the unit card and on the
+timeline chip. Each is in the context's look: her quarters bust in a cabin scene, her pilot bust at a post, her armor
+bust in battle. They're read from the Uma Platform app's universe looks (CA4) at run time, the same private way as
+master data's art, never in git. Until a look exists, master data's bust or render stands in.
 
-**LK11, a few cut-in keys per Uma.** Side view, combat armor, about 360 px tall in a 512 cell, light from the front:
-`stance`, `melee`, `shot`, `launcher` (the Back unit firing over her shoulder), `hack`, `guard`, `hurt`, `kneel`,
-`victory`, and `strike` with the helmet on (the visor down for the hit). Ten keys, drawn as stills; the cut-in moves them
-(slides, shakes, a flash), as uma-quest's fights do with their keys.
+**LK11, a few cut-in keys per Uma, a separate request later.** Side view, combat armor, about 360 px tall in a 512 cell,
+light from the front: `stance`, `melee`, `shot`, `launcher` (the Back unit firing over her shoulder), `hack`, `guard`,
+`hurt`, `kneel`, `victory`, and `strike` with the helmet on (the visor down for the hit). Ten keys, drawn as stills; the
+cut-in moves them (slides, shakes, a flash), as uma-quest's fights do with their keys. They aren't in the combat sprites
+request.
 
 ## 9. Authoring and order (LK12, LK13)
 
 **LK12, tiers, so the cost follows the story.**
 
-| Tier | Who | Looks (portraits) | Board sprites | Cut-in keys |
+| Tier | Who | Looks (portraits) | Combat sprites | Cut-in keys |
 |---|---|---|---|---|
-| **Pilots** | The two Umas with approved looks | All five | All five sets | Yes |
-| **Leads** | Each lead the story names (TC51) | All five | Combat, Pilot suit, Quarters, Street | Yes |
-| **Featured crew** | Crew with bond scenes (TC57) | All five | Combat, Pilot suit | Yes |
-| **Everyone else** | The rest aboard | Combat and Quarters | Combat | Later |
+| **Pilots** | The two Umas with approved looks | All five ✓ | **Now** (the request) | Later |
+| **Leads** | Each lead the story names (TC51) | All five | As the story casts them | Yes |
+| **Featured crew** | Crew with bond scenes (TC57) | All five | Next | Yes |
+| **Everyone else** | The rest aboard | Combat and Quarters | Later; her chibi set meanwhile | Later |
 
-**While a look isn't drawn, the game falls back:** a missing board sprite uses her original-outfit chibi set from master
-data (D19), else her face card; a missing portrait uses master data's bust or render. Nothing waits on art.
+**While a look isn't drawn, the game falls back:**
+- a missing combat set: her original-outfit chibi set from master data (D19), else her face card;
+- a missing portrait: master data's bust or render.
 
-**LK13, who draws and how it flows.**
+Nothing waits on art.
+
+**LK13, ChatGPT generates images, nothing else.**
 1. **The looks** (portraits): ChatGPT draws each Uma's five looks in the Character Art Studio, from her master data art
-   and the five templates (the pilots' looks are the reference sheets), the owner approves, and `pnpm art:push`
-   publishes them to Uma Character Art (CA4).
-2. **Board sprites and cut-in keys:** ChatGPT draws them from the approved looks, in uma-platform's sprite pipeline
-   (pipeline.md), to this spec's profiles. **The first frame of each look comes first:** her front standing frame,
-   checked on the board at 70 pt (LK8's two checks, the face readable) before the rest of the set is drawn; if the face
-   doesn't read, the head grows toward three and a half heads for every look. The owner approves in the Studio; they
-   publish in master data's private release, keyed by outfit **and look**.
-3. **The game** reads both at run time, picks the look by context (LK2) and falls back while one is missing.
-
-**The order:** the pilots' combat set and cut-in keys first (the board), then their pilot-suit set (the ship's posts,
-CY16), quarters set (the cabins, CY14), street set (the world dioramas, Phase 5); then each lead's looks as the story
-names them.
+   and the five templates (the pilots' looks are the reference sheets). The owner approves them, and they're published
+   to Uma Character Art (CA4). The pilots' are done.
+2. **The combat sprites:** ChatGPT generates the pose sheets of [the request](combat-sprites-request.md), using each
+   Uma's private paste-ready prompts. Her reference board holds her approved chibi stills and her approved armor and
+   helmet looks. The sheets are saved privately with their prompts.
+3. **The owner's gates:** the owner looks at the identity sheet (S1) before anything else is drawn, and at the walks
+   (S2, S3) before the reactions. Any change is redrawn before the next step.
+4. **Everything after the images is later** (LK14): cutting the sheets into frames, alignment, the atlas, the checks,
+   publishing, and the game's use.
 
 ## 10. What changes where (LK14)
 
-**LK14, the requests and the game's side.**
-- **To uma-platform** ([the request](art-requests/character-looks.md)): a **Tactics adult** sprite profile (four heads,
-  four facings, the actions of LK9), the **helmet head patch** (format.md §5's head box as a patch), sprite sets and
-  keys **keyed by outfit and look** in master data's release, the Studio's Uma Cyberpunk categories for the five looks
-  and the cut-in keys, and the universe looks readable by this game's API.
-- **In this game,** with the packets that first show each look: a `look` per screen and per scene (LK2), the portrait
-  and bust from the universe looks with their fallbacks, the helmet head patch on the board, sealed maps (a map flag),
-  and the cut-in playing the keys.
+**LK14, one image request now; the integration later.**
+- **Now:** [the combat sprites request](combat-sprites-request.md) for ChatGPT, with the private prompts and reference
+  boards in `content/design/character-looks/`. It asks for images only.
+- **Later, once the sheets exist and pass the gates:**
+  - their export into the platform's format (format.md, unchanged);
+  - a way to key a set by outfit **and look** in master data's release, beside today's chibi set;
+  - the universe looks readable by this game's API.
+
+  That's one uma-platform request under the change protocol, written then from what the sheets need. D23's draft of it
+  is withdrawn (D24).
+- **In this game,** with the packets that first show each look:
+  - a `look` per screen and per scene (LK2);
+  - the portraits and busts from the universe looks, with their fallbacks;
+  - the combat set on the board, the helmet sheets on sealed maps (a map flag);
+  - the cut-in playing the keys.
 
 ## 11. The research behind it
 
@@ -296,17 +315,17 @@ were measured**; rows above marked "not published" or "by eye" are estimates.
 
 | # | Call | Section |
 |---|---|---|
-| LK1 | Five looks per Uma tied to context: Street exploring, Quarters off duty, Pilot suit on duty, Combat armor in missions, the helmet on sealed maps, the suit-up's last beat and the cut-in's strike | [2](#2-the-five-looks-in-the-game-lk1-lk2) |
+| LK1 | *(amended D24)* Five looks per Uma tied to context: Street exploring, Quarters off duty, Pilot suit on duty, Combat armor in missions, the helmet on sealed maps, the suit-up's last beat and the cut-in's strike; **sprites only for combat**, every other look shown as its approved image and bust | [2](#2-the-five-looks-in-the-game-lk1-lk2) |
 | LK2 | The context picks the look; a scene can name another | [2](#2-the-five-looks-in-the-game-lk1-lk2) |
 | LK3 | One template per look for every Uma, personalised by palette (base, accent, trim), emblem, head and one motif | [3](#3-the-template-system-lk3) |
-| LK4 | Two kinds of art: small board sprites for the diorama, the approved looks as portraits and a few large cut-in keys for the drama, as Fire Emblem splits map sprites, battle art and portraits | [4](#4-two-kinds-of-character-art-lk4) |
-| LK5 | The board's camera stays uma-stage's: orthographic, 35°, fixed, axis-aligned (Triangle Strategy's turns 360° at the cost of every map built for every side); four facings, no diagonals, enough even if 90° rotation arrives | [5](#5-the-camera-lk5) |
-| LK6 | The 256 cell and foot point kept; a standing Uma about 212 texels; about four heads, redrawn at sprite size with the head enlarged, never shrunk; light from the top front-left | [6](#6-the-sprite-lk6lk8) |
-| LK7 | Four facings, each drawn, never mirrored (every look has a one-sided detail); no board battle facing | [6](#6-the-sprite-lk6lk8) |
-| LK8 | Readable at 70 pt: the head, two big areas of her accent, the emblem, the template's silhouette, the tail, a back view never taken for the front; the black-silhouette and night-board checks | [6](#6-the-sprite-lk6lk8) |
-| LK9 | Small sets by context (about 64 combat, 34 pilot suit, 32 quarters, 68 street frames), motion held back; the helmet as a head patch | [7](#7-what-each-looks-sprite-set-holds-lk9) |
-| LK10 | The approved looks are the portraits, with a fixed bust crop per look, read at run time; master data's bust while missing | [8](#8-portraits-and-cut-in-keys-lk10-lk11) |
-| LK11 | Ten side-view cut-in keys per Uma, helmet on for the strike | [8](#8-portraits-and-cut-in-keys-lk10-lk11) |
-| LK12 | Tiers: pilots all, leads four sets, featured crew two, everyone else combat; fallbacks so nothing waits on art | [9](#9-authoring-and-order-lk12-lk13) |
-| LK13 | ChatGPT draws looks, sprites and keys; each look's first frame is checked on the board before its set; the owner approves; published privately, keyed by outfit and look; combat first | [9](#9-authoring-and-order-lk12-lk13) |
-| LK14 | One request to uma-platform for the profile, the head patch, look-keyed sets and the Studio's categories; the game's side lands with the packets that show each look | [10](#10-what-changes-where-lk14) |
+| LK4 | *(amended D24)* Board sprites for combat only; the approved looks as portraits and busts everywhere else; cut-in keys in a separate request later. As Fire Emblem splits map sprites, battle art and portraits | [4](#4-two-kinds-of-character-art-lk4) |
+| LK5 | The board's camera stays uma-stage's: orthographic, 35°, fixed, axis-aligned (Triangle Strategy's turns 360° at the cost of every map built for every side); four facings, no diagonals, enough even if 90° rotation arrives; sprites drawn at eye level | [5](#5-the-camera-lk5) |
+| LK6 | *(amended D24)* The sprites are her approved chibi (about three heads), re-dressed in her approved armor, in the platform's format as it is (256 cell, foot point, about 208 texels); the same scale as every chibi still on the board | [6](#6-the-sprite-lk6lk8) |
+| LK7 | *(amended D24)* Five views, each drawn, never mirrored: the key, front, back, and true side profiles left and right | [6](#6-the-sprite-lk6lk8) |
+| LK8 | Readable at 69 pt: the head, two big areas of her accent, the emblem, the armor's silhouette, the tail, a back view never taken for the front; the black-silhouette and night-board checks | [6](#6-the-sprite-lk6lk8) |
+| LK9 | *(amended D24)* One combat set per Uma: 73 frames helmet off (identity, walks and reactions in four facings, victory), 73 with the helmet by editing only the head; none for the other looks; motion held back | [7](#7-the-combat-set-lk9) |
+| LK10 | The approved looks are the portraits, with a fixed bust crop per look (her cabin, her post's card, battle), read at run time; master data's bust while missing | [8](#8-portraits-and-cut-in-keys-lk10-lk11) |
+| LK11 | Ten side-view cut-in keys per Uma, helmet on for the strike; a separate request, later | [8](#8-portraits-and-cut-in-keys-lk10-lk11) |
+| LK12 | *(amended D24)* Tiers: the pilots' combat sprites now, then leads and featured crew as the story casts them, everyone else on her chibi set meanwhile; fallbacks so nothing waits on art | [9](#9-authoring-and-order-lk12-lk13) |
+| LK13 | *(amended D24)* ChatGPT generates images only, from the request and the private prompts; the owner gates the identity sheet and the walks; everything after the images is later | [9](#9-authoring-and-order-lk12-lk13) |
+| LK14 | *(amended D24)* One image request now; the export, look-keyed sets and the API's reads in one uma-platform request later, once the sheets exist; D23's draft withdrawn | [10](#10-what-changes-where-lk14) |
