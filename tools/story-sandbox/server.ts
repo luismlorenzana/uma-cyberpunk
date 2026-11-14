@@ -75,6 +75,16 @@ async function castPack() {
   } catch (e) { return { pack: null, problem: e instanceof Error ? e.message : String(e) } }
 }
 
+/** The story's bibles (`content/stories/bibles/*.md`, private): the casting first, then the worlds in the Circuit's
+ * order, then the rest by name. */
+const BIBLE_ORDER = ['casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink']
+async function bibles(): Promise<{ name: string; path: string; text: string }[]> {
+  const names = (await readdir(join(content, 'bibles')).catch(() => [] as string[])).filter((n) => /^[a-z0-9][a-z0-9-]{0,60}\.md$/.test(n)).map((n) => n.slice(0, -3))
+  const rank = (n: string) => (BIBLE_ORDER.includes(n) ? BIBLE_ORDER.indexOf(n) : BIBLE_ORDER.length)
+  names.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))
+  return Promise.all(names.map(async (name) => ({ name, path: `bibles/${name}.md`, text: await readFile(join(content, 'bibles', `${name}.md`), 'utf8') })))
+}
+
 /** Everything the page draws, read fresh. */
 async function state() {
   const read = readStoryFiles(content)
@@ -102,6 +112,7 @@ async function state() {
     format: { stepKinds: STEP_KINDS, objectives: MISSION_OBJECTIVES, layers: LAYERS, lineMax: LINE_MAX },
     cast: cast.pack, castProblem: cast.problem,
     notes: await maybeText(join(content, 'world-notes.md')), worldDoc: await maybeText(join(repo, 'docs/design/world.md')),
+    bibles: await bibles(),
     reviews, reviewsProblem,
   }
 }

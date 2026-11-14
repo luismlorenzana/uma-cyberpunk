@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cyberpunk Story Sandbox</title>
 <!-- docs/design/story-sandbox.md on one page: the local page where the owner reads, plays and judges uma-cyberpunk's
-     story, how it reads the story with the game's own code, its twelve pages, its player and its calls SX1–SX11.
+     story, how it reads the story with the game's own code, its thirteen pages, its player and its calls SX1–SX12.
      Self-contained, light and dark. No character names, art or story text. -->
 <style>
   :root {
@@ -67,11 +67,11 @@
   <nav><a href="#fits">How it fits</a><a href="#pages">The pages</a><a href="#player">The player</a><a href="#calls">Calls</a><a href="#built">As built</a><a href="../story-sandbox.md">Markdown</a></nav>
   <div class="tiles">
     <div class="tile"><b>:4322</b><span><code>pnpm stories</code>, beside uma-quest's 4320 and uma-farm's 4321</span></div>
-    <div class="tile"><b>11</b><span>pages, from the story's state to the format</span></div>
+    <div class="tile"><b>13</b><span>pages, from the story's state to the format</span></div>
     <div class="tile"><b>15</b><span>step kinds, all played</span></div>
     <div class="tile"><b>0</b><span>formats of its own: the game's parser and check</span></div>
     <div class="tile"><b>154 · 833</b><span>Umas and heroines named in the private cast pack</span></div>
-    <div class="tile"><b>11</b><span>calls, SX1–SX11</span></div>
+    <div class="tile"><b>12</b><span>calls, SX1–SX12</span></div>
   </div>
 
   <section class="card" id="fits">
@@ -113,6 +113,7 @@
     <div class="pages">
       <div><b>Story</b><p>Totals, the five deliverables (SB9) read off the files, every layer, each world with its chapters.</p></div>
       <div><b>Worlds and a world</b><p>The star map; each world's look, mood, factions, leads and its place map, with locked places and the scenes at each.</p></div>
+      <div><b>Bibles <span class="tag">D30</span></b><p>The story session's private bibles: the casting's reasons, then each world in the Circuit's order, read in full with its tables and lists, each with a verdict box.</p></div>
       <div><b>Chapters and a chapter</b><p>Danger order; each scene's place, trigger, cast, reading time (over three minutes flagged) and script; battles' briefs; the debrief.</p></div>
       <div><b>Player</b><p>A scene one step at a time, below.</p></div>
       <div><b>Cast</b><p>Leads and where each comes aboard; the crew's order; heroines by faction and Hold; the Ranker's Umas by batch.</p></div>
@@ -137,7 +138,7 @@
         <tr><td class="id">SX1</td><td><b>A local page in this repo,</b> <code>tools/story-sandbox/</code>, <code>pnpm stories</code> at 127.0.0.1:4322; loopback only; code in git with no names</td></tr>
         <tr><td class="id">SX2</td><td><b>The game's own code reads the story:</b> its parser, check and stand-in, imported in place; a file that doesn't parse is an error, and the rest still shows</td></tr>
         <tr><td class="id">SX3</td><td><b>The stand-in until the first file;</b> verdicts are refused on it</td></tr>
-        <tr><td class="id">SX4</td><td><b>Twelve pages</b> (D24 added Sprites), as above</td></tr>
+        <tr><td class="id">SX4</td><td><b>Thirteen pages</b> (D24 added Sprites, D30 Bibles), as above</td></tr>
         <tr><td class="id">SX5</td><td><b>The player:</b> picks that can be taken back, story changes as cards, interjection slots resolved by a squad you set</td></tr>
         <tr><td class="id">SX6</td><td><b>Verdicts</b> on any item, to <code>content/stories/reviews.json</code>, in the siblings' shape; the story session reads it before each next layer</td></tr>
         <tr><td class="id">SX7</td><td><b>The cast pack:</b> names and faces by id, private, built by <code>pnpm stories:import-cast</code> from the Ranker's plan and uma-quest's pictures; nothing downloaded</td></tr>
@@ -145,6 +146,7 @@
         <tr><td class="id">SX9</td><td><b>Safety, as the siblings':</b> loopback, a same-origin policy, pictures only when the pack lists them, one write</td></tr>
         <tr><td class="id">SX10</td><td><b>Local first</b> (uma-platform P150): no Uma Story book; this replaces the brief's "read it in the game"</td></tr>
         <tr><td class="id">SX11</td><td><b>The Sprites page</b> (D24): read-only, for the gates of the combat sprite request; sheets served only by the request's file names; it judges geometry, the owner judges the art</td></tr>
+        <tr><td class="id">SX12</td><td><b>The Bibles page</b> (D30): read-only, from <code>content/stories/bibles/</code>; a small Markdown reader that draws tables and lists as DOM nodes, never HTML; a verdict per bible</td></tr>
       </tbody>
     </table></div>
   </section>

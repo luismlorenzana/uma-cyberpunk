@@ -11,7 +11,7 @@
 >   recommendation, adopted until the owner changes it.
 > - **Nameless (WD22):** no Uma, no heroine, nothing from a franchise beyond its title. Places, ships, factions and squads
 >   have our own names. Who leads which world, which heroine leads which faction, and every line are the story's
->   private files, written next, after this read.
+>   private files: the casting and the first two worlds' bibles are written (D30), read in the Story Sandbox's Bibles page.
 > - **Read it** here, on [its page](previews/world.html), or world by world in the Story Sandbox (`pnpm stories`), where
 >   each world has a verdict box.
 > - **What the game is asked for** is in §14 and the handoff's story requests: ship battles, boarding enemy ships,

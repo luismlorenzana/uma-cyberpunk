@@ -66,20 +66,63 @@ export function reviewPanel(item, saveReview) {
   return h('div', { class: 'card review' }, h('h4', { text: 'Your verdict' }), h('div', { class: 'row' }, buttons), h('p', {}), note, h('div', { class: 'row' }, save, state))
 }
 
-/** Markdown as text: headings, list lines, tables kept in their columns, and paragraphs. */
+/** A line's inline marks as nodes: **bold**, `code` and [links](…) shown as their words. Text only: nothing is parsed
+ * as HTML. */
+function inline(text) {
+  const out = []
+  const re = /\*\*(.+?)\*\*|`([^`]+)`|\[([^\]]+)\]\([^)]*\)/g
+  let last = 0, m
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index))
+    out.push(m[1] !== undefined ? h('b', { text: m[1] }) : m[2] !== undefined ? h('code', { text: m[2] }) : m[3])
+    last = re.lastIndex
+  }
+  if (last < text.length) out.push(text.slice(last))
+  return out
+}
+const cells = (row) => row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim())
+
+/** Markdown as the page shows it: headings, nested list lines, tables, quotes and paragraphs, with inline marks. */
 function md(text) {
   const out = h('div', { class: 'md' }); let para = [], table = []
-  const flush = () => { if (para.length) out.append(h('p', { text: para.join('\n') })); if (table.length) out.append(h('pre', { text: table.join('\n') })); para = []; table = [] }
+  const flushTable = () => {
+    if (!table.length) return
+    const rows = table.filter((r) => !/^\s*\|?\s*:?-{2,}/.test(r)).map(cells)
+    const [head, ...body] = rows
+    out.append(h('div', { class: 'scroll' }, h('table', {},
+      head && head.some((c) => c) ? h('thead', {}, h('tr', {}, head.map((c) => h('th', {}, inline(c))))) : null,
+      h('tbody', {}, (head && head.some((c) => c) ? body : rows).map((r) => h('tr', {}, r.map((c) => h('td', {}, inline(c)))))))))
+    table = []
+  }
+  const flush = () => { if (para.length) out.append(h('p', {}, inline(para.join(' ')))); para = []; flushTable() }
   for (const line of text.replace(/\r\n/g, '\n').split('\n')) {
-    const head = /^(#{1,4})\s+(.*)$/.exec(line), item = /^\s*[-*]\s+(.*)$/.exec(line)
-    if (head) { flush(); out.append(h(`h${Math.min(4, head[1].length + 1)}`, { text: head[2] })) }
+    const head = /^(#{1,4})\s+(.*)$/.exec(line), item = /^(\s*)[-*]\s+(.*)$/.exec(line), quote = /^>\s?(.*)$/.exec(line)
+    if (head) { flush(); out.append(h(`h${Math.min(4, head[1].length + 1)}`, {}, inline(head[2]))) }
     else if (line.trim() === '') flush()
-    else if (line.trimStart().startsWith('|')) { if (para.length) flush(); table.push(line) }
-    else if (item) { flush(); out.append(h('p', { text: `• ${item[1]}` })) }
-    else { if (table.length) flush(); para.push(line) }
+    else if (line.trimStart().startsWith('|')) { if (para.length) { out.append(h('p', {}, inline(para.join(' ')))); para = [] } table.push(line) }
+    else if (item) { flush(); out.append(h('p', { class: 'li', style: `padding-left:${1 + item[1].length / 2}em` }, '• ', inline(item[2]))) }
+    else if (quote) { flush(); out.append(h('p', { class: 'quote' }, inline(quote[1]))) }
+    else { flushTable(); para.push(line.trim()) }
   }
   flush()
   return out
+}
+
+/** The story's bibles: the casting and each world's, read and judged one file at a time. */
+export function biblesView(name, saveReview) {
+  const list = D.data.bibles ?? []
+  if (!name) {
+    return h('div', {}, h('h1', { text: 'Bibles' }),
+      h('p', { class: 'muted' }, 'The story’s private bibles in ', h('code', { text: 'content/stories/bibles/' }), ': the casting, then each world in depth.'),
+      list.length ? h('div', { class: 'grid' }, list.map((b) => {
+        const title = /^#\s+(.*)$/m.exec(b.text)?.[1] ?? b.name
+        return h('div', { class: 'card' }, h('h3', {}, verdictMark(b.path), ' ', h('a', { href: `#/bibles/${b.name}`, text: title })),
+          h('p', { class: 'muted', text: `${b.path} · ${b.text.trim().split(/\s+/).length} words` }))
+      })) : h('div', { class: 'card muted', text: 'No bible yet: content/stories/bibles/<name>.md.' }))
+  }
+  const bible = list.find((b) => b.name === name)
+  if (!bible) return h('div', { class: 'error-box', text: `No bible ${name}.` })
+  return h('div', {}, h('p', {}, h('a', { href: '#/bibles', text: '‹ Bibles' })), h('div', { class: 'card' }, md(bible.text)), reviewPanel(bible.path, saveReview))
 }
 
 const sceneKey = (chapter, id) => (id === 'debrief' ? `${chapter.id}/debrief` : id)
