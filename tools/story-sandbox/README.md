@@ -17,7 +17,10 @@ pnpm stories               # http://127.0.0.1:4322
   (`content/stories/reviews.json`) are in the ignored `content/`. The code holds no name or line of story.
 - **Safety:** binds to 127.0.0.1, refuses other hosts, a same-origin content policy, images served only when the cast
   pack lists them, and the only write is `reviews.json`, from the page itself.
-- **Tests:** `lib/model.test.mjs` and `import-cast.test.mjs` (invented records), part of `pnpm test`.
+- **Sprites** (`#/sprites`, D24): ChatGPT's combat sprite sheets from `content/design/character-looks/combat-masters/`,
+  cut by the request's grid and measured, on a night tile at the phone's size beside her approved chibi (read from
+  uma-platform's private `content/authoring/sprites/`). `UMA_CYBER_SPRITES` and `UMA_PLATFORM_SPRITES` move them.
+- **Tests:** `lib/model.test.mjs`, `lib/sprites.test.mjs` and `import-cast.test.mjs` (invented records), part of `pnpm test`.
 
 `UMA_CYBER_STORY_PORT` changes the port and `UMA_CYBER_STORIES` the story folder; the import reads
 `UMA_RANKER_PLAN` (default `../uma-platform/content/authoring/tiers/plan.json`, from `pnpm ranker:pull` there) and

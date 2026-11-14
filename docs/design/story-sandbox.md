@@ -3,7 +3,7 @@
 > **Status: 2026-11-13, built (D17).** The owner asked for "a third app" for Uma Cyberpunk, beside the Story Sandboxes
 > uma-quest's and uma-farm's sessions built, where they author and review their stories locally (uma-platform P150).
 > This game's story had a format, a check and a player in the game (CY9), but no page to read it, judge it and leave
-> verdicts for the story session. This page records the sandbox as built and its calls, **SX1–SX10**. No name or line
+> verdicts for the story session. This page records the sandbox as built and its calls, **SX1–SX11**. No name or line
 > of story is in git. Visual page: [previews/story-sandbox.html](previews/story-sandbox.html).
 
 ## The short answer
@@ -51,6 +51,7 @@
 | **Checks** | Exactly `pnpm story:check`'s errors, to-dos and counts |
 | **Format** | The files, the fifteen step kinds with how often each is used, ids, objectives and layers |
 | **Notes** | The private `world-notes.md`, and the nameless world doc in git |
+| **Sprites** | *(D24)* ChatGPT's combat sprite sheets from the private `content/design/character-looks/combat-masters/`: each Uma's fourteen sheets and what's back; a sheet cut by the request's grid, measured (figure in each cell, a clear background, feet on y 480, standing heights within 4%), played on a night tile at the phone's size beside her approved chibi, as silhouettes, and cell by cell |
 
 ## The calls
 
@@ -59,13 +60,14 @@
 | SX1 | **A local page in this repo,** `tools/story-sandbox/`, run with `pnpm stories` at http://127.0.0.1:4322: plain modules and Node's `http`, through the repo's `tsx`; loopback only; code in git with no names |
 | SX2 | **The game's own code reads the story:** the server imports `packages/domain/src/story/` (parser, check, stand-in) and `scripts/story/files.ts`, so the sandbox and the game never disagree on the format. A file that doesn't parse is listed as an error, and the rest still shows while it's being written |
 | SX3 | **The stand-in until the first file:** with no story in `content/stories/`, the page shows the game's invented stand-in and says so; verdicts are refused on it |
-| SX4 | **Eleven pages,** as the table above |
+| SX4 | **Twelve pages** *(D24: Sprites)*, as the table above |
 | SX5 | **The player:** a scene or a debrief one step at a time, with Back, Next, Auto, Restart and the arrow keys; choices and a Call's branches are one-tap picks, and Back takes a pick back; **interjection slots are resolved by a squad you set,** using the casting's crew order (TC51), so you hear who would speak; story changes (a Lead, a File line, an Anomaly, a flag, a join, coming aboard, a battle) show as cards; the script beside it marks the current step |
 | SX6 | **Verdicts:** liked, rework or question, and a note, on any item (a file, `chapters/<id>.json#<scene>`), saved to the private `content/stories/reviews.json` in the shape uma-quest's and uma-farm's sandboxes write; the story session reads it before each next layer (SB9) |
 | SX7 | **The cast pack, for names and faces:** `pnpm stories:import-cast` builds the private `content/stories/cast-pack/` from the Ranker's plan (the Playable Umas in the ten batches by outfit id, a sister under her own name; the Uma NPCs; every unit on the boss, key and regular boards by board id) and copies the pictures uma-quest's pack already holds for those ids. Nothing is downloaded. Without a pack, ids show as themselves, or as the stand-in's labels |
 | SX8 | **Lengths with the game's own measure:** each scene's reading time is the game's `sceneSeconds`; words are counted per scene and chapter |
 | SX9 | **Safety, as the siblings':** 127.0.0.1 only, other hosts refused, a same-origin content policy, writes only from the page itself as JSON, pictures served only when the cast pack lists them, and the only write is the verdicts file |
 | SX10 | **Local first:** the owner authors and reviews stories in the games' local sandboxes (uma-platform P150), so there's no Uma Story book for this game. This sandbox replaces the brief's "read it in the game" (SB8's Review) |
+| SX11 | *(D24)* **The Sprites page,** for the owner's gates on the combat sprite request: read-only, sheets served only by the request's file names inside their Uma's folder, her approved chibi stills read from uma-platform's private authoring folder (`UMA_PLATFORM_SPRITES`), the masters folder from `UMA_CYBER_SPRITES`. It judges geometry; the face, the armor and the accessory sides stay the owner's call |
 
 ## As built
 

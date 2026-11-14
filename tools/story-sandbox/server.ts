@@ -4,9 +4,11 @@
 //   game's own code in packages/domain/src/story/, so the sandbox and the game always agree on the format;
 // - the game's invented stand-in story, while content/stories/ holds no story yet;
 // - the private cast pack (content/stories/cast-pack/, built by import-cast.mjs), for names and faces by id.
+// - the combat sprite sheets ChatGPT saves (D24) in content/design/character-looks/combat-masters/<outfitId>/, and each
+//   Uma's approved chibi stills from uma-platform's private authoring folder, for the Sprites page's reviews.
 // Its only write is the owner's verdicts, to the private content/stories/reviews.json. No name or line is in git.
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
-import { mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, readFile, realpath, rename, writeFile } from 'node:fs/promises'
 import { dirname, extname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -15,11 +17,15 @@ import {
 } from '../../packages/domain/src/story/index'
 import { readStoryFiles } from '../../scripts/story/files'
 import { packImages, parseCastPack, parseReviews, parseVerdict, withVerdict } from './lib/model.mjs'
+import { latestSheets, parseSheetName, REQUESTED } from './lib/sprites.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repo = resolve(here, '../..')
 /** The private side (ignored by git): the story, the cast pack and the verdicts. */
 const content = resolve(process.env.UMA_CYBER_STORIES ?? join(repo, 'content/stories'))
+/** The combat sprite sheets (D24) and uma-platform's authored chibi sets, both private. */
+const masters = resolve(process.env.UMA_CYBER_SPRITES ?? join(repo, 'content/design/character-looks/combat-masters'))
+const platformSprites = resolve(process.env.UMA_PLATFORM_SPRITES ?? join(repo, '../uma-platform/content/authoring/sprites'))
 const port = Number(process.env.UMA_CYBER_STORY_PORT ?? 4322)
 if (!Number.isSafeInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port')
 
@@ -30,7 +36,7 @@ const types: Record<string, string> = {
 /** The page's files; the model is the tested one, shared with the server. */
 const pages: Record<string, string> = {
   '/': 'public/index.html', '/app.js': 'public/app.js', '/app.css': 'public/app.css', '/views.js': 'public/views.js', '/player.js': 'public/player.js',
-  '/model.js': 'lib/model.mjs',
+  '/model.js': 'lib/model.mjs', '/sprites.js': 'public/sprites.js', '/sprites-model.js': 'lib/sprites.mjs',
 }
 
 const code = (e: unknown) => (e as NodeJS.ErrnoException).code
@@ -100,6 +106,26 @@ async function state() {
   }
 }
 
+const list = async (dir: string): Promise<string[]> => { try { return await readdir(dir) } catch (e) { if (code(e) === 'ENOENT') return []; throw e } }
+
+/** Her approved chibi's revision folder in uma-platform's authoring tree, or null. */
+async function chibiDir(outfit: number): Promise<string | null> {
+  const current = await maybeJson(join(platformSprites, String(outfit), 'current.json')) as { revision?: unknown } | null
+  return Number.isSafeInteger(current?.revision) ? join(platformSprites, String(outfit), `r${current!.revision as number}`) : null
+}
+
+/** The Sprites page's state: every sheet in the masters folder (latest take of each), and whose chibi stills exist. */
+async function sprites() {
+  const folders = (await list(masters)).filter((f) => /^\d{5,7}$/.test(f))
+  const files: string[] = []
+  for (const folder of folders) for (const f of await list(join(masters, folder))) if (parseSheetName(f)?.outfit === Number(folder)) files.push(f)
+  const sheets = latestSheets(files)
+  const outfits = [...new Set([...REQUESTED, ...sheets.map((s) => s.outfit)])].sort((a, b) => a - b)
+  const chibi: Record<string, boolean> = {}
+  for (const o of outfits) chibi[o] = (await chibiDir(o)) !== null
+  return { dir: masters, outfits, sheets, chibi }
+}
+
 async function body(request: IncomingMessage): Promise<unknown> {
   const chunks: Buffer[] = []; let size = 0
   for await (const chunk of request) { size += chunk.length; if (size > 64 * 1024) throw Object.assign(new Error('Too large'), { status: 413 }); chunks.push(chunk as Buffer) }
@@ -142,6 +168,24 @@ const server = createServer((request, response) => {
     }
     if (request.method !== 'GET') return send(response, 405, { error: 'Method not allowed' })
     if (url.pathname === '/api/state') return send(response, 200, await state())
+    if (url.pathname === '/api/sprites') return send(response, 200, await sprites())
+    // A combat sheet, only by the request's file name, inside its Uma's folder.
+    const sheet = url.pathname.match(/^\/sheet\/(\d{5,7})\/([A-Za-z0-9._-]+\.png)$/)
+    if (sheet) {
+      if (parseSheetName(sheet[2])?.outfit !== Number(sheet[1])) return send(response, 404, { error: 'Not a sheet' })
+      const file = await inside(join(masters, sheet[1]!), sheet[2]!)
+      response.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'no-cache' })
+      return response.end(await readFile(file))
+    }
+    // Her approved chibi's key or turnaround still, from uma-platform's authoring folder.
+    const chibi = url.pathname.match(/^\/chibi\/(\d{5,7})\/(key|front|back|left|right)\.png$/)
+    if (chibi) {
+      const dir = await chibiDir(Number(chibi[1]))
+      if (!dir) return send(response, 404, { error: 'No chibi set' })
+      const file = await inside(dir, chibi[2] === 'key' ? 'key.png' : `frames/turnaround-${chibi[2]}.png`)
+      response.writeHead(200, { 'content-type': 'image/png', 'cache-control': 'max-age=3600' })
+      return response.end(await readFile(file))
+    }
     // A picture, only when the cast pack lists it.
     const img = url.pathname.match(/^\/img\/([A-Za-z0-9._-]+\.(?:png|webp|jpg))$/)
     if (img) {

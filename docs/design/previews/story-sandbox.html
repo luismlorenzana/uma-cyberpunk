@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cyberpunk Story Sandbox</title>
 <!-- docs/design/story-sandbox.md on one page: the local page where the owner reads, plays and judges uma-cyberpunk's
-     story, how it reads the story with the game's own code, its eleven pages, its player and its calls SX1–SX10.
+     story, how it reads the story with the game's own code, its twelve pages, its player and its calls SX1–SX11.
      Self-contained, light and dark. No character names, art or story text. -->
 <style>
   :root {
@@ -71,7 +71,7 @@
     <div class="tile"><b>15</b><span>step kinds, all played</span></div>
     <div class="tile"><b>0</b><span>formats of its own: the game's parser and check</span></div>
     <div class="tile"><b>154 · 833</b><span>Umas and heroines named in the private cast pack</span></div>
-    <div class="tile"><b>10</b><span>calls, SX1–SX10</span></div>
+    <div class="tile"><b>11</b><span>calls, SX1–SX11</span></div>
   </div>
 
   <section class="card" id="fits">
@@ -119,6 +119,7 @@
       <div><b>Log</b><p>Each File's lines and what fills each in; every Lead, Anomaly and flag, and where.</p></div>
       <div><b>Calls</b><p>The question, the arguments, the branches, where it's held.</p></div>
       <div><b>Checks, Format, Notes</b><p><code>pnpm story:check</code>'s findings exactly; the files and fifteen step kinds; the private world notes and the world doc.</p></div>
+      <div><b>Sprites <span class="tag">D24</span></b><p>ChatGPT's combat sprite sheets as they land: each cut by the request's grid and measured, played on a night tile at the phone's size beside her approved chibi, as silhouettes, and cell by cell.</p></div>
     </div>
   </section>
 
@@ -136,13 +137,14 @@
         <tr><td class="id">SX1</td><td><b>A local page in this repo,</b> <code>tools/story-sandbox/</code>, <code>pnpm stories</code> at 127.0.0.1:4322; loopback only; code in git with no names</td></tr>
         <tr><td class="id">SX2</td><td><b>The game's own code reads the story:</b> its parser, check and stand-in, imported in place; a file that doesn't parse is an error, and the rest still shows</td></tr>
         <tr><td class="id">SX3</td><td><b>The stand-in until the first file;</b> verdicts are refused on it</td></tr>
-        <tr><td class="id">SX4</td><td><b>Eleven pages,</b> as above</td></tr>
+        <tr><td class="id">SX4</td><td><b>Twelve pages</b> (D24 added Sprites), as above</td></tr>
         <tr><td class="id">SX5</td><td><b>The player:</b> picks that can be taken back, story changes as cards, interjection slots resolved by a squad you set</td></tr>
         <tr><td class="id">SX6</td><td><b>Verdicts</b> on any item, to <code>content/stories/reviews.json</code>, in the siblings' shape; the story session reads it before each next layer</td></tr>
         <tr><td class="id">SX7</td><td><b>The cast pack:</b> names and faces by id, private, built by <code>pnpm stories:import-cast</code> from the Ranker's plan and uma-quest's pictures; nothing downloaded</td></tr>
         <tr><td class="id">SX8</td><td><b>Lengths with the game's own measure:</b> reading time by <code>sceneSeconds</code>, words per scene and chapter</td></tr>
         <tr><td class="id">SX9</td><td><b>Safety, as the siblings':</b> loopback, a same-origin policy, pictures only when the pack lists them, one write</td></tr>
         <tr><td class="id">SX10</td><td><b>Local first</b> (uma-platform P150): no Uma Story book; this replaces the brief's "read it in the game"</td></tr>
+        <tr><td class="id">SX11</td><td><b>The Sprites page</b> (D24): read-only, for the gates of the combat sprite request; sheets served only by the request's file names; it judges geometry, the owner judges the art</td></tr>
       </tbody>
     </table></div>
   </section>
