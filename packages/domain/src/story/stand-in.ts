@@ -11,6 +11,7 @@ export const STAND_IN_FILES: Record<string, unknown> = {
     crewOrder: [LEAD, 9000002, 9000003, 9000004],
     roles: { '9000001': 'striker', '9000002': 'medic' },
     bondGates: { '4': 'chapter:sw1-ch1', '6': 'chapter:sw2-ch1' },
+    chiefs: { '9000001': 'bridge', '9000002': 'medbay' },
     tastes: {
       '9000001': { favourite: 'sporty', disliked: 'cozy', gift: 'snacks', topics: ['racing', 'food'] },
       '9000002': { favourite: 'cozy', disliked: 'sporty', gift: 'books', topics: ['history', 'crew'] },
@@ -22,7 +23,7 @@ export const STAND_IN_FILES: Record<string, unknown> = {
     labels: { '9000001': 'Lead A', '9000002': 'Lead B', '9000003': 'Crew C', '9000004': 'Crew D', 'stand-in-1': 'Heroine A', 'sw1-dockhand': 'Dockhand' },
   },
   'worlds/sw1.json': {
-    schemaVersion: 1, id: 'sw1', look: 'A stand-in world: a ring of docks under a dark sky.', mood: 'Quiet before the alarm.', factions: ['steel-muster'], x: 30, y: 55,
+    schemaVersion: 1, id: 'sw1', look: 'A stand-in world: a ring of docks under a dark sky.', mood: 'Quiet before the alarm.', factions: ['steel-muster'], x: 30, y: 55, region: 'ring',
     locations: [
       { id: 'sw1-docks', danger: 1, links: ['sw1-market'], x: 20, y: 70 },
       { id: 'sw1-market', danger: 1, links: ['sw1-docks', 'sw1-underlevels'], x: 45, y: 50 },
@@ -130,6 +131,19 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       { line: { speaker: 9000002, text: 'A store aboard? Good. I need parts more than I need sleep.' } },
       { slot: { lines: { [String(LEAD)]: 'Welcome aboard. Bunks are wherever you fall asleep.' }, fallback: 'The ship hums under her feet.' } },
     ] },
+  },
+  'events/ring.json': {
+    schemaVersion: 1, region: 'ring',
+    events: [
+      { id: 'ring-tug', title: 'A dock tug in trouble', text: 'A tug spins loose off the ring, its pilot shouting on an open channel.', choices: [
+        { text: 'Match its spin and grab it', check: { post: 'pilot', band: 'speed', at: 4 }, pass: { credits: 80 }, fail: { alloy: -5 }, passText: 'Caught clean; the dock pays its thanks.', failText: 'A scrape along the hull.' },
+        { text: 'Call the dockmaster', pass: { credits: 10 }, passText: 'They handle it; a small fee for the call.' }] },
+      { id: 'ring-market-rumor', title: 'A market rumour', text: 'Talk on the comms: a cargo of furniture fell off a hauler.', choices: [
+        { text: 'Find it first', check: { post: 'navigator', band: 'wit', at: 3 }, pass: { item: 'neon-floor' }, passText: 'A light-grid mat, barely scuffed.', failText: 'Someone got there first.' },
+        { text: 'Let it go', pass: {}, passText: 'Not our business.' }] },
+      { id: 'ring-lights', title: 'The ring lights up', text: 'The whole ring lights up for a festival as the ship passes.', choices: [
+        { text: 'Slow down and watch', pass: { rapport: 5 }, passText: 'The crew presses to the windows.' }] },
+    ],
   },
   'bonds/9000001.json': {
     schemaVersion: 1, outfit: LEAD,

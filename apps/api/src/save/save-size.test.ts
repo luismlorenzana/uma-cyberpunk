@@ -22,7 +22,7 @@ describe('the save in one document', () => {
         modules: (() => { let deck = 0, slot = 0; return MODULES.map((m) => { if (slot + m.width > 6) { deck++; slot = 0 } const at = { id: m.id, deck, slot, level: 3, building: null }; slot += m.width; return at }) })() },
       crew: Array.from({ length: 60 }, (_, i) => {
         const rig = bestRig('vanguard', { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 })
-        return { outfit: 9_000_001 + i, xp: 99_999, role: 'vanguard', rig, presets: [0, 1, 2].map((j) => ({ name: `A long loadout name ${j}xx`.slice(0, 24), rig })), strain: 2, bond: { rank: 10, rapport: 0, path: 'heart', seen: [2, 4, 6, 8, 10] }, cabin: { slots: { bed: 'neon-bed', desk: 'neon-desk', wall: 'neon-wall', floor: 'neon-floor', light: 'neon-light', keepsake: 'keepsake-photo' }, revealed: ['gift', 'styles', 'topic:racing', 'topic:food'], request: 'light' } }
+        return { outfit: 9_000_001 + i, xp: 99_999, role: 'vanguard', rig, presets: [0, 1, 2].map((j) => ({ name: `A long loadout name ${j}xx`.slice(0, 24), rig })), strain: 2, bond: { rank: 10, rapport: 0, path: 'heart', seen: [2, 4, 6, 8, 10] }, cabin: { slots: { bed: 'neon-bed', desk: 'neon-desk', wall: 'neon-wall', floor: 'neon-floor', light: 'neon-light', keepsake: 'keepsake-photo' }, revealed: ['gift', 'styles', 'topic:racing', 'topic:food'], request: 'light' }, post: { module: 'bridge', index: 0, since: 1, mastery: 99 } }
       }),
       worlds: { current: 'w1', known: Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`w${i}`, { cleared: Array.from({ length: 20 }, (_, j) => slug(`w${i}`, j)) }])), missions: Array.from({ length: 200 }, (_, i) => slug('m', i)) },
       story: {

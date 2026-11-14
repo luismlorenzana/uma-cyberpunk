@@ -4,9 +4,9 @@
 import type { BattleInput } from '@cyber/battle'
 import {
   addDeck, addItem, afterMission as crewAfterMission, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
-  setAnomaly, setFlag, shipCapabilities, type Chapter, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
+  drawEvent, GENERIC_EVENTS, runDuties, setAnomaly, setFlag, shipCapabilities, type Chapter, type DutyInfo, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
-import { afterBattleBonds } from '../bonds/bonds'
+import { afterBattleBonds, giveRapport } from '../bonds/bonds'
 
 export type Due = { kind: 'scene'; chapter: Chapter; scene: Scene } | { kind: 'mission'; chapter: Chapter; mission: Mission } | { kind: 'none' }
 
@@ -111,12 +111,32 @@ export function ensureWorld(save: Save, pack: StoryPack): Save {
   return { ...save, worlds: { ...save.worlds, current: first, known: { [first]: { cleared: [] } } } }
 }
 
-/** A watch passes (CY13, CY15): the counter, and every build and the Lab's project a watch on. */
-export const passAWatch = (save: Save): Save => ({ ...save, watch: save.watch + 1, ship: passWatch(save.ship).ship })
+/** What a watch's duties need from the screens (CY16): each Uma's duty profile (master data's bands, role, running style),
+ * and the squad of the battle that ends the watch. Without it, every Uma works at band 3. */
+export interface WatchContext { info?: (outfit: number) => DutyInfo | null; deployed?: readonly number[] }
 
-/** A jump: the ship is at the world, which is known from now on, and a watch passes (CY13). */
-export const travel = (save: Save, world: string): Save =>
-  ({ ...passAWatch(save), worlds: { ...save.worlds, current: world, known: save.worlds.known[world] ? save.worlds.known : { ...save.worlds.known, [world]: { cleared: [] } } } })
+/** A watch passes (CY13, CY15, CY16): the counter; every build and the Lab's project a watch on; every post's output on
+ * one ship-log card, and a liked duty's rapport through the bonds' rules. */
+export function passAWatch(save: Save, pack: StoryPack | null = null, ctx: WatchContext = {}): Save {
+  const ticked: Save = { ...save, watch: save.watch + 1, ship: passWatch(save.ship).ship }
+  const r = runDuties(ticked, ctx.info ?? (() => null), pack?.casting.chiefs ?? {}, ctx.deployed ?? [])
+  let next = r.save
+  for (const [outfit, amount] of r.rapport) next = giveRapport(next, pack, outfit, amount)
+  return next
+}
+
+/** A jump: the ship is at the world, which is known from now on, a watch passes (CY13), and one jump in three draws an
+ * event card from the world's region's pool, else the generic one (CY16, TC66). */
+export function travel(save: Save, world: string, pack: StoryPack | null = null, ctx: WatchContext = {}): Save {
+  const moved = passAWatch(save, pack, ctx)
+  const region = pack?.worlds[world]?.region ?? null
+  const pool = region && pack?.events[region]?.length ? pack.events[region]! : GENERIC_EVENTS
+  const ev = drawEvent(moved.watch, world, pool)
+  return {
+    ...moved, event: ev ? { id: ev.id, region: pool === GENERIC_EVENTS ? null : region } : moved.event,
+    worlds: { ...save.worlds, current: world, known: save.worlds.known[world] ? save.worlds.known : { ...save.worlds.known, [world]: { cleared: [] } } },
+  }
+}
 
 /** Worlds a lead's chapter has opened (any chapter whose needs are met, on a world not yet known), so the star map shows
  * them once reachable. */
@@ -174,7 +194,8 @@ export const retry = (save: Save): Save => (save.mission?.battle ? withMission(s
 /** Leaves the results: the crew takes its XP and Strain (the squad in full and +1 Strain, the bench half and a rest), the
  * Umas aboard who fought take the battle's rapport and send a message (CY13), a watch passes; then a win counts the
  * mission and goes aboard (its next scene) and a loss ends the mission. */
-export function closeResults(save: Save, pack: StoryPack | null = null, rapport: ReadonlyMap<number, number> | null = null, lights: ((outfit: number) => number) | null = null): Save {
+export function closeResults(save: Save, pack: StoryPack | null = null, rapport: ReadonlyMap<number, number> | null = null, lights: ((outfit: number) => number) | null = null,
+  info: ((outfit: number) => DutyInfo | null) | null = null): Save {
   const m = save.mission
   if (!m) return save
   const input = (m.battle?.input ?? null) as BattleInput | null
@@ -182,7 +203,7 @@ export function closeResults(save: Save, pack: StoryPack | null = null, rapport:
   const crew = crewAfterMission(save.crew, m.squad, rewards(input, !!m.won).xp, lights ? (x) => restedStrain(x.strain, lights(x.outfit)) : undefined)
   // The results pay into the wallet (CY15): credits, salvage as Alloy, and Data.
   const r = rewards(input, !!m.won)
-  const bonded = afterBattleBonds({ ...passAWatch(save), crew, wallet: earn(save.wallet, resultsPay(r.credits, r.salvage, !!m.won)) }, pack, rapport)
+  const bonded = afterBattleBonds(passAWatch({ ...save, crew, wallet: earn(save.wallet, resultsPay(r.credits, r.salvage, !!m.won)) }, pack, { info: info ?? undefined, deployed: m.squad }), pack, rapport)
   if (!m.won) return { ...bonded, mission: null }
   const first = !save.worlds.missions.includes(m.id)
   const missions = first ? [...save.worlds.missions, m.id] : save.worlds.missions

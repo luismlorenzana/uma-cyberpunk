@@ -1,18 +1,20 @@
 // The ship's quick look, build sheet and Lab (CY15), loaded on the first tap on the decks (`Hull.tsx`).
 import {
   BRANCH_NAME, buildSlots, CAPABILITY_NAME, installedSystems, MODULES, MODULES_BY_ID, moduleAt, PROJECTS, PROJECTS_BY_ID, placeProblem, reactorPips,
-  researchProblem, ROOM_IDS, upgradeProblem, type Branch, type RoomId, type Save,
+  POSTS, researchProblem, ROOM_IDS, shipPosts, upgradeProblem, type Branch, type RoomId, type Save,
 } from '@cyber/domain'
 import { useNavigate } from 'react-router'
 import { updateSave } from '../save/game'
 import { placeOnShip, researchOnShip, upgradeOnShip } from './build'
 import { costText, type Pick } from './Hull'
+import { outfitName, useStory } from './useStory'
 
 const btn = 'min-h-11 rounded-md bg-white/10 px-3 text-[14px] font-semibold disabled:opacity-40'
 const primary = 'min-h-11 rounded-md bg-[#2ee6ff] px-4 font-display font-bold text-[#0b0d17] disabled:opacity-40'
 
 export default function ShipSheet({ save, pick, setPick }: { save: Save; pick: Pick; setPick: (p: Pick | null) => void }) {
   const navigate = useNavigate()
+  const pack = useStory()
   const ship = save.ship
   const frame = (title: string, body: React.ReactNode) => (
     <div data-sheet={pick.kind} className="absolute z-20 max-h-[78%] w-[min(25rem,46%)] overflow-y-auto rounded-xl bg-[#141827]/97 p-3 ring-1 ring-white/15" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', left: 'calc(var(--inset-left) + 10px)' }}>
@@ -52,6 +54,12 @@ export default function ShipSheet({ save, pick, setPick }: { save: Save; pick: P
       {def.kind === 'system' && <div className="text-white/60">A battle system: {def.pips} reactor pip{def.pips === 1 ? '' : 's'} when powered for a sortie (the deploy screen).</div>}
       {pick.id === 'engineering' && <div className="text-white/60">The reactor: {reactorPips(ship)} pips. Builds at once: {buildSlots(ship)}. Installed systems: {installedSystems(ship).map((s) => MODULES_BY_ID.get(s)!.name).join(', ') || 'none'}.</div>}
       {caps && caps.length > 0 && <div className="text-[#7cf2c8]">Opens on the map: {[...new Set(caps)].map((c) => CAPABILITY_NAME[c] ?? c).join(', ')}</div>}
+      {shipPosts(ship).some((p) => p.module === pick.id) && (
+        <div data-posts className="text-white/70">Posts: {shipPosts(ship).filter((p) => p.module === pick.id).map((p) => {
+          const h = save.crew.find((c) => c.post && c.post.module === p.module && c.post.index === p.index)
+          return `${POSTS[p.kind].name}: ${h ? outfitName(pack, h.outfit) : 'empty'}`
+        }).join(' · ')} <span className="text-white/45">(assign in Duties)</span></div>
+      )}
       {next && !m.building && (
         <div className="rounded-lg bg-white/5 p-2">
           <div><b>Level {m.level + 1}:</b> {next.adds}</div>

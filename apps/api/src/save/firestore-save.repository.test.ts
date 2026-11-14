@@ -43,7 +43,7 @@ describe('the Firestore save store', () => {
   it('stores the save as JSON text with its revision, and never touches account.updatedAt', async () => {
     const repo = new FirestoreSaveRepository('cyber')
     const save = touched(newSave('u', T0), T1)
-    expect(await repo.put('u', 0, save, 7)).toEqual({ revision: 1, save })
+    expect(await repo.put('u', 0, save, 8)).toEqual({ revision: 1, save })
     const doc = store.get('saves/u')!
     expect(doc).toEqual({ revision: 1, save: JSON.stringify(save), storedAt: SERVER_TIME })
     expect((JSON.parse(doc.save as string) as Save).account.updatedAt).toBe(T1)
@@ -52,9 +52,9 @@ describe('the Firestore save store', () => {
 
   it('refuses a stale revision with what is stored, writing nothing', async () => {
     const repo = new FirestoreSaveRepository('cyber')
-    await repo.put('u', 0, newSave('u', T0), 7)
+    await repo.put('u', 0, newSave('u', T0), 8)
     const before = structuredClone(store.get('saves/u'))
-    const error = await repo.put('u', 5, newSave('u', T1), 7).catch((e: unknown) => e)
+    const error = await repo.put('u', 5, newSave('u', T1), 8).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(RevisionConflict)
     expect((error as RevisionConflict).current).toEqual({ revision: 1, save: newSave('u', T0) })
     expect(store.get('saves/u')).toEqual(before)
@@ -67,8 +67,8 @@ describe('the Firestore save store', () => {
 
   it('makes no backup while the version stays the same', async () => {
     const repo = new FirestoreSaveRepository('cyber')
-    await repo.put('u', 0, newSave('u', T0), 7)
-    await repo.put('u', 1, touched(newSave('u', T0), T1), 7)
+    await repo.put('u', 0, newSave('u', T0), 8)
+    await repo.put('u', 1, touched(newSave('u', T0), T1), 8)
     expect([...store.keys()].filter((k) => k.startsWith('saveBackups/'))).toEqual([])
   })
 

@@ -5,7 +5,7 @@
 // chapter's debrief plays here, aboard.
 import { fillCaptain } from '@cyber/domain'
 import { TurnedStage } from '@luismlorenzana/uma-stage'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { messageFor } from '../bonds/messages'
 import { replyTo, settleBonds } from '../bonds/bonds'
@@ -13,7 +13,11 @@ import { CaptainSetup } from '../captain/CaptainSetup'
 import { applyStep, debriefDue, debriefScene, ensureWorld, markSeen, opening, sceneSquad, waiting } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer } from '../story/ScenePlayer'
+import { useCrew } from '../crew/useCrew'
 import { Decks, WalletChips } from './Hull'
+import { EventCard, LogCard } from './ShipCards'
+
+const DutiesPanel = lazy(() => import('./DutiesPanel'))
 import { outfitName, useStory } from './useStory'
 
 let resumedThisLoad = false
@@ -28,6 +32,8 @@ function Ship() {
   const pack = useStory()
   const [menu, setMenu] = useState(false)
   const [inbox, setInbox] = useState(false)
+  const [duties, setDuties] = useState(false)
+  const { crew } = useCrew()
 
   useEffect(() => {
     if (!save || !pack) return
@@ -63,6 +69,7 @@ function Ship() {
       <Decks save={save} onRoom={() => {}} />
       <div className="absolute flex gap-2" style={{ top: 'calc(var(--inset-top) + 8px)', left: 'calc(var(--inset-left) + 8px)' }}>
         <button type="button" onClick={() => setMenu((m) => !m)} className="min-h-11 rounded-md bg-[#141827] px-4 font-display font-bold ring-1 ring-white/15">Menu</button>
+        <button type="button" data-duties-open onClick={() => setDuties((d) => !d)} className="min-h-11 rounded-md bg-[#141827] px-4 font-display font-bold ring-1 ring-white/15">Duties</button>
         {save.inbox.length > 0 && <button type="button" data-inbox onClick={() => setInbox((v) => !v)} className="min-h-11 rounded-md bg-[#ff3dc8] px-3 font-display font-bold text-[#0b0d17]">✉ {save.inbox.length}</button>}
         <span className="flex min-h-11 items-center px-2 text-[13px] text-white/60">{save.captain.name} · Crew {save.crew.length} · {save.worlds.current ?? 'no world'}</span>
         <WalletChips save={save} />
@@ -83,6 +90,9 @@ function Ship() {
           {card.text}
         </Link>
       )}
+      <LogCard save={save} nameOf={(o) => outfitName(pack, o)} />
+      {save.log?.read !== false && <EventCard save={save} pack={pack} crew={crew} nameOf={(o) => outfitName(pack, o)} />}
+      {duties && <Suspense fallback={null}><DutiesPanel save={save} crew={crew} onClose={() => setDuties(false)} /></Suspense>}
       {menu && (
         <div className="absolute flex flex-col gap-2 rounded-xl bg-[#141827] p-3 ring-1 ring-white/15" style={{ top: 'calc(var(--inset-top) + 60px)', left: 'calc(var(--inset-left) + 8px)' }}>
           {[['Account', '/account'], ['Sandbox', '/sandbox'], ['Board bench', '/board'], ['Story test', '/story']].map(([label, to]) => (

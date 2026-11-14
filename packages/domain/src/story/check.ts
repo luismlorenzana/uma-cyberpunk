@@ -139,6 +139,11 @@ export function checkPack(pack: StoryPack): Finding[] {
   for (const l of pack.casting.leads) if (!pack.bonds[String(l.outfit)]) todo('casting.json', `leads.${l.outfit}`, 'no bond scenes yet (TC57)')
   // Tastes and small talk (CY14): written for an Uma aboard; a talk topic she loves is the one that pays full rapport.
   for (const k of Object.keys(pack.casting.tastes ?? {})) if (!crew.has(Number(k))) todo('casting.json', `tastes["${k}"]`, `${k} isn't a lead or in the crew order`)
+  // Chiefs and jump events (CY16): a chief is aboard; a world's region has its pool; a pool belongs to a region.
+  for (const k of Object.keys(pack.casting.chiefs ?? {})) if (!crew.has(Number(k))) todo('casting.json', `chiefs["${k}"]`, `${k} isn't a lead or in the crew order`)
+  const regions = new Set(Object.values(pack.worlds).map((w) => w.region).filter(Boolean))
+  for (const w of Object.values(pack.worlds)) if (w.region && !pack.events[w.region]) todo(`worlds/${w.id}.json`, 'region', `no events/${w.region}.json yet: its jumps draw the generic pool`)
+  for (const r of Object.keys(pack.events)) if (!regions.has(r)) todo(`events/${r}.json`, 'region', `no world names the region ${r}`)
   // The captain's placeholders (TC55), anywhere a line is written.
   const placeholder = /\{([^}]*)\}/g
   const okWord = /^(captain|they|them|their|theirs|they're)$/i

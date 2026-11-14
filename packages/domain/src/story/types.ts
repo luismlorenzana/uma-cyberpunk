@@ -7,6 +7,8 @@ import type { Role } from '@cyber/battle'
 import type { Tastes } from '../cabins/cabins'
 import type { Topic } from '../cabins/items'
 import type { Look } from '../looks'
+import type { ModuleId } from '../ship/modules'
+import type { ShipEvent } from '../ship/watch'
 
 export type Speaker = number | string
 export type Layer = 'placeholder' | 'skeleton' | 'bible' | 'scripted' | 'published'
@@ -106,7 +108,8 @@ export interface Chapter {
 
 export interface Location { id: string; danger: number; needs: string[]; links: string[]; x?: number; y?: number }
 
-export interface World { schemaVersion: 1; id: string; look?: string; mood?: string; locations: Location[]; factions: string[]; layer?: Layer; x?: number; y?: number }
+/** `region` (CY16): the event pool its jumps draw from (`events/<region>.json`); none, the game's generic pool. */
+export interface World { schemaVersion: 1; id: string; look?: string; mood?: string; locations: Location[]; factions: string[]; layer?: Layer; x?: number; y?: number; region?: string }
 
 export interface Lead { outfit: number; world: string; opens?: string; talent?: string }
 
@@ -121,6 +124,8 @@ export interface Casting {
   bondGates?: Record<string, string>
   /** Each Uma's tastes (CY14), by outfit id; one not written derives hers from what the game knows of her. */
   tastes?: Record<string, Tastes>
+  /** Station chiefs (CY16): an Uma's room, by outfit id; at its post she brings a chief's extra. */
+  chiefs?: Record<string, ModuleId>
   heroines: { board: string; faction: string; hold: 'anchor' | 'collar' | 'none' }[]
   minor: string[]
   /** Stand-in only: plain labels for invented ids, since no name comes from master data for them. */
@@ -141,4 +146,6 @@ export interface StoryPack {
   calls: Record<string, Call>
   /** Bond scenes by outfit id (CY13). */
   bonds: Record<string, BondFile>
+  /** Jump events by region (CY16), from `events/<region>.json`. */
+  events: Record<string, ShipEvent[]>
 }

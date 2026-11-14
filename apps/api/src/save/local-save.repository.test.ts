@@ -20,25 +20,25 @@ describe('the local save store (dev)', () => {
   it('is empty before the first upload', async () => expect(await repo.load('u')).toEqual({ revision: 0, save: null }))
 
   it('round-trips a save and counts revisions', async () => {
-    expect(await repo.put('u', 0, newSave('u', T0), 7)).toEqual({ revision: 1, save: newSave('u', T0) })
-    expect(await repo.put('u', 1, touched(newSave('u', T0), T1), 7)).toMatchObject({ revision: 2 })
+    expect(await repo.put('u', 0, newSave('u', T0), 8)).toEqual({ revision: 1, save: newSave('u', T0) })
+    expect(await repo.put('u', 1, touched(newSave('u', T0), T1), 8)).toMatchObject({ revision: 2 })
     expect(await repo.load('u')).toEqual({ revision: 2, save: touched(newSave('u', T0), T1) })
   })
 
   it('keeps accounts apart', async () => {
-    await repo.put('a', 0, newSave('a', T0), 7)
+    await repo.put('a', 0, newSave('a', T0), 8)
     expect(await repo.load('b')).toEqual({ revision: 0, save: null })
   })
 
   it('refuses a stale revision with what is stored', async () => {
-    await repo.put('u', 0, newSave('u', T0), 7)
-    const error = await repo.put('u', 0, newSave('u', T1), 7).catch((e: unknown) => e)
+    await repo.put('u', 0, newSave('u', T0), 8)
+    const error = await repo.put('u', 0, newSave('u', T1), 8).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(RevisionConflict)
     expect((error as RevisionConflict).current).toEqual({ revision: 1, save: newSave('u', T0) })
   })
 
   it('serializes concurrent writes: one wins, one conflicts', async () => {
-    const results = await Promise.allSettled([repo.put('u', 0, newSave('u', T0), 7), repo.put('u', 0, newSave('u', T1), 7)])
+    const results = await Promise.allSettled([repo.put('u', 0, newSave('u', T0), 8), repo.put('u', 0, newSave('u', T1), 8)])
     expect(results.map((r) => r.status).sort()).toEqual(['fulfilled', 'rejected'])
   })
 

@@ -2,7 +2,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
 
-export const STORY_DIRS = ['worlds', 'chapters', 'log', 'calls'] as const
+export const STORY_DIRS = ['worlds', 'chapters', 'log', 'calls', 'bonds', 'events'] as const
 
 /** The story's JSON files under `dir`, by path relative to it; null when there's no story there yet. */
 export function readStoryFiles(dir: string): { files: Record<string, unknown>; raw: Record<string, Buffer>; problems: { file: string; message: string }[] } | null {

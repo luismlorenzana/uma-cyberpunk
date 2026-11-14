@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Hangar } from '../crew/Hangar'
 import { Quarters } from '../crew/Quarters'
+import { useCrew } from '../crew/useCrew'
+import { dutyInfoFrom } from './duties'
 import { applyStep, atNode, markSeen, progressOf, reachableWorlds, sceneSquad, startMission, timeline, travel } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer } from '../story/ScenePlayer'
@@ -51,6 +53,7 @@ function Placeholder({ text }: { text?: string }) {
 /** The Bridge (TC50): the star map of known worlds (a tap, a jump card, travel; no fuel, no clock), then the current
  * world's node map: locked, available or cleared, each with its danger, a locked one naming its key. */
 function Bridge({ pack }: { pack: StoryPack }) {
+  const { crew } = useCrew()
   const navigate = useNavigate()
   const save = useGame((g) => g.save)!
   const [params, setParams] = useSearchParams()
@@ -117,7 +120,7 @@ function Bridge({ pack }: { pack: StoryPack }) {
             <p className="text-[13px] text-white/70">{pack.worlds[jump]?.look ?? 'An unknown world.'}</p>
             <div className="mt-2 flex gap-2">
               <button type="button" onClick={() => setJump(null)} className="min-h-11 flex-1 rounded-md bg-white/10 font-bold">Stay</button>
-              <button type="button" onClick={() => { void updateSave((s) => travel(s, jump)); setJump(null); setView('world') }} className="min-h-11 flex-1 rounded-md bg-[#2ee6ff] font-bold text-[#0b0d17]">Jump</button>
+              <button type="button" onClick={() => { void updateSave((s) => travel(s, jump, pack, { info: dutyInfoFrom(crew) })); setJump(null); void navigate('/') }} className="min-h-11 flex-1 rounded-md bg-[#2ee6ff] font-bold text-[#0b0d17]">Jump</button>
             </div>
           </div>
         )}

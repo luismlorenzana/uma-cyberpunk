@@ -4,6 +4,7 @@
 import { bandOf, capacityOf, isLight, loadOf, maxHpOf, moveOf, TUNING, type Bands, type Loadout, type Role, type Stride, type Weapon } from '@cyber/battle'
 import type { AptitudeGrade, Stats, Strategy } from '@luismlorenzana/uma-data'
 import { emptyCabin, type Cabin } from '../cabins/items'
+import type { HeldPost } from '../ship/duties'
 import { newBond, type Bond } from './bonds'
 import { BACK_ROLE, loadoutOf, PARTS_BY_ID, partsFor, ROLE_BACK, rigProblem, type Part, type Rig } from './parts'
 
@@ -71,13 +72,15 @@ export interface CrewMember {
   bond: Bond
   /** Her cabin: its slots, what she's revealed of her tastes, a request (CY14). */
   cabin: Cabin
+  /** Her post aboard (CY16), held until changed: the module and post, the watch she took it, her mastery there. */
+  post: HeldPost | null
 }
 
 export const MAX_PRESETS = 3
 export const STRAIN_REST = 3
 export const PRESET_NAME_MAX = 24
 
-export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: newBond(), cabin: emptyCabin() })
+export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: newBond(), cabin: emptyCabin(), post: null })
 
 /** Her level: 1 + one a hundred XP, to 50. A placeholder curve until Phase 5's economy; levels change no numbers yet. */
 export const levelOf = (xp: number): number => Math.min(50, 1 + Math.floor(xp / 100))

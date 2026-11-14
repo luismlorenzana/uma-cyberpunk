@@ -51,7 +51,7 @@ async function inside(root: string, path: string): Promise<string> {
 
 /** Every file that parses on its own, so one broken chapter doesn't blank the rest while it's being written. */
 function bestEffort(files: Record<string, unknown>): StoryPack {
-  const pack: StoryPack = { casting: { schemaVersion: 1, leads: [], crewOrder: [], heroines: [], minor: [] }, worlds: {}, chapters: {}, files: {}, calls: {} }
+  const pack: StoryPack = { casting: { schemaVersion: 1, leads: [], crewOrder: [], heroines: [], minor: [] }, worlds: {}, chapters: {}, files: {}, calls: {}, bonds: {}, events: {} }
   for (const [path, value] of Object.entries(files)) {
     try {
       if (path === 'casting.json') pack.casting = parseCasting(value, path)

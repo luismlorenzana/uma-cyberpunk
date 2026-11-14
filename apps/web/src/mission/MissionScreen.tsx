@@ -11,6 +11,7 @@ import { battleRapport } from '../bonds/battleRapport'
 import { ItemIcon } from '../cabins/art'
 import { lightsFrom } from '../cabins/cabins'
 import { togglePower } from '../ship/build'
+import { dutyInfoFrom } from '../ship/duties'
 import { resume } from '../battle/session'
 import { useMaster } from '../master/master'
 import { crewViews, infoFrom, memberView, type CrewView } from '../crew/view'
@@ -73,7 +74,8 @@ function Mission({ layout }: { layout: StageLayout }) {
     const units = squad.map((v) => ({ outfit: v.outfit, label: v.name, bands: v.bands, loadout: loadoutOf(v.rig), stride: v.stride }))
     const base = missionInput(scenario, units, bench.map((v) => v.role), `${mission.id}:1`)
     // The powered systems go into the frozen input (CY15); rules version 3 plays them (CY17).
-    void updateSave((s) => deploy(setSquad(s, squad.map((v) => v.outfit)), s.ship.powered.length ? { ...base, systems: [...s.ship.powered] } : base))
+    // The cook's meal goes in too, eaten (CY16).
+    void updateSave((s) => ({ ...deploy(setSquad(s, squad.map((v) => v.outfit)), { ...base, ...(s.ship.powered.length ? { systems: [...s.ship.powered] } : {}), ...(s.meal ? { meal: s.meal } : {}) }), meal: null }))
   }} />)
 
   if (m.step === 'battle' && m.battle) return <MissionBattle layout={layout} input={m.battle.input as BattleInput} actions={m.battle.actions as BattleAction[]} />
@@ -98,7 +100,7 @@ function Mission({ layout }: { layout: StageLayout }) {
           <button type="button" className={won ? primary : secondary} onClick={() => {
             const rapport = m.battle ? battleRapport(m.battle.input as BattleInput, m.battle.actions as BattleAction[]) : null
             const views = crewViews(save, pack, infoFrom(master.status === 'ready' ? master.view.info : null), (o) => outfitName(pack, o))
-            void updateSave((s) => closeResults(s, pack, rapport, lightsFrom(pack, views))).then(() => { if (!won) void navigate('/') })
+            void updateSave((s) => closeResults(s, pack, rapport, lightsFrom(pack, views), dutyInfoFrom(views))).then(() => { if (!won) void navigate('/') })
           }}>{won ? 'Continue' : 'Back to the ship'}</button>
         </div>
       </div>,

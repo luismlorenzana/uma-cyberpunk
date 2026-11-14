@@ -176,6 +176,8 @@ export interface BattleInput {
   // --- Rules version 3 (CY17) ---
   /** The ship's battle systems powered for this sortie (CY15 records them; rules version 3 plays them). */
   systems?: readonly string[]
+  /** The cook's meal for this battle (CY16 records it; rules version 3 plays it). */
+  meal?: string
 }
 
 // --- The state ------------------------------------------------------------------------------------------------------
