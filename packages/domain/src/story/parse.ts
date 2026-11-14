@@ -3,6 +3,15 @@
 import type { Role } from '@cyber/battle'
 import type { BondFile, Call, CaptainOption, CastMember, Casting, Chapter, ChoiceOption, EnemySlot, Layer, Location, LogFile, Mission, Scene, Step, StoryPack, Tone, Trigger, World } from './types'
 import { LAYERS, MISSION_OBJECTIVES, TONES } from './types'
+import { DECOR_STYLES, GIFT_KINDS, TOPICS, type GiftKind, type Style, type Topic } from '../cabins/items'
+import { LOOKS, type Look } from '../looks'
+
+/** A scene's `look` (D24): one of the five, or nothing. */
+function look(p: P, v: unknown, path: string): { look?: Look } {
+  if (v === undefined) return {}
+  if (!LOOKS.includes(v as Look)) p.fail(path, `expected one of ${LOOKS.join(', ')}`)
+  return { look: v as Look }
+}
 
 export class StoryParseError extends Error {
   readonly file: string
@@ -128,8 +137,8 @@ function cast(p: P, v: unknown, path: string): CastMember {
 }
 
 function scene(p: P, v: unknown, path: string): Scene {
-  const o = p.object(v, path, ['id', 'place', 'trigger', 'cast', 'steps'])
-  return { id: p.slug(o.id, `${path}.id`), place: p.slug(o.place, `${path}.place`), trigger: trigger(p, o.trigger, `${path}.trigger`), cast: p.list(o.cast, `${path}.cast`, (c, cp) => cast(p, c, cp), 12), steps: p.steps(o.steps, `${path}.steps`) }
+  const o = p.object(v, path, ['id', 'place', 'trigger', 'cast', 'steps', 'look'], ['id', 'place', 'trigger', 'cast', 'steps'])
+  return { id: p.slug(o.id, `${path}.id`), place: p.slug(o.place, `${path}.place`), trigger: trigger(p, o.trigger, `${path}.trigger`), cast: p.list(o.cast, `${path}.cast`, (c, cp) => cast(p, c, cp), 12), steps: p.steps(o.steps, `${path}.steps`), ...look(p, o.look, `${path}.look`) }
 }
 
 function enemy(p: P, v: unknown, path: string): EnemySlot {
@@ -198,7 +207,7 @@ export function parseWorld(value: unknown, file = 'world'): World {
 
 export function parseCasting(value: unknown, file = 'casting.json'): Casting {
   const p = new P(file)
-  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'bondGates', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
+  const o = p.object(value, 'casting', ['schemaVersion', 'leads', 'crewOrder', 'roles', 'bondGates', 'tastes', 'heroines', 'minor', 'labels', 'layer'], ['schemaVersion', 'leads'])
   p.version(o)
   const casting: Casting = {
     schemaVersion: 1,
@@ -228,6 +237,20 @@ export function parseCasting(value: unknown, file = 'casting.json'): Casting {
       p.outfit(Number(k), `roles["${k}"]`)
       if (!ROLE_IDS.includes(v as string)) p.fail(`roles["${k}"]`, `expected one of ${ROLE_IDS.join(', ')}`)
       return [k, v as Role]
+    }))
+  }
+  if (o.tastes !== undefined) {
+    const tastes = p.object(o.tastes, 'tastes', Object.keys((o.tastes ?? {}) as Obj), [])
+    casting.tastes = Object.fromEntries(Object.entries(tastes).map(([k, v]) => {
+      p.outfit(Number(k), `tastes["${k}"]`)
+      const tp = `tastes["${k}"]`
+      const x = p.object(v, tp, ['favourite', 'disliked', 'gift', 'topics'])
+      if (!DECOR_STYLES.includes(x.favourite as Style)) p.fail(`${tp}.favourite`, `expected one of ${DECOR_STYLES.join(', ')}`)
+      if (!DECOR_STYLES.includes(x.disliked as Style) || x.disliked === x.favourite) p.fail(`${tp}.disliked`, 'expected a style other than her favourite')
+      if (!GIFT_KINDS.includes(x.gift as GiftKind)) p.fail(`${tp}.gift`, `expected one of ${GIFT_KINDS.join(', ')}`)
+      const topics = x.topics as unknown[]
+      if (!Array.isArray(topics) || topics.length !== 2 || topics[0] === topics[1] || !topics.every((t) => TOPICS.includes(t as Topic))) p.fail(`${tp}.topics`, `expected two different topics of ${TOPICS.join(', ')}`)
+      return [k, { favourite: x.favourite as Style, disliked: x.disliked as Style, gift: x.gift as GiftKind, topics: [topics[0] as Topic, topics[1] as Topic] as [Topic, Topic] }]
     }))
   }
   if (o.labels !== undefined) {
@@ -271,18 +294,22 @@ export function parseCall(value: unknown, file = 'call'): Call {
 /** A bond file (CY13): her scenes at ranks 2, 4, 6, 8 and 10, and her epilogue card. */
 export function parseBondFile(value: unknown, file = 'bond'): BondFile {
   const p = new P(file)
-  const o = p.object(value, 'bond', ['schemaVersion', 'outfit', 'scenes', 'epilogue', 'layer'], ['schemaVersion', 'outfit', 'scenes'])
+  const o = p.object(value, 'bond', ['schemaVersion', 'outfit', 'scenes', 'epilogue', 'talk', 'layer'], ['schemaVersion', 'outfit', 'scenes'])
   p.version(o)
   const b: BondFile = {
     schemaVersion: 1, outfit: p.outfit(o.outfit, 'outfit'),
     scenes: p.list(o.scenes, 'scenes', (s, sp) => {
-      const x = p.object(s, sp, ['rank', 'place', 'steps'])
+      const x = p.object(s, sp, ['rank', 'place', 'steps', 'look'], ['rank', 'place', 'steps'])
       const rank = p.int(x.rank, `${sp}.rank`, 2, 10)
       if (rank % 2 !== 0) p.fail(`${sp}.rank`, 'expected 2, 4, 6, 8 or 10')
-      return { rank, place: p.slug(x.place, `${sp}.place`), steps: p.steps(x.steps, `${sp}.steps`) }
+      return { rank, place: p.slug(x.place, `${sp}.place`), steps: p.steps(x.steps, `${sp}.steps`), ...look(p, x.look, `${sp}.look`) }
     }, 5),
   }
   if (o.epilogue !== undefined) b.epilogue = p.text(o.epilogue, 'epilogue', 400)
+  if (o.talk !== undefined) {
+    const talk = p.object(o.talk, 'talk', TOPICS, [])
+    b.talk = Object.fromEntries(Object.entries(talk).map(([t, lines]) => [t, p.list(lines, `talk.${t}`, (l, lp) => p.text(l, lp, 160), 4)]))
+  }
   const layer = p.layer(o.layer, 'layer')
   if (layer) b.layer = layer
   return b

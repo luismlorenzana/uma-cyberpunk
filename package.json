@@ -15,7 +15,7 @@
     "test:ci": "node --test scripts/check-size.test.mjs scripts/check-private-content.test.mjs scripts/check-hosting-site.test.mjs scripts/make-icons.test.mjs scripts/manual-pages.test.mjs scripts/story/story.test.mjs tools/story-sandbox/lib/model.test.mjs tools/story-sandbox/lib/sprites.test.mjs tools/story-sandbox/import-cast.test.mjs && turbo run test --concurrency=1",
     "web": "pnpm --filter @cyber/web dev",
     "api": "pnpm --filter @cyber/api dev",
-    "docs:update": "UPDATE_DOCS=1 pnpm --filter @cyber/battle exec vitest run src/docs.test.ts && UPDATE_DOCS=1 pnpm --filter @cyber/domain exec vitest run src/crew/docs.test.ts && node scripts/manual-pages.mjs",
+    "docs:update": "UPDATE_DOCS=1 pnpm --filter @cyber/battle exec vitest run src/docs.test.ts && UPDATE_DOCS=1 pnpm --filter @cyber/domain exec vitest run src/crew/docs.test.ts src/cabins/docs.test.ts && node scripts/manual-pages.mjs",
     "sim": "tsx scripts/sim/battle.ts",
     "story:check": "tsx scripts/story/check.ts",
     "story:pack": "tsx scripts/story/pack.ts",

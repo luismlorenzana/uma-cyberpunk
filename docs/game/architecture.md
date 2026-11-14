@@ -17,7 +17,10 @@ iPhone (Home Screen app)                 Firebase Hosting: uma-cyberpunk.web.app
  ├─ Dexie: the save + safety copies        └─ /api/** ──► Cloud Run cyber-api (us-central1)
  └─ service worker (precache, updates)                     ├─ owner guard (Firebase ID token, one email)
                                                            ├─ /api/save ──► Firestore `cyber`: saves, saveRescues, saveBackups
-                                                           └─ /api/master/… ──► uma-platform's master data bucket (read only)
+                                                           ├─ /api/master/… ──► uma-platform's master data bucket (read only)
+                                                           └─ /api/content/… ──► the story pack (Phase 4's bucket) and, under looks/,
+                                                                                 uma-platform's content bucket: art/universes/cyberpunk/
+                                                                                 only, read only (D25)
 ```
 
 ## Pages
@@ -38,23 +41,24 @@ the gates, so a waiting build shows on any screen.
 
 ## The save
 
-**Save v5** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
+**Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
 the worlds and the mission in CY10, v4 each crew member's record in CY11, v5 the captain, the watch, the inbox and each
-Uma's bond in CY13):
+Uma's bond in CY13, v6 each Uma's cabin, the item stock and the visits in CY14):
 
 ```json
-{ "version": 5, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
+{ "version": 6, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
   "captain": { "name": "Captain", "pronouns": "they", "romance": "ask", "named": false }, "watch": 0, "inbox": [],
+  "items": { "classic-bed": 2, "…": 2, "gift-buns": 1 }, "visits": { "watch": 0, "used": 0 },
   "crew": [], "ship": { "rooms": ["bridge", "hangar", "quarters", "log"] },
   "worlds": { "current": null, "known": {}, "missions": [] },
   "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] },
   "mission": null }
 ```
 
-Older saves open as v5 on the device, each step pure and `account.updatedAt` untouched; the fields are on
+Older saves open as v6 on the device, each step pure and `account.updatedAt` untouched; the fields are on
 [story.md](story.md#the-story-state-save-v2), [ship.md](ship.md#the-save-v3), [missions.md](missions.md#the-save),
-[crew.md](crew.md#the-save-v4) and [captain-and-bonds.md](captain-and-bonds.md#the-save-v5); a crew member is
-`{ outfit, xp, role, rig, presets, strain, bond }`.
+[crew.md](crew.md#the-save-v4), [captain-and-bonds.md](captain-and-bonds.md#the-save-v5) and [cabins.md](cabins.md#the-save-v6); a crew member is
+`{ outfit, xp, role, rig, presets, strain, bond, cabin }`.
 
 - **`account.updatedAt` is the conflict rule's clock.** Only the player's own change moves it (`touched`); parsing,
   syncing and the server never do. A Restore counts as the player's own change.

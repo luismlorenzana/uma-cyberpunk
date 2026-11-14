@@ -1,6 +1,6 @@
 # Handoff: open work
 
-> **Status: 2026-11-13, after D22: CY13 is done; CY14 is next.** After D21: Phase 4's packets are written (CY13–CY19, below). After D20: [life aboard](../design/life-aboard.md) is designed (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
+> **Status: 2026-11-13, after D25: CY14 is done (cabins, decor, visits; save v6; the approved looks served to the game); CY15 is next.** After D24: sprites are for combat only, as chibis, and ChatGPT's image request is written ([the combat sprites request](../design/combat-sprites-request.md)), with the Story Sandbox's Sprites page for reviewing the sheets. After D22: CY13 is done. After D21: Phase 4's packets are written (CY13–CY19, below). After D20: [life aboard](../design/life-aboard.md) is designed (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
 > to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
 > below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
 > the story session delivers its first world** ([SB9](../design/story-brief.md#9-what-you-deliver-and-when-sb9)). The owner split the work (D4): **the story has its own session,** which writes the world
@@ -20,7 +20,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY19; decision numbers continue from D25.
+Packet ids run CY1–CY19; decision numbers continue from D26.
 
 ## Phase 1: the foundation
 
@@ -41,7 +41,6 @@ D20), built on the stand-in while the story session writes its base elements. In
 
 | Id | What | Who | Size | Needs | State |
 |---|---|---|---|---|---|
-| CY14 | [Cabins, decor and visits](tasks/CY14-cabins-and-visits.md): six slots, six styles, Comfort and Strain, tastes discovered, visits, requests, theme kits; the furniture art request; save v6 | Claude | L | CY13 | Written |
 | CY15 | [The ship as a build](tasks/CY15-ship-as-a-build.md): decks and modules, levels, building over watches, the wallet, power per sortie, the Lab, the map by capability; save v7 | Claude | L | CY14 | Written |
 | CY16 | [Duties, the ship log and travel events](tasks/CY16-duties-and-travel.md): posts, aptitude by thresholds, running style as tenure, mastery, chiefs, one ship-log card, auto-assign, event cards; save v8 | Claude | M | CY15 | Written |
 | CY17 | [Bonds and the ship in battle](tasks/CY17-bonds-and-ship-in-battle.md): rules version 3: bond perks, Resonance, Orders, ship support, meals, partners and duo techniques; the balance pass; save v9 | Claude | L | CY13, CY15, CY16 | Written |
@@ -81,6 +80,9 @@ packet, or says why not.
     [tunable bloom and tilt-shift](../design/stage-requests/tunable-effects.md), shipped in uma-stage 0.5.0 (ST5, P156) and
     is pinned with the board's own values (D18). Queued behind it: glowing kit frames, a tactics kit kind cached by id, a lighter saver tier. Heights 0–3 aren't
     needed (level 3 builds);
+  - **the cabins' furniture** as pixel art ([the furniture request](../design/art-requests/cabin-furniture.md), D25):
+    48 items' icons and room-size pieces, drawn by Claude in a uma-platform session (`scripts/pixel-art`) and shipped in
+    uma-art; code-drawn stand-ins until then. Handed to the uma-platform session 2026-11-13;
   - **the map kits** are drawn in code by Claude in a uma-platform session (`scripts/kit-art`, P147), from the story
     session's world outline, in Phase 4;
   - **the heroines' delivery** from the franchise boards and the Ranker's images (TC7, TC12), when Phase 4 needs its
@@ -110,6 +112,7 @@ Packets finished go here, newest first.
 | Id | Task | Commit |
 |---|---|---|
 | CY13 | The captain and bonds (D22): the captain screen and Account's panel, the watch, bonds 1–10 with rapport from battles, replies and the captain's choices, the catch-up, the story's gates, bond scenes with the `captain` and `path` steps, Trust or Heart at rank 8 (Friends only takes Trust), messages, the bond panel and the Log's Bonds tab; save v5; [the captain and bonds](../game/captain-and-bonds.md) in the manual | `381ca5b` |
+| CY14 | Cabins, decor and visits (D25): the Quarters deck of doors, each cabin's six slots in a diorama with a world-tinted window, 30 pieces in six styles, 6 keepsakes and 12 gifts, Comfort's five lights and its Strain rules, tastes written or derived and revealed by visits, three visits a watch (talk, gift, decorating together, invitations from rank 4) with a result card and requests, theme kits, a first win's item; the approved looks served through `/api/content/looks/` (read-only, that folder only); save v6; [cabins](../game/cabins.md) in the manual; the furniture request | — |
 | — | **The Cyberpunk Story Sandbox** (D17, no packet: the owner asked for "a third app"): `tools/story-sandbox/`, `pnpm stories` on :4322, the sibling of uma-quest's and uma-farm's. It reads `content/stories/` with the game's own parser and `pnpm story:check`'s findings, falling back to the stand-in; pages for the story's state and its five deliverables (SB9), worlds with their maps, chapters, the scene player (a squad picker for interjection slots, choices and Calls as picks, story changes as cards), the cast (leads, crew order, heroines by Hold, the Ranker's Umas by batch), the Log's Files, Leads, Anomalies and flags, Calls, Checks, Format and Notes; the owner's verdicts to `content/stories/reviews.json`. `pnpm stories:import-cast` builds the private cast pack (154 Umas, 833 heroines, pictures from uma-quest's pack). [Design](../design/story-sandbox.md) | this commit |
 | CY12 | The Chapter 1 loop (D16): the stand-in's two worlds and two Chapter 1s, the headless loop test, debriefs on the ship and in the Timeline, slots that hear the real squad, newcomers at the squad's level, the map's available-means-playable rule, a new game straight into its first scene, the Continue card's four cases; story.md's loop and ship.md's rooms opening with leads. **Phase 3's code is done** | `4e4c1bb` |
 | CY11 | The crew and the Hangar (D15): save v4 with each crew member's record, the master-data adapter (bands, Stride, the fallback role), the casting's `roles` tag, 32 starter parts, best for her role, role change, Strain and XP after a mission, the Quarters with profiles, the Hangar (slots, Capacity bar, swap preview, saved loadouts), deploy in the crew's own rigs; [the crew](../game/crew.md) and [the Hangar](../game/hangar.md) in the manual | `10764d4` |

@@ -4,6 +4,10 @@
 import type { Role } from '@cyber/battle'
 
 /** Who speaks: an Uma's outfit id, or a heroine's board id or a minor character's slug. */
+import type { Tastes } from '../cabins/cabins'
+import type { Topic } from '../cabins/items'
+import type { Look } from '../looks'
+
 export type Speaker = number | string
 export type Layer = 'placeholder' | 'skeleton' | 'bible' | 'scripted' | 'published'
 export const LAYERS: readonly Layer[] = ['placeholder', 'skeleton', 'bible', 'scripted', 'published']
@@ -43,15 +47,20 @@ export const TONES: readonly Tone[] = ['warm', 'steady', 'wry']
 export interface CaptainOption { tone: Tone; text: string; rapport: number; then: Step[] }
 
 /** A bond scene (CY13, TC57): at a rank, in her cabin or a ship spot. */
-export interface BondScene { rank: number; place: string; steps: Step[] }
+export interface BondScene { rank: number; place: string; steps: Step[]; look?: Look }
 /** Her bond scenes, `bonds/<outfit>.json`, and her epilogue card once she reaches rank 10. */
-export interface BondFile { schemaVersion: 1; outfit: number; scenes: BondScene[]; epilogue?: string; layer?: Layer }
+export interface BondFile {
+  schemaVersion: 1; outfit: number; scenes: BondScene[]; epilogue?: string; layer?: Layer
+  /** Her small talk in a visit (CY14), by topic: a line is picked when that topic comes up; the game's pool otherwise. */
+  talk?: Partial<Record<Topic, string[]>>
+}
 
 export type Trigger = { arrive: string } | { after: string } | { talk: string }
 
 export interface CastMember { outfit?: number; heroine?: string; minor?: string }
 
-export interface Scene { id: string; place: string; trigger: Trigger; cast: CastMember[]; steps: Step[] }
+/** `look` (D24, LK2): the outfit the scene shows, when it isn't the place's (a world is Street, the ship Quarters or the Pilot suit). */
+export interface Scene { id: string; place: string; trigger: Trigger; cast: CastMember[]; steps: Step[]; look?: Look }
 
 export type MissionObjective = 'defeat-all' | 'defeat-leader' | 'free-leader' | 'reach' | 'hold' | 'escort' | 'hack'
 export const MISSION_OBJECTIVES: readonly MissionObjective[] = ['defeat-all', 'defeat-leader', 'free-leader', 'reach', 'hold', 'escort', 'hack']
@@ -106,6 +115,8 @@ export interface Casting {
   roles?: Record<string, Role>
   /** The keys bond ranks 4, 6, 8 and 10 wait on (CY13), in the `needs` syntax; a rank not named is open. */
   bondGates?: Record<string, string>
+  /** Each Uma's tastes (CY14), by outfit id; one not written derives hers from what the game knows of her. */
+  tastes?: Record<string, Tastes>
   heroines: { board: string; faction: string; hold: 'anchor' | 'collar' | 'none' }[]
   minor: string[]
   /** Stand-in only: plain labels for invented ids, since no name comes from master data for them. */

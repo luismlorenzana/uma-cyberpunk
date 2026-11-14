@@ -2,7 +2,7 @@
 
 > **Status: 2026-11-13, CY13 (D22).** The player as the ship's captain (TC55), the watch every life-aboard budget counts
 > by, and a bond with every Uma from rank 1 to 10 (TC56, TC57): rapport from battles, messages and bond scenes, the
-> story's gates, the catch-up, and the Trust or Heart choice at rank 8. Cabins and visits come in CY14; the bonds' perks
+> story's gates, the catch-up, and the Trust or Heart choice at rank 8. Cabins and visits came with CY14 ([cabins.md](cabins.md)); the bonds' perks
 > play in battle with rules version 3 (CY17). The design is [life-aboard.md](../design/life-aboard.md).
 
 ## The short answer
@@ -48,7 +48,7 @@ saves it. Account's **Captain** panel changes any of the three.
 ## The watch
 
 A counter on the save: +1 when a mission's results close (won or lost) and +1 on a jump from the Bridge. Messages are
-per battle; CY14's visits, CY15's builds and CY16's duties count by it. No timers, no real time.
+per battle; CY14's visits (three a watch, [cabins.md](cabins.md#a-visit-tc61)), CY15's builds and CY16's duties count by it. No timers, no real time.
 
 ## Bonds (TC56)
 

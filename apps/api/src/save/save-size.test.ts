@@ -2,7 +2,7 @@
 // version that grows the save adds its full case here. Invented data only.
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { bestRig, newSave, parseSave } from '@cyber/domain'
+import { bestRig, ITEMS, newSave, parseSave } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 
 const bytes = (value: unknown): number => new TextEncoder().encode(JSON.stringify(value)).length
@@ -11,15 +11,16 @@ describe('the save in one document', () => {
   it('fits a new save many times over', () => {
     expect(bytes(parseSave(newSave('u'.repeat(128), '2026-11-12T12:00:00.000Z')))).toBeLessThan(1024)
   })
-  it('fits a late game: 60 crew with rigs, three loadouts and a full bond each, 300 flags and scenes, 40 Files, 12 worlds, and a mission mid-battle (v5)', () => {
+  it('fits a late game: 60 crew with rigs, three loadouts and a full bond each, 300 flags and scenes, 40 Files, 12 worlds, a full cabin each and every item owned, and a mission mid-battle (v6)', () => {
     const map = JSON.parse(readFileSync(resolve(__dirname, '../../../../scenarios/maps/underlevels-14.json'), 'utf8'))
     const scenario = JSON.parse(readFileSync(resolve(__dirname, '../../../../scenarios/sandbox-muster.json'), 'utf8'))
     const slug = (p: string, i: number) => `${p}-${String(i).padStart(4, '0')}-a-longish-slug`
     const save = {
       ...newSave('u', '2026-11-12T12:00:00.000Z'), inbox: Array.from({ length: 60 }, (_, i) => 9_000_001 + i), watch: 9999,
+      items: Object.fromEntries(ITEMS.map((it) => [it.id, 9999])), visits: { watch: 9999, used: 3 },
       crew: Array.from({ length: 60 }, (_, i) => {
         const rig = bestRig('vanguard', { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 })
-        return { outfit: 9_000_001 + i, xp: 99_999, role: 'vanguard', rig, presets: [0, 1, 2].map((j) => ({ name: `A long loadout name ${j}xx`.slice(0, 24), rig })), strain: 2, bond: { rank: 10, rapport: 0, path: 'heart', seen: [2, 4, 6, 8, 10] } }
+        return { outfit: 9_000_001 + i, xp: 99_999, role: 'vanguard', rig, presets: [0, 1, 2].map((j) => ({ name: `A long loadout name ${j}xx`.slice(0, 24), rig })), strain: 2, bond: { rank: 10, rapport: 0, path: 'heart', seen: [2, 4, 6, 8, 10] }, cabin: { slots: { bed: 'neon-bed', desk: 'neon-desk', wall: 'neon-wall', floor: 'neon-floor', light: 'neon-light', keepsake: 'keepsake-photo' }, revealed: ['gift', 'styles', 'topic:racing', 'topic:food'], request: 'light' } }
       }),
       worlds: { current: 'w1', known: Object.fromEntries(Array.from({ length: 12 }, (_, i) => [`w${i}`, { cleared: Array.from({ length: 20 }, (_, j) => slug(`w${i}`, j)) }])), missions: Array.from({ length: 200 }, (_, i) => slug('m', i)) },
       story: {

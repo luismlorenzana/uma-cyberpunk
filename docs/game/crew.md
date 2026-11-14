@@ -2,7 +2,7 @@
 
 > **Status: 2026-11-12, CY11 (D15).** Who is aboard and what each Uma is in a fight: her bands from master data's 5★
 > stats (TC4), her role (TC5), her Stride (TC46), her level, and Strain (TC27). Her rig is on [hangar.md](hangar.md).
-> Shown in the **Quarters**: the roster beside her profile, and who rests next mission.
+> Shown in the **Quarters**: a deck of cabin doors, her cabin with her profile, and who rests next mission (CY14: [cabins.md](cabins.md)).
 
 ## The short answer
 
@@ -89,10 +89,16 @@ every Uma aboard and not deployed is the battle's bench ([battle.md](battle.md#t
 
 ## The Quarters
 
-The crew on uma-kit's face tiles, each with her role and her Strain in the corners and dimmed while resting; a tap opens
-her **profile** beside the roster (her bust, level and XP, role and where it comes from, Back unit, Stride, Strain, the
-role buttons, the band table) and **Her rig in the Hangar**. Below the roster: who rests next mission, and everyone's
-Strain.
+Since CY14 the Quarters are a **deck of cabin doors** ([cabins.md](cabins.md)): her face tile with her bond rank and
+Strain in the corners, dimmed while resting, and her cabin's Comfort lights below it. A door opens her cabin, whose
+**Profile** tab holds what the roster's profile did:
+- her bust, level and XP;
+- her role and where it comes from, the role buttons, her Back unit;
+- her Stride, her Strain, the band table;
+- **Her rig in the Hangar**.
+
+Below the doors: who rests next mission, and everyone's Strain. A rest in a comfortable cabin sheds more Strain
+([cabins.md](cabins.md#comfort-tc61)).
 
 ## The save (v4)
 

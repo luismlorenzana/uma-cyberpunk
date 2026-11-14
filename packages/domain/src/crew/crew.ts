@@ -3,6 +3,7 @@
 // Hangar, and Strain. Every rule number comes from `@cyber/battle`; nothing here recomputes Load, Capacity or Move.
 import { bandOf, capacityOf, isLight, loadOf, maxHpOf, moveOf, TUNING, type Bands, type Loadout, type Role, type Stride, type Weapon } from '@cyber/battle'
 import type { AptitudeGrade, Stats, Strategy } from '@luismlorenzana/uma-data'
+import { emptyCabin, type Cabin } from '../cabins/items'
 import { newBond, type Bond } from './bonds'
 import { BACK_ROLE, loadoutOf, PARTS_BY_ID, partsFor, ROLE_BACK, rigProblem, type Part, type Rig } from './parts'
 
@@ -53,8 +54,8 @@ export function defaultRole(tag: Role | undefined, info: OutfitInfo | null): Rol
 
 export interface Preset { name: string; rig: Rig }
 
-/** A crew member in the save (v4, v5): her outfit, XP, role and rig once the player sets them, three saved loadouts, Strain,
- * and from v5 her bond. */
+/** A crew member in the save (v4–v6): her outfit, XP, role and rig once the player sets them, three saved loadouts, Strain,
+ * from v5 her bond, and from v6 her cabin. */
 export interface CrewMember {
   outfit: number
   xp: number
@@ -68,13 +69,15 @@ export interface CrewMember {
   strain: number
   /** Her bond with the captain (CY13). */
   bond: Bond
+  /** Her cabin: its slots, what she's revealed of her tastes, a request (CY14). */
+  cabin: Cabin
 }
 
 export const MAX_PRESETS = 3
 export const STRAIN_REST = 3
 export const PRESET_NAME_MAX = 24
 
-export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: newBond() })
+export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: newBond(), cabin: emptyCabin() })
 
 /** Her level: 1 + one a hundred XP, to 50. A placeholder curve until Phase 5's economy; levels change no numbers yet. */
 export const levelOf = (xp: number): number => Math.min(50, 1 + Math.floor(xp / 100))
@@ -102,11 +105,12 @@ export function savePreset(m: CrewMember, index: number, name: string, rig: Rig)
 export const wearPreset = (m: CrewMember, index: number): CrewMember => (m.presets[index] ? { ...m, rig: m.presets[index].rig } : m)
 
 /** After a mission, won or lost (TC25, TC27): who fought takes its XP and 1 Strain (3 at most); who rested takes half the
- * XP, and a rest clears Strain 3. */
-export function afterMission(crew: readonly CrewMember[], squad: readonly number[], xp: number): CrewMember[] {
+ * XP, and her Strain after resting: by default a rest clears Strain 3; the cabins' Comfort sheds more (CY14's
+ * `restedStrain`, passed in by the caller so this module needn't know cabins). */
+export function afterMission(crew: readonly CrewMember[], squad: readonly number[], xp: number, rest: (m: CrewMember) => number = (m) => (resting(m) ? 0 : m.strain)): CrewMember[] {
   return crew.map((m) => squad.includes(m.outfit)
     ? { ...m, xp: m.xp + xp, strain: Math.min(STRAIN_REST, m.strain + 1) }
-    : { ...m, xp: m.xp + Math.floor(xp / 2), strain: resting(m) ? 0 : m.strain })
+    : { ...m, xp: m.xp + Math.floor(xp / 2), strain: rest(m) })
 }
 
 // --- The rig's numbers -------------------------------------------------------------------------------------------------

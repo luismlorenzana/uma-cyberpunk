@@ -6,14 +6,17 @@
 import type { Role } from '@cyber/battle'
 import { CAPTAIN_NAME_MAX, DEFAULT_CAPTAIN, PRONOUNS, ROMANCE, type Captain, type Pronouns, type Romance } from '../captain'
 import { BOND_MAX, BOND_PATHS, BOND_TUNING, newBond, type Bond, type BondPath } from '../crew/bonds'
+import { emptyCabin, ITEMS_BY_ID, LINE_SLOTS, placeable, SLOTS, STARTER_STOCK, TOPICS, type Cabin, type Reveal, type Slot } from '../cabins/items'
+import type { Stock, Visits } from '../cabins/cabins'
 import { MAX_PRESETS, newMember, PRESET_NAME_MAX, ROLES, STRAIN_REST, type CrewMember } from '../crew/crew'
 import { PARTS_BY_ID, RIG_SLOTS, SLOT_KIND, type Rig } from '../crew/parts'
 import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
 import { emptyStory, type StoryState } from '../story/state'
 
 /** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
- * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13). */
-export const SAVE_VERSION = 5
+ * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
+ * item stock and the visits (CY14). */
+export const SAVE_VERSION = 6
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -63,8 +66,10 @@ export interface SaveV3 {
   mission: MissionState | null
 }
 
-/** A crew record as v4 kept it: before the bond. */
-export type CrewMemberV4 = Omit<CrewMember, 'bond'>
+/** A crew record as v4 kept it: before the bond and the cabin. */
+export type CrewMemberV4 = Omit<CrewMember, 'bond' | 'cabin'>
+/** A crew record as v5 kept it: before the cabin. */
+export type CrewMemberV5 = Omit<CrewMember, 'cabin'>
 
 /** v4 (CY11): each crew member's record (XP, role, rig, saved loadouts, Strain) in place of her bare outfit id. */
 export interface SaveV4 extends Omit<SaveV3, 'version' | 'crew'> {
@@ -81,11 +86,19 @@ export interface SaveV5 extends Omit<SaveV4, 'version' | 'crew'> {
   watch: number
   /** Umas whose message after the last battle hasn't had a reply. */
   inbox: number[]
+  crew: CrewMemberV5[]
+}
+
+/** v6 (CY14): each Uma's cabin, the items owned and how many, and the visits used this watch. */
+export interface SaveV6 extends Omit<SaveV5, 'version' | 'crew'> {
+  version: 6
   crew: CrewMember[]
+  items: Stock
+  visits: Visits
 }
 
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV5
+export type Save = SaveV6
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -112,7 +125,13 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() })))
+  return migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }))))
+}
+
+/** v5 to v6: every cabin empty with nothing revealed, the starter kit in the stock, no visits used this watch; the rest as
+ * it was (`updatedAt` untouched). Pure; runs on the device. */
+export function migrateV5(save: SaveV5): SaveV6 {
+  return { ...save, version: 6, account: { ...save.account }, crew: save.crew.map((m) => ({ ...m, cabin: emptyCabin() })), items: { ...STARTER_STOCK }, visits: { watch: save.watch, used: 0 } }
 }
 
 /** v4 to v5: a default captain the player names on next opening, watch 0, an empty inbox, every Uma at bond rank 1; the
@@ -124,7 +143,7 @@ export function migrateV4(save: SaveV4): SaveV5 {
 /** v3 to v4: each outfit id aboard becomes her record with no XP, her default role, "best for her role", no saved
  * loadouts and no Strain; the rest as it was (`updatedAt` untouched). Pure; runs on the device. */
 export function migrateV3(save: SaveV3): SaveV4 {
-  return { ...save, version: 4, account: { ...save.account }, crew: save.crew.map((o) => { const { bond: _bond, ...m } = newMember(o); return m }) }
+  return { ...save, version: 4, account: { ...save.account }, crew: save.crew.map((o) => { const { bond: _bond, cabin: _cabin, ...m } = newMember(o); return m }) }
 }
 
 /** v2 to v3: the account and story as they were (`updatedAt` untouched); the crew, worlds and mission empty, the rooms
@@ -239,14 +258,51 @@ function parseCaptain(value: unknown, path: string): Captain {
   return { name, pronouns: o.pronouns as Pronouns, romance: o.romance as Romance, named: o.named }
 }
 
-function parseCrew(value: unknown, path: string, withBond: true): CrewMember[]
-function parseCrew(value: unknown, path: string, withBond: false): CrewMemberV4[]
-function parseCrew(value: unknown, path: string, withBond: boolean): (CrewMember | CrewMemberV4)[] {
+const REVEALS: readonly string[] = ['gift', 'styles', ...TOPICS.map((t) => `topic:${t}`)]
+
+function parseCabin(value: unknown, path: string): Cabin {
+  const o = object(value, path, ['slots', 'revealed', 'request'])
+  const slots = object(o.slots, `${path}.slots`, SLOTS)
+  const out = emptyCabin()
+  for (const slot of SLOTS) {
+    const v = slots[slot]
+    if (v === null || v === undefined) continue
+    const item = ITEMS_BY_ID.get(id(v, `${path}.slots.${slot}`))
+    if (!placeable(item) || item.slot !== slot) throw new SaveParseError(`${path}.slots.${slot}`, `expected a ${slot} item`)
+    out.slots[slot] = item.id
+  }
+  if (!Array.isArray(o.revealed) || o.revealed.length > REVEALS.length) throw new SaveParseError(`${path}.revealed`, 'expected a list')
+  out.revealed = o.revealed.map((r, i) => { if (!REVEALS.includes(r as string)) throw new SaveParseError(`${path}.revealed[${i}]`, 'expected gift, styles or topic:…'); return r as Reveal })
+  if (o.request !== null && !LINE_SLOTS.includes(o.request as Exclude<Slot, 'keepsake'>)) throw new SaveParseError(`${path}.request`, 'expected a slot or null')
+  out.request = o.request as Slot | null
+  return out
+}
+
+function parseItems(value: unknown, path: string): Stock {
+  const o = object(value, path, Object.keys((value ?? {}) as Obj))
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => {
+    if (!ITEMS_BY_ID.has(k)) throw new SaveParseError(`${path}.${k}`, 'expected an item')
+    const n = count(v, `${path}.${k}`)
+    if (n < 1 || n > 9999) throw new SaveParseError(`${path}.${k}`, 'expected 1–9999')
+    return [k, n]
+  }))
+}
+
+function parseVisits(value: unknown, path: string): Visits {
+  const o = object(value, path, ['watch', 'used'])
+  return { watch: count(o.watch, `${path}.watch`), used: count(o.used, `${path}.used`) }
+}
+
+function parseCrew(value: unknown, path: string, version: 6): CrewMember[]
+function parseCrew(value: unknown, path: string, version: 5): CrewMemberV5[]
+function parseCrew(value: unknown, path: string, version: 4): CrewMemberV4[]
+function parseCrew(value: unknown, path: string, version: 4 | 5 | 6): (CrewMember | CrewMemberV5 | CrewMemberV4)[] {
+  const keys = ['outfit', 'xp', 'role', 'rig', 'presets', 'strain', ...(version >= 5 ? ['bond'] : []), ...(version >= 6 ? ['cabin'] : [])]
   if (!Array.isArray(value) || value.length > 300) throw new SaveParseError(path, 'expected a list of crew members')
   const seen = new Set<number>()
   return value.map((v, i) => {
     const p = `${path}[${i}]`
-    const o = object(v, p, withBond ? ['outfit', 'xp', 'role', 'rig', 'presets', 'strain', 'bond'] : ['outfit', 'xp', 'role', 'rig', 'presets', 'strain'])
+    const o = object(v, p, keys)
     const [outfit] = outfits([o.outfit], `${p}.outfit`)
     if (seen.has(outfit!)) throw new SaveParseError(`${p}.outfit`, 'already aboard')
     seen.add(outfit!)
@@ -263,7 +319,8 @@ function parseCrew(value: unknown, path: string, withBond: boolean): (CrewMember
         return { name, rig: parseRig(q.rig, `${p}.presets[${j}].rig`) }
       }),
       strain,
-      ...(withBond ? { bond: parseBond(o.bond, `${p}.bond`) } : {}),
+      ...(version >= 5 ? { bond: parseBond(o.bond, `${p}.bond`) } : {}),
+      ...(version >= 6 ? { cabin: parseCabin(o.cabin, `${p}.cabin`) } : {}),
     }
   })
 }
@@ -314,14 +371,15 @@ export function parseSave(value: unknown, path = 'save'): Save {
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version === 1) {
     const o = object(value, path, ['version', 'account'])
-    return migrateV4(migrateV3(migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) }))))
+    return migrateV5(migrateV4(migrateV3(migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) })))))
   }
   if (version === 2) {
     const o = object(value, path, ['version', 'account', 'story'])
-    return migrateV4(migrateV3(migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) })))
+    return migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) }))))
   }
-  if (version !== 3 && version !== 4 && version !== 5) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
-  const o = object(value, path, version === 5 ? ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission', 'captain', 'watch', 'inbox'] : ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission'])
+  if (version < 3 || version > 6) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
+  const base = ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission']
+  const o = object(value, path, [...base, ...(version >= 5 ? ['captain', 'watch', 'inbox'] : []), ...(version >= 6 ? ['items', 'visits'] : [])])
   const ship = object(o.ship, `${path}.ship`, ['rooms'])
   const rooms = slugs(ship.rooms, `${path}.ship.rooms`)
   for (const [i, r] of rooms.entries()) if (!ROOM_IDS.includes(r as RoomId)) throw new SaveParseError(`${path}.ship.rooms[${i}]`, 'expected a room')
@@ -329,12 +387,11 @@ export function parseSave(value: unknown, path = 'save'): Save {
     account: parseAccount(o.account, `${path}.account`), ship: { rooms: rooms as RoomId[] },
     worlds: parseWorlds(o.worlds, `${path}.worlds`), story: parseStory(o.story, `${path}.story`), mission: parseMission(o.mission, `${path}.mission`),
   }
-  if (version === 3) return migrateV4(migrateV3({ version: 3, ...rest, crew: outfits(o.crew, `${path}.crew`) }))
-  if (version === 4) return migrateV4({ version: 4, ...rest, crew: parseCrew(o.crew, `${path}.crew`, false) })
-  return {
-    version: 5, ...rest, crew: parseCrew(o.crew, `${path}.crew`, true), captain: parseCaptain(o.captain, `${path}.captain`),
-    watch: count(o.watch, `${path}.watch`), inbox: outfits(o.inbox, `${path}.inbox`),
-  }
+  if (version === 3) return migrateV5(migrateV4(migrateV3({ version: 3, ...rest, crew: outfits(o.crew, `${path}.crew`) })))
+  if (version === 4) return migrateV5(migrateV4({ version: 4, ...rest, crew: parseCrew(o.crew, `${path}.crew`, 4) }))
+  const v5 = { ...rest, captain: parseCaptain(o.captain, `${path}.captain`), watch: count(o.watch, `${path}.watch`), inbox: outfits(o.inbox, `${path}.inbox`) }
+  if (version === 5) return migrateV5({ version: 5, ...v5, crew: parseCrew(o.crew, `${path}.crew`, 5) })
+  return { version: 6, ...v5, crew: parseCrew(o.crew, `${path}.crew`, 6), items: parseItems(o.items, `${path}.items`), visits: parseVisits(o.visits, `${path}.visits`) }
 }
 
 /** The body of `PUT /api/save`. */

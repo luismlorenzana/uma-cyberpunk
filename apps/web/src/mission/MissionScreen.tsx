@@ -2,15 +2,17 @@
 // save, so after iOS closes the app it reopens where it was (a battle replays its actions to the same state). The battle
 // is CY8's screen, unchanged. Landscape, on the turned stage, loaded on demand.
 import type { BattleAction, BattleInput } from '@cyber/battle'
-import { loadoutOf, newMember, ROLE_NAME, type StoryPack } from '@cyber/domain'
+import { ITEMS_BY_ID, loadoutOf, missionItem, newMember, ROLE_NAME, type StoryPack } from '@cyber/domain'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { BattleView } from '../battle/BattleView'
 import { battleRapport } from '../bonds/battleRapport'
+import { ItemIcon } from '../cabins/art'
+import { lightsFrom } from '../cabins/cabins'
 import { resume } from '../battle/session'
 import { useMaster } from '../master/master'
-import { infoFrom, memberView, type CrewView } from '../crew/view'
+import { crewViews, infoFrom, memberView, type CrewView } from '../crew/view'
 import { updateSave, useGame } from '../save/game'
 import { outfitName, useStory } from '../ship/useStory'
 import { ScenePlayer } from '../story/ScenePlayer'
@@ -32,6 +34,7 @@ function Mission({ layout }: { layout: StageLayout }) {
   const navigate = useNavigate()
   const save = useGame((g) => g.save)
   const pack = useStory()
+  const master = useMaster()
   if (!save || !pack) return <div className="flex h-full items-center justify-center bg-[#0b0d17] text-white/60">…</div>
   const m = save.mission
   if (!m) return (
@@ -84,12 +87,16 @@ function Mission({ layout }: { layout: StageLayout }) {
             <div key={k} className="rounded-lg bg-white/5 p-2"><div className="text-[12px] text-white/60">{k}</div><div className="font-display text-xl font-bold">{v}</div></div>
           ))}
         </div>
-        <p className="mt-2 text-[12px] text-white/50">The squad takes the XP and a point of Strain; the crew aboard takes half and rests. The economy comes in Phase 5: credits and salvage are plain numbers for now.</p>
+        {won && !save.worlds.missions.includes(m.id) && (() => { const item = ITEMS_BY_ID.get(missionItem(m.id)); return item ? (
+          <div data-found-item={item.id} className="mt-2 flex items-center gap-2 rounded-lg bg-white/5 p-2 text-[14px]"><ItemIcon id={item.id} size={32} /> Found for the cabins: <b>{item.name}</b></div>
+        ) : null })()}
+        <p className="mt-2 text-[12px] text-white/50">The squad takes the XP and a point of Strain; the crew aboard takes half and rests, shedding more Strain in a comfortable cabin. The economy comes in Phase 5: credits and salvage are plain numbers for now.</p>
         <div className="mt-3 flex gap-2">
           {!won && <button type="button" className={primary} onClick={() => void updateSave(retry)}>Retry</button>}
           <button type="button" className={won ? primary : secondary} onClick={() => {
             const rapport = m.battle ? battleRapport(m.battle.input as BattleInput, m.battle.actions as BattleAction[]) : null
-            void updateSave((s) => closeResults(s, pack, rapport)).then(() => { if (!won) void navigate('/') })
+            const views = crewViews(save, pack, infoFrom(master.status === 'ready' ? master.view.info : null), (o) => outfitName(pack, o))
+            void updateSave((s) => closeResults(s, pack, rapport, lightsFrom(pack, views))).then(() => { if (!won) void navigate('/') })
           }}>{won ? 'Continue' : 'Back to the ship'}</button>
         </div>
       </div>,

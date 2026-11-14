@@ -27,6 +27,8 @@ RUNTIME_SA="${RUNTIME_SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 DEPLOY_SA="${DEPLOY_SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 MASTER_PROJECT="uma-platform-lm"
 MASTER_BUCKET="uma-platform-master-data"
+LOOKS_BUCKET="uma-platform-content"
+LOOKS_PREFIX="art/universes/cyberpunk/"
 
 export CLOUDSDK_CORE_PROJECT="${PROJECT_ID}"
 PROJECT_NUMBER="$(gcloud projects describe "${PROJECT_ID}" --format='value(projectNumber)')"
@@ -58,6 +60,9 @@ gcloud projects add-iam-policy-binding "${PROJECT_ID}" --member="serviceAccount:
   --condition='expression=resource.name == "projects/'"${PROJECT_ID}"'/databases/'"${DB}"'",title=cyber-database-only,description=uma-cyberpunk only (IN5)' >/dev/null
 CLOUDSDK_CORE_PROJECT="${MASTER_PROJECT}" gcloud storage buckets add-iam-policy-binding "gs://${MASTER_BUCKET}" \
   --member="serviceAccount:${RUNTIME_SA}" --role="roles/storage.objectViewer" >/dev/null
+# The Cyberpunk universe's approved looks in Uma Character Art (D25): read-only, that folder only.
+gcloud storage buckets add-iam-policy-binding "gs://${LOOKS_BUCKET}" --member="serviceAccount:${RUNTIME_SA}" --role="roles/storage.objectViewer" \
+  --condition='expression=resource.name.startsWith("projects/_/buckets/'"${LOOKS_BUCKET}"'/objects/'"${LOOKS_PREFIX}"'"),title=cyber-looks-only,description=uma-cyberpunk reads its universe looks only (D25)' >/dev/null
 
 # --- 3. Images: keep the last 3 --------------------------------------------------------------------------------------
 if gcloud artifacts repositories describe "${AR_REPO}" --location="${REGION}" >/dev/null 2>&1; then say "images ${AR_REPO} exist"

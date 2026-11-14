@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cabins, decor and visits</title>
+<!-- Generated from docs/game/cabins.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>Cabins, decor and visits</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#comfort-tc61">Comfort (TC61)</a><a class="h2" href="#a-visit-tc61">A visit (TC61)</a><a class="h2" href="#her-tastes">Her tastes</a><a class="h2" href="#items-and-the-stock">Items and the stock</a><a class="h2" href="#the-save-v6">The save (v6)</a><a class="h2" href="#looks-in-the-cabin">Looks in the cabin</a></nav>
+<main id="top">
+<h1 id="cabins-decor-and-visits">Cabins, decor and visits</h1>
+<blockquote><p><b>Status: 2026-11-13, CY14 (D25).</b> Every Uma has a cabin with six decor slots. Furniture comes in six styles, and her cabin's Comfort helps her shed Strain. She reveals her tastes over time, and the captain's <b>visit</b> (talk, a gift, decorating together, an invitation out) is the main way rapport rises between battles. The design is <a href="../../design/life-aboard.md">life-aboard.md</a> §4 (TC60, TC61). Berths and the Quarters module's levels come in CY15; the Store and the Workshop (more items) in CY15 and CY16.</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>The Quarters deck</b> has a door for each Uma aboard. Each door shows:<ul><li>her face;</li><li>her bond rank;</li><li>her cabin's Comfort as five lights;</li><li>a badge when her bond scene waits (<b>!</b>) or she's asked for something (<b>?</b>).</li></ul>
+<p>A door opens her <b>cabin</b>.</p></li><li><b>Her cabin</b> is a landscape room with six slots (Bed, Desk, Wall, Floor, Light, Keepsake) and a window tinted by the world the ship orbits. She stands in it in her <b>Quarters look</b>, the approved Uma Character Art image, and master data's bust stands in until it loads.</li><li><b>Decorating</b> is free and never a visit: tap a slot, pick an item from the stock, or empty it. A <b>theme kit</b> furnishes her favourite style from the stock in one tap. Comfort changes on the spot. Decorating never gates a rank.</li><li><b>Three visits a watch</b>, shared by the whole crew. A visit is one choice:<ul><li><b>Talk</b> about one of three topics;</li><li>give a <b>gift</b>;</li><li><b>decorate together</b>: she picks a piece from the stock;</li><li><b>invite</b> her out, from bond rank 4.</li></ul>
+<p>Each ends on a card with what she said, the rapport, anything she revealed, and sometimes a <b>request</b>.</p></li><li><b>Her tastes</b> (a favourite style, a disliked style, a gift kind, two topics) come from the story when it writes them, else are derived from her running style, role and bands. They stay hidden until a visit reveals them.</li></ul>
+<pre class="mermaid">flowchart LR
+  door[Her door on the Quarters deck] --&gt; cabin[Her cabin]
+  cabin --&gt; decorate[Decorate: slot by slot, or a theme kit] --&gt; comfort[Comfort: five lights]
+  cabin --&gt; visit[A visit: 3 a watch]
+  visit --&gt; talk[Talk: +30 a loved topic, +15 otherwise]
+  visit --&gt; gift[A gift: +40 her kind, +15 otherwise]
+  visit --&gt; together[Decorate together: +20, +30 in her style]
+  visit --&gt; invite[Invite, rank 4+: +40, Strain −1]
+  comfort --&gt;|4 lights: half again| visit
+  comfort --&gt;|3 lights: −1 Strain resting; 5: all| strain[Strain after a mission]
+  visit --&gt; card[The result card: what she said, rapport, reveals, a request]</pre>
+<h2 id="comfort-tc61">Comfort (TC61)</h2>
+<p>Comfort is the sum of her six items' comfort (1 to 3 each), with three adjustments:</p>
+<ul><li>+2 for each piece in her favourite style;</li><li>−1 for each in the style she dislikes;</li><li>+2 for a <b>full set</b>: all five regular slots in one style.</li></ul>
+<p>It shows as five lights:</p>
+<div class="scroll"><table><tr><th>Lights</th><th>Points</th><th>What it does</th></tr><tr><td>1</td><td>6</td><td>—</td></tr><tr><td>2</td><td>10</td><td>—</td></tr><tr><td>3</td><td>14</td><td>Resting through a mission, she sheds 1 Strain even below 3</td></tr><tr><td>4</td><td>18</td><td>A visit earns half again as much rapport</td></tr><tr><td>5</td><td>22</td><td>Resting through a mission clears all her Strain</td></tr></table></div>
+<p>Her favourite line in full is 21 or 22 points (four lights, or five), and a keepsake adds up to 3. Strain 3 always clears on a rest (TC27), whatever the cabin.</p>
+<h2 id="a-visit-tc61">A visit (TC61)</h2>
+<div class="scroll"><table><tr><th>Choice</th><th>Rapport</th><th>Reveals</th><th>Notes</th></tr><tr><td><b>Talk</b></td><td>+30 on a topic she loves, +15 otherwise</td><td>That topic, if she loves it</td><td>Three topics, usually one she loves; her written small talk when the story has it, else a line from the game's pool</td></tr><tr><td><b>A gift</b></td><td>+40 her favourite kind, +15 otherwise</td><td>Her gift kind</td><td>One gift from the stock, used up</td></tr><tr><td><b>Decorate together</b></td><td>+20, +30 if the piece is in her style</td><td>Her favourite and disliked styles</td><td>She picks the piece that does the most for an empty slot, from the stock, and says why</td></tr><tr><td><b>Invite</b></td><td>+40</td><td>—</td><td>From bond rank 4; the Observation Deck (more spots come with CY15's modules); sheds 1 Strain</td></tr></table></div>
+<p>The rapport goes through the bonds' rules:</p>
+<ul><li>half again at Comfort 4;</li><li>doubled below the crew's median rank;</li><li>the story's gates still hold.</li></ul>
+<p><b>Her bond scene,</b> when one is ready, waits at the top of the visit panel and costs no visit.</p>
+<p><b>Requests:</b> about one visit in five ends with her asking for something for a slot (an empty one first). Granting it from the Decorate panel fills the slot and pays +30. It isn't a visit.</p>
+<p>Visits reset when the watch moves on: a mission's results closing, or a jump.</p>
+<h2 id="her-tastes">Her tastes</h2>
+<div class="scroll"><table><tr><th>Taste</th><th>Derived from (when the story writes none)</th></tr><tr><td>Favourite style</td><td>Her best running style (Front Runner: Sporty, Pace Chaser: Classic, Late Surger: Tech, End Closer: Wild), nudged by the Medic role</td></tr><tr><td>Disliked style</td><td>The favourite's opposite (Neon and Classic, Cozy and Sporty, Tech and Wild)</td></tr><tr><td>Gift kind</td><td>Her role (Vanguard: gear, Striker: snacks, Gunner: music, Netrunner: books, Medic: plants); keepsakes for one Uma in six, by her id</td></tr><tr><td>Two topics</td><td>Her running style (racing, training, the stars, games) and her best band (speed: racing, stamina: nature, power: food, guts: the crew, wit: tech)</td></tr></table></div>
+<p>An Uma with no known running style derives all four from her id. The same Uma always derives the same tastes.</p>
+<p>The story writes them in <code>casting.json</code> as <code>tastes</code> by outfit id: <code>{ favourite, disliked, gift, topics: [a, b] }</code>. Her small talk goes in her bond file as <code>talk: { &lt;topic&gt;: [lines] }</code>, up to four lines a topic, 160 characters each.</p>
+<h2 id="items-and-the-stock">Items and the stock</h2>
+<ul><li><b>A new game owns</b> two of each regular slot in Classic and Cozy, and one gift of each kind.</li><li><b>A first win</b> of a mission brings one item, chosen by a fixed table over the mission's id, and the results screen shows it. The Store (CY15) and the Workshop (CY16) add more.</li><li><b>Placing</b> a piece takes it from the stock; removing it or replacing it puts it back.</li></ul>
+<p><b>30 pieces of furniture, 6 keepsakes and 12 gifts:</b></p>
+<div class="scroll"><table><tr><th>Style</th><th>Bed</th><th>Desk</th><th>Wall</th><th>Floor</th><th>Light</th></tr><tr><td>Neon</td><td>Glow Pod Bed (2)</td><td>Holo Desk (2)</td><td>Neon Sign (2)</td><td>Light-Grid Mat (1)</td><td>Strip Lights (2)</td></tr><tr><td>Classic</td><td>Oak Bunk (3)</td><td>Writing Desk (2)</td><td>Framed Print (1)</td><td>Woven Rug (2)</td><td>Brass Lamp (1)</td></tr><tr><td>Cozy</td><td>Quilted Bed (3)</td><td>Tea Table (1)</td><td>Plush Shelf (2)</td><td>Fluffy Rug (3)</td><td>Paper Lantern (1)</td></tr><tr><td>Sporty</td><td>Training Cot (2)</td><td>Gear Bench (2)</td><td>Race Poster (1)</td><td>Stretch Mat (2)</td><td>Track Light (2)</td></tr><tr><td>Tech</td><td>Capsule Bunk (2)</td><td>Console Desk (3)</td><td>Wall Screen (2)</td><td>Grid Floor Panel (1)</td><td>Smart Lamp (1)</td></tr><tr><td>Wild</td><td>Rope Hammock (2)</td><td>Driftwood Desk (1)</td><td>Vine Wall (2)</td><td>Moss Rug (2)</td><td>Firefly Jar (3)</td></tr></table></div>
+<p><b>Keepsakes:</b> First Trophy (3), Crew Photo (3), Captain’s Charm (2), Hand-Drawn Star Map (2), Old Race Ribbon (2), Pocket Radio (1)</p>
+<p><b>Gifts:</b> Snacks: Steamed Buns, Fizz Candy · Music: Mix Tape, Spare Earbuds · Gear: Grip Gloves, Tune-Up Kit · Plants: Tiny Succulent, Seed Packet · Books: Paperback Novel, Pocket Atlas · Keepsakes: Enamel Pin, Postcard</p>
+<p>Each piece's comfort is in brackets. The art is code-drawn stand-ins until uma-platform's pixel set lands (the <a href="../../design/art-requests/cabin-furniture.md">furniture request</a>).</p>
+<h2 id="the-save-v6">The save (v6)</h2>
+<div class="scroll"><table><tr><th>Where</th><th>Holds</th></tr><tr><td>Each crew record's <code>cabin</code></td><td><code>slots</code> (an item id or null for each of the six), <code>revealed</code> (<code>gift</code>, <code>styles</code>, <code>topic:&lt;topic&gt;</code>), <code>request</code> (a slot or null)</td></tr><tr><td><code>items</code></td><td>Each owned item and how many (1–9999)</td></tr><tr><td><code>visits</code></td><td><code>{ watch, used }</code>: the visits used in that watch</td></tr></table></div>
+<p>A v5 save migrates on the device:</p>
+<ul><li>every cabin empty, nothing revealed;</li><li>the starter kit in the stock;</li><li>no visits used;</li><li><code>account.updatedAt</code> untouched.</li></ul>
+<h2 id="looks-in-the-cabin">Looks in the cabin</h2>
+<p>The cabin shows her <b>Quarters look</b> (D24, LK10): the approved full-body image from Uma Character Art's Cyberpunk universe. cyber-api serves it to the signed-in owner at <code>/api/content/looks/…</code>:</p>
+<ul><li><b>in production,</b> from uma-platform's content bucket, read-only and only <code>art/universes/cyberpunk/</code> (D25);</li><li><b>locally,</b> from a mirror in the ignored <code>content/looks/</code>.</li></ul>
+<p>The game matches a look to an Uma by her character's English name from master data. Without one, master data's bust stands in.</p>
+<p class="foot">From <a href="../cabins.md">docs/game/cabins.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>

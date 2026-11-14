@@ -11,6 +11,12 @@ export const STAND_IN_FILES: Record<string, unknown> = {
     crewOrder: [LEAD, 9000002, 9000003, 9000004],
     roles: { '9000001': 'striker', '9000002': 'medic' },
     bondGates: { '4': 'chapter:sw1-ch1', '6': 'chapter:sw2-ch1' },
+    tastes: {
+      '9000001': { favourite: 'sporty', disliked: 'cozy', gift: 'snacks', topics: ['racing', 'food'] },
+      '9000002': { favourite: 'cozy', disliked: 'sporty', gift: 'books', topics: ['history', 'crew'] },
+      '9000003': { favourite: 'tech', disliked: 'wild', gift: 'gear', topics: ['tech', 'training'] },
+      '9000004': { favourite: 'wild', disliked: 'tech', gift: 'plants', topics: ['nature', 'stars'] },
+    },
     heroines: [{ board: 'stand-in-1', faction: 'steel-muster', hold: 'collar' }],
     minor: ['sw1-dockhand'],
     labels: { '9000001': 'Lead A', '9000002': 'Lead B', '9000003': 'Crew C', '9000004': 'Crew D', 'stand-in-1': 'Heroine A', 'sw1-dockhand': 'Dockhand' },
@@ -125,6 +131,10 @@ export const STAND_IN_FILES: Record<string, unknown> = {
   'bonds/9000001.json': {
     schemaVersion: 1, outfit: LEAD,
     epilogue: 'Lead A still runs the ring docks at dawn, with {captain} keeping pace a step behind.',
+    talk: {
+      racing: ['I ran the ring docks every dawn before any of this. I still wake up for it.', 'Nobody beats me to the end of a corridor. Try it.'],
+      food: ['The Galley’s noodles are a crime. I’m going to fix them myself.', 'Bring me something sweet after a mission and I’ll forgive anything.'],
+    },
     scenes: [
       { rank: 2, place: 'cabin', steps: [
         { line: { speaker: LEAD, text: '{Captain}. You knock like you expect to be told no.' } },

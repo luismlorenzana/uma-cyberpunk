@@ -30,6 +30,8 @@ env:
   HOSTING_URL: https://${{ vars.HOSTING_SITE || 'uma-cyberpunk' }}.web.app
   FIRESTORE_DATABASE: ${{ vars.FIRESTORE_DATABASE || 'cyber' }}
   MASTER_BUCKET: ${{ vars.MASTER_BUCKET || 'uma-platform-master-data' }}
+  # The Cyberpunk universe's approved looks (D25): uma-platform's content bucket, read-only, its art/universes/cyberpunk/ only.
+  LOOKS_BUCKET: ${{ vars.LOOKS_BUCKET || 'uma-platform-content' }}
   # @luismlorenzana/* packages (uma-platform) on GitHub Packages.
   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -132,6 +134,7 @@ jobs:
             PERSISTENCE=firestore
             FIRESTORE_DATABASE=${{ env.FIRESTORE_DATABASE }}
             MASTER_BUCKET=${{ env.MASTER_BUCKET }}
+            LOOKS_BUCKET=${{ env.LOOKS_BUCKET }}
             ALLOWED_ORIGIN=${{ env.HOSTING_URL }}
             ALLOWED_EMAIL=${{ vars.ALLOWED_EMAIL }}
             BUILD_ID=${{ github.sha }}

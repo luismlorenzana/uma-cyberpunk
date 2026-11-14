@@ -3,8 +3,8 @@
 // rooms), and the mission's steps: briefing → deploy → battle → results → aboard. Every function returns a new save.
 import type { BattleInput } from '@cyber/battle'
 import {
-  afterMission as crewAfterMission, fillFile, finishedChapters, gainLead, newMember, resting, roomsOpenedBy, seeScene, setAnomaly, setFlag, type Chapter,
-  type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
+  addItem, afterMission as crewAfterMission, fillFile, finishedChapters, gainLead, newMember, resting, roomsOpenedBy, seeScene, setAnomaly, setFlag, type Chapter,
+  missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
 import { afterBattleBonds } from '../bonds/bonds'
 
@@ -170,16 +170,20 @@ export const retry = (save: Save): Save => (save.mission?.battle ? withMission(s
 /** Leaves the results: the crew takes its XP and Strain (the squad in full and +1 Strain, the bench half and a rest), the
  * Umas aboard who fought take the battle's rapport and send a message (CY13), a watch passes; then a win counts the
  * mission and goes aboard (its next scene) and a loss ends the mission. */
-export function closeResults(save: Save, pack: StoryPack | null = null, rapport: ReadonlyMap<number, number> | null = null): Save {
+export function closeResults(save: Save, pack: StoryPack | null = null, rapport: ReadonlyMap<number, number> | null = null, lights: ((outfit: number) => number) | null = null): Save {
   const m = save.mission
   if (!m) return save
   const input = (m.battle?.input ?? null) as BattleInput | null
-  const crew = crewAfterMission(save.crew, m.squad, rewards(input, !!m.won).xp)
+  // Resting, an Uma sheds Strain by her cabin's Comfort (CY14): 1 at three lights, all of it at five.
+  const crew = crewAfterMission(save.crew, m.squad, rewards(input, !!m.won).xp, lights ? (x) => restedStrain(x.strain, lights(x.outfit)) : undefined)
   const bonded = afterBattleBonds({ ...save, crew, watch: save.watch + 1 }, pack, rapport)
   if (!m.won) return { ...bonded, mission: null }
-  const missions = save.worlds.missions.includes(m.id) ? save.worlds.missions : [...save.worlds.missions, m.id]
+  const first = !save.worlds.missions.includes(m.id)
+  const missions = first ? [...save.worlds.missions, m.id] : save.worlds.missions
+  // A first win brings one item for the cabins (CY14, by a fixed table over the mission's id).
+  const items = first ? addItem(bonded.items, missionItem(m.id)) : bonded.items
   // The battle stays until the mission ends: a lead who fought it comes aboard at its XP (`joiningXp`).
-  return { ...bonded, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard' } }
+  return { ...bonded, items, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard' } }
 }
 export const finishMission = (save: Save): Save => withMission(save, null)
 

@@ -15,6 +15,8 @@ export interface MasterView {
   info: ReadonlyMap<number, OutfitInfo>
   /** Each outfit's album name, by outfit id. */
   names: ReadonlyMap<number, string>
+  /** Each outfit's character, by her English name, by outfit id: how a universe look finds her (D25). */
+  characters: ReadonlyMap<number, string>
   art: ArtIndex | null
 }
 
@@ -42,6 +44,7 @@ export function loadMaster(): void {
         version: manifest.version,
         info: new Map(outfits.map((o) => [o.id, { stats: o.stats.star5, strategy: o.aptitudes.strategy }])),
         names: new Map(outfits.map((o) => [o.id, outfitRowBase(o, byCharacter.get(o.characterId)).name])),
+        characters: new Map(outfits.flatMap((o) => { const en = byCharacter.get(o.characterId)?.name.en; return en ? [[o.id, en] as const] : [] })),
         art,
       }
       setNameSource((id) => view.names.get(id))
