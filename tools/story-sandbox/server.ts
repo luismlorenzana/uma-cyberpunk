@@ -77,7 +77,7 @@ async function castPack() {
 
 /** The story's bibles (`content/stories/bibles/*.md`, private): the casting first, then the worlds in the Circuit's
  * order, then the foes (the Standard, then each faction as the Circuit meets them), then the rest by name. */
-const BIBLE_ORDER = ['casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink', 'foes', ...FOE_ORDER.map((f) => `foes-${f}`), 'ties']
+const BIBLE_ORDER = ['roadmap', 'casting', 'ring', 'tidewell', 'verdance', 'anvil', 'gale', 'hush', 'hollow-ring', 'brink', 'foes', ...FOE_ORDER.map((f) => `foes-${f}`), 'ties']
 async function bibles(): Promise<{ name: string; path: string; text: string }[]> {
   const names = (await readdir(join(content, 'bibles')).catch(() => [] as string[])).filter((n) => /^[a-z0-9][a-z0-9-]{0,60}\.md$/.test(n)).map((n) => n.slice(0, -3))
   const rank = (n: string) => (BIBLE_ORDER.includes(n) ? BIBLE_ORDER.indexOf(n) : BIBLE_ORDER.length)

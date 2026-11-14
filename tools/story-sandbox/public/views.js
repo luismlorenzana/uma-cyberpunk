@@ -466,7 +466,8 @@ export function storyView() {
   return h('div', {},
     data.standIn
       ? h('div', { class: 'banner stand-in' }, h('b', { text: 'No story yet. ' }), `Nothing is in ${data.dir}, so this is the game’s invented stand-in story, with made-up ids and labels. Every page works on it; the story’s first file replaces it.`)
-      : h('div', { class: 'banner' }, 'Reading ', h('code', { text: data.dir }), ` · ${plural(data.paths.length, 'file')}`, data.clean ? '' : ' · some files don’t parse yet: see Checks'),
+      : h('div', { class: 'banner' }, 'Reading ', h('code', { text: data.dir }), ` · ${plural(data.paths.length, 'file')}`, data.clean ? '' : ' · some files don’t parse yet: see Checks',
+        (data.bibles ?? []).some((b) => b.name === 'roadmap') ? [' · ', h('a', { href: '#/bibles/roadmap', text: 'the story roadmap ›' })] : null),
     h('div', { class: 'tiles' },
       tile(t.worlds, 'worlds'), tile(t.leads, 'leads'), tile(t.chapters, 'chapters'), tile(t.scenes, 'scenes'), tile(t.missions, 'battles'),
       tile(t.words, 'words'), tile(minutes(seconds), 'of reading'), tile(errors, 'errors', errors ? 'bad' : ''), tile(todos, 'to do', todos ? 'warn' : '')),
