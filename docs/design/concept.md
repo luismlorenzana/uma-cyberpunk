@@ -36,6 +36,11 @@
 > [life-aboard.md](life-aboard.md) (**TC55–TC74**, new), with the story session's open brief beside it,
 > [story-brief-life-aboard.md](story-brief-life-aboard.md). It amends TC8, TC15, TC36, TC42, TC44, TC49, TC50 and
 > TC51, each marked "amended D20" below.
+>
+> **Looks and sprites (D23):** each Uma's five looks (Street, Quarters, Pilot suit, Combat armor, the helmet), the board
+> sprites, portraits and cut-in keys made from them, and how they're authored are their own page,
+> [character-sprites.md](character-sprites.md) (**LK1–LK14**); it refines TC12's art, TC28's cut-in, TC39's suit-up and
+> TC41's hue per Uma.
 
 ## The short answer
 
