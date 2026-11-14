@@ -1,5 +1,9 @@
 # Art: the cabins' furniture, keepsakes and gifts as pixel art (a request)
 
+> **Delivered (2026-11-13):** uma-art 2.29.0 (uma-platform #86, P164) ships `cabin-icons` (all 48 items, 64 px) and
+> `cabin-room` (the 30 furniture pieces with `mount` and `foot`). uma-cyberpunk pins it and draws both (D32). The
+> weakest pieces, if they're ever revised: Spare Earbuds, Training Cot, Gear Bench.
+
 > **From uma-cyberpunk's CY14 (2026-11-13, D25)** to uma-platform, under the
 > [change protocol](https://github.com/luismlorenzana/uma-platform/blob/main/docs/change-protocol.md)'s art row: the game
 > writes the packet, a uma-platform Claude session draws the pixel art in `scripts/pixel-art` and ships it in uma-art.

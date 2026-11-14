@@ -16,7 +16,7 @@ import { Profile } from '../crew/Profile'
 import type { CrewView } from '../crew/view'
 import { LookPortrait } from '../looks/looks'
 import { updateSave, useGame } from '../save/game'
-import { ItemIcon, SLOT_SPOTS, STAND, windowColors } from './art'
+import { DRAW_ORDER, ItemIcon, piecePlace, RoomPiece, SLOT_SPOTS, STAND, windowColors } from './art'
 import { applyThemeKit, canInvite, grantItem, placeItem, revealText, tastesFor, visit, visitsLeftNow, type VisitChoice, type VisitResult } from './cabins'
 
 const btn = 'min-h-11 rounded-md bg-white/10 px-3 text-[14px] font-semibold disabled:opacity-40'
@@ -50,15 +50,19 @@ function Room({ view, save, onSlot, picked }: { view: CrewView; save: Save; onSl
           <circle cx="372" cy="78" r="24" fill={glow} opacity="0.7" />
           {[[280, 56], [300, 108], [330, 50], [396, 120], [350, 98]].map(([x, y]) => <circle key={`${x}`} cx={x} cy={y} r="1.6" fill="#fff" opacity="0.8" />)}
         </g>
-        {SLOTS.map((slot) => {
+        {DRAW_ORDER.filter((slot) => SLOTS.includes(slot)).map((slot) => {
           const spot = SLOT_SPOTS[slot], id = cabin.slots[slot]
+          const placed = id ? piecePlace(id, slot) : null
+          const box = placed ?? { x: spot.x, y: spot.y - spot.size * 0.25, w: spot.size, h: spot.size }
           return (
             <g key={slot} data-slot={slot} role="button" tabIndex={0} aria-label={`${CABIN_SLOT_NAME[slot]}: ${id ? ITEMS_BY_ID.get(id)?.name : 'empty'}`}
               onClick={() => onSlot(slot)} onKeyDown={(e) => { if (e.key === 'Enter') onSlot(slot) }} className="cursor-pointer">
-              {id ? <foreignObject x={spot.x} y={spot.y - spot.size * 0.25} width={spot.size} height={spot.size}><ItemIcon id={id} size={spot.size} /></foreignObject>
+              {id && slot === 'keepsake' && <rect data-shelf x={spot.x - 6} y={spot.y + 38} width={spot.size + 12} height="5" rx="2" fill="#3a4270" />}
+              {id && placed ? <RoomPiece id={id} slot={slot} />
+                : id ? <foreignObject x={spot.x} y={spot.y - spot.size * 0.25} width={spot.size} height={spot.size}><ItemIcon id={id} size={spot.size} /></foreignObject>
                 : <><rect x={spot.x + spot.size * 0.15} y={spot.y} width={spot.size * 0.7} height={spot.size * 0.45} rx="8" fill="none" stroke="#ffffff" strokeOpacity="0.3" strokeDasharray="6 5" />
                   <text x={spot.x + spot.size / 2} y={spot.y + spot.size * 0.27} textAnchor="middle" fill="#ffffff" fillOpacity="0.55" fontSize="14">+ {CABIN_SLOT_NAME[slot]}</text></>}
-              {picked === slot && <rect x={spot.x} y={spot.y - spot.size * 0.25} width={spot.size} height={spot.size} rx="10" fill="none" stroke="#2ee6ff" strokeWidth="3" />}
+              {picked === slot && <rect x={box.x} y={box.y} width={box.w} height={box.h} rx="10" fill="none" stroke="#2ee6ff" strokeWidth="3" />}
             </g>
           )
         })}

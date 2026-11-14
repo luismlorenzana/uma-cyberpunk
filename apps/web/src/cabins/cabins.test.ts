@@ -1,10 +1,11 @@
 // Cabins headless (CY14): visits through the save (three a watch, the fourth refused), reveals, invitations from rank 4,
 // decorating and theme kits, granting a request, a first win's item and Comfort's rest; and the looks index.
-import { comfortOf, missionItem, newMember, newSave, parsePack, STAND_IN_FILES, VISIT_TUNING, type Save, type StoryPack } from '@cyber/domain'
+import { comfortOf, ITEMS as ALL_ITEMS, missionItem, newMember, newSave, parsePack, STAND_IN_FILES, VISIT_TUNING, type Save, type StoryPack } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { crewViews, infoFrom } from '../crew/view'
 import { lookPath, parseLooks } from '../looks/looks'
 import { closeResults } from '../mission/director'
+import { ICONS, piecePlace, ROOM } from './art'
 import { applyThemeKit, comfortFor, grantItem, lightsFrom, placeItem, tastesFor, visit, visitsLeftNow } from './cabins'
 
 const pack = parsePack(STAND_IN_FILES).pack as StoryPack
@@ -122,5 +123,31 @@ describe('the looks index (D25)', () => {
     expect(lookPath(entries, 'Uma A', 'armor')).toBeNull()
     expect(lookPath(entries, undefined, 'quarters')).toBeNull()
     expect(parseLooks(null)).toEqual([])
+  })
+})
+
+// uma-art 2.29.0's cabin art (P164): every item has its icon, every furniture piece its room frame, and each piece placed
+// by its mount and foot stays inside the 640 × 360 room, its foot on the floor (below the wall's line at y 250).
+describe('the cabin art', () => {
+  it('has an icon for every item and a room frame with a mount and a foot for every piece of furniture', () => {
+    for (const i of ALL_ITEMS) expect(ICONS.frames[i.id], i.id).toBeDefined()
+    for (const i of ALL_ITEMS.filter((x) => x.kind === 'furniture')) {
+      const f = ROOM.frames[i.id]!
+      expect(f, i.id).toBeDefined()
+      expect(['floor', 'wall', 'ceiling']).toContain(f.mount)
+      expect(f.foot.x + f.foot.w).toBeLessThanOrEqual(f.w)
+    }
+  })
+  it('places every piece inside the room, floor pieces standing on the floor', () => {
+    for (const i of ALL_ITEMS) {
+      if (i.kind !== 'furniture') continue
+      const p = piecePlace(i.id, i.slot)!
+      expect(p.x, i.id).toBeGreaterThanOrEqual(0)
+      expect(p.x + p.w, i.id).toBeLessThanOrEqual(640)
+      expect(p.y, i.id).toBeGreaterThanOrEqual(0)
+      expect(p.y + p.h, i.id).toBeLessThanOrEqual(360)
+      if (p.frame.mount === 'floor') expect(p.y + p.frame.foot.y * (p.h / p.frame.h), i.id).toBeGreaterThan(250)
+    }
+    expect(piecePlace('keepsake-photo', 'keepsake')).toBeNull()
   })
 })

@@ -124,8 +124,21 @@ Her small talk goes in her bond file as `talk: { <topic>: [lines] }`, up to four
 **Gifts:** Snacks: Steamed Buns, Fizz Candy · Music: Mix Tape, Spare Earbuds · Gear: Grip Gloves, Tune-Up Kit · Plants: Tiny Succulent, Seed Packet · Books: Paperback Novel, Pocket Atlas · Keepsakes: Enamel Pin, Postcard
 <!-- /live -->
 
-Each piece's comfort is in brackets. The art is code-drawn stand-ins until uma-platform's pixel set lands (the
-[furniture request](../design/art-requests/cabin-furniture.md)).
+Each piece's comfort is in brackets.
+
+**The art** is uma-art 2.29.0's pixel set (uma-platform P164, from the
+[furniture request](../design/art-requests/cabin-furniture.md); D32):
+
+- **Every item's icon** is a 64 px frame from `cabin-icons`, scaled crisp.
+- **The diorama draws the 30 furniture pieces from `cabin-room`,** each placed by its `mount` and `foot` in the 640 × 360
+  room:
+  - a floor piece's foot centre lands on its slot's spot (the bed on the left, the desk on the right, the rug under her
+    feet);
+  - a wall piece's bottom edge lands on the wall's spot;
+  - a ceiling light hangs from the room's top.
+- **A keepsake** stands on a small shelf as its icon.
+- **The code-drawn shapes** stay as the fallback for an id the atlas doesn't hold. A test keeps every piece inside the
+  room, with floor pieces standing on the floor.
 
 ## The save (v6)
 
