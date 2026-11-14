@@ -28,7 +28,7 @@ iPhone (Home Screen app)                 Firebase Hosting: uma-cyberpunk.web.app
 | Path | What it shows |
 |---|---|
 | (the gates) | uma-kit's boot gates: the splash ("Uma Cyberpunk · Rigs up. Lights out."), then **Sign in with Google** when signed out, then the boot below, then master data ("Loading game data…", or "Connect once" with **Try again**) |
-| `/` | **The ship** ([ship.md](ship.md)): the rooms, the Continue card, the Menu; `/room/:id` a room's page, `/mission` the mission flow ([missions.md](missions.md)) |
+| `/` | **The ship** ([ship.md](ship.md)), loaded on demand since CY16 so the first download stays under budget: the decks, the Continue card, the Menu, Duties, the ship-log and event cards; `/room/:id` a room's page, `/mission` the mission flow ([missions.md](missions.md)) |
 | `/home` | **Status:** the game's name; the account; the save's state (Synced and when, Syncing, Saved on this phone, Offline, Not backed up); its revision; master data's release version; **Sync now**; links to the sandbox, the board bench and the story test |
 | `/account` | **Account:** who's signed in, the save's state and when it was last backed up, **Sync now**, the phone's **safety copies** with a **Restore** each, and **Sign out** |
 | `?sheet=menu` | **The menu,** over any page (the bottom bar's Menu, or the rail's on a landscape phone): Home, Account, Sign out and the build id |
@@ -43,23 +43,23 @@ the gates, so a waiting build shows on any screen.
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
 the worlds and the mission in CY10, v4 each crew member's record in CY11, v5 the captain, the watch, the inbox and each
-Uma's bond in CY13, v6 each Uma's cabin, the item stock and the visits in CY14, v7 the ship as a build and the wallet in CY15):
+Uma's bond in CY13, v6 each Uma's cabin, the item stock and the visits in CY14, v7 the ship as a build and the wallet in CY15, v8 duties, presets, the meal, camaraderie, the ship log and a jump's event in CY16):
 
 ```json
-{ "version": 7, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
+{ "version": 8, "account": { "uid": "…", "createdAt": "2026-11-12T17:50:22.332Z", "updatedAt": "2026-11-12T17:50:22.332Z" },
   "captain": { "name": "Captain", "pronouns": "they", "romance": "ask", "named": false }, "watch": 0, "inbox": [],
   "items": { "classic-bed": 2, "…": 2, "gift-buns": 1 }, "visits": { "watch": 0, "used": 0 },
-  "wallet": { "credits": 500, "alloy": 20, "data": 20 },
+  "wallet": { "credits": 500, "alloy": 20, "data": 20 }, "dutyPresets": [], "meal": null, "camaraderie": {}, "log": null, "event": null,
   "crew": [], "ship": { "decks": 2, "width": 5, "modules": [{ "id": "bridge", "deck": 0, "slot": 0, "level": 1, "building": null }, "…"], "unlocked": ["…"], "powered": [], "research": { "done": [], "current": null } },
   "worlds": { "current": null, "known": {}, "missions": [] },
   "story": { "flags": [], "leads": [], "files": {}, "anomalies": {}, "seen": [] },
   "mission": null }
 ```
 
-Older saves open as v7 on the device, each step pure and `account.updatedAt` untouched; the fields are on
+Older saves open as v8 on the device, each step pure and `account.updatedAt` untouched; the fields are on
 [story.md](story.md#the-story-state-save-v2), [ship.md](ship.md#the-save-v3), [missions.md](missions.md#the-save),
-[crew.md](crew.md#the-save-v4), [captain-and-bonds.md](captain-and-bonds.md#the-save-v5), [cabins.md](cabins.md#the-save-v6) and [ship-build.md](ship-build.md#the-save-v7); a crew member is
-`{ outfit, xp, role, rig, presets, strain, bond, cabin }`.
+[crew.md](crew.md#the-save-v4), [captain-and-bonds.md](captain-and-bonds.md#the-save-v5), [cabins.md](cabins.md#the-save-v6), [ship-build.md](ship-build.md#the-save-v7) and [duties.md](duties.md#the-save-v8); a crew member is
+`{ outfit, xp, role, rig, presets, strain, bond, cabin, post }`.
 
 - **`account.updatedAt` is the conflict rule's clock.** Only the player's own change moves it (`touched`); parsing,
   syncing and the server never do. A Restore counts as the player's own change.

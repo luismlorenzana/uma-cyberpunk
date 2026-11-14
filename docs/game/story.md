@@ -31,12 +31,13 @@ flowchart LR
 
 | File | Holds |
 |---|---|
-| `casting.json` | `leads` (each `{ outfit, world, opens?, talent? }`), `crewOrder` (outfit ids: the order the squad's interjection slots prefer), `roles` (each Uma's authored role by outfit id, CY11: untagged, she takes her running style's, [crew.md](crew.md#her-role-tc5)), `bondGates` (CY13: the key each bond rank 4, 6, 8 and 10 waits on, in the `needs` syntax), `tastes` (CY14: each Uma's `{ favourite, disliked, gift, topics }` by outfit id; one not written derives hers, [cabins.md](cabins.md#her-tastes)), `heroines` (`{ board, faction, hold }`, the Hold `anchor`, `collar` or `none`), `minor` (slugs); `labels` for the stand-in only |
+| `casting.json` | `leads` (each `{ outfit, world, opens?, talent? }`), `crewOrder` (outfit ids: the order the squad's interjection slots prefer), `roles` (each Uma's authored role by outfit id, CY11: untagged, she takes her running style's, [crew.md](crew.md#her-role-tc5)), `bondGates` (CY13: the key each bond rank 4, 6, 8 and 10 waits on, in the `needs` syntax), `tastes` (CY14: each Uma's `{ favourite, disliked, gift, topics }` by outfit id; one not written derives hers, [cabins.md](cabins.md#her-tastes)), `chiefs` (CY16: an Uma's room by outfit id, [duties.md](duties.md)), `heroines` (`{ board, faction, hold }`, the Hold `anchor`, `collar` or `none`), `minor` (slugs); `labels` for the stand-in only |
 | `worlds/<id>.json` | `id`, `look`, `mood`, `factions`, `locations` (each `{ id, danger, needs, links, x?, y? }`: the world map's nodes), and the world's place on the star map (`x`, `y`) |
 | `chapters/<id>.json` | `id`, `world`, `leads` (one, or two for crossed paths), `number` (1 is her Chapter 1), `danger`, `needs`, `scenes`, `missions`, `debrief` |
 | `log/<id>.json` | A Log File: its `lines`, each `{ text, redacted }` |
 | `calls/<id>.json` | A Call: the `question`, the `voters` (`{ outfit, argument }`) and the `branches` (`{ id, text, then }`) |
 | `bonds/<outfit>.json` | *(CY13)* Her bond scenes: `outfit` (the file's name), `scenes` (each `{ rank, place, steps }`, ranks 2, 4, 6, 8 and 10), an optional `epilogue` (her card once she reaches rank 10, 400 characters at most), and *(CY14)* `talk` (her small talk in a visit: `{ <topic>: [lines] }`, up to four lines of 160 characters a topic). A bond scene may name a `look` (D24). See [captain-and-bonds.md](captain-and-bonds.md) and [cabins.md](cabins.md) |
+| `events/<region>.json` | *(CY16)* A region's jump events: `region` (the file's name) and `events`, each `{ id, title, text, choices }`; a world names its region with `region`. See [duties.md](duties.md#jump-events-tc66) |
 
 Every file has `schemaVersion: 1` and may carry a `layer` (placeholder, skeleton, bible, scripted, published); a file's
 `id` is its file name. **Ids:** an Uma is her outfit id, a heroine her board id, everything else a lowercase slug that

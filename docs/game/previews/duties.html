@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duties, the ship log and jump events</title>
+<!-- Generated from docs/game/duties.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>Duties, the ship log and jump events</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#posts">Posts</a><a class="h2" href="#the-ship-log-card">The ship-log card</a><a class="h2" href="#jump-events-tc66">Jump events (TC66)</a><a class="h2" href="#the-story-format">The story format</a><a class="h2" href="#the-save-v8">The save (v8)</a></nav>
+<main id="top">
+<h1 id="duties-the-ship-log-and-jump-events">Duties, the ship log and jump events</h1>
+<blockquote><p><b>Status: 2026-11-13, CY16 (D27).</b> The crew hold posts in the ship's modules. Each post makes its output once a watch onto one ship-log card, applied at once. Aptitude, running style, mastery and station chiefs shape the output, auto-assign and presets keep it to seconds a stop, and a jump sometimes brings an event card. The design is <a href="../../design/life-aboard.md">life-aboard.md</a> §6 (TC67, TC68) and §5.5 (TC66).</p></blockquote>
+<h2 id="the-short-answer">The short answer</h2>
+<ul><li><b>Posts:</b> each running module has posts: a room one a level, a battle system one. An Uma holds one post at a time, until it's changed. The <b>Duties</b> button on the ship opens every post; a module's quick look lists its own.</li><li><b>Aptitude, by thresholds:</b> in the post's band (the better of two where it names two), band 2 or less works at half, band 3 does the job, band 4–5 adds the post's extra. A matching role adds the post's perk. It shows as a three-dot mark before she's assigned.</li><li><b>Running style as tenure:</b><ul><li>a Front Runner is full from the first watch;</li><li>a Pace Chaser is full and never halved when deployed;</li><li>a Late Surger gains half again from her third watch in a row;</li><li>an End Closer grows 10% a watch, to half again.</li></ul>
+<p><b>Mastery</b> stars at 3, 8 and 15 watches at a post add 10% each. A <b>station chief</b> (the casting's <code>chiefs</code>) adds a quarter at her room's post.</p></li><li><b>One ship-log card</b> a watch lists every post's output, already applied. A post held by an Uma deployed in the battle that ends the watch makes half (a Pace Chaser full), and the card says so. Deterministic: no failure rolls, nothing decays, no duty fatigue. An Uma resting at Strain 3 can stand duty.</li><li><b>No chores:</b> <b>Auto-assign</b> fills every post with the best fits (aptitude, then a matching role, then mastery, then her liked duty; the post fewest fit at their best goes first) and sends an Uma at Strain 3 to the Med Bay or the Observation Deck. <b>Two presets</b> keep arrangements.</li><li><b>A liked duty</b> (the post that asks for her best band) pays +5 rapport a watch. <b>Two Umas on one module's posts</b> build camaraderie (CY17's partners).</li><li><b>The cook</b> makes the next battle's meal, which goes into the battle's input as <code>meal</code> (played in CY17).</li><li><b>Jump events:</b> one jump in three draws a card, from the world's region pool or the game's generic twelve. Each choice may be checked by the holder of a named post (a pilot's Speed, a navigator's Wit) and pays from the wallet, items or rapport. <b>Skip</b> is always there.</li></ul>
+<pre class="mermaid">flowchart LR
+  watch[A watch passes: results or a jump] --&gt; posts[Every held post]
+  posts --&gt;|aptitude, tenure, stars, chief, half if deployed| out[Its output]
+  out --&gt; card[One ship-log card, applied at once]
+  out --&gt; wallet[Credits, Alloy, Data]
+  out --&gt; builds[Builds a watch faster]
+  out --&gt; strain[Strain treated]
+  out --&gt; meal[The next battle's meal]
+  out --&gt; items[Furniture and plants]
+  jump[A jump] --&gt;|1 in 3| event[An event card] --&gt;|the post holder's band| reward[Wallet, item, rapport]</pre>
+<h2 id="posts">Posts</h2>
+<p><b>15 posts:</b></p>
+<div class="scroll"><table><tr><th>Post</th><th>Best band</th><th>Makes a watch</th><th>At band 4–5</th><th>Role perk</th></tr><tr><td>Pilot</td><td>speed</td><td>Flies the jumps: charter fees, and she answers the jump events that ask for a pilot</td><td>A better choice in jump events</td><td>striker: Jump events lean her way</td></tr><tr><td>Navigator</td><td>wit</td><td>Charts the next jump: Data, and the events that ask for a navigator</td><td>Navigation data doubles</td><td>gunner: Reads a world’s threats sooner</td></tr><tr><td>Engineer</td><td>power or wit</td><td>Moves the builds on: a build a watch faster</td><td>A second build moves faster too</td><td>vanguard: Builds go a watch faster still</td></tr><tr><td>Mechanic</td><td>power</td><td>Strips salvage: Alloy</td><td>More Alloy from the scrap</td><td>vanguard: Salvages more</td></tr><tr><td>Archivist</td><td>wit</td><td>Works the records: Data</td><td>More Data from the records</td><td>netrunner: Decrypts more</td></tr><tr><td>Trader</td><td>guts or wit</td><td>Runs the Store: credits</td><td>Better margins</td><td>striker: Haggles harder</td></tr><tr><td>Signals</td><td>wit</td><td>Listens in: Data and intel</td><td>Clearer intercepts</td><td>netrunner: Picks up more traffic</td></tr><tr><td>Coach</td><td>guts or stamina</td><td>Drills the bench: XP for every Uma resting</td><td>Harder drills</td><td>medic: Drills the whole bench</td></tr><tr><td>Researcher</td><td>wit</td><td>Feeds the Lab: Data</td><td>More Data for the projects</td><td>netrunner: Finds shortcuts</td></tr><tr><td>Medic</td><td>stamina</td><td>Treats the most strained Uma: a point of Strain off</td><td>Treats one more</td><td>medic: Treats one more</td></tr><tr><td>Cook</td><td>guts or stamina</td><td>Cooks the next battle’s meal (played in CY17)</td><td>A richer dish</td><td>medic: Cooks for a crowd</td></tr><tr><td>Artisan</td><td>power or wit</td><td>Makes a piece of furniture every two watches</td><td>A piece every watch</td><td>netrunner: Works faster</td></tr><tr><td>Gardener</td><td>stamina</td><td>Grows a plant gift every two watches</td><td>A plant every watch</td><td>medic: Green fingers</td></tr><tr><td>Gunner</td><td>power</td><td>Crews the Battery: some Alloy from target practice</td><td>Keeps the Battery warm</td><td>gunner: The orbital strike hits harder (CY17)</td></tr><tr><td>Stargazer</td><td>wit or stamina</td><td>Rests at the window: sheds her own Strain</td><td>Calms another</td><td>—</td></tr></table></div>
+<p>Each module's posts, in order: the Bridge holds a Pilot, then a Navigator, then a second Pilot. Engineering, the Hangar, the Log, the Store, Comms, the Sim Pod, the Lab, the Med Bay, the Galley, the Workshop, the Garden and the Observation Deck hold one more of their post a level. Each battle system holds one: Battery a Gunner, Sensors a Navigator, the Shield Projector an Engineer, the Drone Bay a Mechanic, the Engines a Pilot. The Quarters and the Guest Wing hold none.</p>
+<p><b>Outputs:</b> a numeric output is its amount × the factor, half again at band 4–5 and a quarter more with the role's perk. A discrete one (Strain treated, a piece made, a build sped) lands every watch at full, every other watch at half, and every watch at band 4–5.</p>
+<h2 id="the-ship-log-card">The ship-log card</h2>
+<p>Shown on the ship after a watch: each holder, her post, what it made, "(half: deployed)" where it applies, and the wallet's gain. Everything is already applied; <b>Done</b> closes it. A jump's event card waits until the log is closed.</p>
+<h2 id="jump-events-tc66">Jump events (TC66)</h2>
+<p>A jump draws an event when a fixed hash over the watch and the world says so, one time in three. The world's <code>region</code> names its pool (<code>events/&lt;region&gt;.json</code>); without one, the generic pool. A checked choice passes when the holder of its post has the band (<code>at</code> or more), else pays its <code>fail</code>; no holder fails. Rewards may cost (negative credits, Alloy or Data, never below zero) and rapport goes to the holder. The stand-in's sw1 is region <code>ring</code>, with three events.</p>
+<h2 id="the-story-format">The story format</h2>
+<div class="scroll"><table><tr><th>Where</th><th>What</th></tr><tr><td><code>casting.json</code></td><td><code>chiefs</code>: <code>{ "&lt;outfit&gt;": "&lt;module&gt;" }</code>, a module that holds posts</td></tr><tr><td><code>worlds/&lt;id&gt;.json</code></td><td><code>region</code>: the pool its jumps draw from</td></tr><tr><td><code>events/&lt;region&gt;.json</code></td><td><code>{ schemaVersion: 1, region, events: [{ id, title, text, choices: [{ text, check?: { post, band, at }, pass, fail?, passText, failText? }] }] }</code>; a reward is <code>{ credits?, alloy?, data?, item?, rapport?, lead? }</code></td></tr></table></div>
+<h2 id="the-save-v8">The save (v8)</h2>
+<div class="scroll"><table><tr><th>Where</th><th>Holds</th></tr><tr><td>Each crew record's <code>post</code></td><td><code>{ module, index, since, mastery }</code>, or null</td></tr><tr><td><code>dutyPresets</code></td><td>Two at most: <code>{ name, posts: { "&lt;outfit&gt;": { module, index } } }</code></td></tr><tr><td><code>meal</code></td><td>The cook's dish for the next battle, or null (eaten at deploy)</td></tr><tr><td><code>camaraderie</code></td><td><code>{ "&lt;a&gt;-&lt;b&gt;": watches posted together }</code></td></tr><tr><td><code>log</code></td><td>The last ship-log card: <code>{ watch, lines, gains, read }</code></td></tr><tr><td><code>event</code></td><td>A jump's event waiting: <code>{ id, region }</code>, or null</td></tr></table></div>
+<p>A v7 save migrates on the device: no posts, no presets, no meal, no camaraderie, no log, no event, <code>account.updatedAt</code> untouched.</p>
+<p class="foot">From <a href="../duties.md">docs/game/duties.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.esm.min.mjs';
+mermaid.initialize({ startOnLoad: true, theme: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default' });</script>
+</body>
+</html>
