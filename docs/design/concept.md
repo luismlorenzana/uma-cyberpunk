@@ -114,8 +114,8 @@
 for, whatever the story becomes:
 - **Worlds.** Each is its own setting, with its own maps, map kits, factions and grade, and at least one lead Uma's
   Chapter 1 (TC51). A world is a node map of locations, reached from the ship's Bridge (TC50).
-- **The ship** carries the squad between worlds and is its hub (TC49). Travel is a menu; ship battles stay deferred
-  (TC16).
+- **The ship** carries the squad between worlds and is its hub (TC49). Travel is a menu; ship battles in the Lanes come
+  with TC75 (D34), on the same battle engine.
 - **The first world** is D3's: the neon city on an orbital ring, in six layers (WD4). The owner put it plainly: the
   system D3 described is Chapter 1. The Gates, the Tithe and the Blackout (WD1–WD3) may carry across worlds, or not:
   that's the story session's call.
@@ -674,7 +674,7 @@ game. Phase 2 starts as soon as CY1 is in, beside the cloud. D20 adds Phase 4, l
 | TC13 | *(amended D4)* The story session writes the story; its world doc is in git, nameless; casting, chapters and dialogue are private; read and judged in the local Story Sandbox (D17) | [8](#8-art-and-story-tc12-tc13-tc41-tc53) |
 | TC14 | It stands alone: its own save, rules and economy; no parcels at the start | [7](#7-how-its-built-tc10-tc11-tc14-tc48-tc54) |
 | TC15 | *(amended D4, D20)* Eight phases: the repo; the foundation; the combat tested three ways; the app on test content; life aboard (TC74); the first worlds; progression; worlds as waves | [9](#9-phases-tc15) |
-| TC16 | *(amended D3)* Deferred, for discussion only: ship battles, permadeath, camera rotation, difficulty modes, recruiting beyond the story, franchise monsters as summons. Never: multiplayer | [Deferred](#deferred) |
+| TC16 | *(amended D3; ship battles planned since D34, TC75)* Deferred, for discussion only: permadeath, camera rotation, difficulty modes, recruiting beyond the story, franchise monsters as summons. Never: multiplayer | [Deferred](#deferred) |
 | TC17 | The rig: Core, two arms and Legs take damage and break; the Visor and Back unit can't be hit; hits on a broken part go to the Core | [4.4](#44-the-rig-tc17-tc18) |
 | TC18 | The loadout: eight slots and a Coat; Capacity from Power, the Core and the Back unit; a light rig gets +1 Move; saved loadouts from day one | [4.4](#44-the-rig-tc17-tc18) |
 | TC19 | Weapons in four bands (Melee, Short, Long, Tech); damage types P, I and F against a Coat; the weapon sets where hits land; Aim picks a part at −25% | [4.5](#45-weapons-and-hits-tc19) |
@@ -722,8 +722,8 @@ game. Phase 2 starts as soon as CY1 is in, beside the cloud. D20 adds Phase 4, l
 | TC61 | *(new D20)* Six styles, Comfort, her tastes; Comfort sheds Strain; visits: talk, gift, decorate, invite | [life-aboard §4.2](life-aboard.md#42-decor-and-comfort-tc61) |
 | TC62 | *(new D20)* The ship is built: decks of module slots, three levels, posts, no upkeep; install everything, power a few battle systems per sortie | [life-aboard §5.1](life-aboard.md#51-decks-and-modules-tc62) |
 | TC63 | *(new D20)* The Lab: research in four branches, paid in Data | [life-aboard §5.2](life-aboard.md#52-research-tc63) |
-| TC64 | *(new D20)* The ship in battle through ship support Orders and duty boosts; readiness before a finale; no second battle mode | [life-aboard §5.3](life-aboard.md#53-the-ship-in-battle-tc64) |
-| TC65 | *(new D20)* Boarding missions on the player's own decks, in Phase 6 | [life-aboard §5.4](life-aboard.md#54-boarding-missions-tc65) |
+| TC64 | *(new D20; amended D34 by TC75)* The ship in battle through ship support Orders and duty boosts; readiness before a finale; ship battles on the same engine (TC75) | [life-aboard §5.3](life-aboard.md#53-the-ship-in-battle-tc64) |
+| TC65 | *(new D20; amended D34 by TC76)* Boarding missions on the player's own decks, in Phase 6; boarding enemy ships (TC76) | [life-aboard §5.4](life-aboard.md#54-boarding-missions-tc65) |
 | TC66 | *(new D20)* A jump passes a watch and may draw one event; no fuel, no clock | [life-aboard §5.5](life-aboard.md#55-travel-tc66) |
 | TC67 | *(new D20)* Duties: posts produce once a watch (a mission or a jump); aptitude from bands, role and liked duty | [life-aboard §6.1](life-aboard.md#61-posts-and-watches-tc67) |
 | TC68 | *(new D20)* Duties never chores: auto-assign, presets, one ship-log card, no decay, no duty fatigue; deployed at half | [life-aboard §6.2](life-aboard.md#62-what-it-asks-of-the-player-tc68) |
@@ -733,12 +733,16 @@ game. Phase 2 starts as soon as CY1 is in, beside the cloud. D20 adds Phase 4, l
 | TC72 | *(new D20)* Aboard up to five minutes, optional; the dating layer's tone | [life-aboard §8](life-aboard.md#8-the-session-the-save-and-the-art-tc72-tc73) |
 | TC73 | *(new D20)* The save grows a version a packet; furniture and modules drawn in code; the captain never drawn | [life-aboard §8](life-aboard.md#8-the-session-the-save-and-the-art-tc72-tc73) |
 | TC74 | *(new D20)* Phase 4 is life aboard (CY13–CY19); the first worlds move to Phase 5 | [life-aboard §9](life-aboard.md#9-the-plan-tc74) |
+| TC75 | *(new D34, amends TC64 and TC16)* Ship battles in the Lanes on the same engine: the Homestretch as one unit crewed from its posts; enemy ships strike, drift or flee; rules version 4 | [life-aboard §10.1](life-aboard.md#101-ship-battles-in-the-lanes-tc75) |
+| TC76 | *(new D34, amends TC65)* Boarding enemy ships; breaking the command core frees the fleet's Collared heroines | [life-aboard §10.2](life-aboard.md#102-boarding-enemy-ships-tc76) |
+| TC77 | *(new D34, amends TC62)* Maintenance from ship battles, boardings and hard jumps, repaired at posts; never decay; the Steward's memories | [life-aboard §10.3](life-aboard.md#103-maintenance-tc77) |
+| TC78 | *(new D34, amends TC50)* Cities explored district by district from the captain's eyes | [life-aboard §10.4](life-aboard.md#104-city-exploration-tc78) |
+| TC79 | *(new D34)* The Track on the Observation deck: laps, an invitation, scenes, a seed | [life-aboard §10.5](life-aboard.md#105-the-track-tc79) |
+| TC80 | *(new D34, SB16)* World v2 revises the design; Phase 5 is the Lanes and the first worlds | [life-aboard §10.6](life-aboard.md#106-what-world-v2-revises-tc80) |
 
 ## Deferred
 
 Discussion only, not planned (TC16, amended D3):
-- **Ship battles** between worlds, as a second battle mode. D20 answers the wish without one: ship support in battle
-  (TC64) and boarding missions on the player's own decks (TC65).
 - **Permadeath,** as an option; Rig Break is the rule (TC25).
 - **Camera rotation** in 90° steps, if a map ever needs it (TC48).
 - **Difficulty modes.**

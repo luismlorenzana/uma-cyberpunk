@@ -6,7 +6,9 @@
 > point of view, **bonds** with every Uma that feed the battles, **quarters** she lives in and the captain decorates
 > and visits, **duties** aboard, and **the ship as a game of its own**: decks, modules, power and research. It also
 > reshapes the story's spine toward **squads, factions and one big plot**. Its calls are **TC55–TC74**, new or amending
-> the concept's ([concept.md](concept.md)); every one is a recommendation, adopted until the owner changes it. The story
+> the concept's ([concept.md](concept.md)); every one is a recommendation, adopted until the owner changes it. **D34
+> adds §10, TC75–TC80:** the story session's five requests from world v2 answered (ship battles, boarding, maintenance,
+> city exploration, the Track) and the design revised from the world (SB16). The story
 > session's open brief for it is [story-brief-life-aboard.md](story-brief-life-aboard.md). Visual page:
 > [previews/life-aboard.html](previews/life-aboard.html).
 
@@ -38,7 +40,11 @@
   **operations** on the star map; each faction has a **standing** with the ship. The story's spine becomes one big plot
   told through the factions and the ship's journey; a lead's Chapter 1 stays as her recruitment arc.
 - **The order** (TC74): a new **Phase 4, life aboard,** on test content, while the story session writes the base
-  elements; then the first worlds. Its packets, CY13–CY19, are written (D21).
+  elements; then the first worlds. Its packets, CY13–CY19, are done (D33).
+- **World v2's requests** (TC75–TC80, D34): **ship battles** on the same engine with the Homestretch as a unit crewed
+  from its posts; **boarding** enemy ships, where breaking the command core frees a fleet; **maintenance** from what the
+  ship does, repaired at posts, the Steward remembering; **cities** explored district by district from the captain's
+  eyes; **the Track**. They open Phase 5, the Lanes and the first worlds (§10).
 
 ```mermaid
 flowchart LR
@@ -508,7 +514,7 @@ elements; the first worlds move to Phase 5.
 |---|---|---|
 | 0–3 | Done: the foundation, the combat tested three ways, the app on test content | Phase 2's and 3's exits wait on the owner's plays |
 | **4** | **Life aboard, on test content** (packets below) | Several stops of ship life play end to end on the stand-in: the captain's bonds rise, a cabin is decorated, duties produce, a module is built, a squad runs an operation, and the battle feels each of them |
-| 5 | The first worlds: the story session's first world and its arcs, on the new spine | The opening and the first pickup play end to end |
+| 5 | The first worlds: the story session's first world and its arcs, on the new spine; since D34, **the Lanes and the first worlds**: ship battles, boarding, maintenance, districts and world v2's revisions first (§10.7) | The opening and the first pickup play end to end, the Ring's ship battle and Tidewell's boarding included |
 | 6 | Progression and the ship's later systems: levels, roles, licences, remodels, side jobs, the Call, talents, boarding missions | The first two worlds play end to end and need the progression to win |
 | 7 | Worlds as content waves | Each world plays end to end |
 
@@ -524,7 +530,228 @@ Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/
 | CY18 | **Squads and operations** | Squads and cohesion, operations and their reports, faction standing |
 | CY19 | **The life-aboard loop** | A headless test and a play-through of several stops on the stand-in; Phase 4's exit |
 
-## 10. The calls
+## 10. World v2: the story's requests, answered (TC75–TC80)
+
+The story session's world v2 ([world.md](world.md), D28) carries the owner's six notes and files **five story
+requests** in [the handoff](../handoff/README.md#story-requests) (WD48). SB16 asks the game to revise this design from
+the world before its next packets. This section answers each request with a call and revises what the world changes.
+Every answer is a recommendation, adopted until the owner changes it (D34). They're built in **Phase 5** (§10.7),
+because the first two worlds use them: the Ring ends Act I in a ship battle you can't win, and Tidewell's flagship is the
+first boarding (WD39, WD44, WD45).
+
+```mermaid
+flowchart LR
+  lanes[The Lanes: a ship battle, the Homestretch as a unit] -->|an enemy strikes| board[Boarding: its corridors, the command core]
+  board -->|the core breaks| freed[Every Collared heroine of the fleet freed]
+  lanes -->|hits on hull sections| damage[Modules damaged]
+  board --> damage
+  jump[A hard jump] --> damage
+  damage -->|posts repair over watches| repaired[Repaired: the Steward remembers, a Log File]
+  world[A world's map] --> district[A district, from the captain's eyes: contacts, shops, leads]
+  district -->|shore leave| keepsake[A keepsake for a cabin]
+  track[The Track: laps, bond scenes, a seed of the last layer]
+```
+
+### 10.1 Ship battles in the Lanes (TC75)
+
+**TC75 (answers request 1; amends TC64 and TC16), ship battles reuse the battle engine with the Homestretch as one
+unit.** The owner's note is "Ship to ship combat", and TC64's "no second battle mode" gives way to it. A second rules
+engine would still double the work, so a ship battle is **the same timeline, rig and Charge rules on a space map, with
+ships for units.** Nothing in the battle package knows a unit is a person.
+
+- **The Homestretch is a unit,** drawn larger (the board's sprite scale), on one tile.
+  - **Its bands come from the crew at their posts** (WD34). An empty post counts as band 1.
+
+    | Band | Post |
+    |---|---|
+    | Speed | The helm's pilot |
+    | Power | The Battery's gunner |
+    | Guts | The Shield Projector's engineer |
+    | Stamina | The Engines' pilot, else Engineering's engineer |
+    | Wit | The Sensors' navigator |
+
+    "Fought from the crew's posts in pilot suits" is literal: who holds a post is the ship's strength, and the
+    deploy screen shows it.
+  - **Its rig is its hull:** four sections (the bow as its Core, port and starboard as its arms, the engines as its
+    legs), with HP from its decks. A broken section is a Rig Break that strikes nothing: the ship limps on, slower, or
+    its guns on that side fall silent.
+  - **Its loadout is its battle systems:**
+    - the Battery is its long gun;
+    - the Shield Projector its guard;
+    - the Drone Bay launches drones as allied units;
+    - the Engines add Move;
+    - the Sensors reveal the map and enemy intents.
+
+    The reactor's power choice (TC62) is the loadout's limit, as before each sortie.
+  - **The captain's Orders** work as in rules version 3. Ship support becomes the ship's own actions, so the Orders
+    for a ship battle are the Tactics branch's (Sure shot, Reboot as an emergency repair, a broadside as the orbital
+    strike's twin).
+- **Enemy ships** are units with the faction's archetype (WD44's table):
+  - the Authority's cutters;
+  - the Muster's troop carriers, which drop squads (a boarding threat);
+  - the Commission's fast skiffs;
+  - the Armada's carriers and destroyers, with artillery at range;
+  - the Envoys' slow temple-ship;
+  - the Contractors' corvettes that bend the timeline (they act twice on the turn order);
+  - the Wardens' lantern-ships that raise wrecks;
+  - the Vigil's infected hulks, which spread to what they ram;
+  - the Bastion's guard-ships.
+
+  Each is a data entry with a loadout and a Hold, like any enemy.
+- **Nobody dies on screen** (WD20): a ship whose bow breaks **strikes its colours, drifts or flees** (a cue for each,
+  by its faction), never explodes with its crew. A struck ship can be **boarded** (TC76).
+- **Space maps** use the same map format (schema 1):
+  - **open space** plays as floor;
+  - **debris** is cover;
+  - **asteroids** are solid;
+  - **nebula** blocks sight (lights out);
+  - **storms** are lasting hazards (Gale's lightning as Fire);
+  - **gravity wells** play as height, for range.
+
+  Environments shape fights (WD44): the Hollow Ring's debris, Hush's ice rings, the dark at the edge.
+- **Objectives** reuse the four (defeat all, defeat the leader, reach, hold):
+  - "make the flagship strike" is defeat-the-leader;
+  - "run the blockade" is reach;
+  - "hold the Lane until the jump charges" is hold.
+- **A battle you can't win** (WD39, the Laurel at the Ring): a story mission may say `lose: 'continue'`, and the story
+  goes on after a loss, never a game over.
+- **Rules version 4,** frozen like the others, adds the ship actions (broadside, launch, ram, evade) and the strike, drift
+  and flee cues. Versions 1–3 replay exactly. The simulator gets a ship-battle scenario family with its own targets.
+- **After the battle:** salvage (Alloy, Data), a chance to board, and **damage** to the modules in each section hit
+  (TC77). A watch passes, as with any battle.
+- **The art is drawn in code** by Claude (uma-platform P126/P147): ship sprites and space tiles. Ships aren't
+  characters.
+
+### 10.2 Boarding enemy ships (TC76)
+
+**TC76 (answers request 2; amends TC65), boarding is a grid battle in the enemy's ship, and breaking its command core
+frees a fleet.** The owner's note is "In-ship combat by boarding enemy ships".
+
+- **Where:** corridors, cargo holds and reactor rooms, on interior map kits (Claude's kit-art), built as ordinary
+  battle maps.
+- **Who:** the squad, deployed as for any mission, **helmets sealed** (WD42).
+- **The ship's security is terrain,** each built on CY5's terrain, props and terminals:
+
+  | Security | In play |
+  |---|---|
+  | **Doors** | Open and shut from terminals; a shut door is solid and blocks sight |
+  | **Turrets** | Props that fire on their own turn from a fixed tile; hacked, they fire for the squad |
+  | **Vents** | Pairs of tiles linked: a unit steps into one and out of the other |
+  | **Decompression** | A breached tile pulls each unit within two tiles one tile toward it at round's end; sealed helmets mean no damage, only the pull |
+
+- **The objective, "break the command core":** a terminal with HP in the reactor room, hacked by a Netrunner's Tech or
+  broken by attacks (CY5's free-the-leader, on an object).
+  - A Collar is broadcast from that core (WD45), so breaking it **frees every Collared heroine of that fleet at
+    once.** They count as freed for faction standing (TC71).
+- **Other stakes:** a siphon core to seize (Alloy and Data), prisoners to rescue (escort), a contract to steal (a Log
+  File).
+- **The way in:**
+  - after a ship battle, when an enemy has struck (a choice on the results: board, or take the salvage);
+  - or as a story or operation mission.
+- **The reverse** (TC65, kept): enemies board the Homestretch, first at Anvil's slipways. The map is built from the
+  player's own decks, in Phase 6.
+
+### 10.3 Maintenance (TC77)
+
+**TC77 (answers request 3; amends TC62's "no upkeep" without breaking it), damage from what the ship does, repaired
+at posts over watches; never decay with time.** The owner's note is "Ship maintenance and aptitudes for each
+character", and WD33 sets its tone: care, not a chore.
+
+- **What damages a module:**
+  - **a ship battle,** where each hull section hit damages one module on the matching deck;
+  - **a boarding** of the Homestretch: the rooms fought through;
+  - **a hard jump:** an event card's fail outcome, or a Lane the story marks damaged.
+
+  Nothing else does. No decay while the ship sits, no breakdown from neglect, no failure roll (TC68 kept).
+- **Damage is one to three points on a module.** A damaged module still works, one level weaker:
+  - **a room's posts** produce as if one level lower (a level-1 room at half);
+  - **a battle system** plays at one level lower in battle (level 1 at half effect).
+
+  The hull view marks it, and the deploy screen lists it.
+- **Repair is a duty** (TC67):
+  - Engineering's engineer and the Hangar's mechanic repair a point a watch;
+  - two points at band 4–5 (aptitude 3), and faster with a matching role;
+  - auto-assign sends the right Umas, and the ship-log card says what was fixed.
+
+  In a quiet stretch, a few jumps between worlds fix it all.
+- **The Steward remembers** (WD31): every module brought back to full, and every level reached, can return a fragment
+  of its memory. The story writes these as Log File lines with a trigger (`{ module, level }` or
+  `{ module, repaired: true }`), filled the moment it happens. The fragments are seeds of the last layer.
+
+### 10.4 City exploration (TC78)
+
+**TC78 (answers request 4; amends TC50), each world's city is explored district by district, from the captain's
+eyes.** The owner's note is "City exploration in multiple planetary settings with different environments".
+
+**The captain is never drawn** (TC55: the camera is the captain), and the sprites are for combat only (D24). So the
+city isn't walked by a figure: the **camera walks it**.
+
+- **A world's node map stays its overview** (TC50). A city node opens into **districts**.
+- **A district is a view:** a street, a market, a dock or a rooftop, rendered as an HD-2D still from the world's map
+  kit on uma-stage, in the world's own environment. Each view has **hotspots**:
+
+  | Hotspot | What it does |
+  |---|---|
+  | **Contacts** | A bust and a scene: information, a side job, a favour |
+  | **Shops** | Stock to buy: parts, furniture and keepsakes from that world (the Store's stock becomes the world's) |
+  | **Leads** | An investigation step: a Log File line, a Lead, a node opened on the map, an Anomaly |
+  | **Exits** | The next view; a district is a small graph of views |
+  | **Crew on shore leave** | Umas from the crew in street looks (busts, which exist), with a line, a visit, a keepsake (WD40) |
+
+- **Shore leave** is where city exploration and life aboard meet (WD40). An invitation (TC61) can be to a district
+  spot, and what she picks there becomes a keepsake for her cabin.
+- **Investigations** end in battles on city maps (WD43); the Dark Horse squad shines in them (§10.6).
+- **Why not a walking figure:** it would need exploration sprites, which D24 left out, and a drawn captain, which TC55
+  rules out. If the owner wants one, it's an Uma walking in her street look: the combat sprite request's sheets would
+  grow an exploration set. That's a change to D24, so it's discussed and not planned.
+- **Cost:** one kit per world (already planned for Phase 5) gives every district its views. A district is data:
+  `districts: [{ id, node, views: [{ id, look, hotspots: [...] }] }]` in the world file.
+
+### 10.5 The Track (TC79)
+
+**TC79 (answers request 5), the Track is the Observation deck's ring corridor: a spot for laps, scenes and a seed.**
+
+- **The room:** the Observation deck includes the Track from level 1. Opened at the Ring (WD32), so the world's
+  `opens` places it (§10.6).
+- **Laps:** off-duty Umas (no post, not deployed, not away) are shown running it in the room's view.
+- **A visit spot:** "Run laps with her" is an invitation (TC61): its rapport, a Strain shed, and camaraderie with any
+  Uma running beside her (CY17's partners).
+- **Scenes:** bond scenes and story scenes can be set there (`place: 'track'`).
+- **The seed:** nobody knows who built it or why it's exactly that long (WD40). The story can attach Log File lines and
+  an Anomaly to it, as anywhere.
+
+### 10.6 What world v2 revises (TC80)
+
+**TC80 (SB16), the design takes world v2's answers:**
+
+| World v2 | What changes in the game |
+|---|---|
+| **The Homestretch and the Steward** (WD30, WD31) | The ship's name in the app, from the story; the Steward rings the watch (the ship-log card's heading) and speaks the repair fragments (TC77) |
+| **The rooms and who opens them** (WD32) | **A module a lead opens follows the story:** its own unlock (from the start, or by research) gives way to the lead's `opens`. A lead opening a module already placed raises it a level ("Anvil restores Engineering"), since the ship can't fly without Engineering. Display names follow the world: the Med Bay is the **Infirmary**, the Sensors the **Sensor Deck** |
+| **Four squads with a way each** (WD38) | The casting's squads gain a `way`: assault, gunnery, closers or infiltration. A squad's way adds +4 power to operations of its kind; Long Shot at the guns and Gatebreak in boardings get a perk named on the deploy screen. **Banners become emblems**, pixel art drawn by Claude (a uma-art request) |
+| **The Laurel Guard** (WD39) | NPC-board Umas as rival units; the first ship battle you can't win uses `lose: 'continue'` (TC75) |
+| **The after-jump meal** (WD40) | A jump's ship-log card opens in the Galley when it's built, with the cook's dish named |
+| **Cabins as memory** (WD40) | World keepsakes: a world file can name keepsakes (`{ id, name, comfort }`), sold in its shops and brought back from shore leave |
+| **Frames, helmets and pilot suits** (WD42) | Helmets sealed in boardings: the combat sprite request gains a sealed-helmet variant, which is ChatGPT's (character art) |
+| **The rest** | Bonds (WD41), the captain (WD36), the five roles and the factions already match what's built |
+
+### 10.7 When: Phase 5 (TC80)
+
+Phase 5 (TC74) becomes **the Lanes and the first worlds.** Its packets are written next, from this section:
+
+| Packet | Builds |
+|---|---|
+| **World v2's revisions** | §10.6: unlock by the story, a lead raising a module, display names, squad ways, world keepsakes, the Steward's watch, the Track and its invitation |
+| **Ship battles** | §10.1: rules version 4, the Homestretch as a unit from its posts, enemy ships, space maps, strike, drift and flee, `lose: 'continue'`, the simulator's ship family |
+| **Boarding** | §10.2: interior maps, doors, turrets, vents and decompression, the command core freeing a fleet, boarding from a struck ship |
+| **Maintenance** | §10.3: damage from ship battles, boarding and hard jumps, repair at posts, the Steward's fragments |
+| **Districts** | §10.4: district views with hotspots on uma-stage, shops, contacts, leads, shore leave |
+| **The first worlds** | The Ring's and Tidewell's chapters from the story session, on all of it |
+
+**The art:** ship sprites, space tiles, interior kits and squad emblems are Claude's, in uma-platform sessions; the
+sealed-helmet variant is ChatGPT's.
+
+## 11. The calls
 
 | # | Call | Section |
 |---|---|---|
@@ -537,8 +764,8 @@ Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/
 | TC61 | *(new D20)* Six styles, comfort per item, sets, her tastes discovered; Comfort sheds Strain and boosts visits; theme kits; requests; visits of a minute or so: talk, gift, decorate, invite; tastes tagged by the story or derived | [4.2](#42-decor-and-comfort-tc61) |
 | TC62 | *(new D20, amends TC42 and TC49)* The ship is built on one screen: decks of module slots, rooms with three levels and posts, no upkeep; install everything, power a few battle systems per sortie; eight new rooms and five battle systems | [5.1](#51-decks-and-modules-tc62) |
 | TC63 | *(new D20)* The Lab: one project at a time in four branches (Ship, Rigs, Tactics, Quarters), paid in Data | [5.2](#52-research-tc63) |
-| TC64 | *(new D20)* The ship in battle through ship support Orders (Valkyria Chronicles 4's model) and duty boosts; readiness before a finale; ship battles stay deferred | [5.3](#53-the-ship-in-battle-tc64) |
-| TC65 | *(new D20)* Boarding missions on the player's own decks, in Phase 6 | [5.4](#54-boarding-missions-tc65) |
+| TC64 | *(new D20; amended D34 by TC75)* The ship in battle through ship support Orders (Valkyria Chronicles 4's model) and duty boosts; readiness before a finale; ship battles come with TC75 | [5.3](#53-the-ship-in-battle-tc64) |
+| TC65 | *(new D20; amended D34 by TC76)* Boarding missions on the player's own decks, in Phase 6; boarding enemy ships comes with TC76 | [5.4](#54-boarding-missions-tc65) |
 | TC66 | *(new D20, amends TC50)* A jump passes a watch and may draw one event card, resolved by who's on duty; regions open by the ship's capability; still no fuel or clock | [5.5](#55-travel-tc66) |
 | TC67 | *(new D20)* Duties: posts produce once a watch (a mission or a jump, never real time); aptitude by band thresholds; running style sets how she settles in; post mastery; station chiefs | [6.1](#61-posts-and-watches-tc67) |
 | TC68 | *(new D20)* Duties never become chores: persistent posts, auto-assign and presets, one ship-log card, no decay, no duty fatigue, no failure rolls; a deployed Uma works her post at half | [6.2](#62-what-it-asks-of-the-player-tc68) |
@@ -548,3 +775,9 @@ Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/
 | TC72 | *(new D20, amends TC36)* Aboard up to five minutes, all optional; the dating layer's tone: adults, warm, never explicit, mutual, no jealousy, equal power | [8](#8-the-session-the-save-and-the-art-tc72-tc73) |
 | TC73 | *(new D20)* The save grows a version a packet; furniture, modules and cabins drawn in code; the captain never drawn | [8](#8-the-session-the-save-and-the-art-tc72-tc73) |
 | TC74 | *(new D20, amends TC15)* A new Phase 4, life aboard, on test content (CY13–CY19); the first worlds move to Phase 5 | [9](#9-the-plan-tc74) |
+| TC75 | *(new D34, amends TC64 and TC16)* Ship battles in the Lanes on the same battle engine: the Homestretch as one unit, its bands from the crew at its posts, its hull as its rig, its battle systems as its loadout; enemy ships by faction; a beaten ship strikes, drifts or flees; space maps; `lose: 'continue'`; rules version 4 | [10.1](#101-ship-battles-in-the-lanes-tc75) |
+| TC76 | *(new D34, amends TC65)* Boarding enemy ships: grid battles in their corridors, holds and reactor rooms, helmets sealed; doors, turrets, vents and decompression as terrain; breaking the command core frees every Collared heroine of the fleet | [10.2](#102-boarding-enemy-ships-tc76) |
+| TC77 | *(new D34, amends TC62)* Maintenance: ship battles, boardings and hard jumps damage modules (one level weaker); repaired at posts over watches by aptitude; never decay; repairs return the Steward's memories as Log File lines | [10.3](#103-maintenance-tc77) |
+| TC78 | *(new D34, amends TC50)* City exploration district by district from the captain's eyes: HD-2D views from the world's kit with contacts, shops, leads, exits and crew on shore leave; no walking figure (TC55, D24) | [10.4](#104-city-exploration-tc78) |
+| TC79 | *(new D34)* The Track: the Observation deck's ring corridor; off-duty Umas run laps; an invitation spot; `place: 'track'` for scenes; a seed of the last layer | [10.5](#105-the-track-tc79) |
+| TC80 | *(new D34, SB16)* World v2 revises the design: modules a lead opens follow the story, the world's room names, squad ways and emblems, the Laurel Guard, the after-jump meal, world keepsakes, sealed helmets; Phase 5 is the Lanes and the first worlds | [10.6](#106-what-world-v2-revises-tc80) |

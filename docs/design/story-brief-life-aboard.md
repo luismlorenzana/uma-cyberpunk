@@ -81,11 +81,17 @@ Prompts, not a checklist. Take them in any order, skip what doesn't spark, add w
 | **Bond scenes** (TC57) | **Live since CY13:** `bonds/<outfit>.json`, the `path` step, `bondGates`, an `epilogue` card. Five per lead at ranks 2, 4, 6, 8, 10; three for featured crew (2, 8, 10); at rank 8 she speaks first, then the player chooses Trust or Heart | Small talk from her tastes, and lines drawn from her cabin, Strain and last battle |
 | **Her tastes** (TC61) | **Live since CY14:** `casting.json`'s `tastes` by outfit id: favourite and disliked decor style (Neon, Classic, Cozy, Sporty, Tech, Wild), favourite gift kind (snacks, music, gear, plants, books, keepsakes), two loved topics (of twelve: racing, music, food, fashion, tech, stars, home, training, games, nature, history, crew); her small talk as `talk` in her bond file, by topic. A liked duty comes with CY16 | Derived from her running style, role and stats; the game's pool of lines |
 | **Partners** (TC58) | Canonical pairs who start with camaraderie | None; the player pairs anyone |
-| **Squads** (TC69) | Named squads with leaders and banners | Four numbered squads |
-| **Faction standing** (TC71) | Story beats that move a faction's standing; what each level opens | Standing moved by battles and operations only |
-| **Operations** (TC70) | Flavour lines per world for squads' side missions | Generic reports |
+| **Squads** (TC69) | **Live since CY18:** `casting.json`'s `squads` (`[{ id, name, banner, leader, members }]`), formed when a newcomer completes one aboard. Coming in Phase 5 (TC80): a `way` each (assault, gunnery, closers, infiltration) and emblem banners | The crew aboard as one squad; ordinal squads after |
+| **Faction standing** (TC71) | **Live since CY18:** `casting.json`'s `standing` (each faction's start, −2 to +2), the `standing` step, `standing:<faction>:<level>` keys; three heroines freed add +1 | Every faction starts Wary (−1) |
+| **Operations** (TC70) | **Live since CY18:** a world's `operations` (`[{ id, title, faction?, danger, watches, reward, needs? }]`) beside a generic table | Four generic operations a world |
+| **Finales** (TC64) | **Live since CY18:** a mission's `finale: true` and `readiness` (`{ system \| standing, at \| total, else }`), each unmet need adding fog, hazards or no reinforcements | No finale conditions |
+| **Ship battles** (TC75, Phase 5) | A mission in the Lanes: enemy ships by faction archetype, a space map, an objective; `lose: 'continue'` for a battle the story needs lost (the Laurel at the Ring) | Played as scenes until Phase 5 builds them |
+| **Boarding** (TC76, Phase 5) | A boarding mission on an interior map; the fleet whose Collared heroines its command core frees | Played as scenes until Phase 5 |
+| **The Steward's memories** (TC77, Phase 5) | Log File lines with a trigger: `{ module, level }` or `{ module, repaired: true }` | Repairs with no fragment |
+| **Districts** (TC78, Phase 5) | A world's `districts`: views with contacts, shops, leads, exits and crew on shore leave; world `keepsakes` | The node map with scenes |
+| **The Track** (TC79, Phase 5) | Scenes at `place: 'track'`; Log File lines and an Anomaly about it | Laps shown, no scenes |
 | **Jump events** (TC66) | Short events with a choice, per region of space | A small generic pool |
-| **The ship's rooms** | What each room is in the world, and which lead or story beat opens it (TC49, TC62) | The game's room plan |
+| **The ship's rooms** | What each room is in the world, and which lead or story beat opens it (TC49, TC62). Since D34 (TC80) a lead's `opens` overrides a module's own unlock, and opening a module already placed raises it a level | The game's room plan |
 | **Recruitment arcs** | A lead's Chapter 1, as the first brief describes (SB4, SB8) | The stand-in |
 
 The content contract (SB8) grows to carry these as the game builds them; the check (`pnpm story:check`) will say what
