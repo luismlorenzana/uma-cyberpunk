@@ -6,7 +6,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { chooseTurn } from '../../packages/battle/src/ai'
+import { chooseAction, chooseTurn } from '../../packages/battle/src/ai'
 import { applyBattleAction, startBattle } from '../../packages/battle/src/battle'
 import { scenarioInput, type Scenario } from '../../packages/battle/src/scenario'
 import { loadScenarios } from '../../packages/battle/src/scenarios'
@@ -50,12 +50,29 @@ function weaponOf(input: BattleInput, unit: string, mount: Mount): Weapon | null
   return item?.kind === 'weapon' ? item : null
 }
 
+/** The squad profiles (CY17): bare, as Phases 2 and 3 played; and life aboard, rules version 3 with bond ranks 3, 7 and 10,
+ * the first two as level-2 partners, three powered systems, two Orders the allies' Auto may take, and a meal. */
+export type Profile = 'bare' | 'life'
+export function withProfile(input: BattleInput, profile: Profile): BattleInput {
+  if (profile === 'bare') return input
+  const squad = input.units.filter((u) => u.side === 'squad').map((u) => u.id)
+  const ranks = [3, 7, 10]
+  return {
+    ...input, rulesVersion: 3, meal: 'curry', systems: ['sensors', 'shield', { id: 'battery', level: 1, band: 3 }], orders: { slots: 2, kinds: ['sure', 'reboot'] },
+    units: input.units.map((u) => {
+      const i = squad.indexOf(u.id)
+      if (i < 0) return u
+      return { ...u, ...(ranks[i] ? { bond: { rank: ranks[i]!, path: 'trust' as const } } : {}), ...(i <= 1 && squad.length > 1 ? { partner: { unit: squad[1 - i]!, level: 2 as const } } : {}) }
+    }),
+  }
+}
+
 function play(input: BattleInput): { state: BattleState; cues: Cue[] } {
   const start = startBattle(input)
   let state = start.state
   const cues: Cue[] = [...start.cues]
   while (!state.result && state.time < STALEMATE_ROUNDS * TUNING.roundTicks) {
-    const r = applyBattleAction(state, chooseTurn(state))
+    const r = applyBattleAction(state, input.rulesVersion >= 3 ? chooseAction(state) : chooseTurn(state))
     if (r.error) throw new Error(`${input.seed}: ${r.error}`)
     cues.push(...r.cues)
     state = r.state
@@ -63,14 +80,14 @@ function play(input: BattleInput): { state: BattleState; cues: Cue[] } {
   return { state, cues }
 }
 
-export function simulate(s: Scenario, map: Parameters<typeof scenarioInput>[1], seeds: number): ScenarioReport {
+export function simulate(s: Scenario, map: Parameters<typeof scenarioInput>[1], seeds: number, profile: Profile = 'bare'): ScenarioReport {
   const r: ScenarioReport = {
     id: s.id, title: s.title, even: !!s.even, battles: seeds, wins: { squad: 0, enemy: 0 }, stalemates: 0, playerTurns: 0, rounds: 0, minutes: 0,
     damageByBand: {}, damageByType: {}, partsBroken: {}, rigBreaks: 0, rigBreaksAfterPart: 0, oneShots: 0, firstRoundBreaks: 0,
     counters: 0, crossfires: 0, covers: 0, chargeSpent: 0, chargeLeft: 0, heroines: { freed: 0, broken: 0, standing: 0 },
   }
   for (let seed = 1; seed <= seeds; seed++) {
-    const input = scenarioInput(s, map, seed)
+    const input = withProfile(scenarioInput(s, map, seed), profile)
     const { state, cues } = play(input)
     if (state.result) r.wins[state.result.winner]++
     else r.stalemates++
@@ -172,6 +189,7 @@ function markdown(reports: ScenarioReport[], seeds: number, before?: ScenarioRep
 function main(): void {
   const args = process.argv.slice(2)
   const which = args.find((a) => !a.startsWith('--')) ?? 'all'
+  if (which === 'balance') return balance(Number(args[args.indexOf('--seeds') + 1] ?? 200) || 200)
   const at = (flag: string) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : undefined }
   const seeds = Number(at('--seeds') ?? 200)
   const compare = at('--compare')
@@ -192,6 +210,29 @@ function main(): void {
   const missed = reports.flatMap((r) => targets(r).filter((t) => !t.met).map((t) => `${r.id}: ${t.name} (${t.value})`))
   console.log(`\n${reports.length} scenarios × ${seeds} seeds in ${((Date.now() - t0) / 1000).toFixed(1)} s → sim/out/${name}.md`)
   console.log(missed.length ? `Missed:\n  ${missed.join('\n  ')}` : 'Every target met.')
+}
+
+/** The balance pass (CY17): every scenario with a bare squad and a life-aboard one. The targets (CY17's packet): a bare
+ * squad wins as before (it plays rules version 2, frozen); a fully bonded squad wins about one battle in five more often
+ * on average (a mean gain of 10 to 30 points), more often in every scenario, and never every battle. */
+export function balance(seeds: number): void {
+  const { maps, scenarios } = loadScenarios(ROOT)
+  const rows = scenarios.map((s) => {
+    const bare = simulate(s, maps[s.map]!, seeds, 'bare'), life = simulate(s, maps[s.map]!, seeds, 'life')
+    const b = (bare.wins.squad / seeds) * 100, l = (life.wins.squad / seeds) * 100
+    const met = l >= b && l < 100
+    console.log(`${s.id}: bare ${b.toFixed(1)}%, life aboard ${l.toFixed(1)}% (${l - b >= 0 ? '+' : ''}${(l - b).toFixed(1)})${met ? '' : '  ← off target'}`)
+    return { id: s.id, bare: b, life: l, gain: l - b, met }
+  })
+  const mean = rows.reduce((n, r) => n + r.gain, 0) / rows.length
+  mkdirSync(OUT, { recursive: true })
+  const md = ['# Balance pass: bare and life aboard', '', `${seeds} seeds a scenario. Life aboard: rules version 3, bond ranks 3, 7, 10, the first two as level-2 partners, the Sensors, the Shield Projector and the Battery powered, Sure shot and Reboot for the allies' Auto, a curry.`, '',
+    '| Scenario | Bare | Life aboard | Gain | On target |', '|---|---|---|---|---|', ...rows.map((r) => `| ${r.id} | ${r.bare.toFixed(1)}% | ${r.life.toFixed(1)}% | ${r.gain >= 0 ? '+' : ''}${r.gain.toFixed(1)} | ${r.met ? 'yes' : 'no'} |`), '',
+    `Mean gain: ${mean >= 0 ? '+' : ''}${mean.toFixed(1)} points (target: about one battle in five, 10 to 30 points; every scenario gaining, none at 100%).`].join('\n')
+  writeFileSync(join(OUT, 'balance.md'), `${md}\n`)
+  writeFileSync(join(OUT, 'balance.json'), `${JSON.stringify({ seeds, rows, mean }, null, 1)}\n`)
+  const meanMet = mean >= 10 && mean <= 30
+  console.log(`\nMean gain ${mean.toFixed(1)} points${meanMet ? ' (on target: about one battle in five)' : ' ← off target'} → sim/out/balance.md`)
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) main()

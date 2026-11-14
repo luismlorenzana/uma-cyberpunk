@@ -8,6 +8,8 @@ import {
 import { AlbumArtProvider, UmaBust } from '@luismlorenzana/uma-kit/album'
 import { useState } from 'react'
 import { BondPanel } from '../bonds/BondPanel'
+import { PartnersPanel } from '../bonds/PartnersPanel'
+import { outfitName } from '../ship/useStory'
 import { bondFileOf } from '../bonds/bonds'
 import { albumArt } from '../crew/art'
 import { Profile } from '../crew/Profile'
@@ -225,7 +227,7 @@ export function Cabin({ view, save, pack, onBack, onBondScene }: { view: CrewVie
         </div>
         {tab === 'visit' && <VisitPanel view={view} save={save} pack={pack} onBondScene={onBondScene} />}
         {tab === 'decorate' && <DecoratePanel view={view} save={save} pack={pack} slot={slot} setSlot={setSlot} />}
-        {tab === 'profile' && <Profile view={view} nameOf={() => view.name} bond={<BondPanel member={view.member} pack={pack} save={save} onPlay={onBondScene} />} />}
+        {tab === 'profile' && <Profile view={view} nameOf={() => view.name} bond={<><BondPanel member={view.member} pack={pack} save={save} onPlay={onBondScene} /><PartnersPanel save={save} outfit={view.outfit} nameOf={(o) => outfitName(pack, o)} /></>} />}
       </div>
     </div>
   )

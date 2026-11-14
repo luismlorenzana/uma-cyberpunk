@@ -293,6 +293,92 @@ action** (her turn goes on), with fixed numbers and no rolls:
 The result lists each enemy as **freed**, **broken** or **standing**, with her **salvage**: her unbroken parts, freed
 or broken alike. A guest joins only when freed, so breaking her parts against keeping them whole is a real choice.
 
+## Rules version 3: life aboard in battle (CY17)
+
+Rules version 3 (D28) brings the ship's life into the fight, all of it frozen into the battle's input at deploy:
+- each Uma's bond rank and path, and her partner when both are in the squad;
+- the captain's Orders the ship offers;
+- the powered battle systems, with their levels and their post holders' bands;
+- the cook's meal.
+
+A version-2 battle replays exactly as before (a test plays one with these fields present and gets the same state).
+Missions deploy at version 3; the sandbox's scenarios stay at version 2.
+
+### Bond perks (TC58)
+
+| Rank | Perk | In play |
+|---|---|---|
+| 3 | **Ready** | +1 Charge at the start |
+| 5 | **Answer** | +1 Charge when an adjacent ally suffers a Rig Break |
+| 7 | **Sure** | Her chance skills +5% |
+| 8 | **Endure** | Once a battle a Core-breaking hit leaves 1: a second use after Guts' Hold on, never the same hit |
+| 9 | **Steadfast** | One free Cover a battle (no Charge) |
+| 10 | **Resonance** | The captain can call her name (an Order) |
+
+### Orders (TC59)
+
+A free action on a squad unit's turn, from the battle's slots: 2 at Bridge level 1, 3 at 2, 4 at 3, plus one with the Ship
+Uplink project (to 4). The **Orders** button on the battle screen shows how many are left.
+
+| Order | Offered | Does |
+|---|---|---|
+| **Sure shot** | Always | The unit's next attack this turn can't miss |
+| **Call her name** | Always; a rank-10 Uma, once a battle | **Resonance**: she acts next with full Charge, and every Linked ally in reach joins her attack free; a banner in her colour says Resolve (Trust) or Devotion (Heart) |
+| **Hold the line** | Bridge level 2 | An enemy loses her next turn |
+| **Reboot** | Med Bay level 2, or the Field Repairs project | A kneeling ally stands at 25% Core, anywhere |
+| **Orbital strike** | The Battery powered | Marks a 3 × 3 area this round; it lands at the start of the next round on every enemy in it (14, +6 a level, +2 a band of the gunner over 3) |
+| **Sweep** | The Sensors powered | The enemy's next moves shown |
+| **Barrier** | The Shield Projector powered | A barrier on an open tile |
+| **Drone** | The Drone Bay powered | Mends a standing ally's most damaged part by 15 |
+| **Reinforce** | Hangar level 3, someone resting | A resting Uma's drop, as the bench call, without using it |
+
+### The powered systems' passives (TC64)
+
+- **The Engines:** the squad starts with a head start on the clock, so it moves first in round 1.
+- **The Shield Projector:** a shield on each squad unit at the start that absorbs 4 damage (+2 a level) before her parts.
+- **The Sensors:** the enemy's roster on the deploy screen. This is shown, not a rule.
+
+### Meals
+
+The cook's meal (CY16) applies to the whole squad for one battle: noodles +5% hit, stew +10% Core HP, skewers +1 melee
+damage, curry +1 Charge at the start, salad chance skills +5%, a feast +5% hit and +1 Charge.
+
+### Partners (TC58)
+
+| Level | Camaraderie | In play |
+|---|---|---|
+| 1 | 100 | Joins her partner's attacks free once a battle, linked or not |
+| 2 | 250 | Also covers her partner free once a battle |
+| 3 | 500 and the Coordinated Fire project | The **duo technique**: both partners strike the target from where they stand, a third harder, with their pair's effect; it takes this turn and the partner's next |
+
+The fifteen pairs of roles each have a technique (`DUO_TECHS`). Each adds one effect:
+- **Power:** the strikes as they are, a third harder;
+- **Pierce:** past the guard, and +20% hit;
+- **Stun:** the target loses her next turn;
+- **Mend:** both partners +12 Core;
+- **Charge:** both partners +1 Charge.
+
+### Ally Auto and the balance
+
+**Ally Auto** takes a free Order before her turn: Reboot on a kneeling ally, or Sure shot when the attack she means to make
+is under 40% to hit. Auto never calls Resonance.
+
+**The balance pass** (`pnpm sim balance`) plays every scenario with a bare squad and a life-aboard one. Life aboard means:
+- bond ranks 3, 7 and 10;
+- the first two Umas as level-2 partners;
+- the Sensors, the Shield Projector and the Battery powered;
+- two Orders for Auto;
+- a curry.
+
+At 80 seeds a scenario, the bare squad is unchanged (version 2, frozen), the mean gain is **+23 points**, every scenario
+gains, and none reaches 100%. The targets are about one battle in five more often and never every battle.
+
+Two findings changed the rules on the way:
+- The Shield Projector's first form, barriers before the spawns, blocked the squad's own path and lost battles. It became
+  the absorbing shield.
+- The Engines' head start decides some maps alone (+35 points on muster-underlevels), whatever its size. So the
+  life-aboard profile leaves them off, and the rule stays as the packet words it.
+
 ## The battle screen
 
 The battle as the sandbox (CY8) and the missions (CY10) show it: DOM over the [board](board.md), in `apps/web/src/battle/`.

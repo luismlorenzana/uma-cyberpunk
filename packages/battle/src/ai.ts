@@ -4,6 +4,7 @@
 // counter it draws, the allies who join, the threat where she ends up, cover, height, terrain, the objective, and
 // Charge kept for a counter. Ties go to the seeded roll, so a battle always plays the same way. It never idles: with
 // nothing worth doing, it advances. The Steel Muster holds cover and keeps a gun loaded under its volley.
+import { orderError } from './v3'
 import { canAim, counterFor, crossfireFor, mapTarget, objectStrikeOf, strikeOf, tileOf, unitById, type Strike } from './attack'
 import { v2 } from './harm'
 import { attacksFrom, supportFrom } from './legal'
@@ -17,7 +18,7 @@ import { techChance } from './tech'
 import { boardOf, cross, keyOf, liveTiles, type Board } from './terrain'
 import { inputOf } from './timeline'
 import { TUNING } from './tuning'
-import type { Act, BattleState, Dir, Tile, TurnAction, UnitState } from './types'
+import type { BattleAction, OrderAction, Act, BattleState, Dir, Tile, TurnAction, UnitState } from './types'
 import { PARTS } from './types'
 
 /** How many tiles the scorer looks at beyond the best places to strike from. */
@@ -328,3 +329,29 @@ export function chooseTurn(state: BattleState, unitId: string = state.active!): 
 /** Ally Auto: the same scorer, for a squad unit. */
 export const autoTurn = (state: BattleState): TurnAction => chooseTurn(state)
 
+/**
+ * Ally Auto with the captain's Orders (rules version 3, CY17): before her turn, a squad unit on Auto may take a free
+ * Order the battle offers: Reboot a kneeling ally, or Sure shot when the attack she means to make is likely to miss.
+ * Auto never calls Resonance: that's the player's moment. Enemies, and battles below version 3, play `chooseTurn`.
+ */
+export function chooseAction(state: BattleState): BattleAction {
+  const id = state.active!
+  const me = unitById(state, id)
+  const o = state.input.orders
+  if (me.side === 'squad' && state.v3 && o && state.v3.orders < o.slots) {
+    if (o.kinds.includes('reboot')) {
+      const down = state.units.find((u) => u.side === 'squad' && u.status === 'down')
+      const a: OrderAction = { kind: 'order', unit: id, order: 'reboot', target: down?.id }
+      if (down && !orderError(state, a)) return a
+    }
+    if (o.kinds.includes('sure') && state.v3.sure !== id) {
+      const t = chooseTurn(state, id)
+      if (t.act.kind === 'attack' && state.units.some((u) => t.act.kind === 'attack' && u.id === t.act.target)) {
+        const s = strikeOf(state, id, t.act.with, t.act.target, t.to ?? tileOf(me))
+        const a: OrderAction = { kind: 'order', unit: id, order: 'sure' }
+        if (s && s.hit < TUNING.autoSureBelow && !orderError(state, a)) return a
+      }
+    }
+  }
+  return chooseTurn(state, id)
+}

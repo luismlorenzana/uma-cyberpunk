@@ -3,7 +3,7 @@
 // forecast card for an attack, and the facing, all sent as one turn. Enemy turns play at double speed, with Skip. Every
 // committed action is handed to `onCommit` (the sandbox's autosave); the board follows the cues, then the state.
 import {
-  boardOf, chooseTurn, dirTo, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
+  boardOf, chooseAction, dirTo, orderError, partnerOf, type OrderKind, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
   type Cue, type Dir, type Forecast, type Reach, type Role, type TerrainCard, type Tile, type TurnAction,
 } from '@cyber/battle'
 import { AlbumArtProvider } from '@luismlorenzana/uma-kit/album'
@@ -29,6 +29,11 @@ type Ui =
   | { phase: 'forecast'; reach: Reach; dash: boolean; act: Act; f: Forecast }
   | { phase: 'face'; reach: Reach; dash: boolean; act: Act; face: Dir }
   | { phase: 'bench'; role: Role }
+  // Rules version 3 (CY17): the captain's Orders and the duo technique.
+  | { phase: 'orders' }
+  | { phase: 'order-target'; order: OrderKind }
+  | { phase: 'order-tile'; order: OrderKind }
+  | { phase: 'duo' }
 
 export interface SandboxHandle {
   readonly state: BattleState
@@ -45,6 +50,12 @@ declare global { interface Window { __sandbox?: SandboxHandle } }
 const wait = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
 const DIRS: Dir[] = ['N', 'E', 'S', 'W']
 const ARROW: Record<Dir, string> = { N: '↑', E: '→', S: '↓', W: '←' }
+/** Each Order's words and what it takes (TC59). */
+const ORDER: Record<OrderKind, { label: string; takes: 'none' | 'unit' | 'tile' }> = {
+  sure: { label: 'Sure shot', takes: 'none' }, hold: { label: 'Hold the line', takes: 'unit' }, reboot: { label: 'Reboot', takes: 'unit' },
+  resonance: { label: 'Call her name', takes: 'unit' }, strike: { label: 'Orbital strike', takes: 'tile' }, sweep: { label: 'Sweep', takes: 'none' },
+  barrier: { label: 'Barrier', takes: 'tile' }, drone: { label: 'Drone', takes: 'unit' }, reinforce: { label: 'Reinforce', takes: 'tile' },
+}
 
 /** The act's words on the arc and the card. */
 function actWords(state: BattleState, a: Act): string {
@@ -102,6 +113,7 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
   const [terrain, setTerrain] = useState<TerrainCard | null>(null)
   const [dolls, setDolls] = useState<Doll[]>([])
   const [cutIn, setCutIn] = useState<CutInView | null>(null)
+  const [resonance, setResonance] = useState<{ unit: string; path: 'trust' | 'heart' | null; key: number } | null>(null)
   const [cutInSetting, setCutInSetting] = useState<CutInSetting>('auto')
   const [reachAll, setReachAll] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -156,6 +168,8 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
         if (tile) over.push({ tile, kind: 'attack' })
       }
     }
+    // Rules version 3: the orbital strike's marked tiles until it lands.
+    for (const t of s.v3?.strike?.tiles ?? []) over.push({ tile: t, kind: 'danger' })
     sc.setOverlay(over)
     sc.setFocus(s.active ? [s.active, ...(u.phase === 'forecast' && u.act.kind === 'attack' ? [u.act.target] : [])] : [])
   }
@@ -199,6 +213,8 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       else if (c.kind === 'faced') sc.face(c.unit, c.facing)
       else if (c.kind === 'terrain' || c.kind === 'door' || c.kind === 'heights' || c.kind === 'burst') sync(after)
       else if (c.kind === 'turned') sc.setHue(c.unit, SIDE_HUE[c.side])
+      else if (c.kind === 'resonance') { setResonance({ unit: c.unit, path: c.path, key: Math.random() }); window.setTimeout(() => setResonance(null), 2200) }
+      else if (c.kind === 'strikeMarked' || c.kind === 'duo' || c.kind === 'order') sync(after)
       const ms = stepMs(c) / speed
       if (ms) await wait(ms)
     }
@@ -241,7 +257,7 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       return
     }
     // The AI's turn: at double speed, or at once while skipping.
-    window.setTimeout(() => void commit(chooseTurn(session.current.state)), skipping.current ? 0 : 250)
+    window.setTimeout(() => void commit(chooseAction(session.current.state)), skipping.current ? 0 : 250)
   }
 
   const skip = () => {
@@ -298,7 +314,7 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       auto: async () => {
         controlRef.current = { squad: 'ai', enemy: 'ai' }
         while (!session.current.state.result) {
-          const r = applyAct(session.current, chooseTurn(session.current.state))
+          const r = applyAct(session.current, chooseAction(session.current.state))
           if ('error' in r) throw new Error(r.error)
           session.current = r.session
           onCommit(r.session)
@@ -350,6 +366,19 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
     }
     if (ui.phase === 'bench') {
       void commit({ kind: 'bench', unit: s.active!, role: ui.role, at: tile }).then((err) => { if (!err) setToast(null) })
+      return
+    }
+    if (ui.phase === 'order-target' && unit) {
+      void commit({ kind: 'order', unit: s.active!, order: ui.order, target: unit.id }).then((err) => { if (!err) { setToast(null); undo() } })
+      return
+    }
+    if (ui.phase === 'order-tile') {
+      const role = ui.order === 'reinforce' ? (s.input.bench ?? [])[0] : undefined
+      void commit({ kind: 'order', unit: s.active!, order: ui.order, at: tile, ...(role ? { role } : {}) }).then((err) => { if (!err) { setToast(null); undo() } })
+      return
+    }
+    if (ui.phase === 'duo' && unit) {
+      void commit({ kind: 'duo', unit: s.active!, target: unit.id }).then((err) => { if (!err) setToast(null) })
       return
     }
     if (unit) setInspect(unit.id)
@@ -435,6 +464,10 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       if (me.side === 'squad' && state.field && !state.field.benchUsed && (state.input.bench ?? []).length > 0) {
         for (const role of state.input.bench ?? []) arc.push(btn(`Call ${role}`, () => { show({ phase: 'bench', role }); setToast(`Tap a tile for the ${role}`) }, false, `bench-${role}`))
       }
+      const o = state.input.orders
+      const left = o && state.v3 ? Math.min(o.slots, 4) - state.v3.orders : 0
+      if (me.side === 'squad' && left > 0) arc.push(btn(`Orders ${left}`, () => show({ phase: 'orders' }), false, 'orders'))
+      if (me.side === 'squad' && (partnerOf(state, me.id)?.level ?? 0) >= 3) arc.push(btn('Duo', () => { show({ phase: 'duo' }); setToast('Tap the enemy both partners can reach') }, false, 'duo'))
     } else if (ui.phase === 'act' || ui.phase === 'target') {
       const targets = targetsFrom(state, me.id, ui.reach.to)
       if (targets.length > 0) arc.push(btn('Attack', () => show({ phase: 'target', reach: ui.reach, dash: ui.dash, aim: false }), ui.phase !== 'target'))
@@ -466,6 +499,19 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       arc.push(btn('Confirm', send, true))
       arc.push(btn('Undo', undo))
     } else if (ui.phase === 'bench') arc.push(btn('Cancel call', undo))
+    else if (ui.phase === 'orders') {
+      for (const kind of state.input.orders?.kinds ?? []) {
+        const words = ORDER[kind]
+        // An Order that takes nothing is checked now; one that takes a unit or a tile is checked on the tap.
+        const blocked = words.takes === 'none' ? orderError(state, { kind: 'order', unit: me.id, order: kind }) : null
+        if (blocked) continue
+        arc.push(btn(words.label, () => {
+          if (words.takes === 'none') void commit({ kind: 'order', unit: me.id, order: kind }).then((err) => { if (!err) undo() })
+          else { show({ phase: words.takes === 'unit' ? 'order-target' : 'order-tile', order: kind }); setToast(words.takes === 'unit' ? `Tap the Uma or enemy for ${words.label}` : `Tap a tile for ${words.label}`) }
+        }, false, `order-${kind}`))
+      }
+      arc.push(btn('Back', undo))
+    } else if (ui.phase === 'order-target' || ui.phase === 'order-tile' || ui.phase === 'duo') arc.push(btn('Cancel', () => { setToast(null); undo() }))
   }
 
   const timelineIds = timeline(state)
@@ -475,6 +521,15 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
     <div className="absolute inset-0 select-none overflow-hidden">
       <canvas ref={canvas} className="block h-full w-full" style={{ touchAction: 'none' }} onPointerDown={down} onPointerMove={move} onPointerUp={up}
         onPointerCancel={() => { scene.current?.pointerCancel(); press.current = null }} />
+      {resonance && (
+        <div key={resonance.key} data-resonance={resonance.unit} className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center">
+          <div className={`rounded-2xl px-8 py-5 text-center font-display shadow-2xl ring-2 ${resonance.path === 'heart' ? 'bg-[#ff3dc8]/85 ring-[#ffb3ec]' : 'bg-[#2ee6ff]/85 ring-[#b3f5ff]'} text-[#0b0d17]`}>
+            <div className="text-[13px] uppercase tracking-[0.3em]">Resonance</div>
+            <div className="text-[30px] font-bold">{labelOf(state, resonance.unit)}</div>
+            <div className="text-[16px] font-semibold">{resonance.path === 'heart' ? 'Devotion' : 'Resolve'}</div>
+          </div>
+        </div>
+      )}
       <div className="pointer-events-none absolute inset-x-0 flex justify-center" style={{ top: 'calc(var(--inset-top) + 6px)' }}>
         <Timeline state={state} ids={timelineIds} ghost={ghost} onInspect={setInspect} />
       </div>

@@ -106,6 +106,21 @@ export const TUNING = {
   bench: { strike: 15, mortar: 10, drop: 15 },
   /** The Steel Muster (WD11): the volley meter's size and pinning fire's hit % off. */
   muster: { volleyFull: 6, pinPenalty: 10 },
+  /** Rules version 3 (CY17): the bond perks' ranks (TC58), the Orders (TC59), the ship's support and passives (TC64),
+   * the meals and the partners. Every number here, tuned by the simulator's balance pass. */
+  bond: { ready: 3, answer: 5, sure: 7, endure: 8, steadfast: 9, resonance: 10, surePct: 5 },
+  orders: { maxSlots: 4, rebootCorePct: 25, droneMend: 15, resonanceCharge: 5 },
+  strike: { base: 14, perLevel: 6, perBand: 2, size: 1 },
+  /** The Shield Projector: a shield on each squad unit at the start, absorbing this much (more a level). Ally Auto takes
+   * a Sure shot only on an attack below `autoSureBelow` % to hit. */
+  shield: { absorb: 4, perLevel: 2 },
+  autoSureBelow: 40,
+  engines: { clockPct: 10 },
+  meals: {
+    noodles: { hit: 5 }, stew: { coreHpPct: 10 }, skewers: { melee: 1 }, curry: { charge: 1 }, salad: { skills: 5 }, feast: { hit: 5, charge: 1 },
+  } as Record<string, { hit?: number; coreHpPct?: number; melee?: number; charge?: number; skills?: number }>,
+  /** The duo technique: each partner's strike gains this much damage, and the pair's effect by their roles. */
+  duo: { damagePct: 30, mend: 12, charge: 1 },
 } as const
 
 /** A master-data stat at 5★ to its band (TC4). */

@@ -116,9 +116,9 @@ visit.
 | Rigs | Drone Bay | 50 | 2 | — | Unlocks the Drone Bay |
 | Rigs | Long-Range Engines | 50 | 2 | — | Unlocks the Engines (farther worlds) |
 | Rigs | Systems Refit | 80 | 3 | — | Level 3 for the battle systems |
-| Tactics | Coordinated Fire | 40 | 2 | — | A new Order for the captain (CY17) |
-| Tactics | Field Repairs | 50 | 2 | Coordinated Fire | A new Order for the captain (CY17) |
-| Tactics | Ship Uplink | 70 | 3 | Field Repairs | A new Order for the captain (CY17) |
+| Tactics | Coordinated Fire | 40 | 2 | — | Partners can reach level 3 and their duo technique |
+| Tactics | Field Repairs | 50 | 2 | Coordinated Fire | The Reboot Order without a level 2 Med Bay |
+| Tactics | Ship Uplink | 70 | 3 | Field Repairs | One more Order a battle, to four |
 | Quarters | Private Cabins | 50 | 2 | — | Quarters level 3: a cabin for everyone |
 | Quarters | Med Bay | 30 | 1 | — | Unlocks the Med Bay |
 | Quarters | Observation Deck | 30 | 1 | — | Unlocks the Observation Deck |

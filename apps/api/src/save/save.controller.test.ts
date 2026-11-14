@@ -23,7 +23,7 @@ describe('PUT /api/save', () => {
     const put = vi.fn(async (_uid: string, revision: number, save: Save) => ({ revision: revision + 1, save }))
     const { repo, controller } = fake(put)
     await expect(controller.put('u', upload())).resolves.toMatchObject({ revision: 4 })
-    expect(put).toHaveBeenCalledWith('u', 3, upload().save, 8)
+    expect(put).toHaveBeenCalledWith('u', 3, upload().save, 9)
     expect(repo.rescue).not.toHaveBeenCalled()
   })
 

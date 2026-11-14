@@ -3,7 +3,7 @@
 // rooms), and the mission's steps: briefing → deploy → battle → results → aboard. Every function returns a new save.
 import type { BattleInput } from '@cyber/battle'
 import {
-  addDeck, addItem, afterMission as crewAfterMission, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
+  addCamaraderie, addDeck, addItem, afterMission as crewAfterMission, PARTNER_TUNING, settlePartners, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
   drawEvent, GENERIC_EVENTS, runDuties, setAnomaly, setFlag, shipCapabilities, type Chapter, type DutyInfo, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
 import { afterBattleBonds, giveRapport } from '../bonds/bonds'
@@ -195,7 +195,7 @@ export const retry = (save: Save): Save => (save.mission?.battle ? withMission(s
  * Umas aboard who fought take the battle's rapport and send a message (CY13), a watch passes; then a win counts the
  * mission and goes aboard (its next scene) and a loss ends the mission. */
 export function closeResults(save: Save, pack: StoryPack | null = null, rapport: ReadonlyMap<number, number> | null = null, lights: ((outfit: number) => number) | null = null,
-  info: ((outfit: number) => DutyInfo | null) | null = null): Save {
+  info: ((outfit: number) => DutyInfo | null) | null = null, camaraderie: ReadonlyMap<string, number> | null = null): Save {
   const m = save.mission
   if (!m) return save
   const input = (m.battle?.input ?? null) as BattleInput | null
@@ -203,7 +203,10 @@ export function closeResults(save: Save, pack: StoryPack | null = null, rapport:
   const crew = crewAfterMission(save.crew, m.squad, rewards(input, !!m.won).xp, lights ? (x) => restedStrain(x.strain, lights(x.outfit)) : undefined)
   // The results pay into the wallet (CY15): credits, salvage as Alloy, and Data.
   const r = rewards(input, !!m.won)
-  const bonded = afterBattleBonds(passAWatch({ ...save, crew, wallet: earn(save.wallet, resultsPay(r.credits, r.salvage, !!m.won)) }, pack, { info: info ?? undefined, deployed: m.squad }), pack, rapport)
+  const watched = passAWatch({ ...save, crew, wallet: earn(save.wallet, resultsPay(r.credits, r.salvage, !!m.won)) }, pack, { info: info ?? undefined, deployed: m.squad })
+  // Camaraderie from the battle (CY17), and partners levelled to it.
+  const cam = camaraderie ? addCamaraderie(watched.camaraderie, camaraderie) : watched.camaraderie
+  const bonded = afterBattleBonds({ ...watched, camaraderie: cam, partners: settlePartners(watched.partners, cam, watched.ship.research.done.includes(PARTNER_TUNING.level3)) }, pack, rapport)
   if (!m.won) return { ...bonded, mission: null }
   const first = !save.worlds.missions.includes(m.id)
   const missions = first ? [...save.worlds.missions, m.id] : save.worlds.missions

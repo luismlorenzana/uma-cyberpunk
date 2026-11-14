@@ -1,13 +1,13 @@
 // The mission flow at /mission (CY10, TC32, TC42): briefing → deploy → battle → results → aboard, each step held in the
 // save, so after iOS closes the app it reopens where it was (a battle replays its actions to the same state). The battle
 // is CY8's screen, unchanged. Landscape, on the turned stage, loaded on demand.
-import type { BattleAction, BattleInput } from '@cyber/battle'
-import { installedSystems, ITEMS_BY_ID, loadoutOf, missionItem, MODULES_BY_ID, newMember, pipsOf, reactorPips, ROLE_NAME, type Save, type StoryPack } from '@cyber/domain'
+import type { Band, BattleAction, BattleInput } from '@cyber/battle'
+import { BOND_PERKS, installedSystems, ITEMS_BY_ID, MEALS, postKind, POSTS, sortieOrders, type PostKind, loadoutOf, missionItem, MODULES_BY_ID, newMember, pipsOf, reactorPips, ROLE_NAME, type Save, type StoryPack } from '@cyber/domain'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { BattleView } from '../battle/BattleView'
-import { battleRapport } from '../bonds/battleRapport'
+import { battleCamaraderie, battleRapport } from '../bonds/battleRapport'
 import { ItemIcon } from '../cabins/art'
 import { lightsFrom } from '../cabins/cabins'
 import { togglePower } from '../ship/build'
@@ -18,7 +18,7 @@ import { crewViews, infoFrom, memberView, type CrewView } from '../crew/view'
 import { updateSave, useGame } from '../save/game'
 import { outfitName, useStory } from '../ship/useStory'
 import { ScenePlayer } from '../story/ScenePlayer'
-import { missionInput, SCENARIOS } from './battleInput'
+import { lifeAboardInput, missionInput, SCENARIOS } from './battleInput'
 import {
   afterMission, applyStep, cantDeploy, chapterOf, closeResults, deploy, finishBattle, finishMission, lockedMembers, markSeen, recordAction, retry, rewards, sceneSquad,
   setSquad, toDeploy,
@@ -73,9 +73,10 @@ function Mission({ layout }: { layout: StageLayout }) {
     if (!SCENARIOS[scenario]) return
     const units = squad.map((v) => ({ outfit: v.outfit, label: v.name, bands: v.bands, loadout: loadoutOf(v.rig), stride: v.stride }))
     const base = missionInput(scenario, units, bench.map((v) => v.role), `${mission.id}:1`)
-    // The powered systems go into the frozen input (CY15); rules version 3 plays them (CY17).
-    // The cook's meal goes in too, eaten (CY16).
-    void updateSave((s) => ({ ...deploy(setSquad(s, squad.map((v) => v.outfit)), { ...base, ...(s.ship.powered.length ? { systems: [...s.ship.powered] } : {}), ...(s.meal ? { meal: s.meal } : {}) }), meal: null }))
+    // Rules version 3 (CY17): bonds, partners, Orders, the powered systems and the meal (eaten) go into the frozen input.
+    const all = [...squad, ...bench]
+    const bandOfPost = (post: PostKind) => { const h = all.find((v) => v.member.post && postKind(v.member.post) === post); return h ? Math.max(...POSTS[post].bands.map((b) => h.bands[b])) as Band : null }
+    void updateSave((s) => ({ ...deploy(setSquad(s, squad.map((v) => v.outfit)), lifeAboardInput(base, s, bandOfPost)), meal: null }))
   }} />)
 
   if (m.step === 'battle' && m.battle) return <MissionBattle layout={layout} input={m.battle.input as BattleInput} actions={m.battle.actions as BattleAction[]} />
@@ -100,7 +101,8 @@ function Mission({ layout }: { layout: StageLayout }) {
           <button type="button" className={won ? primary : secondary} onClick={() => {
             const rapport = m.battle ? battleRapport(m.battle.input as BattleInput, m.battle.actions as BattleAction[]) : null
             const views = crewViews(save, pack, infoFrom(master.status === 'ready' ? master.view.info : null), (o) => outfitName(pack, o))
-            void updateSave((s) => closeResults(s, pack, rapport, lightsFrom(pack, views), dutyInfoFrom(views))).then(() => { if (!won) void navigate('/') })
+            const cam = m.battle ? battleCamaraderie(m.battle.input as BattleInput, m.battle.actions as BattleAction[]) : null
+            void updateSave((s) => closeResults(s, pack, rapport, lightsFrom(pack, views), dutyInfoFrom(views), cam)).then(() => { if (!won) void navigate('/') })
           }}>{won ? 'Continue' : 'Back to the ship'}</button>
         </div>
       </div>,
@@ -169,6 +171,7 @@ function Deploy({ pack, squad, locked, fixed, onDeploy }: { pack: StoryPack; squ
         })}
       </div>
       <PowerPanel save={save} />
+      <LifeAboardSummary save={save} chosen={chosen} />
       {blocked.length > 0 && <div data-deploy-blocked className="mt-3 rounded-md bg-[#ff3d6e]/15 p-2 text-[13px] text-[#ffb3c6]">{blocked.map((b) => <div key={b.v.outfit}>{b.v.name}: {b.why}</div>)}</div>}
       <div className="mt-3 flex gap-2">
         <button type="button" disabled={blocked.length > 0} className={`${primary} disabled:opacity-40`}
@@ -221,3 +224,20 @@ function PowerPanel({ save }: { save: Save }) {
     </div>
   )
 }
+
+/** What life aboard brings to this battle (CY17): each chosen Uma's bond perks, partners in the squad, the Orders, the meal. */
+function LifeAboardSummary({ save, chosen }: { save: Save; chosen: readonly number[] }) {
+  const pack = useStory()
+  const perks = chosen.map((o) => { const m = save.crew.find((c) => c.outfit === o); const got = m ? BOND_PERKS.filter((p) => p.rank <= m.bond.rank && p.rank < 10).map((p) => p.name) : []; return got.length ? `${outfitName(pack, o)}: ${got.join(', ')}` : null }).filter(Boolean)
+  const pairs = save.partners.filter((p) => chosen.includes(p.a) && chosen.includes(p.b)).map((p) => `${outfitName(pack, p.a)} & ${outfitName(pack, p.b)} (level ${p.level})`)
+  const orders = sortieOrders(save.ship, false)
+  return (
+    <div data-life-aboard className="mt-2 rounded-md bg-white/5 p-2 text-[12px] text-white/70">
+      <div><b className="text-white/90">Orders:</b> {orders.slots} this battle</div>
+      {perks.length > 0 && <div><b className="text-white/90">Bond perks:</b> {perks.join(' · ')}</div>}
+      {pairs.length > 0 && <div><b className="text-white/90">Partners:</b> {pairs.join(' · ')}</div>}
+      {save.meal && <div><b className="text-white/90">Meal:</b> {MEALS[save.meal].name}: {MEALS[save.meal].does}</div>}
+    </div>
+  )
+}
+

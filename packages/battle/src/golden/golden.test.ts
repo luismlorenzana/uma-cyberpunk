@@ -8,6 +8,7 @@ import { applyBattleAction, battleStateHash, replayBattle, startBattle } from '.
 import type { BattleAction, BattleInput, Cue } from '../types'
 import { GOLDEN } from './battles'
 import { GOLDEN2, resetPlans, type Golden2 } from './battles2'
+import { GOLDEN3, resetPlans3 } from './battles3'
 import { greedyTurn } from './policy'
 
 interface GoldenFile { name: string; input: BattleInput; actions: BattleAction[]; cues: Cue[][]; result: unknown; hash: string }
@@ -17,6 +18,7 @@ const file = (name: string) => join(__dirname, `${name}.json`)
 
 function record(name: string, input: BattleInput, plan?: Golden2['plan']): GoldenFile {
   resetPlans()
+  resetPlans3()
   const start = startBattle(input)
   let state = start.state
   const actions: BattleAction[] = [], cues: Cue[][] = [start.cues]
@@ -39,6 +41,7 @@ describe('golden replays', () => {
   const all: [string, BattleInput, Golden2 | null][] = [
     ...Object.entries(GOLDEN).map(([n, i]): [string, BattleInput, null] => [n, i, null]),
     ...Object.entries(GOLDEN2).map(([n, g]): [string, BattleInput, Golden2] => [n, g.input, g]),
+    ...Object.entries(GOLDEN3).map(([n, g]): [string, BattleInput, Golden2] => [n, g.input, g]),
   ]
   it('has a version-2 battle for every rule CY5 names', () => {
     expect(Object.keys(GOLDEN2).length).toBeGreaterThanOrEqual(9)

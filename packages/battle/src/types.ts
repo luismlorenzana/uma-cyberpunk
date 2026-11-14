@@ -147,7 +147,19 @@ export interface UnitInput {
   /** Hardware that never moves: a turret. */
   fixed?: boolean
   faction?: Faction
+  // --- Rules version 3 (CY17) ---
+  /** Her bond with the captain: the rules read only the rank's perks (TC58). */
+  bond?: { rank: number; path: 'trust' | 'heart' | null }
+  /** Her partner in this battle and the pair's level (TC58). */
+  partner?: { unit: string; level: 1 | 2 | 3 }
 }
+
+/** The captain's Orders (TC59) and the ship's support, one kind each. */
+export type OrderKind = 'sure' | 'hold' | 'reboot' | 'resonance' | 'strike' | 'sweep' | 'barrier' | 'drone' | 'reinforce'
+export type SystemKind = 'battery' | 'sensors' | 'shield' | 'drones' | 'engines'
+/** A powered battle system: its level and its post holder's band (rules version 3; CY15 recorded bare ids, read as level 1). */
+export interface SystemInput { id: SystemKind; level: number; band: Band }
+export type MealKind = 'noodles' | 'stew' | 'skewers' | 'curry' | 'salad' | 'feast'
 
 export type Objective =
   | { kind: 'defeatAll' }
@@ -173,11 +185,13 @@ export interface BattleInput {
   bench?: readonly Role[]
   /** Factions whose mechanics are on. */
   factions?: readonly Faction[]
-  // --- Rules version 3 (CY17) ---
-  /** The ship's battle systems powered for this sortie (CY15 records them; rules version 3 plays them). */
-  systems?: readonly string[]
-  /** The cook's meal for this battle (CY16 records it; rules version 3 plays it). */
+  // --- Rules version 3 (CY17); below version 3 they're ignored ---
+  /** The ship's battle systems powered for this sortie (CY15 recorded bare ids). */
+  systems?: readonly (string | SystemInput)[]
+  /** The cook's meal for this battle (CY16). */
   meal?: string
+  /** The captain's Orders this battle: how many, and which kinds. */
+  orders?: { slots: number; kinds: readonly OrderKind[] }
 }
 
 // --- The state ------------------------------------------------------------------------------------------------------
@@ -273,6 +287,27 @@ export interface BattleState {
   result: BattleResult | null
   /** Rules version 2 only. */
   field?: FieldState
+  /** Rules version 3 only. */
+  v3?: V3State
+}
+
+/** Rules version 3's battle state (CY17): Orders spent, the once-a-battle perks used, the marked strike, the sure shot,
+ * Resonance and the partners' free joins and covers. */
+export interface V3State {
+  orders: number
+  resonance: boolean
+  resonating: string | null
+  sure: string | null
+  strike: { tiles: Tile[]; at: number; damage: number } | null
+  sweep: boolean
+  endured: string[]
+  steadfast: string[]
+  joined: string[]
+  covered: string[]
+  /** Partners whose next turn a duo technique used up. */
+  spent: string[]
+  /** The Shield Projector's shield on each squad unit: damage it still absorbs. */
+  shields: Record<string, number>
 }
 
 // --- Actions --------------------------------------------------------------------------------------------------------
@@ -320,11 +355,29 @@ export interface BenchAction {
   at: Tile
 }
 
-export type BattleAction = TurnAction | LinkAction | BenchAction
+/** An Order (TC59, rules version 3): a free action on a squad unit's turn, from the battle's slots. */
+export interface OrderAction {
+  kind: 'order'
+  unit: string
+  order: OrderKind
+  target?: string
+  at?: Tile
+  /** For a reinforcement: the resting Uma's role. */
+  role?: Role
+}
+
+/** A duo technique (TC58, rules version 3): partners at level 3 both strike; it takes this turn and the partner's next. */
+export interface DuoAction {
+  kind: 'duo'
+  unit: string
+  target: string
+}
+
+export type BattleAction = TurnAction | LinkAction | BenchAction | OrderAction | DuoAction
 
 // --- Cues: what the board and the cut-in play; the scene decides nothing ----------------------------------------------
 
-export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam'
+export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo'
 export type AttackRole = 'main' | 'crossfire' | 'counter'
 
 export type Cue =
@@ -358,7 +411,7 @@ export type Cue =
   | { kind: 'lights'; out: boolean }
   | { kind: 'tech'; unit: string; target: string; tech: TechKind; landed: boolean }
   | { kind: 'stunned'; unit: string }
-  | { kind: 'skipped'; unit: string; why: 'stunned' | 'idle' }
+  | { kind: 'skipped'; unit: string; why: 'stunned' | 'idle' | 'duo' }
   | { kind: 'holdHit'; unit: string; target: string; amount: number; broke: boolean }
   | { kind: 'freed'; unit: string; by: 'hold' | 'jackout' }
   | { kind: 'barrier'; unit: string; id: string; at: Tile }
@@ -374,6 +427,17 @@ export type Cue =
   | { kind: 'pinned'; unit: string }
   | { kind: 'volleySignal'; tiles: Tile[]; at: number }
   | { kind: 'volley'; tiles: Tile[] }
+  // Rules version 3 (CY17):
+  | { kind: 'order'; unit: string; order: OrderKind; target?: string; at?: Tile }
+  | { kind: 'resonance'; unit: string; path: 'trust' | 'heart' | null }
+  | { kind: 'strikeMarked'; tiles: Tile[]; at: number }
+  | { kind: 'endure'; unit: string }
+  | { kind: 'freeJoin'; unit: string; why: 'partner' | 'resonance' }
+  | { kind: 'freeCover'; unit: string; why: 'steadfast' | 'partner' }
+  | { kind: 'duo'; unit: string; partner: string; target: string; tech: string }
+  | { kind: 'sweep'; unit: string }
+  | { kind: 'drone'; unit: string; target: string; part: PartId; hp: number }
+  | { kind: 'shielded'; unit: string; absorbed: number; left: number }
 
 export interface ActionResult {
   state: BattleState

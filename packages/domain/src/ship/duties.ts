@@ -121,9 +121,9 @@ export function likedDuty(bands: Bands): PostKind {
 
 export type Meal = 'noodles' | 'stew' | 'skewers' | 'curry' | 'salad' | 'feast'
 export const MEALS: Readonly<Record<Meal, { name: string; does: string }>> = {
-  noodles: { name: 'Night-market noodles', does: '+1 Move on the first turn' }, stew: { name: 'Hull-heater stew', does: '+10% Core HP' },
-  skewers: { name: 'Neon skewers', does: '+5% melee damage' }, curry: { name: 'Docker’s curry', does: '+1 Charge at the start' },
-  salad: { name: 'Hydroponic salad', does: '+5% hit' }, feast: { name: 'Captain’s feast', does: 'Two of the above' },
+  noodles: { name: 'Night-market noodles', does: '+5% hit' }, stew: { name: 'Hull-heater stew', does: '+10% Core HP' },
+  skewers: { name: 'Neon skewers', does: '+1 melee damage' }, curry: { name: 'Docker’s curry', does: '+1 Charge at the start' },
+  salad: { name: 'Hydroponic salad', does: 'Chance skills +5%' }, feast: { name: 'Captain’s feast', does: '+5% hit and +1 Charge at the start' },
 }
 /** The cook's dish, by her best band; a feast at band 5. */
 export function mealOf(bands: Bands): Meal {

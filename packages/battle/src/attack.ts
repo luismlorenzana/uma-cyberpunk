@@ -11,7 +11,8 @@ import { dirTo, distance, facingOf, inReach, pincerTile, sameTile } from './sigh
 import { boardOf, cross, lightsOut, setState, type Board } from './terrain'
 import { inputOf, rateOf, ticksToTurn } from './timeline'
 import { TUNING } from './tuning'
-import type { AimAt, AttackRole, BattleState, ChanceSkill, Cue, Facing, Mount, PartId, Prop, Tile, UnitState, Weapon } from './types'
+import { freeCover, freeJoin, mealOf, rankOf, useFreeCover } from './v3'
+import type { V3State, AimAt, AttackRole, BattleState, ChanceSkill, Cue, Facing, Mount, PartId, Prop, Tile, UnitState, Weapon } from './types'
 import { PARTS } from './types'
 
 export { spendCharge, tileOf, unitById }
@@ -96,12 +97,15 @@ export function strikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 
   const to = tileOf(target)
   const facing = opts.facing ?? facingOf(to, target.facing, from)
   const accuracy = arm.halfAccuracy ? Math.floor((weapon.accuracy * TUNING.oneArmTwoHandedPct) / 100) : weapon.accuracy
-  const hit = clamp(accuracy + TUNING.witAccuracy * aIn.bands.wit - evasionOf(tIn, target) - (opts.aim ? TUNING.aimPenalty : 0) - rangedPenalty(state, board, attacker, weapon.band, from, to, facing),
+  const meal = attacker.side === 'squad' ? mealOf(state) : null
+  const rolled = clamp(accuracy + TUNING.witAccuracy * aIn.bands.wit + (meal?.hit ?? 0) - evasionOf(tIn, target) - (opts.aim ? TUNING.aimPenalty : 0) - rangedPenalty(state, board, attacker, weapon.band, from, to, facing),
     TUNING.hitClamp[0], TUNING.hitClamp[1])
+  // Rules version 3: Sure shot can't miss.
+  const hit = (state as { v3?: V3State }).v3?.sure === attackerId ? 100 : rolled
   const guard = facing === 'back' ? 0 : guardOf(tIn, target)
   const numbers = {
     power: weapon.power,
-    meleeBonus: weapon.band === 'melee' ? TUNING.meleePowerPerBand * aIn.bands.power : 0,
+    meleeBonus: weapon.band === 'melee' ? TUNING.meleePowerPerBand * aIn.bands.power + (meal?.melee ?? 0) : 0,
     facing,
     heightDiff: board.height(from[0], from[1]) - board.height(target.x, target.y),
     coat: tIn.loadout.coat === weapon.type,
@@ -162,7 +166,9 @@ export function skillChance(state: Pick<BattleState, 'input'>, unitId: string, s
   const input = inputOf(state, unitId)
   const base = input.skills?.[skill]
   if (base === undefined) return 0
-  return Math.min(TUNING.skills.cap, base + TUNING.skills.perWit * input.bands.wit)
+  // Rules version 3: Sure (bond rank 7) and a meal add to every chance skill.
+  const v3bonus = (rankOf(state, unitId) >= TUNING.bond.sure ? TUNING.bond.surePct : 0) + (input.side === 'squad' ? mealOf(state)?.skills ?? 0 : 0)
+  return Math.min(TUNING.skills.cap, base + TUNING.skills.perWit * input.bands.wit + v3bonus)
 }
 
 const fires = (state: BattleState, unitId: string, skill: ChanceSkill): boolean => {
@@ -194,11 +200,12 @@ export function timelineOrder(state: Pick<BattleState, 'input' | 'units' | 'turn
 
 /** Who covers a target against an attack from `facing`: when her own shield doesn't guard it, the first adjacent ally in
  * timeline order with a whole shield arm, her link on and the Charge (TC21). */
-export function coverFor(state: Pick<BattleState, 'input' | 'units' | 'turn'>, targetId: string, facing: Facing): string | null {
+export function coverFor(state: Pick<BattleState, 'input' | 'units' | 'turn'> & { v3?: V3State }, targetId: string, facing: Facing): string | null {
   const target = unitById(state, targetId)
   if (facing !== 'back' && guardOf(inputOf(state, targetId), target) > 0) return null
+  // Rules version 3: Steadfast (bond rank 9) and a level-2 partner cover once a battle with no Charge.
   const ids = state.units.filter((u) => u.side === target.side && u.id !== targetId && u.status === 'active' && u.link
-    && u.charge >= TUNING.charge.cover && distance(tileOf(u), tileOf(target)) === 1 && guardOf(inputOf(state, u.id), u) > 0).map((u) => u.id)
+    && (u.charge >= TUNING.charge.cover || freeCover(state, u.id, targetId)) && distance(tileOf(u), tileOf(target)) === 1 && guardOf(inputOf(state, u.id), u) > 0).map((u) => u.id)
   return timelineOrder(state, ids)[0] ?? null
 }
 
@@ -207,12 +214,16 @@ export interface Joiner { unit: string; mount: Mount; how: 'pincer' | 'link' }
 /** Who joins an attack from `from` on a target (TC21): up to two of the attacker's allies, in timeline order, with their
  * link on and the Charge, standing on the target's far side with a Melee or Short weapon in reach (a pincer) or with a
  * Short or Long weapon in reach and a line of fire (a link). */
-export function crossfireFor(state: Pick<BattleState, 'input' | 'units' | 'turn' | 'field'>, attackerId: string, from: Tile, targetId: string): Joiner[] {
+export function crossfireFor(state: Pick<BattleState, 'input' | 'units' | 'turn' | 'field'> & { v3?: V3State }, attackerId: string, from: Tile, targetId: string): Joiner[] {
   const attacker = unitById(state, attackerId), target = unitById(state, targetId)
   const far = pincerTile(tileOf(target), from)
   const found = new Map<string, Joiner>()
+  const resonating = state.v3?.resonating === attackerId
   for (const u of state.units) {
-    if (u.side !== attacker.side || u.id === attackerId || u.status !== 'active' || !u.link || u.charge < TUNING.charge.crossfire) continue
+    // Rules version 3: during Resonance every Linked ally in reach joins free; a partner joins once free, link or not.
+    const free = freeJoin(state, attackerId, u.id)
+    if (u.side !== attacker.side || u.id === attackerId || u.status !== 'active') continue
+    if (free !== 'partner' && (!u.link || (u.charge < TUNING.charge.crossfire && !free))) continue
     const at = tileOf(u)
     const pincer = sameTile(at, far) ? mountFor(state, u.id, at, targetId, ['melee', 'short']) : null
     if (pincer) found.set(u.id, { unit: u.id, mount: pincer, how: 'pincer' })
@@ -221,7 +232,7 @@ export function crossfireFor(state: Pick<BattleState, 'input' | 'units' | 'turn'
       if (link) found.set(u.id, { unit: u.id, mount: link, how: 'link' })
     }
   }
-  return timelineOrder(state, [...found.keys()]).slice(0, TUNING.crossfireMax).map((id) => found.get(id)!)
+  return timelineOrder(state, [...found.keys()]).slice(0, resonating ? found.size : TUNING.crossfireMax).map((id) => found.get(id)!)
 }
 
 /** The counter a defender would answer with (TC21): she stands, has the Charge, isn't reloading, the attack came from her
@@ -385,17 +396,23 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
   }
   cues.push(attackCue(strike, 'main', coverer ?? targetId))
   if (coverer) {
-    spendCharge(unitById(state, coverer), TUNING.charge.cover, 'cover', cues)
+    const free = unitById(state, coverer).charge < TUNING.charge.cover || rankOf(state, coverer) >= TUNING.bond.steadfast ? freeCover(state, coverer, targetId) : null
+    if (free) useFreeCover(state, coverer, free, cues)
+    else spendCharge(unitById(state, coverer), TUNING.charge.cover, 'cover', cues)
     cues.push({ kind: 'cover', unit: coverer, for: targetId, attacker: attackerId })
   }
   const hits = resolveStrike(state, strike, 'main', cues)
+  // The sure shot is spent on this attack.
+  if (state.v3?.sure === attackerId) state.v3.sure = null
   afterMusterAttack(state, attackerId, strike.weapon.band, cues)
   if (v2(state) && !coverer && !burst && target.status === 'active') chain(state, attackerId, mount, targetId, from, aim, hits, cues)
   if (target.status === 'active') {
     for (const j of crossfireFor(state, attackerId, from, targetId)) {
       if (target.status !== 'active') break
       const u = unitById(state, j.unit)
-      spendCharge(u, TUNING.charge.crossfire, 'crossfire', cues)
+      const free = freeJoin(state, attackerId, j.unit)
+      if (free) { if (free === 'partner') state.v3!.joined.push(j.unit); cues.push({ kind: 'freeJoin', unit: j.unit, why: free }) }
+      else spendCharge(u, TUNING.charge.crossfire, 'crossfire', cues)
       cues.push({ kind: 'crossfire', unit: j.unit, target: targetId, how: j.how })
       const s = strikeOf(state, j.unit, j.mount, targetId, tileOf(u))!
       s.hits = Math.min(s.hits, TUNING.crossfireRounds)

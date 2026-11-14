@@ -5,5 +5,7 @@
 // - **2** (CY5): terrain and props, terminals, Tech and the Holds, the Back units' actions, chance skills, items, Stride,
 //   the bench support call, three more objectives and the Steel Muster, plus an impact hit on the Core that can Stun,
 //   cover tiles' bonus and grating's current. A version-1 battle plays exactly as CY4's did.
-export const RULES_VERSION = 2
-export const SUPPORTED_VERSIONS: readonly number[] = [1, 2]
+// - **3** (CY17): life aboard in battle: the bond perks and Resonance, the captain's Orders and the ship's support, the
+//   powered systems' passives, the meals, partners and their duo technique. A version-2 battle plays exactly as before.
+export const RULES_VERSION = 3
+export const SUPPORTED_VERSIONS: readonly number[] = [1, 2, 3]

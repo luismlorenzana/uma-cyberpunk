@@ -3,6 +3,7 @@
 import { inputOf } from './timeline'
 import { TUNING } from './tuning'
 import type { BattleState, ChargeWhy, Cue, PartId, Tile, UnitState } from './types'
+import { answer, endure, shielded } from './v3'
 
 export const unitById = (state: Pick<BattleState, 'units'>, id: string): UnitState => state.units.find((u) => u.id === id)!
 export const tileOf = (u: Pick<UnitState, 'x' | 'y'>): Tile => [u.x, u.y]
@@ -11,6 +12,8 @@ export const v2 = (state: Pick<BattleState, 'input'>): boolean => state.input.ru
 /** Damage to a part: the cue `say` makes comes first (with whether the part broke), then Hold on, the broken part and
  * Rig Break. A Core-breaking hit leaves a Guts 4+ unit at Core 1, once a battle. */
 export function harm(state: BattleState, target: UnitState, part: PartId, amount: number, cues: Cue[], say: (broke: boolean) => Cue): void {
+  // Rules version 3: the Shield Projector's shield takes it first.
+  if (state.v3) amount = shielded(state, target, amount, cues)
   const before = target.hp[part]
   let after = Math.max(0, before - amount)
   let held = false
@@ -19,6 +22,8 @@ export function harm(state: BattleState, target: UnitState, part: PartId, amount
     target.holdOnUsed = true
     held = true
   }
+  // Rules version 3: Endure (bond rank 8), a second use once a battle, never on the hit Hold on just caught.
+  if (part === 'core' && before > 0 && state.v3) after = endure(state, target, after, held, cues)
   target.hp[part] = after
   const broke = before > 0 && after === 0
   cues.push(say(broke))
@@ -29,6 +34,7 @@ export function harm(state: BattleState, target: UnitState, part: PartId, amount
       target.status = 'down'
       delete target.stunned
       cues.push({ kind: 'rigBreak', unit: target.id })
+      if (state.v3) answer(state, target, cues)
     }
   }
 }

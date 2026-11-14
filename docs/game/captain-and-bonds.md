@@ -3,7 +3,7 @@
 > **Status: 2026-11-13, CY13 (D22).** The player as the ship's captain (TC55), the watch every life-aboard budget counts
 > by, and a bond with every Uma from rank 1 to 10 (TC56, TC57): rapport from battles, messages and bond scenes, the
 > story's gates, the catch-up, and the Trust or Heart choice at rank 8. Cabins and visits came with CY14 ([cabins.md](cabins.md)); the bonds' perks
-> play in battle with rules version 3 (CY17). The design is [life-aboard.md](../design/life-aboard.md).
+> play in battle with rules version 3 since CY17 ([battle.md](battle.md#rules-version-3-life-aboard-in-battle-cy17)), where the captain calls a rank-10 Uma's name for Resonance, and partners fight as a pair. The design is [life-aboard.md](../design/life-aboard.md).
 
 ## The short answer
 
@@ -100,11 +100,11 @@ for Heart. **Her epilogue card** (the bond file's `epilogue`) appears in the Log
 ## Her profile and the Log
 
 - **The bond panel** on her profile: the ring, the rank and path, the rapport toward the next rank (or the key it waits
-  on), the perks of each rank (lit as reached; played in battle from CY17), and her ready scene.
+  on), the perks of each rank (lit as reached; played in battle since CY17), her partner and her camaraderie with each Uma aboard, and her ready scene.
 - **The roster** shows each Uma's rank (♦) and a **!** when a scene is ready.
 - **The Log's Bonds tab** lists the bond scenes each Uma has played, to replay, and her epilogue card at rank 10.
 
-| Rank | Perk (played from CY17) |
+| Rank | Perk (played since CY17) |
 |---|---|
 | 3 | **Ready:** starts each battle with +1 Charge |
 | 5 | **Answer:** 1 Charge when an ally next to her suffers a Rig Break |

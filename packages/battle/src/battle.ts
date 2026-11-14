@@ -2,8 +2,8 @@
 // frozen input plus a list of actions: `applyBattleAction` returns the next state and the cues the board plays, or an
 // error and no change; `replayBattle` rebuilds any state from the two. Every roll is seeded, so a replay is exact. A
 // version-1 battle plays exactly as CY4's did; version 2 adds CY5's rules, gated by `v2`.
-import { resolveAttack, tileOf, unitById } from './attack'
-import { harm, spendCharge, v2 } from './harm'
+import { mountFor, resolveAttack, resolveStrike, stun, strikeOf, tileOf, unitById } from './attack'
+import { gainCharge, harm, spendCharge, v2 } from './harm'
 import { checkTurn } from './legal'
 import { BattleInputError, inBounds, isSolid, parseMap } from './map'
 import { fireVolley, startOwnTurn } from './muster'
@@ -15,7 +15,8 @@ import { outcomes, resolveHack, resolveTech } from './tech'
 import { expire, keyOf, lightsOut, liveTiles, newField } from './terrain'
 import { advanceClocks, nextTurn, roundAt } from './timeline'
 import { TUNING } from './tuning'
-import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, FieldState, Objective, Role, UnitState } from './types'
+import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, DuoAction, FieldState, Objective, Role, UnitState } from './types'
+import { cloneV3, DUO_TECHS, duoError, duoKey, giveOrder, landStrike, orderError, partnerOf, startV3, v3 } from './v3'
 import { SUPPORTED_VERSIONS } from './version'
 
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,63}$/
@@ -67,6 +68,7 @@ function checkInput(input: BattleInput): void {
   }
   for (const [i, r] of (input.bench ?? []).entries()) if (!ROLES.includes(r)) throw new BattleInputError(`bench[${i}]`, 'expected a role')
   for (const [i, f] of (input.factions ?? []).entries()) if (f !== 'steel-muster') throw new BattleInputError(`factions[${i}]`, 'unknown faction')
+  if (input.rulesVersion >= 3) checkV3(input)
   for (const p of input.map.props ?? []) {
     if (p.kind === 'terminal' && 'turret' in p.does) {
       const turret = input.units.find((u) => u.id === (p.does as { turret: string }).turret)
@@ -74,6 +76,27 @@ function checkInput(input: BattleInput): void {
     }
   }
   checkObjective(input, map)
+}
+
+const ORDER_KINDS = ['sure', 'hold', 'reboot', 'resonance', 'strike', 'sweep', 'barrier', 'drone', 'reinforce']
+const SYSTEM_KINDS = ['battery', 'sensors', 'shield', 'drones', 'engines']
+/** Rules version 3's input (CY17): bonds, partners, Orders, systems and the meal. Below version 3 these are ignored. */
+function checkV3(input: BattleInput): void {
+  const ids = new Set(input.units.map((u) => u.id))
+  input.units.forEach((u, i) => {
+    if (u.bond !== undefined && !(Number.isSafeInteger(u.bond.rank) && u.bond.rank >= 1 && u.bond.rank <= 10 && [null, 'trust', 'heart'].includes(u.bond.path))) throw new BattleInputError(`units[${i}].bond`, 'expected a rank 1–10 and a path')
+    if (u.partner !== undefined && !(ids.has(u.partner.unit) && u.partner.unit !== u.id && [1, 2, 3].includes(u.partner.level))) throw new BattleInputError(`units[${i}].partner`, 'expected another unit and a level 1–3')
+  })
+  if (input.orders !== undefined) {
+    if (!(Number.isSafeInteger(input.orders.slots) && input.orders.slots >= 0 && input.orders.slots <= TUNING.orders.maxSlots)) throw new BattleInputError('orders.slots', `expected 0–${TUNING.orders.maxSlots}`)
+    for (const [i, k] of input.orders.kinds.entries()) if (!ORDER_KINDS.includes(k)) throw new BattleInputError(`orders.kinds[${i}]`, 'unknown Order')
+  }
+  for (const [i, s] of (input.systems ?? []).entries()) {
+    const id = typeof s === 'string' ? s : s.id
+    if (!SYSTEM_KINDS.includes(id)) throw new BattleInputError(`systems[${i}]`, 'unknown system')
+    if (typeof s !== 'string' && !(Number.isSafeInteger(s.level) && s.level >= 1 && s.level <= 3 && isBand(s.band))) throw new BattleInputError(`systems[${i}]`, 'expected a level 1–3 and a band')
+  }
+  if (input.meal !== undefined && !(input.meal in TUNING.meals)) throw new BattleInputError('meal', 'unknown meal')
 }
 
 function checkObjective(input: BattleInput, map: BattleInput['map']): void {
@@ -152,6 +175,7 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
       expire(state, cues)
       fireVolley(state, cues)
     }
+    if (state.v3) landStrike(state, cues)
     const after = objectiveProgress(state)
     if (state.input.objective.kind === 'hold' && after.value !== before.value) cues.push({ kind: 'objective', objective: 'hold', value: after.value, of: after.of })
     if (settle(state, cues)) return
@@ -166,8 +190,10 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
       continue
     }
     const idle = state.input.units.find((i) => i.id === u.id)!.fixed && lightsOut(state)
-    if (u.stunned || idle) {
-      cues.push({ kind: 'skipped', unit: u.id, why: u.stunned ? 'stunned' : 'idle' })
+    const spent = !!state.v3?.spent.includes(u.id)
+    if (u.stunned || idle || spent) {
+      cues.push({ kind: 'skipped', unit: u.id, why: spent ? 'duo' : u.stunned ? 'stunned' : 'idle' })
+      if (spent) state.v3!.spent = state.v3!.spent.filter((x) => x !== u.id)
       delete u.stunned
       startOwnTurn(state, u.id)
       u.clock = 0
@@ -199,6 +225,7 @@ export function startBattle(input: BattleInput): { state: BattleState; cues: Cue
   })
   const state: BattleState = { input, time: 0, turn: 0, active: null, units, result: null }
   if (input.rulesVersion >= 2) state.field = newField(state)
+  if (input.rulesVersion >= 3) startV3(state)
   const cues: Cue[] = []
   startNextTurn(state, cues)
   return { state, cues }
@@ -216,6 +243,7 @@ function cloneField(f: FieldState): FieldState {
 function clone(state: BattleState): BattleState {
   const next: BattleState = { ...state, units: state.units.map((u) => ({ ...u, hp: { ...u.hp } })), result: state.result && { ...state.result } }
   if (state.field) next.field = cloneField(state.field)
+  if (state.v3) next.v3 = cloneV3(state.v3)
   return next
 }
 
@@ -239,6 +267,16 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     unitById(next, action.unit).link = action.on
     return { state: next, cues: [{ kind: 'linked', unit: action.unit, on: action.on }], error: null }
   }
+  if (action.kind === 'order') {
+    const error = orderError(state, action)
+    if (error) return { state, cues: [], error }
+    const next = clone(state)
+    const cues: Cue[] = []
+    giveOrder(next, action, cues, callBench)
+    settle(next, cues)
+    return { state: next, cues, error: null }
+  }
+  if (action.kind === 'duo') return duo(state, action)
   if (action.kind === 'bench') {
     if (!v2(state)) return { state, cues: [], error: 'no bench in rules version 1' }
     const error = benchError(state, action.unit, action.role, action.at)
@@ -309,12 +347,64 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
   }
   u.clock = restart
   u.turns += 1
+  if (next.v3) {
+    if (next.v3.sure === u.id) next.v3.sure = null
+    if (next.v3.resonating === u.id) next.v3.resonating = null
+  }
   next.turn += 1
   next.active = null
   const progressAfter = objectiveProgress(next)
   if (o !== 'hold' && progressAfter.value !== progressBefore.value) cues.push({ kind: 'objective', objective: o, value: progressAfter.value, of: progressAfter.of })
   startNextTurn(next, cues)
   return { state: next, cues, error: null }
+}
+
+/** A duo technique (TC58, rules version 3): both partners strike the target from where they stand, a third harder, and
+ * their pair's effect lands; it takes this turn and the partner's next. */
+function duo(state: BattleState, action: DuoAction): ActionResult {
+  const canStrike = (unit: string, target: string) => mountFor(state, unit, tileOf(unitById(state, unit)), target, ['melee', 'short', 'long']) !== null
+  const error = duoError(state, action, canStrike)
+  if (error) return { state, cues: [], error }
+  const next = clone(state)
+  const cues: Cue[] = []
+  const partner = partnerOf(next, action.unit)!.unit
+  const roles = [action.unit, partner].map((id) => roleOf(next, id))
+  const tech = DUO_TECHS[duoKey(roles[0]!, roles[1]!)] ?? { name: 'Duo Strike', effect: 'power' as const }
+  cues.push({ kind: 'duo', unit: action.unit, partner, target: action.target, tech: tech.name })
+  for (const id of [action.unit, partner]) {
+    const target = unitById(next, action.target)
+    if (target.status !== 'active') break
+    const u = unitById(next, id)
+    const mount = mountFor(next, id, tileOf(u), action.target, ['melee', 'short', 'long'])!
+    const s = strikeOf(next, id, mount, action.target, tileOf(u))!
+    s.damage = Math.round((s.damage * (100 + TUNING.duo.damagePct)) / 100)
+    s.critDamage = Math.round((s.critDamage * (100 + TUNING.duo.damagePct)) / 100)
+    if (tech.effect === 'pierce') { s.guard = 0; s.hit = Math.min(100, s.hit + 20) }
+    cues.push({ kind: 'attack', unit: id, target: action.target, with: mount, band: s.weapon.band as 'melee' | 'short' | 'long', role: 'main', facing: s.facing })
+    resolveStrike(next, s, 'main', cues, ':duo')
+  }
+  const target = unitById(next, action.target)
+  if (tech.effect === 'stun' && target.status === 'active') stun(next, target, cues)
+  for (const id of [action.unit, partner]) {
+    const u = unitById(next, id)
+    if (u.status !== 'active') continue
+    if (tech.effect === 'mend') { const hp = Math.min(u.maxHp.core, u.hp.core + TUNING.duo.mend); cues.push({ kind: 'mended', unit: action.unit, target: id, part: 'core', hp }); u.hp.core = hp }
+    if (tech.effect === 'charge') gainCharge(next, u, TUNING.duo.charge, 'duo', cues)
+  }
+  next.v3!.spent.push(partner)
+  const me = unitById(next, action.unit)
+  me.clock = 0
+  me.turns += 1
+  next.turn += 1
+  next.active = null
+  startNextTurn(next, cues)
+  return { state: next, cues, error: null }
+}
+
+/** A unit's role for the duo table: her Back unit's role (the rig's job), as the bench and the roster read it. */
+function roleOf(state: BattleState, id: string): Role {
+  const back = state.input.units.find((i) => i.id === id)!.loadout.back.kind
+  return back === 'bulwark' ? 'vanguard' : back === 'thruster' ? 'striker' : back === 'launcher' ? 'gunner' : back === 'deck' ? 'netrunner' : back === 'med' ? 'medic' : 'striker'
 }
 
 /** Rebuilds a battle from its input and actions; stops at the first illegal action. */
