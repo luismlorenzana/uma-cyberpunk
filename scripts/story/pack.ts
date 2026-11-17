@@ -33,6 +33,6 @@ export function pack(dir: string, out: string, now = new Date().toISOString()): 
 if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename)) {
   const at = (f: string) => { const i = process.argv.indexOf(f); return i >= 0 ? process.argv[i + 1] : undefined }
   const root = join(import.meta.dirname, '../..')
-  const index = pack(resolve(at('--dir') ?? join(root, 'content/stories')), resolve(at('--out') ?? join(root, 'content/story-release')))
+  const index = pack(resolve(at('--dir') ?? process.env.UMA_CYBER_STORIES ?? join(root, '../uma-story-authoring/content/cyberpunk/stories')), resolve(at('--out') ?? join(root, 'content/story-release')))
   console.log(`Packed ${index.files.length} files into content/story-release/ (story.json and story/*).`)
 }

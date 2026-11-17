@@ -55,3 +55,8 @@ scenarios and a simulator (CY6). Next: the board on uma-stage (CY7), then the sa
 - **uma-rpg:** the live party RPG. Its GCP project hosts uma-quest's, uma-farm's and the platform app's cloud, and is
   where this game's goes (TC11).
 - **uma-farm** and **uma-racer:** the farm and the racer. Nothing is shared with them at the start (TC14).
+
+## Local Story Sandbox
+
+Run `pnpm start` in the sibling [uma-story-authoring](https://github.com/luismlorenzana/uma-story-authoring) repo.
+Choose this game in the Story Sandbox at http://127.0.0.1:4322. Private drafts and verdicts live with the Story authoring checkout.
