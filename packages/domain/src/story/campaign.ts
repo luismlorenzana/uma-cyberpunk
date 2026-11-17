@@ -3,6 +3,8 @@ import { P, parsePack } from './parse'
 import type { Scene, Speaker, StoryPack } from './types'
 import { PORT_STOCK_MAX, SUPPLY_KINDS, type Supplies, type SupplyNetwork } from '../campaign-supply'
 import { CAPABILITY_NAME } from '../ship/modules'
+import type { CommandEncounter } from '../ship/command'
+import { parseCommandEncounter } from '../ship/command-parse'
 
 export interface CampaignQuest {
   id: string
@@ -10,6 +12,7 @@ export interface CampaignQuest {
   scene: string
   after?: string
   encounter?: string
+  port?: string
 }
 
 export interface CampaignSceneArt {
@@ -28,6 +31,7 @@ export interface CampaignBook {
   scenes: ReadonlyMap<string, Scene>
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
   supply?: SupplyNetwork
+  commands: ReadonlyMap<string, CommandEncounter>
 }
 
 export interface CampaignReleaseFile {
@@ -137,7 +141,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -150,7 +154,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const scenes = unique(p, 'chapter scenes', chapters.flatMap((c) => c.scenes), (s) => s.id)
   const encounters = unique(p, 'chapter missions', chapters.flatMap((c) => c.missions), (m) => m.id)
   const quests = p.list(o.quests, 'quests', (v, path) => {
-    const q = p.object(v, path, ['id', 'title', 'scene', 'after', 'encounter'], ['id', 'title', 'scene'])
+    const q = p.object(v, path, ['id', 'title', 'scene', 'after', 'encounter', 'port'], ['id', 'title', 'scene'])
     const scene = p.slug(q.scene, `${path}.scene`)
     const declared = scenes.get(scene)
     if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
@@ -162,7 +166,8 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
       p.fail(`${path}.encounter`, 'a battle quest must finish with its declared encounter')
     }
     return { id: p.slug(q.id, `${path}.id`), title: p.text(q.title, `${path}.title`, 80), scene,
-      ...(q.after === undefined ? {} : { after: p.slug(q.after, `${path}.after`) }), ...(encounter ? { encounter } : {}) }
+      ...(q.after === undefined ? {} : { after: p.slug(q.after, `${path}.after`) }), ...(encounter ? { encounter } : {}),
+      ...(q.port === undefined ? {} : { port: p.slug(q.port, `${path}.port`) }) }
   })
   const byQuest = unique(p, 'quests', quests, (q) => q.id)
   unique(p, 'quest scenes', quests, (q) => q.scene)
@@ -240,5 +245,15 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     return { after, visits }
   })()
   const supply = o.supply === undefined ? undefined : parseSupplyNetwork(p, o.supply, story, byQuest)
-  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
+  for (const quest of quests) {
+    if (quest.port && !supply?.ports.some((port) => port.id === quest.port)) p.fail('quests', `${quest.id} uses unknown port ${quest.port}`)
+  }
+  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 24), (c) => c.id)
+  for (const command of commands.values()) {
+    const mission = encounters.get(command.id)
+    if (!supply || !mission || mission.scenario === 'training' || !quests.some((quest) => quest.encounter === command.id && quest.port)) {
+      p.fail('commands', `${command.id} needs a ship mission and a quest at a supply port`)
+    }
+  }
+  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
 }

@@ -19,6 +19,7 @@ const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-w
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 const TrainingScreen = lazy(() => import('./TrainingScreen'))
+const ShipCommandScreen = lazy(() => import('./ShipCommandScreen'))
 
 export default function CampaignScreen() {
   return <TurnedStage>{(layout) => <Campaign layout={layout} />}</TurnedStage>
@@ -52,25 +53,43 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }, [check])
   const reduceEffects = (s: Save, effects: readonly EffectStep[]): Save =>
     loaded ? effects.reduce((state, step) => applyStep(state, loaded.book.story, step), s) : s
+  const day = save?.campaignDay
+  const night = day?.pending
+  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)
+    && (!q.encounter || save.worlds.missions.includes(q.encounter))).map((q) => q.id))
+  const network = loaded?.book.supply
+  const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
+  const port = supply && network?.ports.find((p) => p.id === supply.port)
   const missionState = save?.mission
-  const trainingChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
-  const training = trainingChapter && trainingChapter.missions.find((m) => m.id === missionState?.id && m.scenario === 'training')
-  const trainee = missionState?.squad[0] ?? trainingChapter?.leads[0]
-  if (loaded && save && training && trainee !== undefined && !trainingPaused) {
+  const missionChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
+  const mission = missionChapter && missionChapter.missions.find((m) => m.id === missionState?.id)
+  const training = mission?.scenario === 'training'
+  const command = mission && loaded?.book.commands.get(mission.id)
+  const trainee = missionState?.squad[0] ?? missionChapter?.leads[0]
+  if (loaded && save && mission && training && trainee !== undefined && !trainingPaused) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading Training…</div>}>
-      <TrainingScreen save={save} mission={training} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
+      <TrainingScreen save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
         close={() => setTrainingPaused(true)} />
+    </Suspense>
+  }
+  if (loaded && save && mission && command && supply) {
+    const scene = loaded.book.quests.find((quest) => quest.encounter === mission.id)?.scene
+    const art = loaded.book.art.find((entry) => entry.scene === scene)
+    return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
+      <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply} backdrop={art?.backdrop ? loaded.assets.get(art.backdrop) : undefined}
+        names={new Map(save.crew.map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
     </Suspense>
   }
   if (loaded && active) return <CampaignScene key={active.scene} loaded={loaded} sceneId={active.scene}
     battle={async (id, effects) => {
       const chapter = Object.values(loaded.book.story.chapters).find((c) => c.scenes.some((scene) => scene.id === active.scene))
-      const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id && m.scenario === 'training')
-      if (!chapter || !mission || (mission.fixedSquad ?? chapter.leads).length !== 1) {
-        setError('This release is missing the Training exercise.')
+      const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id)
+      const training = mission?.scenario === 'training' && chapter && (mission.fixedSquad ?? chapter.leads).length === 1
+      if (!chapter || !mission || (!training && !loaded.book.commands.has(id))) {
+        setError('This release is missing the encounter.')
       } else {
         await updateSave((s) => {
-          if (s.mission) return s
+          if (s.mission || (active.port && active.port !== (s.campaignSupply?.port ?? supply?.port))) return s
           const next = reduceEffects(s, effects)
           return startMission({ ...next, story: seeScene(next.story, active.scene) }, chapter, mission)
         })
@@ -85,13 +104,6 @@ function Campaign({ layout }: { layout: StageLayout }) {
     }).then(() => setActive(null))}
     fail={(message) => { setError(message); setActive(null) }} />
 
-  const day = save?.campaignDay
-  const night = day?.pending
-  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)
-    && (!q.encounter || save.worlds.missions.includes(q.encounter))).map((q) => q.id))
-  const network = loaded?.book.supply
-  const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
-  const port = supply && network?.ports.find((p) => p.id === supply.port)
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
     const next = { ...s, campaignDay }
     if (campaignDay.day === s.campaignDay.day || !supply || !network || !loaded) return next
@@ -114,7 +126,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       })} />
   }
 
-  const available = loaded?.book.quests.filter((q) => !complete.has(q.id) && (q.after === undefined || complete.has(q.after))) ?? []
+  const available = loaded?.book.quests.filter((q) => !complete.has(q.id) && (!q.after || complete.has(q.after)) && (!q.port || q.port === supply?.port)) ?? []
   const evening = loaded?.book.evening
   const canRest = !!(day && !night && !missionState && evening && complete.has(evening.after))
   const supplyPanel = loaded && save && supply && network && port && !night && !missionState && !eveningOpen
@@ -147,7 +159,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {night && !pending && !error && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved scene.</p>}
           {supply && !port && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved port.</p>}
           {missionState && training && <button type="button" className={button} onClick={() => setTrainingPaused(false)}>Resume Training</button>}
-          {missionState && loaded && !training && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved exercise.</p>}
+          {missionState && loaded && !training && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved encounter.</p>}
           {save && !night && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
             className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
           {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}

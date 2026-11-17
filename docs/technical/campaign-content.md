@@ -95,6 +95,20 @@ Provisions pay the ship's nightly bill. Alloy goes into the ship wallet, where t
 and advances ship builds and duties. The tender restores up to three fuel and two provisions once per day when the ship
 is short. Loading supplies and jumping both write the cargo and the source or destination together.
 
+## Ship command
+
+Use `port` on a quest to make it available at a supply port. For a ship battle, add an entry to `commands` whose `id`
+matches the quest's chapter mission. Give it a `cost` in fuel and provisions, starting `transport` and `enemy` hull, and
+an ordered `threats` list. Each wave gives a shield `section` (`fore` or `aft`), hostile `power` and a count of `fighters`.
+Use `calls` to supply one short line per order (`evade`, `brace`, `fire`, `intercept`, `strike`, `reroute`). The bridge
+uses the encounter scene's backdrop.
+
+Launch charges the listed resources and freezes rules version 1, waves, reactor and officer skills. Each bridge order
+records one allocation of reactor power and returns damage, shielding and fighter interception cues. A missing officer
+has skill zero. An assigned officer can drill once per day in her station up to two drills. Reassigning her starts a
+new station record. Win by screening the transport through all waves or by driving the raider off. Losing leaves the
+frozen battle available to retry. Reloads restore committed orders. The win unlocks the authored debrief once.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:
@@ -123,3 +137,4 @@ The private `baseline-3` rehearsal adds a draft sign-on scene, a quarters visit 
 The private `baseline-4` rehearsal replaces sign-on with Training and its debrief, then opens the same quarters visit.
 The private `baseline-5` rehearsal adds five landing scenes, cargo, upkeep and a drive shortcut. It carries the port
 and scene IDs across art and dialogue revisions. The Training exercise is free.
+The private `baseline-6` rehearsal adds the paid relay convoy defense and the second occurrence of the three-pulse clue.

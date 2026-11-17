@@ -14,7 +14,7 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 | [CY27](tasks/CY27.md) | Return home and defend it | First complete arc, with resettlement or staying aboard |
 | [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Later campaign deliveries, the alien reveal and final fight |
 
-CY20 and CY21 are complete. CY22's private `baseline-4` release plays through Training, debrief and the first morning. The reviewed content swap and iPhone playthrough are pending. Open packet files define pending work. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
+CY20 and CY21 are complete. The private `baseline-6` release plays through Training, debrief, the first morning, five civilian ports and Selden's paid convoy defense. CY22–CY24 have playable drafts with outstanding work recorded in their packets. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
 
 ## Earlier campaign handoff
 
