@@ -1,5 +1,6 @@
 import {
-  finishCampaignNightScene, pairProgress, pairVisit, seeScene, startCampaignNight, startSupply, supplyNight, walkSteps,
+  campaignHomeSupport, finishCampaignNightScene, homeOutcome, pairProgress, pairVisit, seeScene,
+  startCampaignNight, startSupply, walkSteps,
   type CampaignDay, type CampaignQuest, type CampaignVisit, type EffectStep, type Save,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
@@ -8,14 +9,16 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { CAMPAIGN_ENTRY } from '../app/campaign'
 import { Account } from '../home/Account'
-import { applyStep, passAWatch, startMission } from '../mission/director'
+import { applyStep, setSquad, startMission } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
-import { closePairScene, openPairScene, pairAvailable, recordPairScene } from './pair'
+import { closePairScene, homeQuestReady, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, recordPairScene } from './pair'
 import { PairPanel } from './PairPanel'
+import { HomePanel } from './HomePanel'
 import { SupplyPanel } from './SupplyPanel'
+import { settleCampaignDay } from './watch'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
@@ -70,6 +73,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
   const port = supply && network?.ports.find((p) => p.id === supply.port)
   const pairs = loaded && save ? loaded.book.pairs.filter((pair) => pairAvailable(save, loaded.book, pair)) : []
+  const support = save ? campaignHomeSupport(pairs, save.story) : null
   const missionState = save?.mission
   const missionChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
   const mission = missionChapter && missionChapter.missions.find((m) => m.id === missionState?.id)
@@ -77,19 +81,22 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const command = mission && loaded?.book.commands.get(mission.id)
   const ground = mission && loaded?.book.ground.get(mission.id)
   const trainee = missionState?.squad[0] ?? missionChapter?.leads[0]
-  if (loaded && save && mission && (training || ground) && trainee !== undefined && !groundPaused) {
+  if (loaded && save && mission && (training || ground) && trainee !== undefined && !support?.ashore.has(trainee) && !groundPaused) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
       <GroundScreen key={mission.id} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
         ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
         close={() => setGroundPaused(true)} />
     </Suspense>
   }
-  if (loaded && save && mission && command && supply) {
-    const scene = loaded.book.quests.find((quest) => quest.encounter === mission.id)?.scene
-    const art = loaded.book.art.find((entry) => entry.scene === scene)
+  if (loaded && save && mission && command && supply && support) {
+    const quest = loaded.book.quests.find((quest) => quest.encounter === mission.id)
+    const art = loaded.book.art.find((entry) => entry.scene === quest?.scene)
+    const home = pairs.find(({ home }) => home?.defense === quest?.id)?.home
+    const homeDefense = home && port ? { name: port.name, relay: homeOutcome(home, save.story) === 'resettle' ? home.support.relay : 0 } : undefined
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
       <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply} backdrop={art?.backdrop ? loaded.assets.get(art.backdrop) : undefined}
-        names={new Map(save.crew.map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
+        ashore={support.ashore} homeDefense={homeDefense}
+        names={new Map(save.crew.filter(({ outfit }) => !support.ashore.has(outfit)).map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
     </Suspense>
   }
   if (loaded && active) return <CampaignScene key={active.scene} loaded={loaded} sceneId={active.scene}
@@ -101,16 +108,20 @@ function Campaign({ layout }: { layout: StageLayout }) {
         setError('This release is missing the encounter.')
       } else {
         await updateSave((s) => {
-          if (s.mission || (active.port && active.port !== (s.campaignSupply?.port ?? supply?.port))) return s
+          if (s.mission || s.pairScene || s.campaignDay.pending || (active.port && active.port !== (s.campaignSupply?.port ?? supply?.port))) return s
+          if (!homeQuestReady(s, loaded.book, active.id)) return s
           const next = reduceEffects(s, effects)
-          return startMission({ ...next, story: seeScene(next.story, active.scene) }, chapter, mission)
+          const started = startMission({ ...next, story: seeScene(next.story, active.scene) }, chapter, mission)
+          const { ashore } = campaignHomeSupport(loaded.book.pairs, s.story)
+          const squad = started.mission!.squad.filter((outfit) => !ashore.has(outfit))
+          return !squad.length && !loaded.book.commands.has(id) ? s : setSquad(started, squad)
         })
         setGroundPaused(false)
       }
       setActive(null)
     }}
     finish={(effects) => void updateSave((s) => {
-      if (s.story.seen.includes(active.scene)) return s
+      if (s.story.seen.includes(active.scene) || !homeQuestReady(s, loaded.book, active.id)) return s
       const next = reduceEffects(s, effects)
       return { ...next, story: seeScene(next.story, active.scene) }
     }).then(() => setActive(null))}
@@ -118,15 +129,13 @@ function Campaign({ layout }: { layout: StageLayout }) {
 
   const pairScene = pendingPair && pairs.find((pair) => pair.id === pendingPair.pair)
   if (loaded && save && pendingPair && pairScene && !error && loaded.book.scenes.has(pendingPair.scene)
-    && pairProgress(pairScene, save.story).next === pendingPair.scene) {
+    && pairSceneReady(save, loaded.book, pairScene, pendingPair.scene)) {
     return <CampaignScene key={pendingPair.scene} loaded={loaded} sceneId={pendingPair.scene} fail={setError}
       finish={(effects) => updatePair((s) => closePairScene(s, loaded.book, pairScene, pendingPair.scene, effects))} />
   }
 
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
-    const next = { ...s, campaignDay }
-    if (campaignDay.day === s.campaignDay.day || !supply || !network || !loaded) return next
-    return passAWatch({ ...next, campaignSupply: supplyNight(s.campaignSupply ?? startSupply(network), network, s.story.flags) }, loaded.book.story)
+    return supply && loaded ? settleCampaignDay(s, campaignDay, loaded.book) : { ...s, campaignDay }
   }
   const nightPair = night && 'pair' in night ? pairs.find((pair) => pair.id === night.pair) : undefined
   if (loaded && day && night && !error && loaded.book.scenes.has(night.scene) && (!('pair' in night) || nightPair)) {
@@ -148,19 +157,28 @@ function Campaign({ layout }: { layout: StageLayout }) {
       })} />
   }
 
-  const available = loaded?.book.quests.filter((q) => !complete.has(q.id) && (!q.after || complete.has(q.after)) && (!q.port || q.port === supply?.port)) ?? []
+  const available = loaded && save ? loaded.book.quests.filter((q) => !complete.has(q.id) && (!q.after || complete.has(q.after))
+    && (!q.port || q.port === supply?.port) && homeQuestReady(save, loaded.book, q.id)) : []
   const evening = loaded?.book.evening
   const canRest = !!(day && !night && !pendingPair && !missionState && evening && complete.has(evening.after))
-  const supplyPanel = loaded && save && supply && network && port && !night && !pendingPair && !missionState && !eveningOpen
-    ? <SupplyPanel save={save} network={network} supply={supply} port={port} worlds={loaded.book.story.worlds} /> : null
-  const pairPanels = loaded && save && !night && !pendingPair && !missionState && !eveningOpen ? pairs.map((pair) => (
+  const supplyPanel = loaded && save && supply && network && port && support && !night && !pendingPair && !missionState && !eveningOpen
+    ? <SupplyPanel save={save} network={network} supply={supply} port={port} worlds={loaded.book.story.worlds} upkeep={support.provisions} /> : null
+  const basePanels = loaded && save && port && !night && !pendingPair && !missionState && !eveningOpen ? pairs.flatMap((pair) => {
+    const home = pair.home
+    if (!home || home.port !== port.id || !complete.has(home.base)) return []
+    return [<HomePanel key={pair.id} pair={pair} home={home} name={port.name} story={save.story} pack={loaded.book.story}
+      next={nextHomeScene(save, loaded.book, pair)} defended={complete.has(home.defense)}
+      open={(scene) => updatePair((s) => openPairScene(s, loaded.book, pair, scene))} />]
+  }) : []
+  const pairPanels = loaded && save && !night && !pendingPair && !missionState && !eveningOpen ? pairs.filter((pair) =>
+    !pair.members.some(({ outfit }) => support?.ashore.has(outfit))).map((pair) => (
     <PairPanel key={pair.id} pair={pair} story={save.story} pack={loaded.book.story}
       open={(scene) => updatePair((s) => openPairScene(s, loaded.book, pair, scene))} />
   )) : []
-  const side = supplyPanel || pairPanels.length > 0
-  const visitOptions = canRest ? evening?.visits.filter((v) => save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
+  const side = supplyPanel || pairPanels.length + basePanels.length > 0
+  const visitOptions = canRest ? evening?.visits.filter((v) => !support?.ashore.has(v.companion) && save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
   const pairVisits = loaded && save && canRest ? pairs.flatMap((pair) => {
-    const visit = pairVisit(pair, save.story, save.crew.map(({ outfit }) => outfit))
+    const visit = pairVisit(pair, save.story, save.crew.flatMap(({ outfit }) => support?.ashore.has(outfit) ? [] : [outfit]))
     if (!visit) return []
     const progress = pairProgress(pair, save.story)
     const [first, second] = pair.members.map(({ outfit }) => nameOf(loaded.book.story, outfit))
@@ -171,10 +189,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
     setEveningOpen(false)
     void (visit?.kind === 'pair-visit' ? updatePair : updateSave)((s) => {
       if (!canRest || s.campaignDay.day !== day?.day || s.pairScene || s.mission) return s
-      if (visit?.kind === 'visit' && !s.crew.some((crew) => crew.outfit === visit.companion)) return s
+      const { ashore } = campaignHomeSupport(loaded?.book.pairs ?? [], s.story)
+      if (visit?.kind === 'visit' && (ashore.has(visit.companion) || !s.crew.some((crew) => crew.outfit === visit.companion))) return s
       if (visit?.kind === 'pair-visit') {
         const pair = loaded?.book.pairs.find((pair) => pair.id === visit.pair)
-        const live = pair && loaded && pairAvailable(s, loaded.book, pair) && pairVisit(pair, s.story, s.crew.map(({ outfit }) => outfit))
+        const live = pair && loaded && pairAvailable(s, loaded.book, pair)
+          && pairVisit(pair, s.story, s.crew.flatMap(({ outfit }) => ashore.has(outfit) ? [] : [outfit]))
         if (!live || live.scene !== visit.scene || live.morning !== visit.morning) return s
       }
       const campaignDay = startCampaignNight(s.campaignDay, visit)
@@ -215,6 +235,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
         </div>
         {side && <div className="space-y-3">
           {pairPanels}
+          {basePanels}
           {supplyPanel}
           {loaded && save && Object.keys(save.story.files).length > 0 && <section aria-label="Evidence" className="space-y-2 rounded-xl border border-white/15 p-3">
             <h2 className="font-display text-lg font-bold">Evidence</h2>

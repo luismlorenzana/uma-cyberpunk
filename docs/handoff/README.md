@@ -9,10 +9,9 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 | [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
 | [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
 | [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
-| [CY27](tasks/CY27.md) | Return home and defend it | First complete arc, with resettlement or staying aboard |
 | [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Later campaign deliveries, the alien reveal and final fight |
 
-CY20, CY21, CY25 and CY26 are complete. The private `baseline-8-revised` release continues from Selden's liberation through recovery, release and a first morning in shared or separate quarters. The [quarantine](../design/art-requests/selden-quarantine.md) and [recovery](../design/art-requests/selden-recovery.md) art packets describe the final assets. CY22–CY24 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
+CY20, CY21 and CY25–CY27 are complete. The private `baseline-9-revised` release completes the first Selden arc through recovery, return home or staying aboard, and the civilian relay defense. The [quarantine](../design/art-requests/selden-quarantine.md), [recovery](../design/art-requests/selden-recovery.md) and [home defense](../design/art-requests/selden-home.md) art packets describe the final assets. CY22–CY24 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
 
 ## Earlier campaign handoff
 
@@ -132,6 +131,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY27 | Return home and defend it (D48). After the first morning, the liberated base hosts the resettlement choice. Local assignments add nightly production and relay shielding. Staying aboard keeps stations and quarters. Chrome verified both routes through defense and the same signal evidence, with an unchanged launch cost on retry. The [home defense art packet](../design/art-requests/selden-home.md) records final assets. | _this commit_ |
 | CY26 | Recovery, release and quarters (D47). Two brig visits establish trust and save the testimony before release. The bond and quarters decisions are independent. Chrome verified both residence paths through morning and resumed a pending scene with a revised line and image. The [recovery art packet](../design/art-requests/selden-recovery.md) records the final assets. | _this commit_ |
 | CY25 | Occupied space, boarding and liberation (D46). The `baseline-7` draft carries the patrol emitter outcome into the maintenance or cargo arrival. Boarding records custody; the station terminal separately saves liberation, the manifest and the port's increased Alloy production. Chrome verified the maintenance route through debrief and reload. Both routes and the station have tested replays. Approved art is tracked in the [Selden art packet](../design/art-requests/selden-quarantine.md). | _this commit_ |
 | CY21 | Opening, quarters and the first day (D42). A private draft sign-on and quarters visit exercise save v11, morning resume and a full-screen illustration. The rehearsal passed on the migrated save in Chrome, with framing checked at 844 × 390. CY22 connects the authored Training result to recruitment and quarters. [Content guide](../technical/campaign-content.md#quarters-and-morning) | _this commit_ |

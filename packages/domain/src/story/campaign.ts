@@ -311,7 +311,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const reserved = new Set([...quests.map((q) => q.scene), ...(supply?.ports.map((port) => port.scene) ?? []),
     ...(evening?.visits.flatMap((visit) => visit.morning ? [visit.scene, visit.morning] : [visit.scene]) ?? [])])
   const captureFlags = new Set([...ground.values()].flatMap((g) => g.win.flag ? [g.win.flag] : []))
-  const pairs = parseCampaignPairs(o.pairs, story, scenes, new Set(byQuest.keys()), reserved, captureFlags)
+  const pairs = parseCampaignPairs(o.pairs, story, scenes, { quests: byQuest, reserved, captureFlags, supply, commands })
   if (pairs.length && !evening) p.fail('pairs', 'recovery visits need an evening schedule')
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }

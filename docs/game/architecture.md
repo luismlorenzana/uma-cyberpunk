@@ -61,6 +61,10 @@ mission, so reloads and retries use the same reactor, crew skills and waves.
 Save v14 records a pending daytime pair scene and supports pair visits and mornings. The recovery, bond and residency
 milestones use the saved story flags and completed scenes.
 
+The return-home decision also uses save v14. Local residents stop staffing the ship and provide support through their
+base. Staying aboard keeps their quarters and station assignments. Both outcomes can defend the relay and retain its
+evidence.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,

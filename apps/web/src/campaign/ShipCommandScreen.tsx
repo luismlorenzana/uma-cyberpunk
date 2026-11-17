@@ -17,8 +17,9 @@ const powerLabels = { shields: 'Shields', guns: 'Guns', fighters: 'Fighters' }
 const orderLine = (encounter: CommandEncounter, last: NonNullable<CommandState['last']>) =>
   last.emitterHit && encounter.assault ? encounter.assault.call : encounter.calls[last.order]
 
-export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop }: {
+export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, ashore, homeDefense }: {
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
+  ashore: ReadonlySet<number>; homeDefense?: { name: string; relay: number }
 }) {
   const [background, setBackground] = useState<string | null>(null)
   useEffect(() => {
@@ -41,7 +42,8 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
     <div className="mx-auto max-w-4xl space-y-3">
       <h1 className="font-display text-xl font-bold">{assault
         ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : 'Station approach'
-        : state.step === 'results' ? state.won ? 'Convoy secured' : 'Defense lost' : 'Convoy defense'}</h1>
+        : homeDefense ? state.step === 'results' ? state.won ? 'Relay secured' : 'Defense lost' : `Defend ${homeDefense.name}`
+          : state.step === 'results' ? state.won ? 'Convoy secured' : 'Defense lost' : 'Convoy defense'}</h1>
       {state.step === 'briefing' && <>
         <p className="max-w-xl text-sm">{mission.brief}</p>
         <button type="button" className={primary} onClick={() => void updateSave(toDeploy)}>Prepare ship</button>
@@ -55,23 +57,25 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
             return <div key={station} className="rounded-lg border border-white/15 p-2">
               <label className="flex items-center justify-between gap-2 font-semibold">{stations[station]}
                 <select className="min-h-11 rounded-lg bg-[#182238] px-2 text-sm" value={assigned?.outfit ?? ''}
-                  onChange={(event) => { const value = event.currentTarget.value; void updateSave((s) => assignOfficer(s, station, value ? Number(value) : null)) }}>
+                  onChange={(event) => { const value = event.currentTarget.value; void updateSave((s) => assignOfficer(s, station, value ? Number(value) : null, ashore)) }}>
                   <option value="">Watch officer</option>
                   {[...names].map(([id, name]) => <option key={id} value={id}>{name}</option>)}
                 </select>
               </label>
-              {assigned && <button type="button" className={`${button} mt-2`} disabled={!canDrill} onClick={() => void updateSave((s) => drillOfficer(s, station))}>
+              {assigned && <button type="button" className={`${button} mt-2`} disabled={!canDrill} onClick={() => void updateSave((s) => drillOfficer(s, station, ashore))}>
                 Drill {stations[station].toLowerCase()} · {assigned.drills}/{MAX_DRILLS}
               </button>}
             </div>
           })}
         </div>
         <p className="text-sm">Cargo {supply.fuel} fuel · {supply.provisions} provisions</p>
-        <button type="button" className={primary} disabled={!canLaunch(supply, encounter)} onClick={() => void updateSave((s) => launchCommand(s, s.campaignSupply ?? supply, encounter))}>
+        {!!homeDefense?.relay && <p className="text-sm text-cyan-200">Local shield bank · +{homeDefense.relay} relay integrity</p>}
+        <button type="button" className={primary} disabled={!canLaunch(supply, encounter)}
+          onClick={() => void updateSave((s) => launchCommand(s, s.campaignSupply ?? supply, encounter, { ashore, relay: homeDefense?.relay ?? 0 }))}>
           Launch · {encounter.cost.fuel} fuel · {encounter.cost.provisions} provisions
         </button>
       </>}
-      {state.step === 'battle' && (run ? <CommandBoard encounter={encounter} {...run} />
+      {state.step === 'battle' && (run ? <CommandBoard encounter={encounter} relay={!!homeDefense} {...run} />
         : <p role="alert">The saved defense can’t resume.</p>)}
       {state.step === 'results' && <div className="flex flex-wrap gap-2">
         {run?.state.last && <p className="w-full text-sm">{orderLine(encounter, run.state.last)}</p>}
@@ -84,7 +88,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   </main>
 }
 
-function CommandBoard({ encounter, input, state }: { encounter: CommandEncounter; input: CommandInput; state: CommandState }) {
+function CommandBoard({ encounter, input, state, relay }: { encounter: CommandEncounter; input: CommandInput; state: CommandState; relay: boolean }) {
   const [action, setAction] = useState<CommandAction>({ order: 'fire', shields: 1, guns: 1, fighters: 1 })
   const threat = input.threats[state.turn]!
   const spent = action.shields + action.guns + action.fighters
@@ -98,7 +102,7 @@ function CommandBoard({ encounter, input, state }: { encounter: CommandEncounter
       <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-sm">
         {([
           ['Fore shield', state.shields.fore, COMMAND_SHIELD], ['Aft shield', state.shields.aft, COMMAND_SHIELD],
-          ['Hull', state.hull, COMMAND_HULL], [input.version === 2 ? 'Boarding shuttle' : 'Transport', state.transport, input.transport],
+          ['Hull', state.hull, COMMAND_HULL], [input.version === 2 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport', state.transport, input.transport],
           [input.version === 2 ? 'Patrol ship' : 'Raider', state.enemy, input.enemy],
           ...(input.version === 2 ? [['Shield emitter', state.emitter ?? 0, input.assault.emitter] as const] : []),
         ] as const).map(([label, value, max]) => <div key={label}><span>{label} {value}/{max}</span>

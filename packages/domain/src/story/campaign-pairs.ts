@@ -1,13 +1,20 @@
-import type { CampaignPair, PairMember, PairRoom } from '../campaign-pair'
+import type { CampaignHome, CampaignPair, PairMember, PairRoom } from '../campaign-pair'
+import { SHIP_PROVISIONS_PER_NIGHT, type SupplyNetwork } from '../campaign-supply'
+import type { CommandEncounter } from '../ship/command'
+import type { CampaignQuest } from './campaign'
 import { walkSteps } from './check'
 import { P } from './parse'
 import type { Scene, StoryPack } from './types'
 
-export function parseCampaignPairs(value: unknown, story: StoryPack, scenes: ReadonlyMap<string, Scene>, quests: ReadonlySet<string>,
-  reserved: ReadonlySet<string>, captureFlags: ReadonlySet<string>): CampaignPair[] {
+export function parseCampaignPairs(value: unknown, story: StoryPack, scenes: ReadonlyMap<string, Scene>, context: {
+  quests: ReadonlyMap<string, CampaignQuest>; reserved: ReadonlySet<string>; captureFlags: ReadonlySet<string>
+  supply: SupplyNetwork | undefined; commands: ReadonlyMap<string, CommandEncounter>
+}): CampaignPair[] {
   if (value === undefined) return []
+  const { quests, reserved, captureFlags, supply, commands } = context
   const p = new P('campaign.json')
   const usedScenes = new Set(reserved), usedFlags = new Set<string>(), ids = new Set<string>()
+  const homePorts = new Set<string>(), homeResidents = new Set<number>()
   const cast = new Set([...story.casting.crewOrder, ...story.casting.leads.map(({ outfit }) => outfit)])
   function sceneRef(value: unknown, path: string): string {
     const id = p.slug(value, path)
@@ -39,8 +46,45 @@ export function parseCampaignPairs(value: unknown, story: StoryPack, scenes: Rea
       } else seen.add(last.flag)
     }
   }
+  function parseHome(value: unknown, path: string, after: string, members: readonly PairMember[]): CampaignHome {
+    const h = p.object(value, path, ['port', 'base', 'defense', 'scene', 'resettle', 'stay', 'visit', 'jobs', 'support'])
+    const port = p.slug(h.port, `${path}.port`)
+    if (!supply?.ports.find((candidate) => candidate.id === port)?.liberation) p.fail(`${path}.port`, 'expected a port with a liberation outcome')
+    if (homePorts.has(port)) p.fail(`${path}.port`, 'this port already has a home')
+    homePorts.add(port)
+    for (const { outfit } of members) {
+      if (homeResidents.has(outfit)) p.fail(path, 'a resident already has another campaign home')
+      homeResidents.add(outfit)
+    }
+    const base = p.slug(h.base, `${path}.base`)
+    const baseQuest = quests.get(base)
+    if (baseQuest?.port !== port || baseQuest.after !== after || baseQuest.encounter) p.fail(`${path}.base`, 'expected a local base quest after liberation')
+    const defense = p.slug(h.defense, `${path}.defense`)
+    const defenseQuest = quests.get(defense)
+    const encounter = defenseQuest?.encounter && commands.get(defenseQuest.encounter)
+    if (defenseQuest?.port !== port || defenseQuest.after !== base || !encounter || encounter.assault) {
+      return p.fail(`${path}.defense`, 'expected a local ship defense after the base quest')
+    }
+    const scene = sceneRef(h.scene, `${path}.scene`)
+    function branch(key: 'resettle' | 'stay') {
+      const field = `${path}.${key}`
+      const b = p.object(h[key], field, ['flag', 'debrief'])
+      return { flag: flagRef(b.flag, `${field}.flag`), debrief: sceneRef(b.debrief, `${field}.debrief`) }
+    }
+    const resettle = branch('resettle'), stay = branch('stay')
+    decision(`${path}.scene`, scene, [resettle.flag, stay.flag])
+    const visit = sceneRef(h.visit, `${path}.visit`)
+    const jobs = p.list(h.jobs, `${path}.jobs`, (value, field) => p.text(value, field, 48), 2)
+    if (jobs.length !== 2) p.fail(`${path}.jobs`, 'expected one assignment per resident')
+    const s = p.object(h.support, `${path}.support`, ['alloy', 'provisions', 'relay'])
+    const support = { alloy: p.int(s.alloy, `${path}.support.alloy`, 1, 10),
+      provisions: p.int(s.provisions, `${path}.support.provisions`, 1, SHIP_PROVISIONS_PER_NIGHT - 1),
+      relay: p.int(s.relay, `${path}.support.relay`, 1, Math.min(10, 99 - encounter.transport)) }
+    return { port, base, defense, scene, resettle, stay, visit, jobs: [jobs[0]!, jobs[1]!], support }
+  }
   return p.list(value, 'pairs', (value, path): CampaignPair => {
-    const o = p.object(value, path, ['id', 'after', 'capture', 'members', 'recovery', 'testimony', 'release', 'bond', 'residency', 'rooms'])
+    const fields = ['id', 'after', 'capture', 'members', 'recovery', 'testimony', 'release', 'bond', 'residency', 'rooms']
+    const o = p.object(value, path, [...fields, 'home'], fields)
     const id = p.slug(o.id, `${path}.id`)
     if (ids.has(id)) p.fail(`${path}.id`, `duplicate pair ${id}`)
     ids.add(id)
@@ -79,7 +123,9 @@ export function parseCampaignPairs(value: unknown, story: StoryPack, scenes: Rea
       const x = p.object(rooms[key], field, ['move', 'visit', 'morning'])
       return { move: sceneRef(x.move, `${field}.move`), visit: sceneRef(x.visit, `${field}.visit`), morning: sceneRef(x.morning, `${field}.morning`) }
     }
+    const quarters = { shared: room('shared'), separate: room('separate') }
+    const home = o.home === undefined ? undefined : parseHome(o.home, `${path}.home`, after, members)
     return { id, after, capture, members: [members[0]!, members[1]!], recovery: [recovery[0]!, recovery[1]!], testimony, release, bond, residency,
-      rooms: { shared: room('shared'), separate: room('separate') } }
+      rooms: quarters, ...(home ? { home } : {}) }
   }, 24)
 }

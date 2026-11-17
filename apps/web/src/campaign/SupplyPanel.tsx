@@ -1,6 +1,6 @@
 import {
   CAPABILITY_NAME, earn, freePlace, jumpRoute, loadShipment, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
-  SHIP_PROVISIONS_PER_NIGHT, shipCapabilities, shipmentAt, startSupply, storesAt, SUPPLY_KINDS,
+  shipCapabilities, shipmentAt, startSupply, storesAt, SUPPLY_KINDS,
   type CampaignSupply, type Save, type SupplyNetwork, type SupplyPort, type World,
 } from '@cyber/domain'
 import { updateSave } from '../save/game'
@@ -17,8 +17,8 @@ function driveBay(save: Save) {
   return { ship, location, problem }
 }
 
-export function SupplyPanel({ save, network, supply, port, worlds }: {
-  save: Save; network: SupplyNetwork; supply: CampaignSupply; port: SupplyPort; worlds: Record<string, World>
+export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
+  save: Save; network: SupplyNetwork; supply: CampaignSupply; port: SupplyPort; worlds: Record<string, World>; upkeep: number
 }) {
   const drives = shipCapabilities(save.ship)
   const engine = moduleAt(save.ship, 'engines')
@@ -66,7 +66,7 @@ export function SupplyPanel({ save, network, supply, port, worlds }: {
     </ul>
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Ship cargo">
       <span>Fuel {supply.fuel}</span><span>Provisions {supply.provisions}</span><span>Alloy {save.wallet.alloy}</span>
-      <span>Nightly upkeep {SHIP_PROVISIONS_PER_NIGHT} provisions</span>
+      <span>Nightly upkeep {upkeep} {upkeep === 1 ? 'provision' : 'provisions'}</span>
     </div>
     {supply.shortfall > 0 && <p className="text-sm text-[#ffa7b7]">Last night’s shortfall {supply.shortfall} provisions</p>}
     <div>

@@ -1,9 +1,22 @@
 import type { CampaignVisit } from './campaign-day'
 import type { StoryState } from './story/state'
+import { SHIP_PROVISIONS_PER_NIGHT } from './campaign-supply'
 
 export interface PairMember { outfit: number; trust: string }
 export interface PairRoom { move: string; visit: string; morning: string }
 export interface PendingPairScene { pair: string; scene: string }
+
+export interface CampaignHome {
+  port: string
+  base: string
+  defense: string
+  scene: string
+  resettle: { flag: string; debrief: string }
+  stay: { flag: string; debrief: string }
+  visit: string
+  jobs: [string, string]
+  support: { alloy: number; provisions: number; relay: number }
+}
 
 export interface CampaignPair {
   id: string
@@ -16,6 +29,27 @@ export interface CampaignPair {
   bond: { scene: string; romance: string; friendship: string }
   residency: { scene: string; shared: string; separate: string }
   rooms: { shared: PairRoom; separate: PairRoom }
+  home?: CampaignHome
+}
+
+export function homeOutcome(home: CampaignHome, story: StoryState): 'resettle' | 'stay' | null {
+  if (!story.seen.includes(home.scene)) return null
+  const resettled = story.flags.includes(home.resettle.flag)
+  const aboard = story.flags.includes(home.stay.flag)
+  return resettled === aboard ? null : resettled ? 'resettle' : 'stay'
+}
+
+export function campaignHomeSupport(pairs: readonly CampaignPair[], story: StoryState) {
+  const ashore = new Set<number>()
+  const localAlloy = new Map<string, number>()
+  let provisions = SHIP_PROVISIONS_PER_NIGHT
+  for (const { home, members } of pairs) {
+    if (!home || homeOutcome(home, story) !== 'resettle') continue
+    for (const { outfit } of members) ashore.add(outfit)
+    localAlloy.set(home.port, home.support.alloy)
+    provisions = Math.max(1, provisions - home.support.provisions)
+  }
+  return { ashore, localAlloy, provisions }
 }
 
 const outcome = <A extends string, B extends string>(story: StoryState, scene: string, a: A, b: B, flags: Record<A | B, string>): A | B | null => {

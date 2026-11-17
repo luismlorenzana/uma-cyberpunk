@@ -144,6 +144,26 @@ when the scene finishes. Reloads return to its start. The visit advances the day
 Keep pair IDs, milestone flags and scene IDs stable across revisions. The private `baseline-8` and `baseline-8-revised`
 releases use the same progress IDs with a different shared-morning line and illustration.
 
+## Homeworld return and defense
+
+A pair can define `home` at a supply `port` with a liberation outcome. Its `base` is a local dialogue quest after the
+pair's liberation quest. Its `defense` is a local ship-command quest after the base. The base opens once both crew
+members can attend and have completed their first morning. Both outcomes of `home.scene` unlock the defense.
+
+The choice uses the same two-branch format as the bond and room scenes. Each branch, `resettle` and `stay`, has a
+`flag` and a `debrief`. The `jobs` list names one local assignment per pair member in casting order. After a resettled
+debrief, `visit` is available whenever the ship docks there. A visit can be replayed. Its effects apply once.
+
+The `support` object defines `alloy` added to local nightly production, `provisions` subtracted from the ship's daily
+bill down to a minimum of one, and `relay` integrity added to the home defense at launch. Resettled members work
+ashore. Their aboard stations and duty presets are cleared, and their saved records and quarters choices are kept.
+Staying aboard retains stations and evening visits. Launch freezes the defense input including relay integrity and
+officers. A retry uses that input and pays nothing further. Both paths should award the same required evidence.
+
+CY27 continues in save v14 using the pair's existing pending scene and the story flag and scene IDs. Preserve those
+IDs when replacing a release. The `baseline-9` and `baseline-9-revised` drafts test a changed line and base backdrop
+while the home choice is pending. Keep local support available to later operations as a consequence of resettlement.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:
