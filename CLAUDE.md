@@ -11,7 +11,7 @@
 - **The story has its own session (D4).** It writes the world and the story from
   [docs/design/story-brief.md](docs/design/story-brief.md) (SB1–SB11); [docs/design/world.md](docs/design/world.md)
   (WD1–WD24) is its first pass. This session builds the game, keeps the brief current when a hook changes, and answers
-  the handoff's story requests. It reads `content/stories/` on disk and never commits it.
+  the handoff's story requests. It reads `../uma-story-authoring/content/cyberpunk/stories/` on disk and never commits it.
 - **`docs/game/` is the manual of the game as built.** It starts with CY3. Every rule change keeps it in step.
 - **This game stands alone:** its own save, rules and economy (uma-platform P2, P3). It reads master data from
   uma-platform by stable IDs only, and never imports from uma-rpg, uma-racer, uma-quest or uma-farm at runtime.
@@ -75,7 +75,7 @@ The owner gave every session full autonomy to commit, publish and deploy (2026-1
 ## Building and running
 
 The workspace's commands are in `AGENTS.md`; `.claude/launch.json` starts the API (`cyber-api`, :8121), the web app
-(`cyber-web`, :5214) and **the Cyberpunk Story Sandbox** (`cyber-story-sandbox`, `pnpm stories`, :4322), where the owner
+(`cyber-web`, :5214) and **the Cyberpunk Story Sandbox** (`pnpm start` in `uma-story-authoring`, :4322/cyberpunk/), where the owner
 reads, plays and judges the story, beside uma-quest's and uma-farm's sandboxes ([its design](docs/design/story-sandbox.md)). The preview pane can't screenshot WebGL: once the board arrives (CY7), check scenes headless through
 `?debug` and `step()` or on a canvas fallback, or ask the owner for a phone check. Never validate in the iOS Simulator
 (uma-platform P60).
