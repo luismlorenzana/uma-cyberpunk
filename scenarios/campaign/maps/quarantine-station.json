@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "quarantine-station",
+  "width": 8,
+  "depth": 7,
+  "heights": ["00000000","00000000","00000000","00000000","00000000","00000000","00000000"],
+  "tiles": ["........","........","..#..c..","..#.....","..#..c..","...c....","........"],
+  "spawns": {"enemy":[[5,3],[4,2]],"squad":[[1,6],[0,6],[2,6],[3,6],[4,6]]},
+  "props": [
+    {"kind":"terminal","tile":[7,1],"does":{"door":"civilian-exit"},"id":"manifest-console"},
+    {"kind":"door","tiles":[[6,0]],"open":false,"id":"civilian-exit"}
+  ]
+}

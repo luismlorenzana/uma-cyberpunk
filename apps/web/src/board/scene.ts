@@ -143,9 +143,11 @@ export class BoardScene {
   private firstFrame: (() => void) | null
   private readonly grade = NIGHT_GRADE
   private readonly reducedMotion: MediaQueryList | null
+  private readonly standInKit: 'biome' | 'town'
 
-  constructor(canvas: HTMLCanvasElement, options: { saver: boolean; onFirstFrame?: () => void }) {
+  constructor(canvas: HTMLCanvasElement, options: { saver: boolean; onFirstFrame?: () => void; standInKit?: 'biome' | 'town' }) {
     this.saver = options.saver
+    this.standInKit = options.standInKit ?? 'biome'
     this.pacer = new FramePacer(options.saver ? SAVER_FPS : null)
     this.firstFrame = options.onFirstFrame ?? null
     this.reducedMotion = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null
@@ -162,15 +164,17 @@ export class BoardScene {
 
   // --- The world -----------------------------------------------------------------------------------------------------
 
-  /** Builds the board from a battle map on the stand-in biome kit. High ground (level 2 and up) is kept apart, so it can
+  /** Builds the board from a battle map on its stand-in kit. High ground (level 2 and up) is kept apart, so it can
    * fade while it stands in front of a unit in focus. A rebuild of the same map (a lift moved, a door shut) keeps the
    * camera. */
   setMap(map: BattleMap, opts: { shut?: readonly string[]; burst?: readonly string[] } = {}): void {
     const same = this.map?.id === map.id
     this.dropWorld()
     this.map = map
-    const kit = standInKitAtlas('biome')
-    const page = pixelTexture(new CanvasTexture(drawStandInKit(kit)))
+    const atlas = standInKitAtlas(this.standInKit)
+    const page = pixelTexture(new CanvasTexture(drawStandInKit(atlas)))
+    const kit = this.standInKit === 'town' ? { ...atlas, frames: Object.fromEntries(Object.entries(atlas.frames)
+      .filter(([name, frame]) => frame.role !== 'prop' || name === 'barrel' || name === 'lantern')) } : atlas
     page.colorSpace = SRGBColorSpace
     const geo = roomGeometry(toRoomDesign(map, opts), kit)
     const tileOfFace = (corners: readonly { x: number; z: number }[]): string => {

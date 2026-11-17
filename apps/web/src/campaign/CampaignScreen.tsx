@@ -18,7 +18,7 @@ import { SupplyPanel } from './SupplyPanel'
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
-const TrainingScreen = lazy(() => import('./TrainingScreen'))
+const GroundScreen = lazy(() => import('./GroundScreen'))
 const ShipCommandScreen = lazy(() => import('./ShipCommandScreen'))
 
 export default function CampaignScreen() {
@@ -40,7 +40,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [pending, setPending] = useState(true)
   const [check, setCheck] = useState(0)
   const [eveningOpen, setEveningOpen] = useState(false)
-  const [trainingPaused, setTrainingPaused] = useState(false)
+  const [groundPaused, setGroundPaused] = useState(false)
   useEffect(() => {
     let live = true
     setPending(true)
@@ -65,11 +65,13 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const mission = missionChapter && missionChapter.missions.find((m) => m.id === missionState?.id)
   const training = mission?.scenario === 'training'
   const command = mission && loaded?.book.commands.get(mission.id)
+  const ground = mission && loaded?.book.ground.get(mission.id)
   const trainee = missionState?.squad[0] ?? missionChapter?.leads[0]
-  if (loaded && save && mission && training && trainee !== undefined && !trainingPaused) {
-    return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading Training…</div>}>
-      <TrainingScreen save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
-        close={() => setTrainingPaused(true)} />
+  if (loaded && save && mission && (training || ground) && trainee !== undefined && !groundPaused) {
+    return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
+      <GroundScreen key={mission.id} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
+        ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
+        close={() => setGroundPaused(true)} />
     </Suspense>
   }
   if (loaded && save && mission && command && supply) {
@@ -85,7 +87,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       const chapter = Object.values(loaded.book.story.chapters).find((c) => c.scenes.some((scene) => scene.id === active.scene))
       const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id)
       const training = mission?.scenario === 'training' && chapter && (mission.fixedSquad ?? chapter.leads).length === 1
-      if (!chapter || !mission || (!training && !loaded.book.commands.has(id))) {
+      if (!chapter || !mission || (!training && !loaded.book.commands.has(id) && !loaded.book.ground.has(id))) {
         setError('This release is missing the encounter.')
       } else {
         await updateSave((s) => {
@@ -93,7 +95,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
           const next = reduceEffects(s, effects)
           return startMission({ ...next, story: seeScene(next.story, active.scene) }, chapter, mission)
         })
-        setTrainingPaused(false)
+        setGroundPaused(false)
       }
       setActive(null)
     }}
@@ -107,7 +109,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
     const next = { ...s, campaignDay }
     if (campaignDay.day === s.campaignDay.day || !supply || !network || !loaded) return next
-    return passAWatch({ ...next, campaignSupply: supplyNight(s.campaignSupply ?? startSupply(network), network) }, loaded.book.story)
+    return passAWatch({ ...next, campaignSupply: supplyNight(s.campaignSupply ?? startSupply(network), network, s.story.flags) }, loaded.book.story)
   }
   if (loaded && day && night && !error && loaded.book.scenes.has(night.scene)) {
     return <CampaignScene key={`${day.day}:${night.kind}:${night.scene}`} loaded={loaded} sceneId={night.scene}
@@ -158,8 +160,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {error && <p role="alert" className="break-words text-[#ffa7b7]">{error}</p>}
           {night && !pending && !error && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved scene.</p>}
           {supply && !port && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved port.</p>}
-          {missionState && training && <button type="button" className={button} onClick={() => setTrainingPaused(false)}>Resume Training</button>}
-          {missionState && loaded && !training && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved encounter.</p>}
+          {missionState && (training || ground) && <button type="button" className={button} onClick={() => setGroundPaused(false)}>Resume {ground?.title ?? 'Training'}</button>}
+          {missionState && loaded && !training && !ground && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved encounter.</p>}
           {save && !night && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
             className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
           {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
@@ -171,7 +173,18 @@ function Campaign({ layout }: { layout: StageLayout }) {
           </section>}
           {loaded && !pending && !night && !missionState && !canRest && !supply && available.length === 0 && <p className="text-white/65">You’re caught up.</p>}
         </div>
-        {supplyPanel}
+        {supplyPanel && <div className="space-y-3">
+          {supplyPanel}
+          {loaded && save && Object.keys(save.story.files).length > 0 && <section aria-label="Evidence" className="space-y-2 rounded-xl border border-white/15 p-3">
+            <h2 className="font-display text-lg font-bold">Evidence</h2>
+            {Object.entries(save.story.files).map(([id, indices]) => {
+              const evidence = loaded.book.story.files[id]
+              return evidence && <ul key={id} aria-label={id.replaceAll('-', ' ')} className="space-y-1 text-sm">
+                {indices.map((index) => evidence.lines[index] && <li key={index}>{evidence.lines[index]!.text}</li>)}
+              </ul>
+            })}
+          </section>}
+        </div>}
       </div>
     </main>
   )

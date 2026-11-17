@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { closeSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, extname, join, resolve } from 'node:path'
+import { loadScenarios } from '../../packages/battle/src/scenarios'
 import {
   CAMPAIGN_PREVIEW_INDEX, CAMPAIGN_RELEASE_PATH, campaignReleasePath, parseCampaignBook, parseCampaignRelease,
   type CampaignRelease, type CampaignReleaseFile,
@@ -59,6 +60,28 @@ function source(dir: string) {
   if (story.problems.length) throw new Error(story.problems.map((p) => `${p.file}: ${p.message}`).join('\n'))
   const files = { ...story.files, 'campaign.json': readJson(join(dir, 'campaign.json')) }
   const book = parseCampaignBook(files)
+  if (book.ground.size) {
+    const { scenarios } = loadScenarios(resolve(import.meta.dirname, '../..'), true)
+    const byId = new Map(scenarios.map((scenario) => [scenario.id, scenario]))
+    for (const chapter of Object.values(book.story.chapters)) for (const mission of chapter.missions) {
+      const ground = book.ground.get(mission.id)
+      if (!ground) continue
+      for (const id of [mission.scenario, ground.alternate?.scenario]) {
+        if (!id) continue
+        const scenario = byId.get(id)
+        if (!scenario) throw new Error(`campaign.json: ${mission.id}: unknown scenario ${id}`)
+        if (scenario.input.objective.kind.toLowerCase() !== mission.objective.kind.replaceAll('-', '')) {
+          throw new Error(`campaign.json: ${mission.id}: ${id} uses a different objective`)
+        }
+        if (ground.boss && !scenario.input.units.some((u) => u.id === ground.boss?.unit && u.side === 'enemy' && u.leader)) {
+          throw new Error(`campaign.json: ${mission.id}: ${id} is missing the named enemy leader`)
+        }
+        if (mission.objective.kind === 'hack' && ground.expansion !== 'back-deck') {
+          throw new Error(`campaign.json: ${mission.id}: a terminal objective needs the Data Deck`)
+        }
+      }
+    }
+  }
   const assets = book.assets.map(({ id, file }) => {
     const bytes = verifiedArt(join(dir, 'art', file))
     return { id, bytes, extension: extname(file) }

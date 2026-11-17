@@ -23,6 +23,7 @@ export function SupplyPanel({ save, network, supply, port, worlds }: {
   const drives = shipCapabilities(save.ship)
   const engine = moduleAt(save.ship, 'engines')
   const bay = driveBay(save)
+  const liberated = port.liberation && save.story.flags.includes(port.liberation.flag) ? port.liberation : null
   const mapped = network.ports.every(({ id }) => worlds[id]?.x !== undefined && worlds[id]?.y !== undefined)
   function change(action: (s: Save, stock: CampaignSupply) => Save) {
     void updateSave((current) => {
@@ -36,6 +37,7 @@ export function SupplyPanel({ save, network, supply, port, worlds }: {
       <h2 className="font-display text-lg font-bold">Star map</h2>
       <p className="text-sm">Docked at {port.name}</p>
     </div>
+    {liberated && <p className="text-sm font-semibold text-cyan-200">Liberated · +{liberated.alloy} alloy each night</p>}
     <ul className={mapped ? 'relative aspect-[2.3] rounded-lg bg-[#080c19]' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'} aria-label="Landing ports">
       {mapped && network.routes.map((route) => {
         const from = worlds[route.from]!, to = worlds[route.to]!

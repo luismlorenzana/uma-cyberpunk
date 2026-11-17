@@ -10,6 +10,7 @@ export interface SupplyPort {
   produces: Supplies
   upkeep: Supplies
   reserve: Supplies
+  liberation?: { flag: string; alloy: number }
 }
 
 export interface SupplyRoute {
@@ -69,12 +70,16 @@ export function jumpRoute(supply: CampaignSupply, route: SupplyRoute, capabiliti
 }
 
 /** A night first produces and pays locally; the ship then pays its provisions bill. */
-export function supplyNight(supply: CampaignSupply, network: SupplyNetwork): CampaignSupply {
+export function supplyNight(supply: CampaignSupply, network: SupplyNetwork, flags: readonly string[] = []): CampaignSupply {
   const stores = { ...supply.stores }
   for (const port of network.ports) {
     const stock = storesAt(supply, port)
     const next = { ...stock }
-    for (const kind of SUPPLY_KINDS) next[kind] = Math.min(PORT_STOCK_MAX, Math.max(0, stock[kind] + port.produces[kind] - port.upkeep[kind]))
+    const extraAlloy = port.liberation && flags.includes(port.liberation.flag) ? port.liberation.alloy : 0
+    for (const kind of SUPPLY_KINDS) {
+      const produced = port.produces[kind] + (kind === 'alloy' ? extraAlloy : 0)
+      next[kind] = Math.min(PORT_STOCK_MAX, Math.max(0, stock[kind] + produced - port.upkeep[kind]))
+    }
     stores[port.id] = next
   }
   return { ...supply, stores,
