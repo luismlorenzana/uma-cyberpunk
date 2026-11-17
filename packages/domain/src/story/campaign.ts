@@ -5,11 +5,13 @@ import { PORT_STOCK_MAX, SUPPLY_KINDS, type Supplies, type SupplyNetwork } from 
 import { CAPABILITY_NAME } from '../ship/modules'
 import type { CommandEncounter } from '../ship/command'
 import { parseCommandEncounter } from '../ship/command-parse'
-import { PARTS_BY_ID } from '../crew/parts'
+import { PARTS_BY_ID, RIG_SLOTS, SLOT_KIND, type RigSlot } from '../crew/parts'
 import type { Wallet } from '../ship/hull'
 import type { CampaignPair } from '../campaign-pair'
 import { parseCampaignPairs } from './campaign-pairs'
+import { parseCampaignDates, type CampaignDate } from './campaign-dates'
 import type { CampaignFinale } from '../campaign-finale'
+import type { CampaignWorkshop } from '../campaign-gear'
 
 export interface CampaignQuest {
   id: string
@@ -39,6 +41,8 @@ export interface CampaignBook {
   commands: ReadonlyMap<string, CommandEncounter>
   ground: ReadonlyMap<string, GroundEncounter>
   pairs: CampaignPair[]
+  dates?: CampaignDate[]
+  workshop?: CampaignWorkshop
   finale?: CampaignFinale
 }
 
@@ -164,7 +168,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -335,9 +339,40 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const captureFlags = new Set([...ground.values()].flatMap((g) => g.win.flag ? [g.win.flag] : []))
   const pairs = parseCampaignPairs(o.pairs, story, scenes, { quests: byQuest, reserved, captureFlags, supply, commands })
   if (pairs.length && !evening) p.fail('pairs', 'recovery visits need an evening schedule')
+  for (const pair of pairs) {
+    const rooms = Object.values(pair.rooms).flatMap(({ move, visit, morning }) => [move, visit, morning])
+    const home = pair.home ? [pair.home.scene, pair.home.resettle.debrief, pair.home.stay.debrief, pair.home.visit] : []
+    for (const id of [...pair.recovery, pair.release, pair.bond.scene, pair.residency.scene, ...rooms, ...home]) reserved.add(id)
+  }
+  const dates = o.dates === undefined ? undefined : parseCampaignDates(o.dates, story, scenes, new Set(byQuest.keys()), reserved,
+    new Set(evening?.visits.map(({ companion }) => companion)))
+  if (dates?.length && !evening) p.fail('dates', 'relationships need an evening schedule')
+  const workshop = o.workshop === undefined ? undefined : (() => {
+    const w = p.object(o.workshop, 'workshop', ['after', 'missions', 'recipes'])
+    const after = p.slug(w.after, 'workshop.after'), quest = byQuest.get(after)
+    const port = quest?.port
+    if (!port || quest?.encounter) return p.fail('workshop.after', 'expected a local workshop conversation')
+    const missions = p.list(w.missions, 'workshop.missions', (value, path) => {
+      const id = p.slug(value, path)
+      if (!ground.has(id)) p.fail(path, 'expected a ground encounter')
+      return id
+    }, 24)
+    const recipes = p.list(w.recipes, 'workshop.recipes', (value, path) => {
+      const r = p.object(value, path, ['part', 'slot', 'alloy', 'icon'])
+      const part = p.slug(r.part, `${path}.part`)
+      const slot = r.slot as RigSlot
+      const definition = PARTS_BY_ID.get(part)
+      if (!RIG_SLOTS.includes(slot) || !definition || SLOT_KIND[slot] !== definition.slot) p.fail(path, 'part does not fit the named rig slot')
+      return { part, slot, alloy: p.int(r.alloy, `${path}.alloy`, 1, 99), icon: asset(r.icon, `${path}.icon`) }
+    }, 32)
+    if (!missions.length || !recipes.length) p.fail('workshop', 'expected missions and recipes')
+    unique(p, 'workshop.missions', missions, (id) => id)
+    unique(p, 'workshop.recipes', recipes, (entry) => entry.part)
+    return { after, port, missions, recipes }
+  })()
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, story, commands, ground)
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
-    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}) }
+    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}), ...(workshop ? { workshop } : {}) }
 }
 
 function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQuest>, pairs: readonly CampaignPair[],

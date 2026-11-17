@@ -12,7 +12,7 @@ import { Account } from '../home/Account'
 import { applyStep, setSquad, startMission } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
-import { nameOf } from '../story/runner'
+import { nameOf, type BondEffect } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
 import { closePairScene, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, recordPairScene } from './pair'
 import { PairPanel } from './PairPanel'
@@ -21,12 +21,15 @@ import { FinalePanel } from './FinalePanel'
 import { questAvailable, questComplete } from './quests'
 import { SupplyPanel } from './SupplyPanel'
 import { settleCampaignDay } from './watch'
+import { creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
+import { DatePanel } from './DatePanel'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 const GroundScreen = lazy(() => import('./GroundScreen'))
 const ShipCommandScreen = lazy(() => import('./ShipCommandScreen'))
+const WorkshopPanel = lazy(() => import('./WorkshopPanel'))
 
 export default function CampaignScreen() {
   return <TurnedStage>{(layout) => <Campaign layout={layout} />}</TurnedStage>
@@ -48,7 +51,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [check, setCheck] = useState(0)
   const [eveningOpen, setEveningOpen] = useState(false)
   const [groundPaused, setGroundPaused] = useState(false)
-  const [savingPair, setSavingPair] = useState(false)
+  const [savingScene, setSavingScene] = useState(false)
   useEffect(() => {
     let live = true
     setPending(true)
@@ -59,11 +62,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
     }).finally(() => { if (live) setPending(false) })
     return () => { live = false }
   }, [check])
-  function updatePair(change: (save: Save) => Save) {
-    setSavingPair(true)
-    void updateSave(change).finally(() => setSavingPair(false))
+  useEffect(() => {
+    if (loaded && save) void updateSave((current) => creditCampaignDates(current, loaded.book))
+  }, [loaded, save])
+  function commitScene(change: (save: Save) => Save) {
+    setSavingScene(true)
+    void updateSave(change).finally(() => setSavingScene(false))
   }
-  if (savingPair) return <div className={viewport} style={insets} role="status">Saving…</div>
+  if (savingScene) return <div className={viewport} style={insets} role="status">Saving…</div>
   const reduceEffects = (s: Save, effects: readonly EffectStep[]): Save =>
     loaded ? effects.reduce((state, step) => applyStep(state, loaded.book.story, step), s) : s
   const day = save?.campaignDay
@@ -74,6 +80,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
   const port = supply && network?.ports.find((p) => p.id === supply.port)
   const pairs = loaded && save ? loaded.book.pairs.filter((pair) => pairAvailable(save, loaded.book, pair)) : []
+  const dates = loaded && save ? (loaded.book.dates ?? []).filter((date) => dateAvailable(save, loaded.book, date)) : []
   const support = save ? campaignHomeSupport(pairs, save.story) : null
   const missionState = save?.mission
   const missionChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
@@ -86,6 +93,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
       <GroundScreen key={mission.id} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
         ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
+        acceptsFitted={loaded.book.workshop?.missions.includes(mission.id)}
         close={() => setGroundPaused(true)} />
     </Suspense>
   }
@@ -137,20 +145,23 @@ function Campaign({ layout }: { layout: StageLayout }) {
   if (loaded && save && pendingPair && pairScene && !error && loaded.book.scenes.has(pendingPair.scene)
     && pairSceneReady(save, loaded.book, pairScene, pendingPair.scene)) {
     return <CampaignScene key={pendingPair.scene} loaded={loaded} sceneId={pendingPair.scene} fail={setError}
-      finish={(effects) => updatePair((s) => closePairScene(s, loaded.book, pairScene, pendingPair.scene, effects))} />
+      finish={(effects) => commitScene((s) => closePairScene(s, loaded.book, pairScene, pendingPair.scene, effects))} />
   }
 
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
     return supply && loaded ? settleCampaignDay(s, campaignDay, loaded.book) : { ...s, campaignDay }
   }
   const nightPair = night && 'pair' in night ? pairs.find((pair) => pair.id === night.pair) : undefined
+  const nightDate = night && 'companion' in night
+    ? loaded?.book.dates?.find((date) => date.companion === night.companion && dateScene(date, night.scene)) : undefined
   if (loaded && day && night && !error && loaded.book.scenes.has(night.scene) && (!('pair' in night) || nightPair)) {
     return <CampaignScene key={`${day.day}:${night.kind}:${night.scene}`} loaded={loaded} sceneId={night.scene}
-      fail={setError}
-      finish={(effects) => (nightPair ? updatePair : updateSave)((s) => {
+      fail={setError} captainDate={!!nightDate}
+      finish={(effects, bondEffects) => (nightPair || nightDate ? commitScene : updateSave)((s) => {
         const campaignDay = finishCampaignNightScene(s.campaignDay, day.day, night)
         if (campaignDay === s.campaignDay) return s
-        const next = nightPair ? recordPairScene(s, loaded.book, nightPair, night.scene, effects) : reduceEffects(s, effects)
+        const next = nightPair ? recordPairScene(s, loaded.book, nightPair, night.scene, effects)
+          : nightDate ? recordDateScene(s, loaded.book, nightDate, night.scene, effects, bondEffects) : reduceEffects(s, effects)
         return settleDay(next, campaignDay)
       })} />
   }
@@ -173,15 +184,25 @@ function Campaign({ layout }: { layout: StageLayout }) {
     if (!home || home.port !== port.id || !complete.has(home.base)) return []
     return [<HomePanel key={pair.id} pair={pair} home={home} name={port.name} story={save.story} pack={loaded.book.story}
       next={nextHomeScene(save, loaded.book, pair)} defended={complete.has(home.defense)}
-      open={(scene) => updatePair((s) => openPairScene(s, loaded.book, pair, scene))} />]
+      open={(scene) => commitScene((s) => openPairScene(s, loaded.book, pair, scene))} />]
   }) : []
   const pairPanels = loaded && save && !night && !pendingPair && !missionState && !eveningOpen ? pairs.filter((pair) =>
     !pair.members.some(({ outfit }) => support?.ashore.has(outfit))).map((pair) => (
     <PairPanel key={pair.id} pair={pair} story={save.story} pack={loaded.book.story}
-      open={(scene) => updatePair((s) => openPairScene(s, loaded.book, pair, scene))} />
+      open={(scene) => commitScene((s) => openPairScene(s, loaded.book, pair, scene))} />
   )) : []
-  const side = supplyPanel || pairPanels.length + basePanels.length > 0
+  const datePanel = loaded && save && dates.length > 0 && !night && !pendingPair && !missionState && !eveningOpen
+    ? <DatePanel save={save} book={loaded.book} dates={dates} /> : null
+  const workshop = loaded?.book.workshop
+  const workshopPanel = loaded && save && support && workshop && !night && !pendingPair && !missionState && !eveningOpen
+    && workshop.port === port?.id && complete.has(workshop.after)
+    ? <Suspense fallback={null}><WorkshopPanel save={save} loaded={loaded} ashore={support.ashore} /></Suspense> : null
+  const side = supplyPanel || datePanel || pairPanels.length + basePanels.length > 0
   const visitOptions = canRest ? evening?.visits.filter((v) => !support?.ashore.has(v.companion) && save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
+  const dateOptions = loaded && save && canRest ? dates.map((date) => {
+    const visit = dateProgress(save, loaded.book, date).visit
+    return { visit: { kind: 'visit' as const, companion: date.companion, scene: visit.scene, morning: visit.morning }, title: visit.title }
+  }) : []
   const pairVisits = loaded && save && canRest ? pairs.flatMap((pair) => {
     const visit = pairVisit(pair, save.story, save.crew.flatMap(({ outfit }) => support?.ashore.has(outfit) ? [] : [outfit]))
     if (!visit) return []
@@ -192,10 +213,18 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }) : []
   function chooseEvening(visit: CampaignVisit | null) {
     setEveningOpen(false)
-    void (visit?.kind === 'pair-visit' ? updatePair : updateSave)((s) => {
+    void (visit ? commitScene : updateSave)((s) => {
       if (!canRest || s.campaignDay.day !== day?.day || s.pairScene || s.mission) return s
       const { ashore } = campaignHomeSupport(loaded?.book.pairs ?? [], s.story)
       if (visit?.kind === 'visit' && (ashore.has(visit.companion) || !s.crew.some((crew) => crew.outfit === visit.companion))) return s
+      if (visit?.kind === 'visit' && loaded) {
+        const date = loaded.book.dates?.find(({ companion }) => companion === visit.companion)
+        if (date) {
+          if (!dateAvailable(s, loaded.book, date)) return s
+          const ready = dateProgress(s, loaded.book, date).visit
+          if (ready.scene !== visit.scene || ready.morning !== visit.morning) return s
+        }
+      }
       if (visit?.kind === 'pair-visit') {
         const pair = loaded?.book.pairs.find((pair) => pair.id === visit.pair)
         const live = pair && loaded && pairAvailable(s, loaded.book, pair)
@@ -232,6 +261,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
             {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
               onClick={() => chooseEvening({ kind: 'visit', ...visit })}>Visit {nameOf(loaded.book.story, visit.companion)}</button>)}
+            {dateOptions.map(({ visit, title }) => <button key={visit.companion} type="button" className={button}
+              onClick={() => chooseEvening(visit)}>{nameOf(loaded.book.story, visit.companion)} · {title}</button>)}
             {pairVisits.map(({ visit, label }) => <button key={visit.pair} type="button" className={button} onClick={() => chooseEvening(visit)}>{label}</button>)}
             <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
             <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
@@ -241,6 +272,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
         {side && <div className="space-y-3">
           {loaded?.book.finale && save && supply && !night && !pendingPair && !missionState && !eveningOpen &&
             <FinalePanel book={loaded.book} story={save.story} complete={complete.has(loaded.book.finale.ending)} />}
+          {datePanel}
+          {workshopPanel}
           {pairPanels}
           {basePanels}
           {supplyPanel}
@@ -259,14 +292,16 @@ function Campaign({ layout }: { layout: StageLayout }) {
   )
 }
 
-function CampaignScene({ loaded, sceneId, finish, fail, battle }: {
-  loaded: LoadedCampaign; sceneId: string; finish: (effects: readonly EffectStep[]) => void; fail: (message: string) => void
+function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate }: {
+  loaded: LoadedCampaign; sceneId: string; finish: (effects: readonly EffectStep[], bondEffects: readonly BondEffect[]) => void; fail: (message: string) => void
+  captainDate?: boolean
   battle?: (id: string, effects: readonly EffectStep[]) => Promise<void>
 }) {
   const scene = loaded.book.scenes.get(sceneId)!
   const art = loaded.book.art.find((entry) => entry.scene === sceneId)
   const [presentation, setPresentation] = useState<ScenePresentation | null>(null)
   const steps = useRef<EffectStep[]>([])
+  const bonds = useRef<BondEffect[]>([])
   const leaving = useRef(false)
 
   useEffect(() => {
@@ -292,7 +327,9 @@ function CampaignScene({ loaded, sceneId, finish, fail, battle }: {
 
   if (!presentation) return <div className={viewport} style={insets} role="status">Loading the scene…</div>
   return <ScenePlayer pack={loaded.book.story} scene={scene} squad={[]} presentation={presentation}
+    pathFooter={captainDate ? 'Either choice keeps the campaign open.' : undefined}
     onEffect={(step) => { steps.current.push(step) }}
+    onBond={(effect) => { bonds.current.push(effect) }}
     onBattle={async (id) => {
       if (leaving.current) return
       leaving.current = true
@@ -302,6 +339,6 @@ function CampaignScene({ loaded, sceneId, finish, fail, battle }: {
     onDone={() => {
       if (leaving.current) return
       leaving.current = true
-      finish(steps.current)
+      finish(steps.current, bonds.current)
     }} />
 }

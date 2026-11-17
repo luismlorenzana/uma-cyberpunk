@@ -39,7 +39,7 @@ export interface ScenePresentation {
   illustrations?: Record<string, string>
 }
 
-export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation }: {
+export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter }: {
   pack: StoryPack
   scene: Scene | { id: string; place: string; steps: Step[] }
   squad: readonly number[]
@@ -49,6 +49,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   /** A bond scene's effects: a captain's choice's rapport, the path chosen (CY13). */
   onBond?: (effect: BondEffect) => void
   presentation?: ScenePresentation
+  pathFooter?: string
 }) {
   const captain = useGame((g) => g.save?.captain) ?? DEFAULT_CAPTAIN
   const fill = (text: string) => fillCaptain(text, captain)
@@ -169,7 +170,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
             <button type="button" data-choose="trust" onClick={() => advance(0)} className="min-h-14 rounded-md bg-[#2ee6ff] px-3 text-left font-bold text-[#0b0d17]">Trust<span className="block text-[12px] font-normal">Partners in arms: friendship, all the way</span></button>
             <button type="button" data-choose="heart" onClick={() => advance(1)} className="min-h-14 rounded-md bg-[#ff3dc8] px-3 text-left font-bold text-[#0b0d17]">Heart<span className="block text-[12px] font-normal">Something more: a light romance</span></button>
           </div>
-          <div className="text-[12px] text-white/50">Both are equal in battle, and a later scene can change it.</div>
+          <div className="text-[12px] text-white/50">{pathFooter ?? 'Both are equal in battle, and a later scene can change it.'}</div>
         </div>
       )}
       {showLog && (
