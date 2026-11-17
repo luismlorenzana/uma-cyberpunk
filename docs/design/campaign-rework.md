@@ -30,6 +30,14 @@ The hidden enemy is the alien power manipulating the occupying factions and expl
 
 Before scripting all five arcs, outline the alien objective, the evidence that makes it discoverable, and one plausible final operation. Before commissioning bespoke final art, agree on the objective, scene beats, enemy silhouettes, phases and states that must be readable during play. Record the actual names, pairings, dialogue and spoilers in the private story files.
 
+## Playable baseline and content releases
+
+Each delivery includes enough original draft writing and placeholder art to exercise the real feature. The opening baseline is a short playable conversation with invented characters, a choice with a saved consequence, named speakers and expression cues, plus placeholder portraits and a backdrop. CY22 extends it through a Training briefing, encounter and debrief. Later packets add baseline calls, scenes and assets as their rules need them. The coding contributor can author these directly while story and art develop the approved versions.
+
+Run the baseline through the same versioned contract, checker, packer, private preview publication and app loader used for approved content. Publish a second preview release with a rewritten line and a replacement image under the same story and asset IDs. Verify that the app discovers the update, renders the new files, and can still continue or resume a save that used the first release. Document how to return to a known-good pack if a release fails.
+
+Label the baseline as draft in preview. Keep source files and assets in ignored private content. CI uses small invented fixtures for automated checks. When the approved script and art land, use the same IDs and publish them through the verified path. If an approved revision changes quest state or an ID, define how existing saves continue before publishing it.
+
 ## Shared quest brief and review
 
 At the start of each delivery, code, story and art agree on a quest brief with the player entry point, scenes and choices, mission objectives and fail/retry rules, consequences saved and shown, and required assets. Use the same IDs in the game, script and art brief. For a clue, specify where it appears, what it means on first encounter, and where it pays off. Story can change an encounter outcome or require a new rule. Art can change the staging when intent or ownership reads poorly on the phone. Update the brief and affected packets together.

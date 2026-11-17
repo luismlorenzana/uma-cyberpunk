@@ -6,7 +6,7 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 
 | Packet | Work | Integrated delivery |
 |---|---|---|
-| [CY20](tasks/CY20.md) | Campaign foundation and authoring contracts | New campaign entry, distinct save, private pack |
+| [CY20](tasks/CY20.md) | Campaign foundation, authoring contracts and preview publishing | New campaign entry, distinct save, playable baseline pack and replacement release |
 | [CY21](tasks/CY21.md) | Opening, quarters and the first day | First recruit's scripted scenes and nightly visit |
 | [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
 | [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
