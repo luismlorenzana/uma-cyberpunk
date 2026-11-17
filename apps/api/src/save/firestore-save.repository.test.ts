@@ -78,4 +78,20 @@ describe('the Firestore save store', () => {
     await repo.rescue('u', { second: true }, 'two')
     expect(store.get('saveRescues/u')).toEqual({ upload: JSON.stringify({ second: true }), reason: 'two', rescuedAt: SERVER_TIME })
   })
+
+  it('isolates campaign saves, backups and rescues for the same uid', async () => {
+    const original = new FirestoreSaveRepository('cyber')
+    const campaign = new FirestoreSaveRepository('cyber', true)
+    await original.put('u', 0, newSave('u', T0), 10)
+    expect(await campaign.load('u')).toEqual({ revision: 0, save: null })
+    const older = { version: 1, account: newSave('u', T0).account }
+    store.set('campaignSaves/u', { revision: 1, save: JSON.stringify(older) })
+    await campaign.put('u', 1, newSave('u', T1), 10)
+    await campaign.rescue('u', { draft: true }, 'invalid upload')
+    expect(await original.load('u')).toEqual({ revision: 1, save: newSave('u', T0) })
+    expect(store.get('campaignSaveBackups/u-v1')?.save).toBe(JSON.stringify(older))
+    expect(store.has('campaignSaveRescues/u')).toBe(true)
+    expect(store.has('saveBackups/u-v1')).toBe(false)
+    expect(store.has('saveRescues/u')).toBe(false)
+  })
 })

@@ -40,7 +40,7 @@ const live = (doc: string, body: string) => doc.replace(/<!-- live:parts -->[\s\
 
 describe('the manual', () => {
   it('holds the current starter parts', () => {
-    const doc = readFileSync(DOC, 'utf8')
+    const doc = readFileSync(DOC, 'utf8').replaceAll('\r\n', '\n')
     const current = live(doc, partsTable())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DOC, current)
     else expect(doc).toBe(current)
@@ -66,7 +66,7 @@ export function squadsTable(): string {
 }
 describe('the squads manual', () => {
   it('holds the current squad numbers', () => {
-    const doc = readFileSync(SQUADS_DOC, 'utf8')
+    const doc = readFileSync(SQUADS_DOC, 'utf8').replaceAll('\r\n', '\n')
     const current = doc.replace(/<!-- live:squads -->[\s\S]*?<!-- \/live -->/, `<!-- live:squads -->\n${squadsTable()}\n<!-- /live -->`)
     if (process.env.UPDATE_DOCS === '1') writeFileSync(SQUADS_DOC, current)
     else expect(doc).toBe(current)

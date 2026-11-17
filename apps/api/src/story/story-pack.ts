@@ -10,6 +10,7 @@
 import { resolve } from 'node:path'
 import { BucketFileSource, DirectoryFileSource, fileSource, PrivatePackModule, type FileSource, type PackAllow } from '@luismlorenzana/uma-server/content'
 import type { DynamicModule } from '@nestjs/common'
+import { CAMPAIGN_FILE_PATH, CAMPAIGN_PREVIEW_INDEX } from '@cyber/domain'
 
 /** `story.json`, and `story/<name>.<hash8>.json` (`scripts/story/pack.ts`'s names). */
 export const STORY_ALLOW: PackAllow = ['story.json', /story\/[a-z0-9]+(-[a-z0-9]+)*\.[a-f0-9]{8}\.json/]
@@ -18,9 +19,10 @@ export const LOOKS_ALLOW: PackAllow = ['looks/index.json', /looks\/images\/[a-z0
 export const LOOKS_PREFIX = 'art/universes/cyberpunk/'
 
 /** One source for the route: `looks/…` from the looks' bucket folder or local mirror, everything else from the story's. */
-export function contentSource(story: FileSource, looks: FileSource | null, prefix = LOOKS_PREFIX): FileSource {
+export function contentSource(story: FileSource, looks: FileSource | null, prefix = LOOKS_PREFIX, campaign: FileSource | null = null): FileSource {
   return {
     read: (path) => {
+      if (path.startsWith('campaign/')) return campaign?.read(path) ?? Promise.resolve(null)
       if (!path.startsWith('looks/')) return story.read(path)
       return looks ? looks.read(`${prefix}${path.slice('looks/'.length)}`) : Promise.resolve(null)
     },
@@ -31,9 +33,10 @@ export function storyPackModule(env: Record<string, string | undefined> = proces
   const story = fileSource({ bucket: env.STORY_BUCKET || undefined, dir: resolve(cwd, env.STORY_DIR || '../../content/story-release') }, (dir) => new DirectoryFileSource(dir))
   // The local mirror keeps the bucket's layout under the prefix, so both read the same relative paths.
   const looks = env.LOOKS_BUCKET ? new BucketFileSource(env.LOOKS_BUCKET) : new DirectoryFileSource(resolve(cwd, env.LOOKS_DIR || '../../content/looks'))
+  const campaign = new DirectoryFileSource(resolve(cwd, env.CAMPAIGN_PACK_DIR || '../../content/campaign-release'))
   return PrivatePackModule.forRoot({
     route: 'content',
-    allow: [...STORY_ALLOW, ...LOOKS_ALLOW],
-    source: contentSource(story, looks, env.LOOKS_PREFIX || LOOKS_PREFIX),
+    allow: [...STORY_ALLOW, ...LOOKS_ALLOW, CAMPAIGN_PREVIEW_INDEX, CAMPAIGN_FILE_PATH],
+    source: contentSource(story, looks, env.LOOKS_PREFIX || LOOKS_PREFIX, campaign),
   })
 }

@@ -33,7 +33,12 @@ function Bust({ pack, speaker }: { pack: StoryPack; speaker: Speaker }) {
   )
 }
 
-export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond }: {
+export interface ScenePresentation {
+  backdrop?: string
+  portraits: { speaker: Speaker; url: string; emote?: string }[]
+}
+
+export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation }: {
   pack: StoryPack
   scene: Scene | { id: string; place: string; steps: Step[] }
   squad: readonly number[]
@@ -42,10 +47,12 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   onDone: () => void
   /** A bond scene's effects: a captain's choice's rapport, the path chosen (CY13). */
   onBond?: (effect: BondEffect) => void
+  presentation?: ScenePresentation
 }) {
   const captain = useGame((g) => g.save?.captain) ?? DEFAULT_CAPTAIN
   const fill = (text: string) => fillCaptain(text, captain)
   const [prompt, setPrompt] = useState<Prompt | null>(null)
+  const [expressions, setExpressions] = useState<Partial<Record<Speaker, string>>>({})
   const [log, setLog] = useState<{ speaker: string; text: string }[]>([])
   /** Her last line stays above a choice, so the player answers what was said. */
   const said = log[log.length - 1]
@@ -71,12 +78,15 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
         if (autoRef.current) window.setTimeout(() => { if (resolve.current) advance() }, 900 + text.length * 45)
         await done
       },
-      emote: async () => { await new Promise((r) => setTimeout(r, skipping.current ? 0 : 300)) },
+      emote: async (actor, emote) => {
+        if (live && presentation) setExpressions((old) => ({ ...old, [actor]: emote }))
+        await new Promise((r) => setTimeout(r, skipping.current ? 0 : 300))
+      },
       wait: async (ms) => { await new Promise((r) => setTimeout(r, Math.min(ms, 2000))) },
       choose: (options) => ask({ kind: 'choice', options }),
       call: (call) => ask({ kind: 'call', call }),
       battle: async (mission) => { await ask({ kind: 'battle', mission }); await onBattle(mission) },
-      effect: onEffect,
+      effect: (step) => { if (live) onEffect(step) },
       captain: (options) => ask({ kind: 'captain', options }),
       path: async () => ((await ask({ kind: 'path' })) === 1 ? 'heart' : 'trust') as BondPath,
       bond: (e) => { if (live) onBond?.(e) },
@@ -87,15 +97,23 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   }, [scene.id])
 
   const skip = () => { skipping.current = true; if (prompt?.kind === 'line') advance() }
+  const speaker = prompt?.kind === 'line' ? prompt.speaker : null
+  const portrait = speaker === null ? undefined
+    : presentation?.portraits.find((p) => p.speaker === speaker && p.emote === expressions[speaker])
+      ?? presentation?.portraits.find((p) => p.speaker === speaker && p.emote === undefined)
   return (
     <div data-scene={scene.id} className="absolute inset-0 select-none bg-gradient-to-b from-[#141827] via-[#0e1222] to-[#05060c] text-[#e8ebf5]">
+      {presentation?.backdrop && <img alt="" src={presentation.backdrop} className="absolute inset-0 size-full object-cover opacity-70" data-scene-backdrop />}
       <div className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{scene.place}</div>
       <div className="absolute right-3 top-3 flex gap-2" style={{ marginTop: 'var(--inset-top)', marginRight: 'var(--inset-right)' }}>
         <button type="button" onClick={() => setAuto((a) => !a)} className={`min-h-11 rounded-md px-3 text-[13px] font-bold ${auto ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>Auto</button>
         <button type="button" onClick={skip} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Skip</button>
         <button type="button" onClick={() => setShowLog(true)} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Log</button>
       </div>
-      {prompt?.kind === 'line' && prompt.speaker !== null && <div className="absolute bottom-[34%] left-8"><Bust pack={pack} speaker={prompt.speaker} /></div>}
+      {speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
+        {portrait ? <img alt="" src={portrait.url} className="max-h-[44vh] max-w-[35vw] rounded-lg object-contain" data-scene-portrait={portrait.emote ?? 'neutral'} />
+          : <Bust pack={pack} speaker={speaker} />}
+      </div>}
       {prompt?.kind === 'line' && (
         <button type="button" data-line onClick={() => advance()} className="absolute inset-x-4 bottom-3 min-h-28 rounded-xl border border-white/15 bg-[#0b0d17]/90 p-3 text-left"
           style={{ marginBottom: 'var(--inset-bottom)', marginLeft: 'var(--inset-left)', marginRight: 'var(--inset-right)' }}>

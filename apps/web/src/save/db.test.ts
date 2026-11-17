@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { newSave } from '@cyber/domain'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { addSafetyCopy, clearDevice, readSaveRow, SAFETY_COPIES, safetyCopies, writeSaveRow } from './db'
 
 const T0 = '2026-11-08T12:00:00.000Z'
@@ -25,5 +25,25 @@ describe('the device save', () => {
     await addSafetyCopy({ uid: 'b', reason: 'replaced', at: T0, revision: 99, save: newSave('b', T0) })
     expect((await safetyCopies('a')).map((c) => c.revision)).toEqual([6, 5, 4, 3, 2])
     expect((await safetyCopies('b')).map((c) => c.revision)).toEqual([99])
+  })
+
+  it('keeps campaign rows and safety copies separate for the same account', async () => {
+    const original = newSave('a', T0)
+    await writeSaveRow({ id: 'main', uid: 'a', revision: 4, save: original, dirty: false, lastSyncedAt: T0 })
+    await addSafetyCopy({ uid: 'a', reason: 'restore', at: T0, revision: 3, save: original })
+    vi.resetModules()
+    vi.doMock('../app/campaign', () => ({ inCampaign: true }))
+    try {
+      const campaign = await import('./db')
+      await campaign.clearDevice()
+      expect(await campaign.readSaveRow('a')).toBeNull()
+      expect(await campaign.safetyCopies('a')).toEqual([])
+      await campaign.writeSaveRow({ id: 'main', uid: 'a', revision: 1, save: original, dirty: false, lastSyncedAt: T0 })
+      await campaign.addSafetyCopy({ uid: 'a', reason: 'restore', at: T0, revision: 1, save: original })
+      expect((await readSaveRow('a'))?.revision).toBe(4)
+      expect((await safetyCopies('a')).map((copy) => copy.revision)).toEqual([3])
+    } finally {
+      vi.doUnmock('../app/campaign')
+    }
   })
 })

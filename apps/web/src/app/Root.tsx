@@ -10,6 +10,7 @@ import { loadMaster } from '../master/master'
 import { MasterGate } from '../master/MasterGate'
 import { boot, startSyncTriggers } from '../save/game'
 import { signInEnabled } from './firebase-config'
+import { inCampaign } from './campaign'
 
 async function bootFor({ uid }: { uid: string }): Promise<{ firstLaunch: boolean }> {
   loadMaster()
@@ -27,7 +28,7 @@ export function Root() {
     <>
       <UpdateNotice />
       <BootGates auth={auth} boot={bootFor} words={{ name: 'Uma Cyberpunk', tagline: 'Rigs up. Lights out.' }}>
-        <MasterGate><Outlet /></MasterGate>
+        {inCampaign ? <Outlet /> : <MasterGate><Outlet /></MasterGate>}
       </BootGates>
     </>
   )

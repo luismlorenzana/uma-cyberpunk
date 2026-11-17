@@ -3,6 +3,7 @@
 // the newest five for each account.
 import type { Dexie, Table } from 'dexie'
 import { parseSave, type Save } from '@cyber/domain'
+import { inCampaign } from '../app/campaign'
 
 export interface SaveRow {
   id: 'main'
@@ -35,7 +36,7 @@ let databasePromise: Promise<Dexie> | null = null
 function database(): Promise<Dexie> {
   databasePromise ??= (async () => {
     const { default: DexieDb } = await import('dexie')
-    const opened = new DexieDb('uma-cyberpunk')
+    const opened = new DexieDb(inCampaign ? 'uma-cyberpunk-campaign' : 'uma-cyberpunk')
     opened.version(1).stores({ save: 'id', safety: '++id, uid' })
     return opened
   })().catch((error: unknown) => {

@@ -87,7 +87,7 @@ function live(doc: string, key: string, body: string): string {
 
 describe('the manual', () => {
   it('holds the current tuning tables', () => {
-    const doc = readFileSync(DOC, 'utf8')
+    const doc = readFileSync(DOC, 'utf8').replaceAll('\r\n', '\n')
     const current = live(live(doc, 'tuning', tuningTables()), 'tuning2', tuningTables2())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DOC, current)
     else expect(doc, 'docs/game/battle.md is stale: run pnpm docs:update').toBe(current)

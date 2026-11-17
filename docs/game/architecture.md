@@ -39,6 +39,17 @@ flow, the sandbox and the benches are landscape screens on uma-stage's turned st
 a newer one, puts a red line under the bar on every page. Every other path goes to Home. The update prompt sits outside
 the gates, so a waiting build shows on any screen.
 
+## Campaign preview
+
+Open `/campaign`, or choose **Campaign preview** from the ship menu. The preview is a separate campaign under the
+same sign-in. **Account** inside the preview shows its sync and safety copies. **Original campaign** returns to the
+original ship. The switch reloads the app so pending save work stays in its campaign.
+
+The original save uses `/api/save` and IndexedDB `uma-cyberpunk`. The preview uses `/api/campaign/save`, IndexedDB
+`uma-cyberpunk-campaign`, and separate save, backup and rescue collections in the same `cyber` database. The local
+API stores its preview save beside the original with a `.campaign` suffix. Both use the same reconciliation rules.
+The [content guide](../technical/campaign-content.md) covers private preview releases and the draft scene.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,

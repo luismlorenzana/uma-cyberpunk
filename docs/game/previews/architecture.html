@@ -142,6 +142,14 @@
       <p class="note">The initial opens Account (safety copies with a Restore each, Sign out); the bottom bar's Menu opens Home, Account, Sign out and the build id. Other paths go to Home.</p>
     </section>
 
+    <section class="card" id="campaign-preview">
+      <h2>Campaign preview</h2>
+      <p>Open <code>/campaign</code> or choose <b>Campaign preview</b> from the ship. Its Account shows the preview’s
+         sync and safety copies. <b>Original campaign</b> returns to the original ship.</p>
+      <p>The preview has its own device database and <code>/api/campaign/save</code> endpoint under the same sign-in.
+         Its save, backups and rescues have separate collections in <code>cyber</code>. The preview’s draft story and
+         art load from the selected private release.</p>
+    </section>
     <section class="card" id="save">
       <h2>The save</h2>
       <p><b>Save v1</b>: <code>{ version: 1, account: { uid, createdAt, updatedAt } }</code>. Parsing is strict: unknown keys and newer versions are refused. Every change is a new version with its migration (v2 in CY9, v3 in CY10). Nothing carries over from any other game.</p>

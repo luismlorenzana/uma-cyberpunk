@@ -26,7 +26,7 @@ const live = (doc: string, body: string) => doc.replace(/<!-- live:items -->[\s\
 
 describe('the manual', () => {
   it('holds the current items', () => {
-    const doc = readFileSync(DOC, 'utf8')
+    const doc = readFileSync(DOC, 'utf8').replaceAll('\r\n', '\n')
     const current = live(doc, itemsBlock())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DOC, current)
     else expect(doc).toBe(current)

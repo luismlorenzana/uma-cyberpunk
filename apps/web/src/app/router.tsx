@@ -10,6 +10,7 @@ import { Account } from '../home/Account'
 import { Home } from '../home/Home'
 import { Shell } from '../shell/Shell'
 import { Root } from './Root'
+import { CAMPAIGN_ENTRY, inCampaign } from './campaign'
 
 const BoardScreen = lazy(() => {
   markStageRequested()
@@ -26,13 +27,25 @@ const MissionScreen = lazy(() => {
   markStageRequested()
   return import('../mission/MissionScreen')
 })
+const CampaignScreen = lazy(() => {
+  markStageRequested()
+  return import('../campaign/CampaignScreen')
+})
+const CampaignAccount = lazy(() => {
+  markStageRequested()
+  return import('../campaign/CampaignScreen').then((module) => ({ default: module.CampaignAccount }))
+})
 const loading = <div className="fixed inset-0 flex items-center justify-center bg-page text-ink-soft">Loading the board…</div>
 const boarding = <div className="fixed inset-0 flex items-center justify-center bg-[#0b0d17] text-white/60">Boarding…</div>
 
 export const routes: RouteObject[] = [
   {
     element: <Root />,
-    children: [
+    children: inCampaign ? [
+      { path: 'campaign', element: <Suspense fallback={boarding}><CampaignScreen /></Suspense> },
+      { path: 'campaign/account', element: <Suspense fallback={boarding}><CampaignAccount /></Suspense> },
+      { path: '*', element: <Navigate to={CAMPAIGN_ENTRY} replace /> },
+    ] : [
       {
         element: <Shell />,
         children: [

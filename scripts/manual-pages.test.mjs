@@ -7,7 +7,7 @@ import { blocks, pages } from './manual-pages.mjs'
 test('every manual page has its current desktop page', () => {
   for (const [path, html] of pages()) {
     assert.ok(existsSync(path), `${path} is missing: run node scripts/manual-pages.mjs`)
-    assert.equal(readFileSync(path, 'utf8'), html, `${path} is stale: run node scripts/manual-pages.mjs`)
+    assert.equal(readFileSync(path, 'utf8').replaceAll('\r\n', '\n'), html, `${path} is stale: run node scripts/manual-pages.mjs`)
   }
 })
 
