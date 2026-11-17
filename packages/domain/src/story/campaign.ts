@@ -5,6 +5,8 @@ import { PORT_STOCK_MAX, SUPPLY_KINDS, type Supplies, type SupplyNetwork } from 
 import { CAPABILITY_NAME } from '../ship/modules'
 import type { CommandEncounter } from '../ship/command'
 import { parseCommandEncounter } from '../ship/command-parse'
+import { PARTS_BY_ID } from '../crew/parts'
+import type { Wallet } from '../ship/hull'
 
 export interface CampaignQuest {
   id: string
@@ -32,6 +34,16 @@ export interface CampaignBook {
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
   supply?: SupplyNetwork
   commands: ReadonlyMap<string, CommandEncounter>
+  ground: ReadonlyMap<string, GroundEncounter>
+}
+
+export interface GroundEncounter {
+  id: string
+  title: string
+  alternate?: { flag: string; scenario: string; label: string }
+  expansion?: string
+  boss?: { unit: string; name: string; portrait: string }
+  win: { flag?: string; file?: string; reward?: Wallet }
 }
 
 export interface CampaignReleaseFile {
@@ -70,7 +82,8 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
   if (!quests.has(after)) p.fail('supply.after', `unknown quest ${after}`)
   const start = p.slug(map.start, 'supply.start')
   const ports = p.list(map.ports, 'supply.ports', (value, path) => {
-    const port = p.object(value, path, ['id', 'name', 'scene', 'stock', 'produces', 'upkeep', 'reserve'])
+    const fields = ['id', 'name', 'scene', 'stock', 'produces', 'upkeep', 'reserve']
+    const port = p.object(value, path, [...fields, 'liberation'], fields)
     const id = p.slug(port.id, `${path}.id`)
     const scene = p.slug(port.scene, `${path}.scene`)
     const entry = Object.values(story.chapters).filter((chapter) => chapter.world === id).flatMap((chapter) => chapter.scenes).find((s) => s.id === scene)
@@ -82,8 +95,12 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
       return { fuel: p.int(o.fuel, `${field}.fuel`, 0, PORT_STOCK_MAX), provisions: p.int(o.provisions, `${field}.provisions`, 0, PORT_STOCK_MAX),
         alloy: p.int(o.alloy, `${field}.alloy`, 0, PORT_STOCK_MAX) }
     }
+    const liberation = port.liberation === undefined ? undefined : (() => {
+      const x = p.object(port.liberation, `${path}.liberation`, ['flag', 'alloy'])
+      return { flag: p.slug(x.flag, `${path}.liberation.flag`), alloy: p.int(x.alloy, `${path}.liberation.alloy`, 1, 99) }
+    })()
     return { id, name: p.text(port.name, `${path}.name`, 48), scene, stock: amounts('stock'), produces: amounts('produces'),
-      upkeep: amounts('upkeep'), reserve: amounts('reserve') }
+      upkeep: amounts('upkeep'), reserve: amounts('reserve'), ...(liberation ? { liberation } : {}) }
   }, 24)
   const known = unique(p, 'supply.ports', ports, (port) => port.id)
   if (!known.has(start)) p.fail('supply.start', `unknown port ${start}`)
@@ -141,7 +158,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -255,5 +272,38 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
       p.fail('commands', `${command.id} needs a ship mission and a quest at a supply port`)
     }
   }
-  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
+  const ground = unique(p, 'ground', o.ground === undefined ? [] : p.list(o.ground, 'ground', (v, path): GroundEncounter => {
+    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'boss', 'win'], ['id', 'title', 'win'])
+    const id = p.slug(g.id, `${path}.id`)
+    const mission = encounters.get(id)
+    if (!mission?.scenario || mission.scenario === 'training' || commands.has(id) || !quests.some((q) => q.encounter === id)) {
+      p.fail(`${path}.id`, 'expected a ground quest with its own mission scenario')
+    }
+    const alternate = g.alternate === undefined ? undefined : (() => {
+      const a = p.object(g.alternate, `${path}.alternate`, ['flag', 'scenario', 'label'])
+      const flag = p.slug(a.flag, `${path}.alternate.flag`)
+      if (![...commands.values()].some((c) => c.assault?.disabledFlag === flag)) p.fail(`${path}.alternate.flag`, 'unknown ship outcome')
+      return { flag, scenario: p.slug(a.scenario, `${path}.alternate.scenario`), label: p.text(a.label, `${path}.alternate.label`, 80) }
+    })()
+    const expansion = g.expansion === undefined ? undefined : p.slug(g.expansion, `${path}.expansion`)
+    if (expansion && PARTS_BY_ID.get(expansion)?.slot !== 'back') p.fail(`${path}.expansion`, 'expected a back unit')
+    const boss = g.boss === undefined ? undefined : (() => {
+      const b = p.object(g.boss, `${path}.boss`, ['unit', 'name', 'portrait'])
+      return { unit: p.slug(b.unit, `${path}.boss.unit`), name: p.text(b.name, `${path}.boss.name`, 48), portrait: asset(b.portrait, `${path}.boss.portrait`) }
+    })()
+    const w = p.object(g.win, `${path}.win`, ['flag', 'file', 'reward'], [])
+    const flag = w.flag === undefined ? undefined : p.slug(w.flag, `${path}.win.flag`)
+    const file = w.file === undefined ? undefined : p.slug(w.file, `${path}.win.file`)
+    if (file && !Object.hasOwn(story.files, file)) p.fail(`${path}.win.file`, `unknown file ${file}`)
+    const reward = w.reward === undefined ? undefined : (() => {
+      const r = p.object(w.reward, `${path}.win.reward`, ['credits', 'alloy', 'data'])
+      return { credits: p.int(r.credits, `${path}.win.reward.credits`, 0, 9999), alloy: p.int(r.alloy, `${path}.win.reward.alloy`, 0, 999), data: p.int(r.data, `${path}.win.reward.data`, 0, 999) }
+    })()
+    return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
+      ...(boss ? { boss } : {}), win: { flag, file, reward } }
+  }, 24), (g) => g.id)
+  for (const port of supply?.ports ?? []) {
+    if (port.liberation && ![...ground.values()].some((g) => g.win.flag === port.liberation?.flag)) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
+  }
+  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
 }

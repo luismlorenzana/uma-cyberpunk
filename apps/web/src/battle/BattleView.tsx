@@ -75,6 +75,9 @@ export interface BattleViewProps {
   control: Control
   debug: boolean
   training?: boolean
+  objectiveLabel?: string
+  portrait?: { unit: string; url: string }
+  standInKit?: 'biome' | 'town'
   onCommit: (s: Session) => void
   onEnd: (s: Session) => void
   onQuit: () => void
@@ -89,7 +92,16 @@ export function BattleView(props: BattleViewProps) {
   const [loaded, setLoaded] = useState<[number, number]>([0, 0])
   useEffect(() => {
     let live = true
-    void looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }).then((l) => { if (live) setLooks(l) })
+    const portrait = props.portrait
+    const face = portrait && new Image()
+    if (face && portrait) face.src = portrait.url
+    void Promise.all([
+      looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }),
+      face ? face.decode().then(() => face, () => null) : undefined,
+    ]).then(([units, decoded]) => {
+      if (portrait && decoded) units.set(portrait.unit, { kind: 'face', face: decoded })
+      if (live) setLooks(units)
+    })
     return () => { live = false }
   }, [])
   const albums = useMemo(() => albumArt((id) => props.session.input.units.find((u) => u.ref?.id === id)?.label ?? `Uma ${id}`), [props.session.input])
@@ -97,7 +109,7 @@ export function BattleView(props: BattleViewProps) {
   return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, training, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -271,7 +283,7 @@ function BattleBoard({ layout, session: first, control, debug, training, onCommi
   useEffect(() => {
     const el = canvas.current
     if (!el) return
-    const sc = new BoardScene(el, { saver: initialSaver() })
+    const sc = new BoardScene(el, { saver: initialSaver(), standInKit })
     scene.current = sc
     sc.resize(layout.width, layout.height, window.devicePixelRatio || 1)
     const s = session.current.state
@@ -543,6 +555,8 @@ function BattleBoard({ layout, session: first, control, debug, training, onCommi
       <div className="pointer-events-none absolute inset-x-0 flex justify-center" style={{ top: 'calc(var(--inset-top) + 6px)' }}>
         <Timeline state={state} ids={timelineIds} ghost={ghost} onInspect={setInspect} />
       </div>
+      {objectiveLabel && <p className="pointer-events-none absolute rounded bg-black/75 px-2 py-1 text-xs font-semibold text-white"
+        style={{ top: 'calc(var(--inset-top) + 55px)', right: 'calc(var(--inset-right) + 6px)' }}>{objectiveLabel}</p>}
       <div className="pointer-events-none absolute flex flex-col gap-2" style={{ top: 'calc(var(--inset-top) + 6px)', left: 'calc(var(--inset-left) + 6px)' }}>
         <button type="button" onClick={onQuit} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Setup</button>
         <button type="button" onClick={() => setReachAll((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Reach {reachAll ? 'on' : 'off'}</button>

@@ -9,12 +9,11 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 | [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
 | [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
 | [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
-| [CY25](tasks/CY25.md) | Occupied space, boarding and liberation | First boss capture and liberation, with a playable clue |
 | [CY26](tasks/CY26.md) | Recovery, release and shared quarters | First pair's recovery and residential choices |
 | [CY27](tasks/CY27.md) | Return home and defend it | First complete arc, with resettlement or staying aboard |
 | [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Later campaign deliveries, the alien reveal and final fight |
 
-CY20 and CY21 are complete. The private `baseline-6` release plays through Training, debrief, the first morning, five civilian ports and Selden's paid convoy defense. CY22–CY24 have playable drafts with outstanding work recorded in their packets. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
+CY20, CY21 and CY25 are complete. The private `baseline-7` release extends Selden's convoy defense through boarding, custody and liberation. The [Selden art packet](../design/art-requests/selden-quarantine.md) covers the approved replacement assets. CY22–CY24 have playable drafts with outstanding work recorded in their packets. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
 
 ## Earlier campaign handoff
 
@@ -134,6 +133,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY25 | Occupied space, boarding and liberation (D46). The `baseline-7` draft carries the patrol emitter outcome into the maintenance or cargo arrival. Boarding records custody; the station terminal separately saves liberation, the manifest and the port's increased Alloy production. Chrome verified the maintenance route through debrief and reload. Both routes and the station have tested replays. Approved art is tracked in the [Selden art packet](../design/art-requests/selden-quarantine.md). | _this commit_ |
 | CY21 | Opening, quarters and the first day (D42). A private draft sign-on and quarters visit exercise save v11, morning resume and a full-screen illustration. The rehearsal passed on the migrated save in Chrome, with framing checked at 844 × 390. CY22 connects the authored Training result to recruitment and quarters. [Content guide](../technical/campaign-content.md#quarters-and-morning) | _this commit_ |
 | CY20 | Campaign foundation (D41). The owner-gated preview has an independent save and a validated content release. Two local draft packs proved a choice, dialogue and art replacement on the same save, and rollback in Chrome. [Campaign content guide](../technical/campaign-content.md) | _this commit_ |
 | CY19 | The life-aboard loop (D33): the stand-in grown (bond scenes for all four Umas, sw3 behind the Engines' drive with its event pool and operation), the headless loop playing every system of ship life with its measures (bonds to rank 8, Comfort 3, the log every watch, builds and research, operations, standing, the finale's conditions, cohesion, resume, time aboard), three gaps fixed (away squads kept whole, canonical squads only on arrival, bond gates on every key), the play-through in the preview pane; [the life-aboard loop](../game/story.md#the-life-aboard-loop-cy19) in the manual. **Phase 4's code is complete** | _this commit_ |

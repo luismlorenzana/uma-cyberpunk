@@ -15,10 +15,15 @@ export type TrainingMain = typeof TRAINING_MAIN[number]['id']
 export type TrainingExpansion = typeof TRAINING_EXPANSION[number]['id']
 
 export function trainingInput(outfit: number, label: string, main: TrainingMain, expansion: TrainingExpansion): BattleInput {
+  return groundInput('training', outfit, label, main, expansion)
+}
+
+export function groundInput(scenario: string, outfit: number, label: string, main: TrainingMain, expansion: string, boss?: { unit: string; name: string }): BattleInput {
   const rig: Rig = { core: 'core-light', leftArm: 'arm-light', rightArm: 'arm-light', legs: 'legs-standard',
     visor: 'visor-aim', leftHand: null, rightHand: main, back: expansion, coat: null }
-  const trainee = SCENARIOS.training!.input.units.find((unit) => unit.side === 'squad')!
-  return missionInput('training', [{ outfit, label, bands: trainee.bands, loadout: loadoutOf(rig), stride: null }], [], 'training')
+  const trainee = SCENARIOS[scenario]!.input.units.find((unit) => unit.side === 'squad')!
+  const input = missionInput(scenario, [{ outfit, label, bands: trainee.bands, loadout: loadoutOf(rig), stride: null }], [], scenario)
+  return boss ? { ...input, units: input.units.map((unit) => unit.id === boss.unit ? { ...unit, label: boss.name } : unit) } : input
 }
 
 /** Exercise results settle independently of mission rewards, supply costs and the day clock. */

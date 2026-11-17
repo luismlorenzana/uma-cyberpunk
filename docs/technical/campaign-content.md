@@ -109,6 +109,24 @@ has skill zero. An assigned officer can drill once per day in her station up to 
 new station record. Win by screening the transport through all waves or by driving the raider off. Losing leaves the
 frozen battle available to retry. Reloads restore committed orders. The win unlocks the authored debrief once.
 
+## Occupied routes and ground missions
+
+Chain an occupied route after its civilian defense debrief and bind the approach quest to the port. A command
+encounter with `assault` gives the player a targetable `emitter`, an officer `call` and a `disabledFlag`. This uses
+ship command rules version 2. Drive off the patrol before the window closes. Successfully disabling the emitter saves
+the flag when the approach victory settles. Version 1 convoy replays retain their original win condition.
+
+For a ground mission, put the default scenario on the chapter mission and add a `ground` entry with the same `id`,
+a title and a `win` block. An `alternate` names a ship outcome flag, alternate `scenario` and Hangar `label`. A `boss`
+binds a scenario's enemy leader `unit` to a `name` and a declared portrait asset. `expansion` forces a mounted back unit.
+Set `back-deck` for a hack objective. The campaign freezes the selected map and loadout at deployment. Loss offers a
+retry with that input and without another launch fee.
+
+On victory, `win.flag`, `win.file` and `win.reward` grant a story flag, the referenced Log File and wallet amounts
+once. Selden's boarding clear records custody. The station console opens the civilian exit and grants the manifest and
+liberation separately. A port can use `liberation.flag` to add `liberation.alloy` to nightly production. Evidence stays
+available on the campaign hub. Its saved lines remain readable after reload and do not require an optional earlier clue.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:
@@ -138,3 +156,5 @@ The private `baseline-4` rehearsal replaces sign-on with Training and its debrie
 The private `baseline-5` rehearsal adds five landing scenes, cargo, upkeep and a drive shortcut. It carries the port
 and scene IDs across art and dialogue revisions. The Training exercise is free.
 The private `baseline-6` rehearsal adds the paid relay convoy defense and the second occurrence of the three-pulse clue.
+The private `baseline-7` rehearsal adds the contested approach, boarding, custody and Selden liberation with temporary
+art. Final asset requirements are in the [Selden art packet](../design/art-requests/selden-quarantine.md).

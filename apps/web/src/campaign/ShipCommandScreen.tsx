@@ -14,6 +14,8 @@ const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom
 const stations = { pilot: 'Pilot', shields: 'Shields', gunnery: 'Gunnery', engineering: 'Engineering' }
 const orders = { evade: 'Evade', brace: 'Brace shields', fire: 'Fire guns', intercept: 'Intercept', strike: 'Fighter strike', reroute: 'Reroute power' }
 const powerLabels = { shields: 'Shields', guns: 'Guns', fighters: 'Fighters' }
+const orderLine = (encounter: CommandEncounter, last: NonNullable<CommandState['last']>) =>
+  last.emitterHit && encounter.assault ? encounter.assault.call : encounter.calls[last.order]
 
 export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop }: {
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
@@ -33,10 +35,13 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const state = save.mission
   if (!state) return null
   const run = state.battle ? resumeCommand(state.battle.input, state.battle.actions) : null
+  const assault = run ? run.input.version === 2 : !!encounter.assault
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"
     style={{ ...insets, ...(background ? { backgroundImage: `linear-gradient(#080d1aeb, #080d1acf), url(${background})` } : {}) }}>
     <div className="mx-auto max-w-4xl space-y-3">
-      <h1 className="font-display text-xl font-bold">{state.step === 'results' ? state.won ? 'Convoy secured' : 'Defense lost' : 'Convoy defense'}</h1>
+      <h1 className="font-display text-xl font-bold">{assault
+        ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : 'Station approach'
+        : state.step === 'results' ? state.won ? 'Convoy secured' : 'Defense lost' : 'Convoy defense'}</h1>
       {state.step === 'briefing' && <>
         <p className="max-w-xl text-sm">{mission.brief}</p>
         <button type="button" className={primary} onClick={() => void updateSave(toDeploy)}>Prepare ship</button>
@@ -69,9 +74,10 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
       {state.step === 'battle' && (run ? <CommandBoard encounter={encounter} {...run} />
         : <p role="alert">The saved defense can’t resume.</p>)}
       {state.step === 'results' && <div className="flex flex-wrap gap-2">
-        {run?.state.last && <p className="w-full text-sm">{encounter.calls[run.state.last.order]}</p>}
+        {run?.state.last && <p className="w-full text-sm">{orderLine(encounter, run.state.last)}</p>}
+        {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled. Maintenance entrance open.</p>}
         {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id))}>Debrief</button>
-          : <button type="button" className={primary} onClick={() => void updateSave(retry)}>Retry defense</button>}
+          : <button type="button" className={primary} onClick={() => void updateSave(retry)}>{assault ? 'Retry approach' : 'Retry defense'}</button>}
       </div>}
       {(state.step !== 'battle' || !run) && !state.won && <button type="button" className={button} onClick={() => void updateSave(finishMission)}>Return to port</button>}
     </div>
@@ -92,13 +98,15 @@ function CommandBoard({ encounter, input, state }: { encounter: CommandEncounter
       <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-sm">
         {([
           ['Fore shield', state.shields.fore, COMMAND_SHIELD], ['Aft shield', state.shields.aft, COMMAND_SHIELD],
-          ['Hull', state.hull, COMMAND_HULL], ['Transport', state.transport, input.transport], ['Raider', state.enemy, input.enemy],
+          ['Hull', state.hull, COMMAND_HULL], [input.version === 2 ? 'Boarding shuttle' : 'Transport', state.transport, input.transport],
+          [input.version === 2 ? 'Patrol ship' : 'Raider', state.enemy, input.enemy],
+          ...(input.version === 2 ? [['Shield emitter', state.emitter ?? 0, input.assault.emitter] as const] : []),
         ] as const).map(([label, value, max]) => <div key={label}><span>{label} {value}/{max}</span>
           <progress className="block h-1.5 w-full accent-cyan-300" aria-label={label} value={value} max={max} /></div>)}
       </div>
       {state.last && <div role="status" className="text-sm" key={state.turn}>
-        <p>{encounter.calls[state.last.order]}</p>
-        <p className="text-white/70">{state.last.blocked} blocked · {state.last.intercepted} intercepted · {state.last.hit} raider damage · {state.last.hullDamage + state.last.transportDamage} friendly damage</p>
+        <p>{orderLine(encounter, state.last)}</p>
+        <p className="text-white/70">{state.last.blocked} blocked · {state.last.intercepted} intercepted · {state.last.emitterHit || state.last.hit} {state.last.emitterHit ? 'emitter' : 'enemy'} damage · {state.last.hullDamage + state.last.transportDamage} friendly damage</p>
       </div>}
     </section>
     <section className="space-y-2" aria-label="Commands">
@@ -115,10 +123,15 @@ function CommandBoard({ encounter, input, state }: { encounter: CommandEncounter
       </div>
       <div className="grid grid-cols-3 gap-2">
         {COMMAND_ORDERS.map((order) => <button key={order} type="button" className={`${button} aria-pressed:ring-2 aria-pressed:ring-cyan-300`}
-          aria-pressed={action.order === order} onClick={() => setAction((a) => ({ ...a, order }))}>{orders[order]}</button>)}
+          aria-pressed={action.order === order && !action.target} onClick={() => setAction((a) => ({ ...a, order, target: undefined }))}>{orders[order]}</button>)}
+        {!!state.emitter && <button type="button" className={`${button} aria-pressed:ring-2 aria-pressed:ring-cyan-300`}
+          aria-pressed={action.target === 'emitter'} onClick={() => setAction((a) => ({ ...a, order: 'fire', target: 'emitter' }))}>Target emitter</button>}
       </div>
       <div className="flex items-center gap-2">
-        <button type="button" className={primary} disabled={!!problem} onClick={() => void updateSave((s) => issueCommand(s, encounter.id, state.turn, action))}>Execute order</button>
+        <button type="button" className={primary} disabled={!!problem} onClick={() => {
+          void updateSave((s) => issueCommand(s, encounter.id, state.turn, action))
+          if (action.target) setAction((a) => ({ ...a, target: undefined }))
+        }}>Execute order</button>
         {problem && <p className="text-sm">{problem}</p>}
       </div>
     </section>

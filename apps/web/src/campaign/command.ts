@@ -1,5 +1,5 @@
 import {
-  COMMAND_STATIONS, MAX_DRILLS, reactorPips, resumeCommand, commandTurn,
+  COMMAND_STATIONS, MAX_DRILLS, reactorPips, resumeCommand, commandTurn, setFlag,
   type CampaignSupply, type CommandAction, type CommandEncounter, type CommandInput, type CommandStation, type Save,
 } from '@cyber/domain'
 import { deploy, finishBattle, finishMission, recordAction } from '../mission/director'
@@ -33,8 +33,11 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
     const assigned = save.commandCrew[station]
     return [station, assigned && save.crew.some((member) => member.outfit === assigned.outfit) ? assigned.drills : 0]
   })) as CommandInput['officers']
-  const input: CommandInput = { version: 1, transport: encounter.transport, enemy: encounter.enemy, threats: encounter.threats,
+  const setup = { transport: encounter.transport, enemy: encounter.enemy, threats: encounter.threats,
     reactor: Math.max(3, reactorPips(save.ship)), officers }
+  const assault = encounter.assault
+  const input: CommandInput = assault ? { ...setup, version: 2, assault: { emitter: assault.emitter, disabledFlag: assault.disabledFlag } }
+    : { ...setup, version: 1 }
   const campaignSupply = { ...supply, fuel: supply.fuel - encounter.cost.fuel, provisions: supply.provisions - encounter.cost.provisions }
   return deploy({ ...save, campaignSupply }, input)
 }
@@ -46,12 +49,17 @@ export function issueCommand(save: Save, encounter: string, turn: number, action
   if (!battle || battle.state.turn !== turn) return save
   const state = commandTurn(battle.input, battle.state, action)
   if (state === battle.state) return save
-  const next = recordAction(save, action)
+  const { target, ...order } = action
+  const next = recordAction(save, target ? { ...order, target } : order)
   return state.result ? finishBattle(next, state.result === 'won') : next
 }
 
 export function settleCommand(save: Save, encounter: string): Save {
   if (save.mission?.step !== 'results' || save.mission.id !== encounter || !save.mission.won) return save
   const missions = save.worlds.missions.includes(encounter) ? save.worlds.missions : [...save.worlds.missions, encounter]
-  return finishMission({ ...save, worlds: { ...save.worlds, missions } })
+  const battle = save.mission.battle
+  const run = battle && resumeCommand(battle.input, battle.actions)
+  if (!run || run.state.result !== 'won') return save
+  const story = run.input.version === 2 && run.state.emitter === 0 ? setFlag(save.story, run.input.assault.disabledFlag) : save.story
+  return finishMission({ ...save, story, worlds: { ...save.worlds, missions } })
 }
