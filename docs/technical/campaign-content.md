@@ -39,7 +39,7 @@ file identifies which quests the game can play and ties presentation to stable s
 ```
 
 `opening` is a quest ID. Each subsequent quest uses `after` with the preceding quest ID. Its `scene` points to a
-chapter scene. An optional `encounter` names a mission declared in a chapter. CY22 wires campaign mission play.
+chapter scene. A quest with an `encounter` ends in a `battle` step referencing that mission in the same chapter.
 `art[].scene` points to a chapter scene. A portrait's speaker occurs in that scene's cast. An `emote` step selects the
 matching portrait and the player can fall back to that speaker's default portrait. Asset filenames are lowercase PNG
 or WebP names under `art/`. A preview displays the release ID and marks a pack with `draft: true` as **Draft**.
@@ -48,6 +48,18 @@ The opening's choice sets a story flag in the preview save. The scene applies it
 when it ends. Closing mid-scene resumes from that scene's start. A content update keeps the scene and asset IDs stable
 so the completed scene and choices carry forward. Coordinate a save compatibility change before publishing a new ID
 for a scene that already carries progress.
+
+## Recruitment Training
+
+Set `encounter` on the Training quest and use `scenario: "training"` in its chapter mission. Give it one trainee in
+`fixedSquad` or in the chapter's `leads`. The scene hands off to the mission briefing, then the Hangar supplies either a
+great blade or a rifle and either a Bulwark or a Med unit. The battle freezes the kit and its rules version at deployment.
+Existing battle actions, Forecast and replay drive the exercise. A broken arm halves the two-handed blade's accuracy.
+The Bulwark and Med unit remain available with broken arms when they have enough Charge.
+
+Put the recruitment dialogue and `join` step in a quest after Training. A win clears Training once and unlocks that
+quest. A loss can retry the same exercise. The exercise advances neither the day nor supplies. Set `evening.after` to
+the recruitment quest to make the visit available once the trainee signs on.
 
 ## Quarters and morning
 
@@ -94,3 +106,4 @@ The first scene's choice and completion stay in the campaign save. Select the fi
 Keep source, release files and art under ignored `content/`. This checkout's two original baseline drafts use an
 invented recruit and original raster placeholders. Story and art can replace those assets through the same references.
 The private `baseline-3` rehearsal adds a draft sign-on scene, a quarters visit and a morning with an illustration.
+The private `baseline-4` rehearsal replaces sign-on with Training and its debrief, then opens the same quarters visit.

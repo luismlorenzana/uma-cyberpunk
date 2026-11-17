@@ -3,7 +3,7 @@
 // forecast card for an attack, and the facing, all sent as one turn. Enemy turns play at double speed, with Skip. Every
 // committed action is handed to `onCommit` (the sandbox's autosave); the board follows the cues, then the state.
 import {
-  boardOf, chooseAction, dirTo, orderError, partnerOf, type OrderKind, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
+  boardOf, canAim, chooseAction, dirTo, orderError, partnerOf, type OrderKind, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
   type Cue, type Dir, type Forecast, type Reach, type Role, type TerrainCard, type Tile, type TurnAction,
 } from '@cyber/battle'
 import { AlbumArtProvider } from '@luismlorenzana/uma-kit/album'
@@ -74,6 +74,7 @@ export interface BattleViewProps {
   session: Session
   control: Control
   debug: boolean
+  training?: boolean
   onCommit: (s: Session) => void
   onEnd: (s: Session) => void
   onQuit: () => void
@@ -96,7 +97,7 @@ export function BattleView(props: BattleViewProps) {
   return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -330,6 +331,13 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
 
   // --- Taps ----------------------------------------------------------------------------------------------------------
 
+  const previewAction = (reach: Reach, dash: boolean, action: Act) => {
+    const s = session.current.state
+    const result = forecast(s, { kind: 'turn', unit: s.active!, to: reach.to, ...(dash ? { dash: true } : {}), act: action, face: 'N' })
+    if ('error' in result) { setToast(result.error); return }
+    show({ phase: 'forecast', reach, dash, act: action, f: result })
+  }
+
   const tap = (tile: Tile) => {
     const s = session.current.state
     setTerrain(null)
@@ -354,11 +362,8 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       const pick = t ?? thing
       if (pick) {
         const a: Act = { kind: 'attack', with: pick.mount, target: pick.target, ...(ui.phase === 'target' && ui.aim && unit?.holdHp ? { aim: 'hold' as const } : {}) }
-        const turn: TurnAction = { kind: 'turn', unit: s.active!, to: ui.reach.to, ...(ui.dash ? { dash: true } : {}), act: a, face: 'N' }
-        const f = forecast(s, turn)
-        if ('error' in f) { setToast(f.error); return }
         lastTarget.current = tile
-        show({ phase: 'forecast', reach: ui.reach, dash: ui.dash, act: a, f })
+        previewAction(ui.reach, ui.dash, a)
         return
       }
       if (unit) setInspect(unit.id)
@@ -468,6 +473,13 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       const left = o && state.v3 ? Math.min(o.slots, 4) - state.v3.orders : 0
       if (me.side === 'squad' && left > 0) arc.push(btn(`Orders ${left}`, () => show({ phase: 'orders' }), false, 'orders'))
       if (me.side === 'squad' && (partnerOf(state, me.id)?.level ?? 0) >= 3) arc.push(btn('Duo', () => { show({ phase: 'duo' }); setToast('Tap the enemy both partners can reach') }, false, 'duo'))
+    } else if (training && ui.phase === 'target' && !ui.aim) {
+      const targets = targetsFrom(state, me.id, ui.reach.to)
+      targets.slice(0, 4).forEach(({ target, mount }) => arc.push(btn(labelOf(state, target), () => {
+        lastTarget.current = targetTile(state, target)
+        previewAction(ui.reach, ui.dash, { kind: 'attack', with: mount, target })
+      }, true, `${target}:${mount}`)))
+      arc.push(btn('Back', () => show({ phase: 'act', reach: ui.reach, dash: ui.dash })))
     } else if (ui.phase === 'act' || ui.phase === 'target') {
       const targets = targetsFrom(state, me.id, ui.reach.to)
       if (targets.length > 0) arc.push(btn('Attack', () => show({ phase: 'target', reach: ui.reach, dash: ui.dash, aim: false }), ui.phase !== 'target'))
@@ -480,12 +492,8 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
       arc.push(btn('Undo', undo))
     } else if (ui.phase === 'more') {
       const placed = { ...state, units: state.units.map((u) => (u.id === me.id ? { ...u, x: ui.reach.to[0], y: ui.reach.to[1] } : u)) }
-      supportFrom(placed, me.id, ui.reach.to).slice(0, 8).forEach((a, i) => arc.push(btn(actWords(state, a), () => {
-        const turn: TurnAction = { kind: 'turn', unit: me.id, to: ui.reach.to, ...(ui.dash ? { dash: true } : {}), act: a, face: 'N' }
-        const f = forecast(state, turn)
-        if ('error' in f) { setToast(f.error); return }
-        show({ phase: 'forecast', reach: ui.reach, dash: ui.dash, act: a, f })
-      }, false, `more-${i}`)))
+      supportFrom(placed, me.id, ui.reach.to).slice(0, 8).forEach((a, i) => arc.push(btn(actWords(state, a),
+        () => previewAction(ui.reach, ui.dash, a), false, `more-${i}`)))
       arc.push(btn('Back', () => show({ phase: 'act', reach: ui.reach, dash: ui.dash })))
     } else if (ui.phase === 'face') {
       arc.push(
@@ -517,6 +525,8 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
   const timelineIds = timeline(state)
   const ghost = ui.phase === 'forecast' ? ui.f.timeline : null
   const inspected = inspect ? state.units.find((u) => u.id === inspect) : null
+  const shot = ui.phase === 'forecast' && ui.act.kind === 'attack' ? ui.act : null
+  const aimTarget = training && shot && me && canAim(state, me.id) ? state.units.find((unit) => unit.id === shot.target) : null
   return (
     <div className="absolute inset-0 select-none overflow-hidden">
       <canvas ref={canvas} className="block h-full w-full" style={{ touchAction: 'none' }} onPointerDown={down} onPointerMove={move} onPointerUp={up}
@@ -545,7 +555,17 @@ function BattleBoard({ layout, session: first, control, debug, onCommit, onEnd, 
         <div className="absolute" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>{btn('Skip', skip, true)}</div>
       )}
       <div className="pointer-events-none absolute flex max-w-[46%] flex-wrap items-end justify-end gap-2" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
-        {ui.phase === 'forecast' && <ForecastCard state={state} f={ui.f} onCancel={() => show({ phase: 'act', reach: ui.reach, dash: ui.dash })} onConfirm={() => toFace(ui.reach, ui.dash, ui.act)} />}
+        {ui.phase === 'forecast' && <ForecastCard state={state} f={ui.f} onCancel={() => show({ phase: 'act', reach: ui.reach, dash: ui.dash })} onConfirm={() => toFace(ui.reach, ui.dash, ui.act)}>
+          {shot && aimTarget && <div className="mt-2 flex gap-2" aria-label="Aim">
+            {(['leftArm', 'rightArm'] as const).filter((part) => aimTarget.hp[part] > 0).map((part) => (
+              <button key={part} type="button" aria-pressed={shot.aim === part}
+                className="min-h-11 flex-1 rounded-md bg-white/10 aria-pressed:ring-2 aria-pressed:ring-cyan-300"
+                onClick={() => previewAction(ui.reach, ui.dash, { ...shot, aim: shot.aim === part ? undefined : part })}>
+                Aim {part === 'leftArm' ? 'left arm' : 'right arm'}
+              </button>
+            ))}
+          </div>}
+        </ForecastCard>}
         {arc}
       </div>
       {me && playerTurn && (

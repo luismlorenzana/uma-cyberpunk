@@ -78,7 +78,7 @@ function StrikeLine({ state, s, title }: { state: BattleState; s: StrikeForecast
 }
 
 /** The forecast card (TC29): the attack, each Crossfire and the counter, Tech %, Charge, the timeline's shift. */
-export function ForecastCard({ state, f, onConfirm, onCancel }: { state: BattleState; f: Forecast; onConfirm: () => void; onCancel: () => void }) {
+export function ForecastCard({ state, f, onConfirm, onCancel, children }: { state: BattleState; f: Forecast; onConfirm: () => void; onCancel: () => void; children?: ReactNode }) {
   const charge = Object.entries(f.charge).filter(([, v]) => v !== 0)
   return (
     <Panel className="pointer-events-auto w-64">
@@ -91,6 +91,7 @@ export function ForecastCard({ state, f, onConfirm, onCancel }: { state: BattleS
         {charge.length > 0 && <div className="text-[#a3abc2]">Charge: {charge.map(([id, v]) => `${labelOf(state, id)} ${v > 0 ? `−${v}` : `+${-v}`}`).join(' · ')}</div>}
         {f.volley && <div className="text-[#ff3d6e]">Volley marked on {f.volley.tiles.length} tiles</div>}
       </div>
+      {children}
       <div className="mt-2 flex gap-2">
         <button type="button" onClick={onCancel} className="min-h-11 flex-1 rounded-md bg-white/10 font-semibold">Back</button>
         <button type="button" onClick={onConfirm} className="min-h-11 flex-1 rounded-md bg-[#2ee6ff] font-display font-bold text-[#0b0d17]">Confirm</button>

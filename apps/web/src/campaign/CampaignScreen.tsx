@@ -2,12 +2,12 @@ import {
   finishCampaignNightScene, seeScene, startCampaignNight, walkSteps, type CampaignNight, type CampaignQuest, type EffectStep, type Save,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
-import { TurnedStage } from '@luismlorenzana/uma-stage'
-import { useEffect, useRef, useState } from 'react'
+import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { CAMPAIGN_ENTRY } from '../app/campaign'
 import { Account } from '../home/Account'
-import { applyStep } from '../mission/director'
+import { applyStep, startMission } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf } from '../story/runner'
@@ -16,9 +16,10 @@ import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
+const TrainingScreen = lazy(() => import('./TrainingScreen'))
 
 export default function CampaignScreen() {
-  return <TurnedStage>{() => <Campaign />}</TurnedStage>
+  return <TurnedStage>{(layout) => <Campaign layout={layout} />}</TurnedStage>
 }
 
 export function CampaignAccount() {
@@ -28,7 +29,7 @@ export function CampaignAccount() {
   </div>}</TurnedStage>
 }
 
-function Campaign() {
+function Campaign({ layout }: { layout: StageLayout }) {
   const save = useGame((g) => g.save)
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
@@ -36,6 +37,7 @@ function Campaign() {
   const [pending, setPending] = useState(true)
   const [check, setCheck] = useState(0)
   const [eveningOpen, setEveningOpen] = useState(false)
+  const [trainingPaused, setTrainingPaused] = useState(false)
   useEffect(() => {
     let live = true
     setPending(true)
@@ -48,7 +50,32 @@ function Campaign() {
   }, [check])
   const reduceEffects = (s: Save, effects: readonly EffectStep[]): Save =>
     loaded ? effects.reduce((state, step) => applyStep(state, loaded.book.story, step), s) : s
+  const missionState = save?.mission
+  const trainingChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
+  const training = trainingChapter && trainingChapter.missions.find((m) => m.id === missionState?.id && m.scenario === 'training')
+  const trainee = missionState?.squad[0] ?? trainingChapter?.leads[0]
+  if (loaded && save && training && trainee !== undefined && !trainingPaused) {
+    return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading Training…</div>}>
+      <TrainingScreen save={save} mission={training} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
+        close={() => setTrainingPaused(true)} />
+    </Suspense>
+  }
   if (loaded && active) return <CampaignScene key={active.scene} loaded={loaded} sceneId={active.scene}
+    battle={async (id, effects) => {
+      const chapter = Object.values(loaded.book.story.chapters).find((c) => c.scenes.some((scene) => scene.id === active.scene))
+      const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id && m.scenario === 'training')
+      if (!chapter || !mission || (mission.fixedSquad ?? chapter.leads).length !== 1) {
+        setError('This release is missing the Training exercise.')
+      } else {
+        await updateSave((s) => {
+          if (s.mission) return s
+          const next = reduceEffects(s, effects)
+          return startMission({ ...next, story: seeScene(next.story, active.scene) }, chapter, mission)
+        })
+        setTrainingPaused(false)
+      }
+      setActive(null)
+    }}
     finish={(effects) => void updateSave((s) => {
       if (s.story.seen.includes(active.scene)) return s
       const next = reduceEffects(s, effects)
@@ -67,10 +94,11 @@ function Campaign() {
       })} />
   }
 
-  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)).map((q) => q.id))
+  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)
+    && (!q.encounter || save.worlds.missions.includes(q.encounter))).map((q) => q.id))
   const available = loaded?.book.quests.filter((q) => !complete.has(q.id) && (q.after === undefined || complete.has(q.after))) ?? []
   const evening = loaded?.book.evening
-  const canRest = !!(day && !night && evening && complete.has(evening.after))
+  const canRest = !!(day && !night && !missionState && evening && complete.has(evening.after))
   const visitOptions = canRest ? evening?.visits.filter((v) => save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
   function chooseEvening(visit: Extract<CampaignNight, { kind: 'visit' }> | null) {
     setEveningOpen(false)
@@ -96,7 +124,9 @@ function Campaign() {
         {pending && <p role="status">Checking the release…</p>}
         {error && <p role="alert" className="break-words text-[#ffa7b7]">{error}</p>}
         {night && !pending && !error && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved scene.</p>}
-        {save && !night && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
+        {missionState && training && <button type="button" className={button} onClick={() => setTrainingPaused(false)}>Resume Training</button>}
+        {missionState && loaded && !training && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved exercise.</p>}
+        {save && !night && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
           className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
         {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
         {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
@@ -105,14 +135,15 @@ function Campaign() {
           <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
           <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
         </section>}
-        {loaded && !pending && !night && !canRest && available.length === 0 && <p className="text-white/65">You’re caught up.</p>}
+        {loaded && !pending && !night && !missionState && !canRest && available.length === 0 && <p className="text-white/65">You’re caught up.</p>}
       </div>
     </main>
   )
 }
 
-function CampaignScene({ loaded, sceneId, finish, fail }: {
+function CampaignScene({ loaded, sceneId, finish, fail, battle }: {
   loaded: LoadedCampaign; sceneId: string; finish: (effects: readonly EffectStep[]) => void; fail: (message: string) => void
+  battle?: (id: string, effects: readonly EffectStep[]) => Promise<void>
 }) {
   const scene = loaded.book.scenes.get(sceneId)!
   const art = loaded.book.art.find((entry) => entry.scene === sceneId)
@@ -144,7 +175,12 @@ function CampaignScene({ loaded, sceneId, finish, fail }: {
   if (!presentation) return <div className={viewport} style={insets} role="status">Loading the scene…</div>
   return <ScenePlayer pack={loaded.book.story} scene={scene} squad={[]} presentation={presentation}
     onEffect={(step) => { steps.current.push(step) }}
-    onBattle={async () => { leaving.current = true; fail('This mission is unavailable in this preview.') }}
+    onBattle={async (id) => {
+      if (leaving.current) return
+      leaving.current = true
+      if (battle) await battle(id, steps.current)
+      else fail('This scene can’t start an exercise.')
+    }}
     onDone={() => {
       if (leaving.current) return
       leaving.current = true
