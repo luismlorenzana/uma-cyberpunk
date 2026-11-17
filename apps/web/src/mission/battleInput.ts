@@ -4,9 +4,9 @@
 import { parseScenario, scenarioInput, type Band, type Bands, type BattleInput, type BattleMap, type Loadout, type Role, type Scenario, type Stride, type UnitInput } from '@cyber/battle'
 import { cohesionLevel, partnershipOf, sortieOrders, sortieSystems, type FinaleCondition, type PostKind, type Save } from '@cyber/domain'
 
-const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import.meta.glob<{ default: BattleMap }>('../../../../scenarios/maps/*.json', { eager: true }))
+const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import.meta.glob<{ default: BattleMap }>(['../../../../scenarios/maps/*.json', '../../../../scenarios/campaign/maps/*.json'], { eager: true }))
   .map(([path, m]) => [path.split('/').pop()!.replace('.json', ''), m.default]))
-export const SCENARIOS: Record<string, Scenario> = Object.fromEntries(Object.values(import.meta.glob<{ default: unknown }>('../../../../scenarios/*.json', { eager: true }))
+export const SCENARIOS: Record<string, Scenario> = Object.fromEntries(Object.values(import.meta.glob<{ default: unknown }>(['../../../../scenarios/*.json', '../../../../scenarios/campaign/*.json'], { eager: true }))
   .map((m) => { const s = parseScenario(m.default, MAPS); return [s.id, s] }))
 
 export interface SquadUnit { outfit: number; label: string; bands: Bands; loadout: Loadout; stride: Stride | null }

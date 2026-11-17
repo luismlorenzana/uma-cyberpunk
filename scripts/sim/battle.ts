@@ -195,7 +195,7 @@ function main(): void {
   const at = (flag: string) => { const i = args.indexOf(flag); return i >= 0 ? args[i + 1] : undefined }
   const seeds = Number(at('--seeds') ?? 200)
   const compare = at('--compare')
-  const { maps, scenarios } = loadScenarios(ROOT)
+  const { maps, scenarios } = loadScenarios(ROOT, which !== 'all')
   const chosen = which === 'all' ? scenarios : scenarios.filter((s) => s.id === which)
   if (chosen.length === 0) throw new Error(`no scenario ${which}`)
   const before = compare ? (JSON.parse(readFileSync(compare, 'utf8')) as { reports: ScenarioReport[] }).reports : undefined

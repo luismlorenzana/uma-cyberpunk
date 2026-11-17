@@ -104,9 +104,15 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const quests = p.list(o.quests, 'quests', (v, path) => {
     const q = p.object(v, path, ['id', 'title', 'scene', 'after', 'encounter'], ['id', 'title', 'scene'])
     const scene = p.slug(q.scene, `${path}.scene`)
-    if (!scenes.has(scene)) p.fail(`${path}.scene`, `unknown scene ${scene}`)
+    const declared = scenes.get(scene)
+    if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
     const encounter = q.encounter === undefined ? undefined : p.slug(q.encounter, `${path}.encounter`)
     if (encounter && !encounters.has(encounter)) p.fail(`${path}.encounter`, `unknown encounter ${encounter}`)
+    const battles = [...walkSteps(declared.steps, '')].flatMap(({ step }) => step.kind === 'battle' ? [step.mission] : [])
+    const terminal = declared.steps.at(-1)
+    if (encounter ? battles.length !== 1 || terminal?.kind !== 'battle' || terminal.mission !== encounter : battles.length > 0) {
+      p.fail(`${path}.encounter`, 'a battle quest must finish with its declared encounter')
+    }
     return { id: p.slug(q.id, `${path}.id`), title: p.text(q.title, `${path}.title`, 80), scene,
       ...(q.after === undefined ? {} : { after: p.slug(q.after, `${path}.after`) }), ...(encounter ? { encounter } : {}) }
   })
