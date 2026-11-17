@@ -70,21 +70,22 @@ export function jumpRoute(supply: CampaignSupply, route: SupplyRoute, capabiliti
 }
 
 /** A night first produces and pays locally; the ship then pays its provisions bill. */
-export function supplyNight(supply: CampaignSupply, network: SupplyNetwork, flags: readonly string[] = []): CampaignSupply {
+export function supplyNight(supply: CampaignSupply, network: SupplyNetwork, flags: readonly string[] = [],
+  support?: { localAlloy: ReadonlyMap<string, number>; provisions: number }): CampaignSupply {
   const stores = { ...supply.stores }
   for (const port of network.ports) {
     const stock = storesAt(supply, port)
     const next = { ...stock }
-    const extraAlloy = port.liberation && flags.includes(port.liberation.flag) ? port.liberation.alloy : 0
+    const liberation = port.liberation && flags.includes(port.liberation.flag) ? port.liberation.alloy : 0
+    const extraAlloy = liberation + (support?.localAlloy.get(port.id) ?? 0)
     for (const kind of SUPPLY_KINDS) {
       const produced = port.produces[kind] + (kind === 'alloy' ? extraAlloy : 0)
       next[kind] = Math.min(PORT_STOCK_MAX, Math.max(0, stock[kind] + produced - port.upkeep[kind]))
     }
     stores[port.id] = next
   }
-  return { ...supply, stores,
-    provisions: Math.max(0, supply.provisions - SHIP_PROVISIONS_PER_NIGHT),
-    shortfall: Math.max(0, SHIP_PROVISIONS_PER_NIGHT - supply.provisions) }
+  const upkeep = support?.provisions ?? SHIP_PROVISIONS_PER_NIGHT
+  return { ...supply, stores, provisions: Math.max(0, supply.provisions - upkeep), shortfall: Math.max(0, upkeep - supply.provisions) }
 }
 
 /** A civilian tender can cover one stopgap per day when the ship is short on fuel or food. */
