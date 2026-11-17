@@ -1,6 +1,8 @@
 import { checkPack, walkSteps } from './check'
 import { P, parsePack } from './parse'
 import type { Scene, Speaker, StoryPack } from './types'
+import { PORT_STOCK_MAX, SUPPLY_KINDS, type Supplies, type SupplyNetwork } from '../campaign-supply'
+import { CAPABILITY_NAME } from '../ship/modules'
 
 export interface CampaignQuest {
   id: string
@@ -25,6 +27,7 @@ export interface CampaignBook {
   story: StoryPack
   scenes: ReadonlyMap<string, Scene>
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
+  supply?: SupplyNetwork
 }
 
 export interface CampaignReleaseFile {
@@ -55,6 +58,51 @@ function unique<T>(p: P, path: string, values: readonly T[], key: (value: T) => 
     result.set(id, value)
   })
   return result
+}
+
+function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: ReadonlyMap<string, CampaignQuest>): SupplyNetwork {
+  const map = p.object(value, 'supply', ['after', 'start', 'ports', 'routes'])
+  const after = p.slug(map.after, 'supply.after')
+  if (!quests.has(after)) p.fail('supply.after', `unknown quest ${after}`)
+  const start = p.slug(map.start, 'supply.start')
+  const ports = p.list(map.ports, 'supply.ports', (value, path) => {
+    const port = p.object(value, path, ['id', 'name', 'scene', 'stock', 'produces', 'upkeep', 'reserve'])
+    const id = p.slug(port.id, `${path}.id`)
+    const scene = p.slug(port.scene, `${path}.scene`)
+    const entry = Object.values(story.chapters).filter((chapter) => chapter.world === id).flatMap((chapter) => chapter.scenes).find((s) => s.id === scene)
+    if (!entry) p.fail(`${path}.scene`, `unknown landing scene ${scene} in ${id}`)
+    if ([...walkSteps(entry!.steps, '')].some(({ step }) => step.kind === 'battle')) p.fail(`${path}.scene`, 'landing scenes cannot start a battle')
+    function amounts(key: string): Supplies {
+      const field = `${path}.${key}`
+      const o = p.object(port[key], field, SUPPLY_KINDS)
+      return { fuel: p.int(o.fuel, `${field}.fuel`, 0, PORT_STOCK_MAX), provisions: p.int(o.provisions, `${field}.provisions`, 0, PORT_STOCK_MAX),
+        alloy: p.int(o.alloy, `${field}.alloy`, 0, PORT_STOCK_MAX) }
+    }
+    return { id, name: p.text(port.name, `${path}.name`, 48), scene, stock: amounts('stock'), produces: amounts('produces'),
+      upkeep: amounts('upkeep'), reserve: amounts('reserve') }
+  }, 24)
+  const known = unique(p, 'supply.ports', ports, (port) => port.id)
+  if (!known.has(start)) p.fail('supply.start', `unknown port ${start}`)
+  const routes = p.list(map.routes, 'supply.routes', (value, path) => {
+    const route = p.object(value, path, ['from', 'to', 'fuel', 'needs'], ['from', 'to', 'fuel'])
+    const from = p.slug(route.from, `${path}.from`)
+    const to = p.slug(route.to, `${path}.to`)
+    if (from === to || !known.has(from) || !known.has(to)) p.fail(path, 'a route connects two different ports')
+    const needs = route.needs === undefined ? undefined : p.slug(route.needs, `${path}.needs`)
+    if (needs && !Object.hasOwn(CAPABILITY_NAME, needs)) p.fail(`${path}.needs`, `unknown ship capability ${needs}`)
+    return { from, to, fuel: p.int(route.fuel, `${path}.fuel`, 1, 3), ...(needs ? { needs } : {}) }
+  }, 100)
+  unique(p, 'supply.routes', routes, ({ from, to }) => [from, to].sort().join(':'))
+  const reachable = new Set([start])
+  for (const port of reachable) {
+    for (const route of routes) {
+      if (route.needs) continue
+      if (port === route.from) reachable.add(route.to)
+      if (port === route.to) reachable.add(route.from)
+    }
+  }
+  if (reachable.size !== ports.length) p.fail('supply.routes', 'every landing port must be reachable before upgrades')
+  return { after, start, ports, routes }
 }
 
 export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_INDEX): CampaignRelease {
@@ -89,7 +137,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -191,5 +239,6 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     unique(p, 'evening.visits', visits, (visit) => String(visit.companion))
     return { after, visits }
   })()
-  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, ...(evening ? { evening } : {}) }
+  const supply = o.supply === undefined ? undefined : parseSupplyNetwork(p, o.supply, story, byQuest)
+  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
 }

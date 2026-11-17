@@ -81,6 +81,20 @@ The scene prepares its portraits and illustrations before they appear.
 The preview records the chosen visit before playing it. Reloading returns to that scene's start. Completing the visit
 applies the scene effects and advances the day once, with the morning pending until its scene finishes.
 
+## Ports and supply
+
+The optional `supply` block opens after the quest in `after`. `start` and each port `id` name a story world. A port's
+`name` labels it on the star map and its `scene` plays the first time the player lands. Set the world's `x` and `y`
+to position the port. Each `stock`, `produces`, `upkeep` and `reserve` record gives amounts for `fuel`, `provisions`
+and `alloy`. Set `routes` to two-way links with `from`, `to`, and a cost of 1–3 `fuel`. An optional ship capability
+such as `needs: "drive-1"` gates a shortcut. Every port must have a route using the starting drive.
+
+A port exports up to four units per shipment, after protecting its next upkeep and reserve. Fuel pays for jumps.
+Provisions pay the ship's nightly bill. Alloy goes into the ship wallet, where the drive refit costs 300 credits,
+20 Alloy and 10 Data. It takes two nights. Each night produces and pays local upkeep, spends up to two ship provisions,
+and advances ship builds and duties. The tender restores up to three fuel and two provisions once per day when the ship
+is short. Loading supplies and jumping both write the cargo and the source or destination together.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:
@@ -107,3 +121,5 @@ Keep source, release files and art under ignored `content/`. This checkout's two
 invented recruit and original raster placeholders. Story and art can replace those assets through the same references.
 The private `baseline-3` rehearsal adds a draft sign-on scene, a quarters visit and a morning with an illustration.
 The private `baseline-4` rehearsal replaces sign-on with Training and its debrief, then opens the same quarters visit.
+The private `baseline-5` rehearsal adds five landing scenes, cargo, upkeep and a drive shortcut. It carries the port
+and scene IDs across art and dialogue revisions. The Training exercise is free.

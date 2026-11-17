@@ -53,6 +53,10 @@ The [content guide](../technical/campaign-content.md) covers private preview rel
 Save v11 stores the new campaign's day and pending visit or morning. Ending a visit advances one day. A reload starts
 the saved visit or morning scene again. Older saves open on day 1 with their story and timestamps intact.
 
+Save v12 adds the preview's current port, planet stockpiles, ship fuel and provisions, and shortage relief. The ledger
+starts when the selected release opens supply. Alloy shipments credit the existing wallet. Each night settles production,
+upkeep and ship work in one save change.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
