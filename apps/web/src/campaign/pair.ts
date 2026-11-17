@@ -55,6 +55,11 @@ export function recordPairScene(save: Save, book: CampaignBook, pair: CampaignPa
   if (scene === pair.recovery[1]) {
     book.story.files[pair.testimony]?.lines.forEach((_, index) => { story = fillFile(story, pair.testimony, index) })
   }
+  const home = pair.home
+  if (home && (scene === home.resettle.debrief || scene === home.stay.debrief)) {
+    const evidence = book.finale?.cases.find(({ port }) => port === home.port)?.file
+    if (evidence) book.story.files[evidence]?.lines.forEach((_, index) => { story = fillFile(story, evidence, index) })
+  }
   return { ...next, story }
 }
 

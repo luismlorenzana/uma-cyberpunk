@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "id": "gate-breach",
+  "width": 8,
+  "depth": 7,
+  "heights": [
+    "00000000",
+    "00000000",
+    "00000000",
+    "00000000",
+    "00000000",
+    "00000000",
+    "00000000"
+  ],
+  "tiles": [
+    "........",
+    "..c..c..",
+    "........",
+    "..#..#..",
+    ".....c..",
+    "...c....",
+    "........"
+  ],
+  "spawns": {
+    "squad": [
+      [
+        2,
+        6
+      ],
+      [
+        5,
+        6
+      ],
+      [
+        4,
+        6
+      ],
+      [
+        0,
+        6
+      ],
+      [
+        1,
+        6
+      ]
+    ],
+    "enemy": [
+      [
+        4,
+        2
+      ],
+      [
+        6,
+        2
+      ]
+    ]
+  },
+  "props": [
+    {
+      "kind": "terminal",
+      "tile": [
+        1,
+        2
+      ],
+      "does": {
+        "door": "feedback-shutter"
+      },
+      "id": "feedback-console"
+    },
+    {
+      "kind": "terminal",
+      "tile": [
+        6,
+        1
+      ],
+      "does": {
+        "door": "output-shutter"
+      },
+      "id": "output-console"
+    },
+    {
+      "kind": "door",
+      "tiles": [
+        [
+          1,
+          0
+        ]
+      ],
+      "open": false,
+      "id": "feedback-shutter"
+    },
+    {
+      "kind": "door",
+      "tiles": [
+        [
+          6,
+          0
+        ]
+      ],
+      "open": false,
+      "id": "output-shutter"
+    }
+  ]
+}

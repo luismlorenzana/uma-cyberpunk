@@ -1,5 +1,5 @@
 import {
-  campaignHomeSupport, finishCampaignNightScene, homeOutcome, pairProgress, pairVisit, seeScene,
+  campaignHomeSupport, finaleAllies, finishCampaignNightScene, homeOutcome, pairProgress, pairVisit, seeScene,
   startCampaignNight, startSupply, walkSteps,
   type CampaignDay, type CampaignQuest, type CampaignVisit, type EffectStep, type Save,
 } from '@cyber/domain'
@@ -14,9 +14,11 @@ import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
-import { closePairScene, homeQuestReady, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, recordPairScene } from './pair'
+import { closePairScene, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, recordPairScene } from './pair'
 import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
+import { FinalePanel } from './FinalePanel'
+import { questAvailable, questComplete } from './quests'
 import { SupplyPanel } from './SupplyPanel'
 import { settleCampaignDay } from './watch'
 
@@ -67,8 +69,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const day = save?.campaignDay
   const night = day?.pending
   const pendingPair = save?.pairScene
-  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)
-    && (!q.encounter || save.worlds.missions.includes(q.encounter))).map((q) => q.id))
+  const complete = new Set(save ? loaded?.book.quests.filter((q) => questComplete(save, q)).map((q) => q.id) : [])
   const network = loaded?.book.supply
   const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
   const port = supply && network?.ports.find((p) => p.id === supply.port)
@@ -93,9 +94,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
     const art = loaded.book.art.find((entry) => entry.scene === quest?.scene)
     const home = pairs.find(({ home }) => home?.defense === quest?.id)?.home
     const homeDefense = home && port ? { name: port.name, relay: homeOutcome(home, save.story) === 'resettle' ? home.support.relay : 0 } : undefined
+    const operation = loaded.book.finale
+    const finale = operation && operation.approach === quest?.id
+      ? { allies: finaleAllies(loaded.book, save.story), preparation: operation.preparation } : undefined
+    const emitterRoute = command.assault && [...loaded.book.ground.values()]
+      .find(({ alternate }) => alternate?.flag === command.assault?.disabledFlag)?.alternate?.label
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
       <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply} backdrop={art?.backdrop ? loaded.assets.get(art.backdrop) : undefined}
-        ashore={support.ashore} homeDefense={homeDefense}
+        ashore={support.ashore} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
         names={new Map(save.crew.filter(({ outfit }) => !support.ashore.has(outfit)).map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
     </Suspense>
   }
@@ -109,7 +115,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       } else {
         await updateSave((s) => {
           if (s.mission || s.pairScene || s.campaignDay.pending || (active.port && active.port !== (s.campaignSupply?.port ?? supply?.port))) return s
-          if (!homeQuestReady(s, loaded.book, active.id)) return s
+          if (!questAvailable(s, loaded.book, active, s.campaignSupply?.port ?? supply?.port)) return s
           const next = reduceEffects(s, effects)
           const started = startMission({ ...next, story: seeScene(next.story, active.scene) }, chapter, mission)
           const { ashore } = campaignHomeSupport(loaded.book.pairs, s.story)
@@ -121,7 +127,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       setActive(null)
     }}
     finish={(effects) => void updateSave((s) => {
-      if (s.story.seen.includes(active.scene) || !homeQuestReady(s, loaded.book, active.id)) return s
+      if (!questAvailable(s, loaded.book, active, s.campaignSupply?.port ?? supply?.port)) return s
       const next = reduceEffects(s, effects)
       return { ...next, story: seeScene(next.story, active.scene) }
     }).then(() => setActive(null))}
@@ -157,8 +163,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       })} />
   }
 
-  const available = loaded && save ? loaded.book.quests.filter((q) => !complete.has(q.id) && (!q.after || complete.has(q.after))
-    && (!q.port || q.port === supply?.port) && homeQuestReady(save, loaded.book, q.id)) : []
+  const available = loaded && save ? loaded.book.quests.filter((q) => questAvailable(save, loaded.book, q, supply?.port)) : []
   const evening = loaded?.book.evening
   const canRest = !!(day && !night && !pendingPair && !missionState && evening && complete.has(evening.after))
   const supplyPanel = loaded && save && supply && network && port && support && !night && !pendingPair && !missionState && !eveningOpen
@@ -234,6 +239,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {loaded && !pending && !night && !pendingPair && !missionState && !canRest && !supply && available.length === 0 && <p className="text-white/65">You’re caught up.</p>}
         </div>
         {side && <div className="space-y-3">
+          {loaded?.book.finale && save && supply && !night && !pendingPair && !missionState && !eveningOpen &&
+            <FinalePanel book={loaded.book} story={save.story} complete={complete.has(loaded.book.finale.ending)} />}
           {pairPanels}
           {basePanels}
           {supplyPanel}

@@ -9,6 +9,7 @@ import { PARTS_BY_ID } from '../crew/parts'
 import type { Wallet } from '../ship/hull'
 import type { CampaignPair } from '../campaign-pair'
 import { parseCampaignPairs } from './campaign-pairs'
+import type { CampaignFinale } from '../campaign-finale'
 
 export interface CampaignQuest {
   id: string
@@ -38,13 +39,15 @@ export interface CampaignBook {
   commands: ReadonlyMap<string, CommandEncounter>
   ground: ReadonlyMap<string, GroundEncounter>
   pairs: CampaignPair[]
+  finale?: CampaignFinale
 }
 
 export interface GroundEncounter {
   id: string
   title: string
-  alternate?: { flag: string; scenario: string; label: string }
+  alternate?: { flag: string; scenario: string; label: string; closedLabel?: string }
   expansion?: string
+  kit?: { weapons: string[]; expansions: string[] }
   boss?: { unit: string; name: string; portrait: string }
   win: { flag?: string; file?: string; reward?: Wallet }
 }
@@ -161,7 +164,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -276,20 +279,39 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     }
   }
   const ground = unique(p, 'ground', o.ground === undefined ? [] : p.list(o.ground, 'ground', (v, path): GroundEncounter => {
-    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'boss', 'win'], ['id', 'title', 'win'])
+    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win'], ['id', 'title', 'win'])
     const id = p.slug(g.id, `${path}.id`)
     const mission = encounters.get(id)
     if (!mission?.scenario || mission.scenario === 'training' || commands.has(id) || !quests.some((q) => q.encounter === id)) {
       p.fail(`${path}.id`, 'expected a ground quest with its own mission scenario')
     }
     const alternate = g.alternate === undefined ? undefined : (() => {
-      const a = p.object(g.alternate, `${path}.alternate`, ['flag', 'scenario', 'label'])
+      const a = p.object(g.alternate, `${path}.alternate`, ['flag', 'scenario', 'label', 'closedLabel'], ['flag', 'scenario', 'label'])
       const flag = p.slug(a.flag, `${path}.alternate.flag`)
       if (![...commands.values()].some((c) => c.assault?.disabledFlag === flag)) p.fail(`${path}.alternate.flag`, 'unknown ship outcome')
-      return { flag, scenario: p.slug(a.scenario, `${path}.alternate.scenario`), label: p.text(a.label, `${path}.alternate.label`, 80) }
+      return { flag, scenario: p.slug(a.scenario, `${path}.alternate.scenario`), label: p.text(a.label, `${path}.alternate.label`, 80),
+        ...(a.closedLabel === undefined ? {} : { closedLabel: p.text(a.closedLabel, `${path}.alternate.closedLabel`, 80) }) }
     })()
     const expansion = g.expansion === undefined ? undefined : p.slug(g.expansion, `${path}.expansion`)
     if (expansion && PARTS_BY_ID.get(expansion)?.slot !== 'back') p.fail(`${path}.expansion`, 'expected a back unit')
+    const kit = g.kit === undefined ? undefined : (() => {
+      const k = p.object(g.kit, `${path}.kit`, ['weapons', 'expansions'])
+      function loadout(key: 'weapons' | 'expansions'): string[] {
+        const field = `${path}.kit.${key}`
+        const values = p.list(k[key], field, (raw, where) => {
+          const id = p.slug(raw, where)
+          const part = PARTS_BY_ID.get(id)
+          const fits = key === 'weapons' ? part?.slot === 'hand' && part.item.kind === 'weapon' : part?.slot === 'back'
+          return fits ? id : p.fail(where, 'unknown or incompatible part')
+        }, 4)
+        if (!values.length) p.fail(field, 'expected at least one part')
+        unique(p, field, values, (id) => id)
+        return values
+      }
+      const weapons = loadout('weapons'), expansions = loadout('expansions')
+      if (expansion && (expansions.length !== 1 || expansions[0] !== expansion)) p.fail(`${path}.kit.expansions`, 'must include only the required expansion')
+      return { weapons, expansions }
+    })()
     const boss = g.boss === undefined ? undefined : (() => {
       const b = p.object(g.boss, `${path}.boss`, ['unit', 'name', 'portrait'])
       return { unit: p.slug(b.unit, `${path}.boss.unit`), name: p.text(b.name, `${path}.boss.name`, 48), portrait: asset(b.portrait, `${path}.boss.portrait`) }
@@ -303,7 +325,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
       return { credits: p.int(r.credits, `${path}.win.reward.credits`, 0, 9999), alloy: p.int(r.alloy, `${path}.win.reward.alloy`, 0, 999), data: p.int(r.data, `${path}.win.reward.data`, 0, 999) }
     })()
     return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
-      ...(boss ? { boss } : {}), win: { flag, file, reward } }
+      ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), win: { flag, file, reward } }
   }, 24), (g) => g.id)
   for (const port of supply?.ports ?? []) {
     if (port.liberation && ![...ground.values()].some((g) => g.win.flag === port.liberation?.flag)) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
@@ -313,6 +335,39 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const captureFlags = new Set([...ground.values()].flatMap((g) => g.win.flag ? [g.win.flag] : []))
   const pairs = parseCampaignPairs(o.pairs, story, scenes, { quests: byQuest, reserved, captureFlags, supply, commands })
   if (pairs.length && !evening) p.fail('pairs', 'recovery visits need an evening schedule')
+  const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, story, commands, ground)
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
-    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
+    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}) }
+}
+
+function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQuest>, pairs: readonly CampaignPair[],
+  story: StoryPack, commands: ReadonlyMap<string, CommandEncounter>, ground: ReadonlyMap<string, GroundEncounter>): CampaignFinale {
+  const f = p.object(value, 'finale', ['cases', 'reveal', 'approach', 'breach', 'ending', 'preparation'])
+  const cases = p.list(f.cases, 'finale.cases', (value, path) => {
+    const c = p.object(value, path, ['port', 'title', 'file'])
+    const port = p.slug(c.port, `${path}.port`), file = p.slug(c.file, `${path}.file`)
+    if (!pairs.some((pair) => pair.home?.port === port)) p.fail(`${path}.port`, 'a case needs a pair and its local defense')
+    if (!story.files[file]?.lines.length) p.fail(`${path}.file`, 'expected a nonempty evidence file')
+    return { port, file, title: p.text(c.title, `${path}.title`, 64) }
+  }, 12)
+  if (cases.length < 2) p.fail('finale.cases', 'expected multiple local cases')
+  unique(p, 'finale.cases', cases, (entry) => entry.port)
+  unique(p, 'finale.cases', cases, (entry) => entry.file)
+  function quest(key: string) {
+    const id = p.slug(f[key], `finale.${key}`)
+    return quests.get(id) ?? p.fail(`finale.${key}`, `unknown quest ${id}`)
+  }
+  const reveal = quest('reveal'), approach = quest('approach'), breach = quest('breach'), ending = quest('ending')
+  if (!reveal.port || reveal.encounter || approach.after !== reveal.id || breach.after !== approach.id || ending.after !== breach.id
+    || [approach, breach, ending].some((q) => q.port !== reveal.port) || ending.encounter) {
+    p.fail('finale', 'expected one local chain from briefing through approach, breach and ending')
+  }
+  const command = approach.encounter && commands.get(approach.encounter)
+  if (!command || !command.assault || !breach.encounter || !ground.has(breach.encounter)) {
+    return p.fail('finale', 'expected a ship assault and a ground breach')
+  }
+  const prep = p.object(f.preparation, 'finale.preparation', ['alloy', 'integrity'])
+  const preparation = { alloy: p.int(prep.alloy, 'finale.preparation.alloy', 1, 99),
+    integrity: p.int(prep.integrity, 'finale.preparation.integrity', 1, Math.min(10, 96 - command.transport)) }
+  return { cases, reveal: reveal.id, approach: approach.id, breach: breach.id, ending: ending.id, preparation }
 }

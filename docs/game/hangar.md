@@ -105,6 +105,12 @@ Original names, the game's own, so they're in git (`packages/domain/src/crew/par
 | Coat | Heat coat | 0 | Halves F | Halves fire |
 <!-- /live -->
 
+## Later campaign kits
+
+The faction missions can issue an Arc axe or Pulse lance for two-handed melee, a two-handed Marksman rifle for a
+single Short shot, and a three-shot Sniper rack for ranged precision. Each mission lists its main weapon and Back unit
+choices at deployment.
+
 ## Deploy
 
 The deploy screen ([missions.md](missions.md#the-steps)) shows each Uma's role, Load and Capacity, and refuses one who

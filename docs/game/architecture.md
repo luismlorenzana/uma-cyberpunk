@@ -65,6 +65,10 @@ The return-home decision also uses save v14. Local residents stop staffing the s
 base. Staying aboard keeps their quarters and station assignments. Both outcomes can defend the relay and retain its
 evidence.
 
+The campaign investigation compares five local reports. After a briefing, the gate operation carries frozen officer,
+escort and reinforcement choices through the ship assault. The ground breach and its aftermath use the same mission
+and story save rules.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,

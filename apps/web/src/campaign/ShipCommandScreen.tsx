@@ -17,11 +17,14 @@ const powerLabels = { shields: 'Shields', guns: 'Guns', fighters: 'Fighters' }
 const orderLine = (encounter: CommandEncounter, last: NonNullable<CommandState['last']>) =>
   last.emitterHit && encounter.assault ? encounter.assault.call : encounter.calls[last.order]
 
-export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, ashore, homeDefense }: {
+export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, ashore, homeDefense, finale, emitterRoute }: {
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
   ashore: ReadonlySet<number>; homeDefense?: { name: string; relay: number }
+  finale?: { allies: number; preparation: { alloy: number; integrity: number } }
+  emitterRoute?: string
 }) {
   const [background, setBackground] = useState<string | null>(null)
+  const [reinforce, setReinforce] = useState(false)
   useEffect(() => {
     if (!backdrop) return
     let live = true
@@ -37,11 +40,12 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   if (!state) return null
   const run = state.battle ? resumeCommand(state.battle.input, state.battle.actions) : null
   const assault = run ? run.input.version === 2 : !!encounter.assault
+  const preparation = reinforce ? finale?.preparation : undefined
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"
     style={{ ...insets, ...(background ? { backgroundImage: `linear-gradient(#080d1aeb, #080d1acf), url(${background})` } : {}) }}>
     <div className="mx-auto max-w-4xl space-y-3">
       <h1 className="font-display text-xl font-bold">{assault
-        ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : 'Station approach'
+        ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : finale ? 'Gate approach' : 'Station approach'
         : homeDefense ? state.step === 'results' ? state.won ? 'Relay secured' : 'Defense lost' : `Defend ${homeDefense.name}`
           : state.step === 'results' ? state.won ? 'Convoy secured' : 'Defense lost' : 'Convoy defense'}</h1>
       {state.step === 'briefing' && <>
@@ -70,8 +74,14 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         </div>
         <p className="text-sm">Cargo {supply.fuel} fuel · {supply.provisions} provisions</p>
         {!!homeDefense?.relay && <p className="text-sm text-cyan-200">Local shield bank · +{homeDefense.relay} relay integrity</p>}
-        <button type="button" className={primary} disabled={!canLaunch(supply, encounter)}
-          onClick={() => void updateSave((s) => launchCommand(s, s.campaignSupply ?? supply, encounter, { ashore, relay: homeDefense?.relay ?? 0 }))}>
+        {!!finale?.allies && <p className="text-sm text-cyan-200">Homeworld escort · +{finale.allies} shuttle integrity</p>}
+        {finale && <button type="button" className={button} aria-pressed={reinforce}
+          disabled={!reinforce && save.wallet.alloy < finale.preparation.alloy} onClick={() => setReinforce(!reinforce)}>
+          Reinforce shuttle · {finale.preparation.alloy} alloy · +{finale.preparation.integrity} integrity
+        </button>}
+        <button type="button" className={primary} disabled={!canLaunch(supply, encounter) || save.wallet.alloy < (preparation?.alloy ?? 0)}
+          onClick={() => void updateSave((s) => launchCommand(s, s.campaignSupply ?? supply, encounter,
+            { ashore, relay: homeDefense?.relay ?? finale?.allies ?? 0, preparation }))}>
           Launch · {encounter.cost.fuel} fuel · {encounter.cost.provisions} provisions
         </button>
       </>}
@@ -79,7 +89,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         : <p role="alert">The saved defense can’t resume.</p>)}
       {state.step === 'results' && <div className="flex flex-wrap gap-2">
         {run?.state.last && <p className="w-full text-sm">{orderLine(encounter, run.state.last)}</p>}
-        {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled. Maintenance entrance open.</p>}
+        {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{emitterRoute && ` · ${emitterRoute}`}</p>}
         {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id))}>Debrief</button>
           : <button type="button" className={primary} onClick={() => void updateSave(retry)}>{assault ? 'Retry approach' : 'Retry defense'}</button>}
       </div>}
