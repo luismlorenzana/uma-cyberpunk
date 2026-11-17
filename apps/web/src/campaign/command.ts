@@ -28,19 +28,22 @@ export function canLaunch(supply: CampaignSupply, encounter: CommandEncounter): 
 }
 
 export function launchCommand(save: Save, supply: CampaignSupply, encounter: CommandEncounter,
-  support?: { ashore: ReadonlySet<number>; relay: number }): Save {
+  support?: { ashore: ReadonlySet<number>; relay: number; preparation?: { alloy: number; integrity: number } }): Save {
   if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id || !canLaunch(supply, encounter)) return save
+  const cost = support?.preparation?.alloy ?? 0
+  if (save.wallet.alloy < cost) return save
   const officers = Object.fromEntries(COMMAND_STATIONS.map((station) => {
     const assigned = save.commandCrew[station]
     return [station, assigned && !support?.ashore.has(assigned.outfit) && save.crew.some((member) => member.outfit === assigned.outfit) ? assigned.drills : 0]
   })) as CommandInput['officers']
-  const setup = { transport: encounter.transport + (support?.relay ?? 0), enemy: encounter.enemy, threats: encounter.threats,
+  const setup = { transport: encounter.transport + (support?.relay ?? 0) + (support?.preparation?.integrity ?? 0), enemy: encounter.enemy, threats: encounter.threats,
     reactor: Math.max(3, reactorPips(save.ship)), officers }
   const assault = encounter.assault
   const input: CommandInput = assault ? { ...setup, version: 2, assault: { emitter: assault.emitter, disabledFlag: assault.disabledFlag } }
     : { ...setup, version: 1 }
   const campaignSupply = { ...supply, fuel: supply.fuel - encounter.cost.fuel, provisions: supply.provisions - encounter.cost.provisions }
-  return deploy({ ...save, campaignSupply }, input)
+  const wallet = cost ? { ...save.wallet, alloy: save.wallet.alloy - cost } : save.wallet
+  return deploy({ ...save, campaignSupply, wallet }, input)
 }
 
 export function issueCommand(save: Save, encounter: string, turn: number, action: CommandAction): Save {

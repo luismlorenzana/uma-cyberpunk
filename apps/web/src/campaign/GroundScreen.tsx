@@ -9,7 +9,8 @@ import { updateSave } from '../save/game'
 import { SCENARIOS } from '../mission/battleInput'
 import { settleGround } from './ground'
 import { campaignImage } from './load'
-import { groundInput, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN, type TrainingExpansion, type TrainingMain } from './training'
+import { nameOf } from '../story/runner'
+import { groundInput, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
 
 const action = 'min-h-11 rounded-lg bg-white/10 px-4 text-sm font-bold text-white'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
@@ -21,8 +22,11 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
 }) {
   const state = save.mission
-  const [main, setMain] = useState<TrainingMain>(TRAINING_MAIN[0].id)
-  const [expansion, setExpansion] = useState<TrainingExpansion>(TRAINING_EXPANSION[0].id)
+  const parts = (ids: readonly string[]) => ids.map((id) => ({ id, name: PARTS_BY_ID.get(id)!.name, details: PARTS_BY_ID.get(id)!.note }))
+  const weapons = ground?.kit ? parts(ground.kit.weapons) : TRAINING_MAIN
+  const expansions = ground?.kit ? parts(ground.kit.expansions) : TRAINING_EXPANSION
+  const [main, setMain] = useState<string>(weapons[0]!.id)
+  const [expansion, setExpansion] = useState<string>(expansions[0]!.id)
   const [portrait, setPortrait] = useState<string | null>()
   useEffect(() => {
     if (!bossArt) return
@@ -39,7 +43,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const title = ground?.title ?? 'Training'
   const alternate = ground?.alternate && save.story.flags.includes(ground.alternate.flag) ? ground.alternate : undefined
   const scenario = alternate?.scenario ?? mission.scenario
-  const approach = ground?.alternate ? alternate?.label ?? 'Cargo airlock' : undefined
+  const approach = ground?.alternate ? alternate?.label ?? ground.alternate.closedLabel ?? 'Cargo airlock' : undefined
   if (state.step === 'battle' && state.battle) {
     if (bossArt && portrait === undefined) return <div className={panel} style={insets} role="status">Preparing the battle…</div>
     return <GroundBattle layout={layout} input={state.battle.input as BattleInput} actions={state.battle.actions as BattleAction[]} close={close}
@@ -65,7 +69,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           <p className="font-semibold">{label}</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <fieldset className="space-y-2"><legend className="text-sm text-white/70">Main weapon</legend>
-              {TRAINING_MAIN.map((option) => <button key={option.id} type="button" aria-pressed={main === option.id}
+              {weapons.map((option) => <button key={option.id} type="button" aria-pressed={main === option.id}
                 className={`${action} block w-full text-left aria-pressed:ring-2 aria-pressed:ring-cyan-300`} onClick={() => setMain(option.id)}>
                 {option.name} <span className="font-normal text-white/70">· {option.details}</span>
               </button>)}
@@ -74,7 +78,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               <p className="text-sm text-white/70">Required armor expansion</p>
               <p className="font-semibold">{PARTS_BY_ID.get(ground.expansion)?.name}</p>
             </div> : <fieldset className="space-y-2"><legend className="text-sm text-white/70">Armor expansion</legend>
-              {TRAINING_EXPANSION.map((option) => <button key={option.id} type="button" aria-pressed={expansion === option.id}
+              {expansions.map((option) => <button key={option.id} type="button" aria-pressed={expansion === option.id}
                 className={`${action} block w-full text-left aria-pressed:ring-2 aria-pressed:ring-cyan-300`} onClick={() => setExpansion(option.id)}>
                 {option.name} <span className="font-normal text-white/70">· {option.details}</span>
               </button>)}
@@ -82,8 +86,16 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           </div>
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => {
-              const input = groundInput(scenario, trainee, label, main, ground?.expansion ?? expansion, ground?.boss)
-              void updateSave((s) => s.mission?.step === 'deploy' && s.mission.id === mission.id ? deploy(setSquad(s, [trainee]), input) : s)
+              void updateSave((s) => {
+                if (s.mission?.step !== 'deploy' || s.mission.id !== mission.id) return s
+                const companions = s.mission.squad.slice(1).flatMap((outfit) => {
+                  const member = s.crew.find((candidate) => candidate.outfit === outfit)
+                  return member ? [{ outfit, label: nameOf(pack, outfit), rig: member.rig }] : []
+                })
+                const input = groundInput(scenario, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions)
+                const squad = input.units.flatMap((unit) => unit.side === 'squad' && unit.ref?.kind === 'uma' ? [Number(unit.ref.id)] : [])
+                return deploy(setSquad(s, squad), input)
+              })
             }}>Deploy</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
           </div>
@@ -106,7 +118,8 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
     <p role="alert">The battle can’t resume.</p>
     <button type="button" className={primary} onClick={() => void updateSave((save) => toDeploy(retry(save)))}>Prepare again</button>
   </div>
-  const objectiveLabel = input.objective.kind === 'hack' ? 'Objective · Secure manifest console' : input.objective.kind === 'defeatLeader' ? 'Objective · Subdue the commander' : undefined
+  const objectiveLabel = input.objective.kind === 'hack' ? input.objective.count > 1 ? 'Objective · Disconnect both consoles' : 'Objective · Secure manifest console'
+    : input.objective.kind === 'defeatLeader' ? 'Objective · Subdue the commander' : undefined
   return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training portrait={portrait} objectiveLabel={objectiveLabel}
     standInKit={interior ? 'town' : undefined}
     onCommit={(next) => {

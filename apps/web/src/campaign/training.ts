@@ -1,5 +1,5 @@
-import type { BattleInput } from '@cyber/battle'
-import { loadoutOf, type Rig, type Save } from '@cyber/domain'
+import { capacityOf, loadOf, type BattleInput } from '@cyber/battle'
+import { loadoutOf, rigProblem, type Rig, type Save } from '@cyber/domain'
 import { missionInput, SCENARIOS } from '../mission/battleInput'
 import { finishMission } from '../mission/director'
 
@@ -18,11 +18,20 @@ export function trainingInput(outfit: number, label: string, main: TrainingMain,
   return groundInput('training', outfit, label, main, expansion)
 }
 
-export function groundInput(scenario: string, outfit: number, label: string, main: TrainingMain, expansion: string, boss?: { unit: string; name: string }): BattleInput {
+export function groundInput(scenario: string, outfit: number, label: string, main: string, expansion: string, boss?: { unit: string; name: string },
+  companions: readonly { outfit: number; label: string; rig: Rig | null }[] = []): BattleInput {
   const rig: Rig = { core: 'core-light', leftArm: 'arm-light', rightArm: 'arm-light', legs: 'legs-standard',
     visor: 'visor-aim', leftHand: null, rightHand: main, back: expansion, coat: null }
-  const trainee = SCENARIOS[scenario]!.input.units.find((unit) => unit.side === 'squad')!
-  const input = missionInput(scenario, [{ outfit, label, bands: trainee.bands, loadout: loadoutOf(rig), stride: null }], [], scenario)
+  const [trainee, ...slots] = SCENARIOS[scenario]!.input.units.filter((unit) => unit.side === 'squad')
+  const squad = [{ outfit, label, bands: trainee!.bands, loadout: loadoutOf(rig), stride: null },
+    ...slots.flatMap((slot, index) => {
+      const member = companions[index]
+      if (!member) return []
+      const equipped = member.rig && !rigProblem(member.rig) ? loadoutOf(member.rig) : slot.loadout
+      const loadout = loadOf(equipped) <= capacityOf({ loadout: equipped, bands: slot.bands }) ? equipped : slot.loadout
+      return [{ outfit: member.outfit, label: member.label, bands: slot.bands, loadout, stride: null }]
+    })]
+  const input = missionInput(scenario, squad, [], scenario)
   return boss ? { ...input, units: input.units.map((unit) => unit.id === boss.unit ? { ...unit, label: boss.name } : unit) } : input
 }
 

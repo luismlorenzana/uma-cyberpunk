@@ -164,6 +164,26 @@ CY27 continues in save v14 using the pair's existing pending scene and the story
 IDs when replacing a release. The `baseline-9` and `baseline-9-revised` drafts test a changed line and base backdrop
 while the home choice is pending. Keep local support available to later operations as a consequence of resettlement.
 
+## Investigation and final operation
+
+`finale.cases` lists one `port`, player-facing `title` and Log `file` per local arc. Each port needs a pair with a home
+and defense. Either home debrief files every line once. The investigation lists the five cases and their evidence.
+Completing all five debriefs is the only extra lock on the reveal. Dock at its port to read it. All travel and local
+quests retain their own prerequisites.
+
+`reveal`, `approach`, `breach` and `ending` name one chain of quests at the same port. The approach uses a ship assault.
+A resettled home contributes one point of shuttle integrity, up to three. `preparation` prices an optional reinforcement
+in `alloy` and adds its `integrity`. Cargo and alloy are charged at launch. The resulting input freezes the officer
+skills, escort and reinforcement for reload and retry. Destroying the emitter opens the authored alternate ground map.
+The main route remains available on a normal victory. The ending opens once the breach has been debriefed.
+
+Ground missions can set `kit.weapons` and `kit.expansions` to one to four compatible parts. A mission with a required
+`expansion` can list only that back unit. Squad slots fill in roster order from available members. Empty squad slots
+retain the authored allies and their equipment. The final battle has two distinct terminals with shutter feedback.
+
+The private `baseline-10` and `baseline-10-finale` releases cover all five local cases and the finale. Save v14 stores
+the same story milestones and frozen mission input. Preserve those scene, file, quest and unit IDs when releasing new art.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:

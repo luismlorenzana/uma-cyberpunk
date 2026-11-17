@@ -9,9 +9,9 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 | [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
 | [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
 | [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
-| [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Later campaign deliveries, the alien reveal and final fight |
+| [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Playable through the ending. Approved content and iPhone review pending. |
 
-CY20, CY21 and CY25–CY27 are complete. The private `baseline-9-revised` release completes the first Selden arc through recovery, return home or staying aboard, and the civilian relay defense. The [quarantine](../design/art-requests/selden-quarantine.md), [recovery](../design/art-requests/selden-recovery.md) and [home defense](../design/art-requests/selden-home.md) art packets describe the final assets. CY22–CY24 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
+CY20, CY21 and CY25–CY27 are complete. The private `baseline-10-finale` release plays five local arcs, the evidence comparison, the gate assault, both ground entries and the aftermath. The [finale art packet](../design/art-requests/campaign-finale.md) covers the remaining faction and gate assets. CY22–CY24 and CY28 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
 
 ## Earlier campaign handoff
 

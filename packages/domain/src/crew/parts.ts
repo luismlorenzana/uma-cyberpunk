@@ -58,7 +58,15 @@ export const STARTER_PARTS: readonly Part[] = [
   { id: 'coat-f', slot: 'coat', name: 'Heat coat', type: 'F', note: 'Halves fire' },
 ]
 
-export const PARTS_BY_ID: ReadonlyMap<string, Part> = new Map(STARTER_PARTS.map((p) => [p.id, p]))
+/** Parts issued by an authored campaign kit. */
+const CAMPAIGN_PARTS: readonly Part[] = [
+  { id: 'back-sniper', slot: 'back', kind: 'launcher', name: 'Sniper rack', load: 4, weapon: long(18, 86, 'P'), ammo: 3, note: 'Gunner: Long P precision fire, 3 ammo' },
+  { id: 'hand-arc-axe', slot: 'hand', name: 'Arc axe', item: melee(21, 70, 'I', 4, { twoHanded: true }), note: 'Melee I, two-handed' },
+  { id: 'hand-lance', slot: 'hand', name: 'Pulse lance', item: melee(17, 88, 'P', 4, { twoHanded: true }), note: 'Accurate Melee P, two-handed' },
+  { id: 'hand-marksman', slot: 'hand', name: 'Marksman rifle', item: { ...short(17, 85, 'P', 3, 1, 4), twoHanded: true }, note: 'Short P, single shot, two-handed' },
+]
+
+export const PARTS_BY_ID: ReadonlyMap<string, Part> = new Map([...STARTER_PARTS, ...CAMPAIGN_PARTS].map((p) => [p.id, p]))
 export const partsFor = (slot: PartSlot): Part[] => STARTER_PARTS.filter((p) => p.slot === slot)
 export const loadOfPart = (p: Part): number => (p.slot === 'hand' ? p.item.load : p.slot === 'coat' ? 0 : p.load)
 

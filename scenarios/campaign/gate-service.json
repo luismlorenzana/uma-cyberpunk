@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "id": "gate-service",
+  "title": "Gate service entry",
+  "map": "gate-service",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "input": {
+    "rulesVersion": 3,
+    "objective": {
+      "kind": "hack",
+      "count": 2
+    },
+    "units": [
+      {
+        "id": "trainee",
+        "side": "squad",
+        "spawn": 0,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 4,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "deck",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 18,
+            "accuracy": 80,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Decoupling specialist"
+      },
+      {
+        "id": "survey-ally",
+        "side": "squad",
+        "spawn": 1,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 4,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "deck",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 75,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 3,
+            "load": 3
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "survey-ally"
+        },
+        "label": "Survey ally"
+      },
+      {
+        "id": "cover-ally",
+        "side": "squad",
+        "spawn": 2,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 4,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 75,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 3,
+            "load": 3
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "cover-ally"
+        },
+        "label": "Escort ally"
+      },
+      {
+        "id": "station-drone",
+        "side": "enemy",
+        "spawn": 0,
+        "bands": {
+          "guts": 3,
+          "wit": 3,
+          "speed": 4,
+          "stamina": 3,
+          "power": 3
+        },
+        "facing": "S",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 1
+          },
+          "back": {
+            "kind": "none",
+            "load": 0
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 78,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 2,
+            "load": 2
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "station-drone"
+        },
+        "label": "Gate custodian",
+        "leader": true
+      },
+      {
+        "id": "cargo-sentry",
+        "side": "enemy",
+        "spawn": 1,
+        "bands": {
+          "guts": 2,
+          "wit": 3,
+          "speed": 3,
+          "stamina": 2,
+          "power": 3
+        },
+        "facing": "S",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 1
+          },
+          "back": {
+            "kind": "none",
+            "load": 0
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 5,
+            "accuracy": 78,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 2,
+            "load": 2
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "cargo-sentry"
+        },
+        "label": "Gate sentry"
+      }
+    ]
+  }
+}
