@@ -1,6 +1,6 @@
 // The production store against an in-memory Firestore: the `cyber` database by name, revisions checked in a transaction,
 // the save stored as JSON text, a backup before a newer version replaces a stored one, and the rescue. Invented data only.
-import { newSave, touched, type Save } from '@cyber/domain'
+import { newSave, SAVE_VERSION, touched, type Save } from '@cyber/domain'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { FirestoreSaveRepository } from './firestore-save.repository'
 import { RevisionConflict } from './save.repository'
@@ -43,7 +43,7 @@ describe('the Firestore save store', () => {
   it('stores the save as JSON text with its revision, and never touches account.updatedAt', async () => {
     const repo = new FirestoreSaveRepository('cyber')
     const save = touched(newSave('u', T0), T1)
-    expect(await repo.put('u', 0, save, 10)).toEqual({ revision: 1, save })
+    expect(await repo.put('u', 0, save, SAVE_VERSION)).toEqual({ revision: 1, save })
     const doc = store.get('saves/u')!
     expect(doc).toEqual({ revision: 1, save: JSON.stringify(save), storedAt: SERVER_TIME })
     expect((JSON.parse(doc.save as string) as Save).account.updatedAt).toBe(T1)
@@ -52,9 +52,9 @@ describe('the Firestore save store', () => {
 
   it('refuses a stale revision with what is stored, writing nothing', async () => {
     const repo = new FirestoreSaveRepository('cyber')
-    await repo.put('u', 0, newSave('u', T0), 10)
+    await repo.put('u', 0, newSave('u', T0), SAVE_VERSION)
     const before = structuredClone(store.get('saves/u'))
-    const error = await repo.put('u', 5, newSave('u', T1), 10).catch((e: unknown) => e)
+    const error = await repo.put('u', 5, newSave('u', T1), SAVE_VERSION).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(RevisionConflict)
     expect((error as RevisionConflict).current).toEqual({ revision: 1, save: newSave('u', T0) })
     expect(store.get('saves/u')).toEqual(before)
@@ -67,8 +67,8 @@ describe('the Firestore save store', () => {
 
   it('makes no backup while the version stays the same', async () => {
     const repo = new FirestoreSaveRepository('cyber')
-    await repo.put('u', 0, newSave('u', T0), 10)
-    await repo.put('u', 1, touched(newSave('u', T0), T1), 10)
+    await repo.put('u', 0, newSave('u', T0), SAVE_VERSION)
+    await repo.put('u', 1, touched(newSave('u', T0), T1), SAVE_VERSION)
     expect([...store.keys()].filter((k) => k.startsWith('saveBackups/'))).toEqual([])
   })
 
@@ -82,11 +82,11 @@ describe('the Firestore save store', () => {
   it('isolates campaign saves, backups and rescues for the same uid', async () => {
     const original = new FirestoreSaveRepository('cyber')
     const campaign = new FirestoreSaveRepository('cyber', true)
-    await original.put('u', 0, newSave('u', T0), 10)
+    await original.put('u', 0, newSave('u', T0), SAVE_VERSION)
     expect(await campaign.load('u')).toEqual({ revision: 0, save: null })
     const older = { version: 1, account: newSave('u', T0).account }
     store.set('campaignSaves/u', { revision: 1, save: JSON.stringify(older) })
-    await campaign.put('u', 1, newSave('u', T1), 10)
+    await campaign.put('u', 1, newSave('u', T1), SAVE_VERSION)
     await campaign.rescue('u', { draft: true }, 'invalid upload')
     expect(await original.load('u')).toEqual({ revision: 1, save: newSave('u', T0) })
     expect(store.get('campaignSaveBackups/u-v1')?.save).toBe(JSON.stringify(older))

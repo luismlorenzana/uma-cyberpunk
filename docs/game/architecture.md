@@ -50,6 +50,9 @@ The original save uses `/api/save` and IndexedDB `uma-cyberpunk`. The preview us
 API stores its preview save beside the original with a `.campaign` suffix. Both use the same reconciliation rules.
 The [content guide](../technical/campaign-content.md) covers private preview releases and the draft scene.
 
+Save v11 stores the new campaign's day and pending visit or morning. Ending a visit advances one day. A reload starts
+the saved visit or morning scene again. Older saves open on day 1 with their story and timestamps intact.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,

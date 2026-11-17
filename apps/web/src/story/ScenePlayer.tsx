@@ -36,6 +36,7 @@ function Bust({ pack, speaker }: { pack: StoryPack; speaker: Speaker }) {
 export interface ScenePresentation {
   backdrop?: string
   portraits: { speaker: Speaker; url: string; emote?: string }[]
+  illustrations?: Record<string, string>
 }
 
 export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation }: {
@@ -53,7 +54,8 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   const fill = (text: string) => fillCaptain(text, captain)
   const [prompt, setPrompt] = useState<Prompt | null>(null)
   const [expressions, setExpressions] = useState<Partial<Record<Speaker, string>>>({})
-  const [log, setLog] = useState<{ speaker: string; text: string }[]>([])
+  const [illustration, setIllustration] = useState<string | null>(null)
+  const [log, setLog] = useState<{ actor: Speaker | null; speaker: string; text: string }[]>([])
   /** Her last line stays above a choice, so the player answers what was said. */
   const said = log[log.length - 1]
   const saidLine = said && <div data-said className="mx-auto mb-1 max-w-[80%] rounded-lg bg-[#0b0d17]/80 px-3 py-2 text-[14px]">{said.speaker && <b>{said.speaker}: </b>}{said.text}</div>
@@ -73,15 +75,17 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       line: async (speaker, text, style) => {
         // React's development double-mount starts a second run; only the live one writes the Log.
         if (!live) return new Promise<void>(() => {})
-        setLog((l) => [...l, { speaker: speaker === null ? '' : nameOf(pack, speaker), text: fillCaptain(text, captain) }])
+        setLog((l) => [...l, { actor: speaker, speaker: speaker === null ? '' : nameOf(pack, speaker), text: fillCaptain(text, captain) }])
         const done = ask({ kind: 'line', speaker, text, style })
-        if (autoRef.current) window.setTimeout(() => { if (resolve.current) advance() }, 900 + text.length * 45)
+        const current = resolve.current
+        if (autoRef.current) window.setTimeout(() => { if (live && current === resolve.current) advance() }, 900 + text.length * 45)
         await done
       },
       emote: async (actor, emote) => {
         if (live && presentation) setExpressions((old) => ({ ...old, [actor]: emote }))
         await new Promise((r) => setTimeout(r, skipping.current ? 0 : 300))
       },
+      illustration: (asset) => { if (live) setIllustration(asset) },
       wait: async (ms) => { await new Promise((r) => setTimeout(r, Math.min(ms, 2000))) },
       choose: (options) => ask({ kind: 'choice', options }),
       call: (call) => ask({ kind: 'call', call }),
@@ -97,20 +101,23 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   }, [scene.id])
 
   const skip = () => { skipping.current = true; if (prompt?.kind === 'line') advance() }
-  const speaker = prompt?.kind === 'line' ? prompt.speaker : null
+  const speaker = prompt?.kind === 'line' ? prompt.speaker
+    : presentation && (prompt?.kind === 'choice' || prompt?.kind === 'captain') ? said?.actor ?? null : null
+  const image = illustration && presentation?.illustrations?.[illustration]
   const portrait = speaker === null ? undefined
     : presentation?.portraits.find((p) => p.speaker === speaker && p.emote === expressions[speaker])
       ?? presentation?.portraits.find((p) => p.speaker === speaker && p.emote === undefined)
   return (
     <div data-scene={scene.id} className="absolute inset-0 select-none bg-gradient-to-b from-[#141827] via-[#0e1222] to-[#05060c] text-[#e8ebf5]">
-      {presentation?.backdrop && <img alt="" src={presentation.backdrop} className="absolute inset-0 size-full object-cover opacity-70" data-scene-backdrop />}
+      {image ? <img alt="" src={image} className="absolute inset-0 size-full object-cover" data-scene-illustration />
+        : presentation?.backdrop && <img alt="" src={presentation.backdrop} className="absolute inset-0 size-full object-cover opacity-70" data-scene-backdrop />}
       <div className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{scene.place}</div>
       <div className="absolute right-3 top-3 flex gap-2" style={{ marginTop: 'var(--inset-top)', marginRight: 'var(--inset-right)' }}>
         <button type="button" onClick={() => setAuto((a) => !a)} className={`min-h-11 rounded-md px-3 text-[13px] font-bold ${auto ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>Auto</button>
         <button type="button" onClick={skip} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Skip</button>
         <button type="button" onClick={() => setShowLog(true)} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Log</button>
       </div>
-      {speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
+      {!image && speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
         {portrait ? <img alt="" src={portrait.url} className="max-h-[44vh] max-w-[35vw] rounded-lg object-contain" data-scene-portrait={portrait.emote ?? 'neutral'} />
           : <Bust pack={pack} speaker={speaker} />}
       </div>}

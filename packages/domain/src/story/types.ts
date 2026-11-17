@@ -22,6 +22,7 @@ export type Step =
   | { kind: 'narrate'; text: string }
   | { kind: 'thought'; speaker: Speaker; text: string }
   | { kind: 'emote'; actor: Speaker; emote: string }
+  | { kind: 'illustration'; asset: string | null }
   | { kind: 'wait'; ms: number }
   | { kind: 'choice'; options: ChoiceOption[] }
   | { kind: 'flag'; flag: string; set: boolean }
@@ -47,7 +48,7 @@ export type Step =
 export type StepKind = Step['kind']
 /** The steps that change the save as they play: the story state, the crew, the ship. */
 export type EffectStep = Extract<Step, { kind: 'flag' | 'lead' | 'file' | 'anomaly' | 'join' | 'aboard' | 'refit' | 'standing' }>
-export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path', 'refit', 'standing']
+export const STEP_KINDS: readonly StepKind[] = ['line', 'slot', 'narrate', 'thought', 'emote', 'illustration', 'wait', 'choice', 'flag', 'lead', 'file', 'anomaly', 'join', 'aboard', 'call', 'battle', 'captain', 'path', 'refit', 'standing']
 
 export interface ChoiceOption { text: string; lead?: string; then: Step[] }
 

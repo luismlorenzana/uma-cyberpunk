@@ -18,13 +18,14 @@ import type { ShipLog } from '../ship/watch'
 import { MODULE_IDS, MODULES_BY_ID, PROJECTS_BY_ID, SYSTEM_IDS, type ModuleId, type SystemId } from '../ship/modules'
 import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
 import { emptyStory, type StoryState } from '../story/state'
+import { firstCampaignDay, type CampaignDay } from '../campaign-day'
 
 /** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
  * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
  * item stock and the visits (CY14); 7 the ship as a build and the wallet (CY15); 8 duties: posts, presets, the meal,
  * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17); 10 squads, operations and faction
- * standing (CY18). */
-export const SAVE_VERSION = 10
+ * standing (CY18); 11 the campaign day and its pending evening or morning scene (CY21). */
+export const SAVE_VERSION = 11
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -147,8 +148,13 @@ export interface SaveV10 extends Omit<SaveV9, 'version'> {
   standing: Record<string, number>
 }
 
+export interface SaveV11 extends Omit<SaveV10, 'version'> {
+  version: 11
+  campaignDay: CampaignDay
+}
+
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV10
+export type Save = SaveV11
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -175,7 +181,11 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }))))))))
+  return migrateV10(migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() })))))))))
+}
+
+export function migrateV10(save: SaveV10): SaveV11 {
+  return { ...save, version: 11, account: { ...save.account }, campaignDay: firstCampaignDay() }
 }
 
 /** v9 to v10: one squad of the crew aboard (up to four), no operations, every standing at the story's start (none stored
@@ -598,6 +608,30 @@ export function versionOf(value: unknown): number {
 export function parseSave(value: unknown, path = 'save'): Save {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
+  if (version < 11) return migrateV10(parseV10(value, path))
+  const raw = object(value, path, Object.keys(value as Obj))
+  const { campaignDay, ...rest } = raw
+  return { ...parseV10({ ...rest, version: 10 }, path), version: 11, campaignDay: parseCampaignDay(campaignDay, `${path}.campaignDay`) }
+}
+
+function parseCampaignDay(value: unknown, path: string): CampaignDay {
+  const o = object(value, path, ['day', 'pending'])
+  const day = count(o.day, `${path}.day`)
+  if (day === 0) throw new SaveParseError(`${path}.day`, 'expected day 1 or later')
+  if (o.pending === null) return { day, pending: null }
+  const pendingPath = `${path}.pending`
+  const kind = (o.pending as { kind?: unknown } | null)?.kind
+  if (kind !== 'visit' && kind !== 'morning') throw new SaveParseError(`${pendingPath}.kind`, 'expected visit or morning')
+  const p = object(o.pending, pendingPath, kind === 'visit' ? ['kind', 'companion', 'scene', 'morning'] : ['kind', 'companion', 'scene'])
+  const companion = count(p.companion, `${pendingPath}.companion`)
+  if (companion === 0) throw new SaveParseError(`${pendingPath}.companion`, 'expected an outfit id')
+  const scene = id(p.scene, `${pendingPath}.scene`)
+  return { day, pending: kind === 'morning' ? { kind, companion, scene }
+    : { kind, companion, scene, morning: p.morning === null ? null : id(p.morning, `${pendingPath}.morning`) } }
+}
+
+function parseV10(value: unknown, path: string): SaveV10 {
+  const version = versionOf(value)
   if (version === 1) {
     const o = object(value, path, ['version', 'account'])
     return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(migrateV1({ version: 1, account: parseAccount(o.account, `${path}.account`) })))))))))
@@ -606,7 +640,7 @@ export function parseSave(value: unknown, path = 'save'): Save {
     const o = object(value, path, ['version', 'account', 'story'])
     return migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: parseAccount(o.account, `${path}.account`), story: parseStory(o.story, `${path}.story`) }))))))))
   }
-  if (version < 3 || version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
+  if (version < 3 || version > 10) throw new SaveParseError(`${path}.version`, `expected 1–${SAVE_VERSION}`)
   const base = ['version', 'account', 'crew', 'ship', 'worlds', 'story', 'mission']
   const o = object(value, path, [...base, ...(version >= 5 ? ['captain', 'watch', 'inbox'] : []), ...(version >= 6 ? ['items', 'visits'] : []), ...(version >= 7 ? ['wallet'] : []),
     ...(version >= 8 ? ['dutyPresets', 'meal', 'camaraderie', 'log', 'event'] : []), ...(version >= 9 ? ['partners'] : []), ...(version >= 10 ? ['squads', 'operations', 'operationsWon', 'standing'] : [])])
