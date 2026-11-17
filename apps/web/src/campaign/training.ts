@@ -1,5 +1,5 @@
 import { capacityOf, loadOf, type BattleInput } from '@cyber/battle'
-import { loadoutOf, rigProblem, type Rig, type Save } from '@cyber/domain'
+import { issuedCampaignRig, loadoutOf, rigProblem, type Rig, type Save } from '@cyber/domain'
 import { missionInput, SCENARIOS } from '../mission/battleInput'
 import { finishMission } from '../mission/director'
 
@@ -19,9 +19,8 @@ export function trainingInput(outfit: number, label: string, main: TrainingMain,
 }
 
 export function groundInput(scenario: string, outfit: number, label: string, main: string, expansion: string, boss?: { unit: string; name: string },
-  companions: readonly { outfit: number; label: string; rig: Rig | null }[] = []): BattleInput {
-  const rig: Rig = { core: 'core-light', leftArm: 'arm-light', rightArm: 'arm-light', legs: 'legs-standard',
-    visor: 'visor-aim', leftHand: null, rightHand: main, back: expansion, coat: null }
+  companions: readonly { outfit: number; label: string; rig: Rig | null }[] = [], fitted?: Rig): BattleInput {
+  const rig = fitted ?? issuedCampaignRig(main, expansion)
   const [trainee, ...slots] = SCENARIOS[scenario]!.input.units.filter((unit) => unit.side === 'squad')
   const squad = [{ outfit, label, bands: trainee!.bands, loadout: loadoutOf(rig), stride: null },
     ...slots.flatMap((slot, index) => {

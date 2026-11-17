@@ -184,6 +184,40 @@ retain the authored allies and their equipment. The final battle has two distinc
 The private `baseline-10` and `baseline-10-finale` releases cover all five local cases and the finale. Save v14 stores
 the same story milestones and frozen mission input. Preserve those scene, file, quest and unit IDs when releasing new art.
 
+## Captain relationships
+
+Optional `dates` entries name a crew outfit in `companion` and the opening quest in `after`. Each entry has ordered
+`milestones`, a repeatable `regular` visit and `awards` tied to completed quests. A visit names its `title`,
+`scene` and optional `morning`. A milestone also sets its required `rank`, earned `rapport` and optional additional
+quest in `after`. Use a distinct scene ID for every entry. The rank-one entry can give retroactive credit through a
+`legacyFlag` carried by a previously released visit.
+
+Write `captain` answers for tone and the existing `path` step at rank eight for the mutual choice. Its two branches
+use `trust` and `heart`. The player chooses one evening plan. The visit records its scene and bond effects once,
+ends the day and queues its morning. The morning completes on the following day. Regular visits remain replayable.
+Quest awards use the companion and quest ID as their saved identity. Captain relationships use each crew member's
+bond record alongside the separate pair story milestones.
+
+`baseline-11-revised` uses five milestone evenings and Selden's convoy debrief. It carries the original first visit
+and morning forward at their released IDs.
+
+## Planet-funded squad preparation
+
+An optional `workshop` block names the local workshop introduction quest in `after` and lists the supported ground
+`missions`. The quest's port hosts the campaign Hangar. Each `recipes` entry gives an existing rig `part`, its exact
+`slot` such as `leftArm` or `back`, its `alloy` price and its `icon` asset ID.
+
+The player directs a normal eligible Alloy shipment to the Hangar. The port deducts the cargo and the Hangar receives
+its material stock in the same saved change. The ship wallet continues to receive the ordinary Alloy shipment.
+Save v15 stores Hangar stock and owned parts. Crafting debits Hangar Alloy and grants one part. Fitting uses the crew's
+saved rig and checks slot compatibility and capacity against the declared missions and their alternate entries.
+Deployment can use a fitted rig or the issued kit. A mission-specific Back unit still applies where required.
+The battle input freezes the equipped loadout through reload and retry.
+
+The Selden draft prices the left Guard arm at three Alloy and the Missile pod at four. Both can be used in cargo
+or maintenance boarding. Stable asset IDs for the handover and the two parts are in the
+[Selden crew and gear art brief](../design/art-requests/selden-crew-prep.md).
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:

@@ -487,10 +487,16 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       if (me.side === 'squad' && (partnerOf(state, me.id)?.level ?? 0) >= 3) arc.push(btn('Duo', () => { show({ phase: 'duo' }); setToast('Tap the enemy both partners can reach') }, false, 'duo'))
     } else if (training && ui.phase === 'target' && !ui.aim) {
       const targets = targetsFrom(state, me.id, ui.reach.to)
-      targets.slice(0, 4).forEach(({ target, mount }) => arc.push(btn(labelOf(state, target), () => {
-        lastTarget.current = targetTile(state, target)
-        previewAction(ui.reach, ui.dash, { kind: 'attack', with: mount, target })
-      }, true, `${target}:${mount}`)))
+      const mounts = { right: 'Main hand', left: 'Off hand', back: 'Back unit' }
+      targets.slice(0, 4).forEach(({ target, mount }) => {
+        const name = labelOf(state, target)
+        const label = mount === 'back' || targets.some((entry) => entry.target === target && entry.mount !== mount)
+          ? `${name} · ${mounts[mount]}` : name
+        arc.push(btn(label, () => {
+          lastTarget.current = targetTile(state, target)
+          previewAction(ui.reach, ui.dash, { kind: 'attack', with: mount, target })
+        }, true, `${target}:${mount}`))
+      })
       arc.push(btn('Back', () => show({ phase: 'act', reach: ui.reach, dash: ui.dash })))
     } else if (ui.phase === 'act' || ui.phase === 'target') {
       const targets = targetsFrom(state, me.id, ui.reach.to)

@@ -11,15 +11,17 @@ import { settleGround } from './ground'
 import { campaignImage } from './load'
 import { nameOf } from '../story/runner'
 import { groundInput, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
+import { fittedGroundRig, fittedSummary } from './workshop'
 
 const action = 'min-h-11 rounded-lg bg-white/10 px-4 text-sm font-bold text-white'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
 const panel = 'absolute inset-0 overflow-auto bg-[#0b0d17] p-4 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt }: {
+export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, acceptsFitted }: {
   save: Save; mission: Mission; layout: StageLayout; trainee: number; label: string; close: () => void
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
+  acceptsFitted?: boolean
 }) {
   const state = save.mission
   const parts = (ids: readonly string[]) => ids.map((id) => ({ id, name: PARTS_BY_ID.get(id)!.name, details: PARTS_BY_ID.get(id)!.note }))
@@ -27,6 +29,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const expansions = ground?.kit ? parts(ground.kit.expansions) : TRAINING_EXPANSION
   const [main, setMain] = useState<string>(weapons[0]!.id)
   const [expansion, setExpansion] = useState<string>(expansions[0]!.id)
+  const [useFitted, setUseFitted] = useState(true)
+  const [launching, setLaunching] = useState(false)
   const [portrait, setPortrait] = useState<string | null>()
   useEffect(() => {
     if (!bossArt) return
@@ -43,7 +47,10 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const title = ground?.title ?? 'Training'
   const alternate = ground?.alternate && save.story.flags.includes(ground.alternate.flag) ? ground.alternate : undefined
   const scenario = alternate?.scenario ?? mission.scenario
+  const fitted = acceptsFitted && scenario
+    ? fittedGroundRig(save.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario, ground?.expansion) : null
   const approach = ground?.alternate ? alternate?.label ?? ground.alternate.closedLabel ?? 'Cargo airlock' : undefined
+  if (launching) return <div className={panel} style={insets} role="status">Saving deployment…</div>
   if (state.step === 'battle' && state.battle) {
     if (bossArt && portrait === undefined) return <div className={panel} style={insets} role="status">Preparing the battle…</div>
     return <GroundBattle layout={layout} input={state.battle.input as BattleInput} actions={state.battle.actions as BattleAction[]} close={close}
@@ -67,7 +74,11 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
         </>}
         {state.step === 'deploy' && <>
           <p className="font-semibold">{label}</p>
-          <div className="grid gap-3 sm:grid-cols-2">
+          {fitted && <div className="flex flex-wrap gap-2" aria-label="Rig for this sortie">
+            <button type="button" className={action} aria-pressed={useFitted} onClick={() => setUseFitted(true)}>Use fitted rig</button>
+            <button type="button" className={action} aria-pressed={!useFitted} onClick={() => setUseFitted(false)}>Use issued kit</button>
+          </div>}
+          {fitted && useFitted ? <p className="text-sm text-cyan-200">{fittedSummary(fitted)}</p> : <div className="grid gap-3 sm:grid-cols-2">
             <fieldset className="space-y-2"><legend className="text-sm text-white/70">Main weapon</legend>
               {weapons.map((option) => <button key={option.id} type="button" aria-pressed={main === option.id}
                 className={`${action} block w-full text-left aria-pressed:ring-2 aria-pressed:ring-cyan-300`} onClick={() => setMain(option.id)}>
@@ -83,19 +94,23 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                 {option.name} <span className="font-normal text-white/70">· {option.details}</span>
               </button>)}
             </fieldset>}
-          </div>
+          </div>}
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => {
+              setLaunching(true)
               void updateSave((s) => {
                 if (s.mission?.step !== 'deploy' || s.mission.id !== mission.id) return s
                 const companions = s.mission.squad.slice(1).flatMap((outfit) => {
                   const member = s.crew.find((candidate) => candidate.outfit === outfit)
                   return member ? [{ outfit, label: nameOf(pack, outfit), rig: member.rig }] : []
                 })
-                const input = groundInput(scenario, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions)
+                const rig = fitted && useFitted
+                  ? fittedGroundRig(s.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario, ground?.expansion) : null
+                if (fitted && useFitted && !rig) return s
+                const input = groundInput(scenario, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions, rig ?? undefined)
                 const squad = input.units.flatMap((unit) => unit.side === 'squad' && unit.ref?.kind === 'uma' ? [Number(unit.ref.id)] : [])
                 return deploy(setSquad(s, squad), input)
-              })
+              }).finally(() => setLaunching(false))
             }}>Deploy</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
           </div>

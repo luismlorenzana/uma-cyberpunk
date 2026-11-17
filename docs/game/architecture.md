@@ -69,6 +69,10 @@ The campaign investigation compares five local reports. After a briefing, the ga
 escort and reinforcement choices through the ship assault. The ground breach and its aftermath use the same mission
 and story save rules.
 
+Captain visits advance the companion's saved bond and settle the night. Save v15 adds the campaign Hangar's Alloy
+and owned parts. Fittings use the existing crew rig. Boarding saves its selected loadout with the rest of the
+frozen battle input.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,
