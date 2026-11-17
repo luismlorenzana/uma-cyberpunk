@@ -43,3 +43,15 @@ Label the baseline as draft in preview. Keep source files and assets in ignored 
 At the start of each delivery, code, story and art agree on a quest brief with the player entry point, scenes and choices, mission objectives and fail/retry rules, consequences saved and shown, and required assets. Use the same IDs in the game, script and art brief. For a clue, specify where it appears, what it means on first encounter, and where it pays off. Story can change an encounter outcome or require a new rule. Art can change the staging when intent or ownership reads poorly on the phone. Update the brief and affected packets together.
 
 Review every delivery through the campaign on the iPhone. Verify the intended outcome, retry and resume, the visible consequences, and the authored lines and art in context. Use the same encounter definition for automated and simulator checks. Keep source story, casting, art and screenshots in private content. CI can run invented fixtures that exercise the same schema and mission entry.
+
+## How the pillar packets ship
+
+The [four-pillar queue](../handoff/README.md#four-pillar-implementation-queue) extends the playable campaign. CY29 starts with the Captain's relationships. CY30 shows planetary exports changing the squad's gear and a real boarding fight. Their planning can overlap. Integrate their save changes in order and verify each against the deployed campaign save version.
+
+For each packet, keep a shared brief that names the campaign entry, objectives and player choices, saved consequences, dialogue beats, asset slots and how to check them in the live scene. Use those IDs in code, draft scripts and the art handoff. A new story beat or art requirement that changes a rule updates the brief and the implementation together.
+
+Supply playable draft scenes, dialogue and compatible placeholder assets with each code delivery. The story and art sessions can review and replace them through the same private release format. Carry both a fresh save and a save from the preceding release through the checkpoint. Keep the real quest as the place to review the result. Use scripted runs for repeated balance and save checks.
+
+Record each delivered rule and its review result in the handoff. When a packet closes, point its dependents to the delivered design or manual before removing the packet.
+
+CY36 reviews approved content and tuning across all four pillars. CY37 verifies the owner-only release path, phone play and save recovery. The existing CY22–CY24 and CY28 reviews carry into those checkpoints.
