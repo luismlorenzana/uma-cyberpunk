@@ -19,6 +19,7 @@
     "sim": "tsx scripts/sim/battle.ts",
     "story:check": "tsx scripts/story/check.ts",
     "story:pack": "tsx scripts/story/pack.ts",
+    "campaign": "tsx scripts/story/campaign.ts",
     "stories": "tsx tools/story-sandbox/server.ts",
     "stories:import-cast": "node tools/story-sandbox/import-cast.mjs"
   },

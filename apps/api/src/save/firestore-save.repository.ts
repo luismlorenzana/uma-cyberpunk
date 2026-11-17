@@ -10,11 +10,17 @@ import { EMPTY_ENVELOPE, RevisionConflict, type SaveRepository } from './save.re
 // (uma-rpg D69), so a migration can be undone by hand. An upload this server refuses waits in `saveRescues/{uid}`,
 // newest only (uma-rpg D260).
 const storedSave = (data: { save?: unknown } | undefined): unknown => (typeof data?.save === 'string' ? JSON.parse(data.save) as unknown : data?.save)
+const legacyCollections = { saves: 'saves', backups: 'saveBackups', rescues: 'saveRescues' }
+const campaignCollections = { saves: 'campaignSaves', backups: 'campaignSaveBackups', rescues: 'campaignSaveRescues' }
 
 export class FirestoreSaveRepository implements SaveRepository {
   private firestore: Firestore | null = null
 
-  constructor(private readonly databaseId: string) {}
+  private readonly collections: typeof legacyCollections
+
+  constructor(private readonly databaseId: string, campaign = false) {
+    this.collections = campaign ? campaignCollections : legacyCollections
+  }
 
   private db(): Firestore {
     if (!this.firestore) this.firestore = getFirestore(getApps()[0] ?? initializeApp(), this.databaseId)
@@ -28,19 +34,19 @@ export class FirestoreSaveRepository implements SaveRepository {
   }
 
   async load(uid: string): Promise<SaveEnvelope> {
-    return FirestoreSaveRepository.envelope(await this.db().collection('saves').doc(uid).get())
+    return FirestoreSaveRepository.envelope(await this.db().collection(this.collections.saves).doc(uid).get())
   }
 
   put(uid: string, baseRevision: number, save: Save, sentVersion: number): Promise<SaveEnvelope> {
     const db = this.db()
-    const ref = db.collection('saves').doc(uid)
+    const ref = db.collection(this.collections.saves).doc(uid)
     return db.runTransaction(async (tx) => {
       const snapshot = await tx.get(ref)
       const current = FirestoreSaveRepository.envelope(snapshot)
       const storedVersion = snapshot.exists ? versionOf(storedSave(snapshot.data() as { save?: unknown })) : 0
       if (current.revision !== baseRevision || sentVersion < storedVersion) throw new RevisionConflict(current)
       if (snapshot.exists && save.version > storedVersion) {
-        tx.set(db.collection('saveBackups').doc(`${uid}-v${storedVersion}`), { ...snapshot.data(), backedUpAt: FieldValue.serverTimestamp() })
+        tx.set(db.collection(this.collections.backups).doc(`${uid}-v${storedVersion}`), { ...snapshot.data(), backedUpAt: FieldValue.serverTimestamp() })
       }
       const next = { revision: baseRevision + 1, save }
       tx.set(ref, { revision: next.revision, save: JSON.stringify(save), storedAt: FieldValue.serverTimestamp() })
@@ -49,6 +55,6 @@ export class FirestoreSaveRepository implements SaveRepository {
   }
 
   async rescue(uid: string, upload: unknown, reason: string): Promise<void> {
-    await this.db().collection('saveRescues').doc(uid).set({ upload: JSON.stringify(upload), reason, rescuedAt: FieldValue.serverTimestamp() })
+    await this.db().collection(this.collections.rescues).doc(uid).set({ upload: JSON.stringify(upload), reason, rescuedAt: FieldValue.serverTimestamp() })
   }
 }

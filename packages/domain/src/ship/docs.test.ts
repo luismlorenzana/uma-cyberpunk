@@ -46,13 +46,13 @@ const live = (doc: string, key: string, body: string) => doc.replace(new RegExp(
 
 describe('the manual', () => {
   it('holds the current modules and projects', () => {
-    const doc = readFileSync(DOC, 'utf8')
+    const doc = readFileSync(DOC, 'utf8').replaceAll('\r\n', '\n')
     const current = live(live(doc, 'modules', modulesBlock()), 'projects', projectsBlock())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DOC, current)
     else expect(doc).toBe(current)
   })
   it('holds the current posts', () => {
-    const doc = readFileSync(DUTIES, 'utf8')
+    const doc = readFileSync(DUTIES, 'utf8').replaceAll('\r\n', '\n')
     const current = live(doc, 'posts', postsBlock())
     if (process.env.UPDATE_DOCS === '1') writeFileSync(DUTIES, current)
     else expect(doc).toBe(current)

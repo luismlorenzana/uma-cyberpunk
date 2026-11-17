@@ -1,7 +1,7 @@
 import { BadRequestException, Body, ConflictException, Controller, Get, Inject, Logger, Put } from '@nestjs/common'
 import { CurrentUid } from '@luismlorenzana/uma-server/auth'
 import { parseSavePut, SaveParseError, type SaveEnvelope } from '@cyber/domain'
-import { RevisionConflict, SAVE_REPOSITORY, type SaveRepository } from './save.repository'
+import { CAMPAIGN_SAVE_REPOSITORY, RevisionConflict, SAVE_REPOSITORY, type SaveRepository } from './save.repository'
 
 // GET and PUT /api/save behind the owner guard (copied from uma-rpg at 30a322a). The server stores what the device sends
 // and never writes into a save itself (the production-save rules).
@@ -46,5 +46,12 @@ export class SaveController {
     } catch (failure) {
       this.logger.error(`Save rescue failed: ${failure instanceof Error ? failure.message : String(failure)}`)
     }
+  }
+}
+
+@Controller('campaign/save')
+export class CampaignSaveController extends SaveController {
+  constructor(@Inject(CAMPAIGN_SAVE_REPOSITORY) saves: SaveRepository) {
+    super(saves)
   }
 }

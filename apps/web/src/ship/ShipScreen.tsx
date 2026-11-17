@@ -16,6 +16,7 @@ import { ScenePlayer } from '../story/ScenePlayer'
 import { useCrew } from '../crew/useCrew'
 import { Decks, WalletChips } from './Hull'
 import { EventCard, LogCard } from './ShipCards'
+import { CAMPAIGN_ENTRY } from '../app/campaign'
 
 const DutiesPanel = lazy(() => import('./DutiesPanel'))
 import { outfitName, useStory } from './useStory'
@@ -95,6 +96,7 @@ function Ship() {
       {duties && <Suspense fallback={null}><DutiesPanel save={save} crew={crew} onClose={() => setDuties(false)} /></Suspense>}
       {menu && (
         <div className="absolute flex flex-col gap-2 rounded-xl bg-[#141827] p-3 ring-1 ring-white/15" style={{ top: 'calc(var(--inset-top) + 60px)', left: 'calc(var(--inset-left) + 8px)' }}>
+          <a href={CAMPAIGN_ENTRY} className="flex min-h-11 items-center rounded-md bg-white/5 px-3 font-semibold">Campaign preview</a>
           {[['Account', '/account'], ['Sandbox', '/sandbox'], ['Board bench', '/board'], ['Story test', '/story']].map(([label, to]) => (
             <Link key={to} to={to!} className="flex min-h-11 items-center rounded-md bg-white/5 px-3 font-semibold">{label}</Link>
           ))}

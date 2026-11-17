@@ -57,7 +57,7 @@ export const LINE_MAX = 160
 const SLUG = /^[a-z0-9][a-z0-9-]{0,63}$/
 type Obj = Record<string, unknown>
 
-class P {
+export class P {
   constructor(readonly file: string) {}
   fail(path: string, message: string): never { throw new StoryParseError(this.file, path, message) }
   object(v: unknown, path: string, keys: readonly string[], required: readonly string[] = keys): Obj {
