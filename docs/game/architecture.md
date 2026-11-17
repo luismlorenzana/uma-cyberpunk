@@ -58,6 +58,8 @@ starts when the selected release opens supply. Alloy shipments credit the existi
 upkeep and ship work in one save change.
 Save v13 also stores command assignments and drills. Each launched defense keeps its frozen input and orders in the
 mission, so reloads and retries use the same reactor, crew skills and waves.
+Save v14 records a pending daytime pair scene and supports pair visits and mornings. The recovery, bond and residency
+milestones use the saved story flags and completed scenes.
 
 ## The save
 
