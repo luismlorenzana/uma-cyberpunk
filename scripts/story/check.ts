@@ -25,7 +25,7 @@ export function runCheck(dir: string, now = new Date().toISOString()): { report:
 
 function main(): void {
   const at = process.argv.indexOf('--dir')
-  const dir = resolve(at >= 0 ? process.argv[at + 1]! : join(import.meta.dirname, '../../content/stories'))
+  const dir = resolve(at >= 0 ? process.argv[at + 1]! : (process.env.UMA_CYBER_STORIES ?? join(import.meta.dirname, '../../../uma-story-authoring/content/cyberpunk/stories')))
   const { report, standIn, errors } = runCheck(dir)
   if (standIn) console.log(`No story in ${dir} yet: checking the stand-in.`)
   for (const f of report.findings) console.log(`${f.level.padEnd(5)} ${f.file}${f.where ? ` ${f.where}` : ''}: ${f.message}`)

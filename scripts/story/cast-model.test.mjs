@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   castIndex, countWords, deliverables, enemyWords, hexOrNull, PACK_KIND, packImages, parseCastPack, parseFoeFile, parseReviews, parseTies, parseVerdict, slotLine, storyIndex, walk, withVerdict,
-} from './model.mjs'
+} from './cast-model.mjs'
 
 test('a ties file pairs an Uma’s outfit id with a boss’s board id, of a known kind and a heat of 1 to 3', () => {
   const ties = { schemaVersion: 1, kind: 'uma-foe-ties', kinds: [{ id: 'rival' }], ties: [{ uma: 9000001, foe: 'stand-in-1', kind: 'rival', heat: 2 }] }

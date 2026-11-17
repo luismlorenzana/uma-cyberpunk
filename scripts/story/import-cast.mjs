@@ -9,7 +9,7 @@
 // - the profiles' facts: a sister's own profile (the Ranker's profiles.json), each Uma's running style and uma-quest's
 //   personality and story tags (its tags.json, read in place), each heroine's franchise details.
 //
-//   node tools/story-sandbox/import-cast.mjs
+//   node scripts/story/import-cast.mjs
 //
 // Sources: the Ranker's plan as `pnpm ranker:pull` leaves it in uma-platform (UMA_RANKER_PLAN, default
 // ../uma-platform/content/authoring/tiers/plan.json), the mirror beside it (UMA_RANKER_DIR, default
@@ -18,14 +18,14 @@
 import { copyFile, mkdir, readdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { PACK_KIND, parseCastPack } from './lib/model.mjs'
+import { PACK_KIND, parseCastPack } from './cast-model.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repo = resolve(here, '../..')
 const planPath = resolve(process.env.UMA_RANKER_PLAN ?? join(repo, '../uma-platform/content/authoring/tiers/plan.json'))
-const quest = resolve(process.env.UMA_QUEST_STORIES ?? join(repo, '../uma-quest/content/stories'))
+const quest = resolve(process.env.UMA_QUEST_STORIES ?? join(repo, '../uma-story-authoring/content/quest/stories'))
 const ranker = resolve(process.env.UMA_RANKER_DIR ?? join(repo, '../uma-platform/content/authoring/ranker'))
-const target = join(resolve(process.env.UMA_CYBER_STORIES ?? join(repo, 'content/stories')), 'cast-pack')
+const target = join(resolve(process.env.UMA_CYBER_STORIES ?? join(repo, '../uma-story-authoring/content/cyberpunk/stories')), 'cast-pack')
 
 /** The pack's Umas and heroines from the Ranker's plan. Pure, so it can be tested on an invented plan. */
 export function castFromPlan(plan) {
