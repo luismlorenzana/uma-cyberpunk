@@ -1,5 +1,6 @@
 import {
-  finishCampaignNightScene, seeScene, startCampaignNight, walkSteps, type CampaignNight, type CampaignQuest, type EffectStep, type Save,
+  finishCampaignNightScene, seeScene, startCampaignNight, startSupply, supplyNight, walkSteps,
+  type CampaignDay, type CampaignNight, type CampaignQuest, type EffectStep, type Save,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
@@ -7,11 +8,12 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
 import { CAMPAIGN_ENTRY } from '../app/campaign'
 import { Account } from '../home/Account'
-import { applyStep, startMission } from '../mission/director'
+import { applyStep, passAWatch, startMission } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
+import { SupplyPanel } from './SupplyPanel'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
@@ -85,57 +87,79 @@ function Campaign({ layout }: { layout: StageLayout }) {
 
   const day = save?.campaignDay
   const night = day?.pending
+  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)
+    && (!q.encounter || save.worlds.missions.includes(q.encounter))).map((q) => q.id))
+  const network = loaded?.book.supply
+  const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
+  const port = supply && network?.ports.find((p) => p.id === supply.port)
+  function settleDay(s: Save, campaignDay: CampaignDay): Save {
+    const next = { ...s, campaignDay }
+    if (campaignDay.day === s.campaignDay.day || !supply || !network || !loaded) return next
+    return passAWatch({ ...next, campaignSupply: supplyNight(s.campaignSupply ?? startSupply(network), network) }, loaded.book.story)
+  }
   if (loaded && day && night && !error && loaded.book.scenes.has(night.scene)) {
     return <CampaignScene key={`${day.day}:${night.kind}:${night.scene}`} loaded={loaded} sceneId={night.scene}
       fail={setError}
       finish={(effects) => void updateSave((s) => {
         const campaignDay = finishCampaignNightScene(s.campaignDay, day.day, night)
-        return campaignDay === s.campaignDay ? s : { ...reduceEffects(s, effects), campaignDay }
+        return campaignDay === s.campaignDay ? s : settleDay(reduceEffects(s, effects), campaignDay)
+      })} />
+  }
+  if (loaded && save && port && !night && !missionState && !error && !save.story.seen.includes(port.scene)) {
+    return <CampaignScene key={port.scene} loaded={loaded} sceneId={port.scene} fail={setError}
+      finish={(effects) => void updateSave((s) => {
+        if (s.story.seen.includes(port.scene)) return s
+        const next = reduceEffects(s, effects)
+        return { ...next, story: seeScene(next.story, port.scene) }
       })} />
   }
 
-  const complete = new Set(loaded?.book.quests.filter((q) => save?.story.seen.includes(q.scene)
-    && (!q.encounter || save.worlds.missions.includes(q.encounter))).map((q) => q.id))
   const available = loaded?.book.quests.filter((q) => !complete.has(q.id) && (q.after === undefined || complete.has(q.after))) ?? []
   const evening = loaded?.book.evening
   const canRest = !!(day && !night && !missionState && evening && complete.has(evening.after))
+  const supplyPanel = loaded && save && supply && network && port && !night && !missionState && !eveningOpen
+    ? <SupplyPanel save={save} network={network} supply={supply} port={port} worlds={loaded.book.story.worlds} /> : null
   const visitOptions = canRest ? evening?.visits.filter((v) => save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
   function chooseEvening(visit: Extract<CampaignNight, { kind: 'visit' }> | null) {
     setEveningOpen(false)
     void updateSave((s) => {
       if (!canRest || s.campaignDay.day !== day?.day || (visit && !s.crew.some((crew) => crew.outfit === visit.companion))) return s
       const campaignDay = startCampaignNight(s.campaignDay, visit)
-      return campaignDay === s.campaignDay ? s : { ...s, campaignDay }
+      return campaignDay === s.campaignDay ? s : settleDay(s, campaignDay)
     })
   }
   return (
     <main className={viewport} style={insets} data-campaign>
-      <div className="mx-auto max-w-xl space-y-3">
-        <nav className="flex flex-wrap gap-2">
-          <a href="/" className={button}>Original campaign</a>
-          <Link to="/campaign/account" className={button}>Account</Link>
-        </nav>
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="font-display text-xl font-bold">Campaign preview</h1>
-          <button type="button" className={button} disabled={pending} onClick={() => setCheck((n) => n + 1)}>Check release</button>
+      <div className={supplyPanel ? 'mx-auto grid max-w-5xl items-start gap-3 sm:grid-cols-[12rem_minmax(0,1fr)]' : 'mx-auto max-w-xl'}>
+        <div className="space-y-3">
+          <nav className="flex flex-wrap gap-2">
+            <a href="/" className={button}>Original campaign</a>
+            <Link to="/campaign/account" className={button}>Account</Link>
+          </nav>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h1 className="font-display text-xl font-bold">Campaign preview</h1>
+            <button type="button" className={button} disabled={pending} onClick={() => setCheck((n) => n + 1)}>Check release</button>
+          </div>
+          {loaded && <p className="text-sm text-white/65" data-campaign-release>{loaded.release.release}{loaded.book.draft ? ' · Draft' : ''}</p>}
+          {day && <p className="text-sm text-white/65">Day {day.day}</p>}
+          {pending && <p role="status">Checking the release…</p>}
+          {error && <p role="alert" className="break-words text-[#ffa7b7]">{error}</p>}
+          {night && !pending && !error && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved scene.</p>}
+          {supply && !port && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved port.</p>}
+          {missionState && training && <button type="button" className={button} onClick={() => setTrainingPaused(false)}>Resume Training</button>}
+          {missionState && loaded && !training && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved exercise.</p>}
+          {save && !night && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
+            className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
+          {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
+          {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
+            {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
+              onClick={() => chooseEvening({ kind: 'visit', ...visit })}>Visit {nameOf(loaded.book.story, visit.companion)}</button>)}
+            <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
+            <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
+          </section>}
+          {loaded && !pending && !night && !missionState && !canRest && !supply && available.length === 0 && <p className="text-white/65">You’re caught up.</p>}
         </div>
-        {loaded && <p className="text-sm text-white/65" data-campaign-release>{loaded.release.release}{loaded.book.draft ? ' · Draft' : ''}</p>}
-        {day && <p className="text-sm text-white/65">Day {day.day}</p>}
-        {pending && <p role="status">Checking the release…</p>}
-        {error && <p role="alert" className="break-words text-[#ffa7b7]">{error}</p>}
-        {night && !pending && !error && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved scene.</p>}
-        {missionState && training && <button type="button" className={button} onClick={() => setTrainingPaused(false)}>Resume Training</button>}
-        {missionState && loaded && !training && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved exercise.</p>}
-        {save && !night && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
-          className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
-        {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
-        {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
-          {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
-            onClick={() => chooseEvening({ kind: 'visit', ...visit })}>Visit {nameOf(loaded.book.story, visit.companion)}</button>)}
-          <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
-          <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
-        </section>}
-        {loaded && !pending && !night && !missionState && !canRest && available.length === 0 && <p className="text-white/65">You’re caught up.</p>}
+        {supplyPanel}
       </div>
     </main>
   )
