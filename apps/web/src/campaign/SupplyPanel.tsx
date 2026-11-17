@@ -28,7 +28,7 @@ export function SupplyPanel({ save, network, supply, port, worlds }: {
   function change(action: (s: Save, stock: CampaignSupply) => Save) {
     void updateSave((current) => {
       const stock = current.campaignSupply ?? startSupply(network)
-      if (stock.port !== port.id || current.mission || current.campaignDay.pending) return current
+      if (stock.port !== port.id || current.mission || current.campaignDay.pending || current.pairScene) return current
       return action(current, stock)
     })
   }

@@ -7,6 +7,8 @@ import type { CommandEncounter } from '../ship/command'
 import { parseCommandEncounter } from '../ship/command-parse'
 import { PARTS_BY_ID } from '../crew/parts'
 import type { Wallet } from '../ship/hull'
+import type { CampaignPair } from '../campaign-pair'
+import { parseCampaignPairs } from './campaign-pairs'
 
 export interface CampaignQuest {
   id: string
@@ -35,6 +37,7 @@ export interface CampaignBook {
   supply?: SupplyNetwork
   commands: ReadonlyMap<string, CommandEncounter>
   ground: ReadonlyMap<string, GroundEncounter>
+  pairs: CampaignPair[]
 }
 
 export interface GroundEncounter {
@@ -158,7 +161,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -305,5 +308,11 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   for (const port of supply?.ports ?? []) {
     if (port.liberation && ![...ground.values()].some((g) => g.win.flag === port.liberation?.flag)) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
   }
-  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
+  const reserved = new Set([...quests.map((q) => q.scene), ...(supply?.ports.map((port) => port.scene) ?? []),
+    ...(evening?.visits.flatMap((visit) => visit.morning ? [visit.scene, visit.morning] : [visit.scene]) ?? [])])
+  const captureFlags = new Set([...ground.values()].flatMap((g) => g.win.flag ? [g.win.flag] : []))
+  const pairs = parseCampaignPairs(o.pairs, story, scenes, new Set(byQuest.keys()), reserved, captureFlags)
+  if (pairs.length && !evening) p.fail('pairs', 'recovery visits need an evening schedule')
+  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
+    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}) }
 }

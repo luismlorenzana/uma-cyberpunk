@@ -18,7 +18,8 @@ import type { ShipLog } from '../ship/watch'
 import { MODULE_IDS, MODULES_BY_ID, PROJECTS_BY_ID, SYSTEM_IDS, type ModuleId, type SystemId } from '../ship/modules'
 import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
 import { emptyStory, type StoryState } from '../story/state'
-import { firstCampaignDay, type CampaignDay } from '../campaign-day'
+import { firstCampaignDay, type CampaignDay, type SoloNight } from '../campaign-day'
+import type { PendingPairScene } from '../campaign-pair'
 import { PORT_STOCK_MAX, SHIP_CARGO_MAX, SHIP_PROVISIONS_PER_NIGHT, SUPPLY_KINDS, type CampaignSupply } from '../campaign-supply'
 import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew } from '../ship/command'
 
@@ -26,8 +27,9 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew } from '../ship/command'
  * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
  * item stock and the visits (CY14); 7 the ship as a build and the wallet (CY15); 8 duties: posts, presets, the meal,
  * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17); 10 squads, operations and faction
- * standing (CY18); 11 the campaign day and pending scenes (CY21); 12 the supply ledger (CY23); 13 command officers (CY24). */
-export const SAVE_VERSION = 13
+ * standing (CY18); 11 the campaign day and pending scenes (CY21); 12 the supply ledger (CY23); 13 command officers (CY24);
+ * 14 saved daytime scenes, visits and mornings for a campaign pair (CY26). */
+export const SAVE_VERSION = 14
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -152,7 +154,7 @@ export interface SaveV10 extends Omit<SaveV9, 'version'> {
 
 export interface SaveV11 extends Omit<SaveV10, 'version'> {
   version: 11
-  campaignDay: CampaignDay
+  campaignDay: CampaignDay<SoloNight>
 }
 
 export interface SaveV12 extends Omit<SaveV11, 'version'> {
@@ -165,8 +167,14 @@ export interface SaveV13 extends Omit<SaveV12, 'version'> {
   commandCrew: CommandCrew
 }
 
+export interface SaveV14 extends Omit<SaveV13, 'version' | 'campaignDay'> {
+  version: 14
+  campaignDay: CampaignDay
+  pairScene: PendingPairScene | null
+}
+
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV13
+export type Save = SaveV14
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -193,9 +201,12 @@ export class SaveParseError extends Error {
 
 /** A new account's save. */
 export function newSave(uid: string, now: string): Save {
-  return migrateV12(migrateV11(migrateV10(migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2({ version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() })))))))))))
+  const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
+  const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
+  return migrateV13(migrateV12(migrateV11(migrateV10(v10))))
 }
 
+export const migrateV13 = (save: SaveV13): SaveV14 => ({ ...save, version: 14, pairScene: null })
 export const migrateV12 = (save: SaveV12): SaveV13 => ({ ...save, version: 13, commandCrew: {} })
 export const migrateV11 = (save: SaveV11): SaveV12 => ({ ...save, version: 12, campaignSupply: null })
 
@@ -623,18 +634,27 @@ export function versionOf(value: unknown): number {
 export function parseSave(value: unknown, path = 'save'): Save {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
-  if (version < 11) return migrateV12(migrateV11(migrateV10(parseV10(value, path))))
+  if (version < 11) return migrateV13(migrateV12(migrateV11(migrateV10(parseV10(value, path)))))
   const raw = object(value, path, Object.keys(value as Obj))
-  const { campaignDay, campaignSupply, commandCrew, ...rest } = raw
+  const { campaignDay, campaignSupply, commandCrew, pairScene, ...rest } = raw
+  if (version < 14 && 'pairScene' in raw) throw new SaveParseError(path, 'unknown keys pairScene')
   if (version < 13 && 'commandCrew' in raw) throw new SaveParseError(path, 'unknown keys commandCrew')
+  const base = parseV10({ ...rest, version: 10 }, path)
+  if (version === 14) {
+    const day = parseCampaignDay(campaignDay, `${path}.campaignDay`, true)
+    const pending = pairScene === null ? null : object(pairScene, `${path}.pairScene`, ['pair', 'scene'])
+    if (pending && (day.pending || base.mission)) throw new SaveParseError(`${path}.pairScene`, 'another activity is already pending')
+    return { ...base, version: 14, campaignDay: day, campaignSupply: parseCampaignSupply(campaignSupply, `${path}.campaignSupply`, day.day),
+      commandCrew: parseCommandCrew(commandCrew, `${path}.commandCrew`, day.day),
+      pairScene: pending ? { pair: id(pending.pair, `${path}.pairScene.pair`), scene: id(pending.scene, `${path}.pairScene.scene`) } : null }
+  }
   const day = parseCampaignDay(campaignDay, `${path}.campaignDay`)
-  const base = { ...parseV10({ ...rest, version: 10 }, path), campaignDay: day }
   if (version === 11) {
     if ('campaignSupply' in raw) throw new SaveParseError(path, 'unknown keys campaignSupply')
-    return migrateV12(migrateV11({ ...base, version: 11 }))
+    return migrateV13(migrateV12(migrateV11({ ...base, campaignDay: day, version: 11 })))
   }
-  const v12: SaveV12 = { ...base, version: 12, campaignSupply: parseCampaignSupply(campaignSupply, `${path}.campaignSupply`, day.day) }
-  return version === 12 ? migrateV12(v12) : { ...v12, version: 13, commandCrew: parseCommandCrew(commandCrew, `${path}.commandCrew`, day.day) }
+  const v12: SaveV12 = { ...base, campaignDay: day, version: 12, campaignSupply: parseCampaignSupply(campaignSupply, `${path}.campaignSupply`, day.day) }
+  return migrateV13(version === 12 ? migrateV12(v12) : { ...v12, version: 13, commandCrew: parseCommandCrew(commandCrew, `${path}.commandCrew`, day.day) })
 }
 
 function parseCommandCrew(value: unknown, path: string, day: number): CommandCrew {
@@ -676,13 +696,21 @@ function parseCampaignSupply(value: unknown, path: string, day: number): Campaig
     reliefDay: o.reliefDay === null ? null : bounded(o.reliefDay, `${path}.reliefDay`, day) }
 }
 
-function parseCampaignDay(value: unknown, path: string): CampaignDay {
+function parseCampaignDay(value: unknown, path: string): CampaignDay<SoloNight>
+function parseCampaignDay(value: unknown, path: string, allowPair: true): CampaignDay
+function parseCampaignDay(value: unknown, path: string, allowPair = false): CampaignDay {
   const o = object(value, path, ['day', 'pending'])
   const day = count(o.day, `${path}.day`)
   if (day === 0) throw new SaveParseError(`${path}.day`, 'expected day 1 or later')
   if (o.pending === null) return { day, pending: null }
   const pendingPath = `${path}.pending`
   const kind = (o.pending as { kind?: unknown } | null)?.kind
+  if (allowPair && (kind === 'pair-visit' || kind === 'pair-morning')) {
+    const p = object(o.pending, pendingPath, kind === 'pair-visit' ? ['kind', 'pair', 'scene', 'morning'] : ['kind', 'pair', 'scene'])
+    const pair = id(p.pair, `${pendingPath}.pair`), scene = id(p.scene, `${pendingPath}.scene`)
+    return { day, pending: kind === 'pair-morning' ? { kind, pair, scene }
+      : { kind, pair, scene, morning: p.morning === null ? null : id(p.morning, `${pendingPath}.morning`) } }
+  }
   if (kind !== 'visit' && kind !== 'morning') throw new SaveParseError(`${pendingPath}.kind`, 'expected visit or morning')
   const p = object(o.pending, pendingPath, kind === 'visit' ? ['kind', 'companion', 'scene', 'morning'] : ['kind', 'companion', 'scene'])
   const companion = count(p.companion, `${pendingPath}.companion`)

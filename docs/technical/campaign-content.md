@@ -127,6 +127,23 @@ once. Selden's boarding clear records custody. The station console opens the civ
 liberation separately. A port can use `liberation.flag` to add `liberation.alloy` to nightly production. Evidence stays
 available on the campaign hub. Its saved lines remain readable after reload and do not require an optional earlier clue.
 
+## Recovery and quarters
+
+An optional `pairs` list describes recovery arcs. Each pair has an `id`, an `after` quest, a ground `capture` flag
+and two `members`, each with an `outfit` and an authored `trust` milestone flag. `recovery` names two evening scenes
+in order. The second visit records the Log File in `testimony`. The `release` scene completes recovery and joins the
+former captive as a crew member. Both trust milestones are visible beside their names.
+
+The post-release `bond` scene ends with a choice between its `romance` and `friendship` flags. The separate `residency`
+scene uses `shared` and `separate` flags. Script each participant's decision in the branch. Each branch must end in
+exactly one matching flag. The `rooms` block supplies a distinct `move`, `visit` and `morning` scene for each residency.
+Completing the move opens the corresponding evening visit. Shared quarters and separate cabins work on either bond path.
+
+Save v14 remembers a daytime pair scene, visit or morning before playing it. Scene effects and milestones commit once
+when the scene finishes. Reloads return to its start. The visit advances the day once and queues its morning.
+Keep pair IDs, milestone flags and scene IDs stable across revisions. The private `baseline-8` and `baseline-8-revised`
+releases use the same progress IDs with a different shared-morning line and illustration.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:
@@ -158,3 +175,5 @@ and scene IDs across art and dialogue revisions. The Training exercise is free.
 The private `baseline-6` rehearsal adds the paid relay convoy defense and the second occurrence of the three-pulse clue.
 The private `baseline-7` rehearsal adds the contested approach, boarding, custody and Selden liberation with temporary
 art. Final asset requirements are in the [Selden art packet](../design/art-requests/selden-quarantine.md).
+The private `baseline-8` rehearsal adds recovery, testimony, release and both room paths with reused placeholders.
+Replacement assets are in the [recovery art packet](../design/art-requests/selden-recovery.md).
