@@ -56,6 +56,8 @@ the saved visit or morning scene again. Older saves open on day 1 with their sto
 Save v12 adds the preview's current port, planet stockpiles, ship fuel and provisions, and shortage relief. The ledger
 starts when the selected release opens supply. Alloy shipments credit the existing wallet. Each night settles production,
 upkeep and ship work in one save change.
+Save v13 also stores command assignments and drills. Each launched defense keeps its frozen input and orders in the
+mission, so reloads and retries use the same reactor, crew skills and waves.
 
 ## The save
 
