@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the Story Sandbox
 
+> **Current setup.** Start the shared app with `pnpm start` in the sibling [uma-story-authoring](https://github.com/luismlorenzana/uma-story-authoring) repo. Use [this book](http://127.0.0.1:4322/cyberpunk/). Its drafts and verdicts are in that repo’s ignored `content/cyberpunk/stories/`. The design notes below describe the original standalone sandbox.
+
 > **Status: 2026-11-14, built (D17); the Bibles page added (D30), the Foes page (D35), Profiles (D36) and Ties (D37).** The owner asked for "a third app" for Uma Cyberpunk, beside the Story Sandboxes
 > uma-quest's and uma-farm's sessions built, where they author and review their stories locally (uma-platform P150).
 > This game's story had a format, a check and a player in the game (CY9), but no page to read it, judge it and leave
