@@ -6,7 +6,6 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 
 | Packet | Work | Integrated delivery |
 |---|---|---|
-| [CY21](tasks/CY21.md) | Opening, quarters and the first day | First recruit's scripted scenes and nightly visit |
 | [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
 | [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
 | [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
@@ -15,7 +14,7 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 | [CY27](tasks/CY27.md) | Return home and defend it | First complete arc, with resettlement or staying aboard |
 | [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Later campaign deliveries, the alien reveal and final fight |
 
-CY20 is complete. Start with CY21, then integrate CY22 for the first Training-to-morning play-through. Open packet files define pending work. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
+CY20 and CY21 are complete. Start with CY22 for the first Training-to-morning play-through. Open packet files define pending work. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
 
 ## Earlier campaign handoff
 
@@ -135,6 +134,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY21 | Opening, quarters and the first day (D42). A private draft sign-on and quarters visit exercise save v11, morning resume and a full-screen illustration. The rehearsal passed on the migrated save in Chrome, with framing checked at 844 × 390. CY22 connects the authored Training result to recruitment and quarters. [Content guide](../technical/campaign-content.md#quarters-and-morning) | _this commit_ |
 | CY20 | Campaign foundation (D41). The owner-gated preview has an independent save and a validated content release. Two local draft packs proved a choice, dialogue and art replacement on the same save, and rollback in Chrome. [Campaign content guide](../technical/campaign-content.md) | _this commit_ |
 | CY19 | The life-aboard loop (D33): the stand-in grown (bond scenes for all four Umas, sw3 behind the Engines' drive with its event pool and operation), the headless loop playing every system of ship life with its measures (bonds to rank 8, Comfort 3, the log every watch, builds and research, operations, standing, the finale's conditions, cohesion, resume, time aboard), three gaps fixed (away squads kept whole, canonical squads only on arrival, bond gates on every key), the play-through in the preview pane; [the life-aboard loop](../game/story.md#the-life-aboard-loop-cy19) in the manual. **Phase 4's code is complete** | _this commit_ |
 | CY18 | Squads, operations and faction standing (D31): squads of four with cohesion from fighting together (the leader's Charge, Crossfire reach, free Cover in rules version 3), canonical squads from the casting, the Quarters' squads and the deploy screen's picker; operations on Comms with deterministic outcomes shown before sending, recall and ship-log reports; faction standing −2..+2 from story steps, operations and heroines freed; the readiness meter and a finale's needs adding fog, hazards or no reinforcements; the stand-in's Vanguard, operations, standing step and storm-ridge finale; save v10; [squads](../game/squads.md) in the manual | _this commit_ |

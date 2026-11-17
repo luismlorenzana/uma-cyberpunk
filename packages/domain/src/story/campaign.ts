@@ -1,4 +1,4 @@
-import { checkPack } from './check'
+import { checkPack, walkSteps } from './check'
 import { P, parsePack } from './parse'
 import type { Scene, Speaker, StoryPack } from './types'
 
@@ -24,6 +24,7 @@ export interface CampaignBook {
   art: CampaignSceneArt[]
   story: StoryPack
   scenes: ReadonlyMap<string, Scene>
+  evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
 }
 
 export interface CampaignReleaseFile {
@@ -87,7 +88,8 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
 export function parseCampaignBook(files: Record<string, unknown>): CampaignBook {
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
-  const o = p.object(config, 'campaign', ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art'])
+  const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
+  const o = p.object(config, 'campaign', [...fields, 'evening'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -137,6 +139,14 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     if (!byAsset.has(key)) p.fail(path, `unknown asset ${key}`)
     return key
   }
+  for (const chapter of chapters) {
+    const source = new P(`chapters/${chapter.id}.json`)
+    chapter.scenes.forEach((scene, index) => {
+      for (const { step, path } of walkSteps(scene.steps, `scenes[${index}].steps`)) {
+        if (step.kind === 'illustration' && step.asset && !byAsset.has(step.asset)) source.fail(path, `unknown illustration ${step.asset}`)
+      }
+    })
+  }
   const art = p.list(o.art, 'art', (v, path) => {
     const a = p.object(v, path, ['scene', 'backdrop', 'portraits'], ['scene', 'portraits'])
     const scene = p.slug(a.scene, `${path}.scene`)
@@ -154,5 +164,26 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }) }
   })
   unique(p, 'art', art, (a) => a.scene)
-  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes }
+  const evening = o.evening === undefined ? undefined : (() => {
+    const e = p.object(o.evening, 'evening', ['after', 'visits'])
+    const after = p.slug(e.after, 'evening.after')
+    if (!byQuest.has(after)) p.fail('evening.after', `unknown quest ${after}`)
+    const cast = new Set([...story.casting.crewOrder, ...story.casting.leads.map((l) => l.outfit)])
+    const visits = p.list(e.visits, 'evening.visits', (v, path) => {
+      const visit = p.object(v, path, ['companion', 'scene', 'morning'], ['companion', 'scene'])
+      const companion = p.outfit(visit.companion, `${path}.companion`)
+      if (!cast.has(companion)) p.fail(`${path}.companion`, `unknown crew member ${companion}`)
+      function sceneRef(value: unknown, key: string): string {
+        const id = p.slug(value, key)
+        if (!scenes.has(id)) p.fail(key, `unknown scene ${id}`)
+        if (quests.some((q) => q.scene === id)) p.fail(key, `scene ${id} is already a quest`)
+        return id
+      }
+      return { companion, scene: sceneRef(visit.scene, `${path}.scene`),
+        morning: visit.morning === undefined ? null : sceneRef(visit.morning, `${path}.morning`) }
+    })
+    unique(p, 'evening.visits', visits, (visit) => String(visit.companion))
+    return { after, visits }
+  })()
+  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, ...(evening ? { evening } : {}) }
 }

@@ -109,6 +109,7 @@ export class P {
       }
       case 'narrate': return { kind, text: this.text(x, p, 240) }
       case 'emote': { const o = this.object(x, p, ['actor', 'emote']); return { kind, actor: this.speaker(o.actor, `${p}.actor`), emote: this.slug(o.emote, `${p}.emote`) } }
+      case 'illustration': return { kind, asset: x === null ? null : this.slug(x, p) }
       case 'wait': return { kind, ms: this.int(x, p, 0, 10_000) }
       case 'choice': return { kind, options: this.list(x, p, (c, cp) => this.option(c, cp), 4) }
       case 'flag': {

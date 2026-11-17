@@ -49,6 +49,26 @@ when it ends. Closing mid-scene resumes from that scene's start. A content updat
 so the completed scene and choices carry forward. Coordinate a save compatibility change before publishing a new ID
 for a scene that already carries progress.
 
+## Quarters and morning
+
+Add an `evening` block with an `after` quest ID and a `visits` list. Each visit has the companion's outfit ID in
+`companion`, a `scene` for the visit, and an optional `morning` scene ID. Use separate chapter scenes for these beats.
+The evening opens after its required quest and offers a companion once she is part of the saved crew.
+
+```json
+{
+  "after": "recruitment",
+  "visits": [{ "companion": 9000101, "scene": "pilot-evening", "morning": "pilot-morning" }]
+}
+```
+
+Use `{ "illustration": "pilot-window-morning" }` in a scene to show a full-screen image. The ID must be listed in
+`assets`. Dialogue stays over the image and the speaker portrait returns after `{ "illustration": null }`.
+The scene prepares its portraits and illustrations before they appear.
+
+The preview records the chosen visit before playing it. Reloading returns to that scene's start. Completing the visit
+applies the scene effects and advances the day once, with the morning pending until its scene finishes.
+
 ## Check, pack and select
 
 From the repo root, with the locked dependencies installed:
@@ -73,3 +93,4 @@ The first scene's choice and completion stay in the campaign save. Select the fi
 
 Keep source, release files and art under ignored `content/`. This checkout's two original baseline drafts use an
 invented recruit and original raster placeholders. Story and art can replace those assets through the same references.
+The private `baseline-3` rehearsal adds a draft sign-on scene, a quarters visit and a morning with an illustration.

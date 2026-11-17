@@ -9,6 +9,7 @@ export interface SceneUi {
   /** Shows a line (by its speaker, or narration) and resolves when the player taps on. */
   line(speaker: Speaker | null, text: string, kind: 'line' | 'thought' | 'narrate'): Promise<void>
   emote(actor: Speaker, emote: string): Promise<void>
+  illustration?(asset: string | null): void
   wait(ms: number): Promise<void>
   /** Resolves with the option picked. */
   choose(options: readonly ChoiceOption[]): Promise<number>
@@ -54,6 +55,7 @@ export async function playSteps(steps: readonly Step[], ui: SceneUi, o: RunOptio
       case 'narrate': if (!skip) await ui.line(null, step.text, 'narrate'); break
       case 'slot': { if (skip) break; const l = slotLine(step, o.squad); await ui.line(l.speaker, l.text, l.speaker === null ? 'narrate' : 'line'); break }
       case 'emote': if (!skip) await ui.emote(step.actor, step.emote); break
+      case 'illustration': ui.illustration?.(step.asset); break
       case 'wait': if (!skip) await ui.wait(step.ms); break
       case 'choice': {
         o.stopSkipping()

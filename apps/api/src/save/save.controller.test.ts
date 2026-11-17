@@ -1,6 +1,6 @@
 // A refused upload is kept (uma-rpg D260), a conflict carries what's stored, and nothing else is written. Invented data only.
 import { BadRequestException, ConflictException } from '@nestjs/common'
-import { newSave, type Save } from '@cyber/domain'
+import { newSave, SAVE_VERSION, type Save } from '@cyber/domain'
 import { describe, expect, it, vi } from 'vitest'
 import { SaveController } from './save.controller'
 import { EMPTY_ENVELOPE, RevisionConflict, type SaveRepository } from './save.repository'
@@ -23,7 +23,7 @@ describe('PUT /api/save', () => {
     const put = vi.fn(async (_uid: string, revision: number, save: Save) => ({ revision: revision + 1, save }))
     const { repo, controller } = fake(put)
     await expect(controller.put('u', upload())).resolves.toMatchObject({ revision: 4 })
-    expect(put).toHaveBeenCalledWith('u', 3, upload().save, 10)
+    expect(put).toHaveBeenCalledWith('u', 3, upload().save, SAVE_VERSION)
     expect(repo.rescue).not.toHaveBeenCalled()
   })
 

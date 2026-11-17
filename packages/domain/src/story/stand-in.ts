@@ -106,6 +106,7 @@ export const STAND_IN_FILES: Record<string, unknown> = {
       fixedSquad: null, side: [{ kind: 'hack', gives: 'sw1-lead-terminal' }], scenario: 'sandbox-muster',
     }],
     debrief: { steps: [
+      { illustration: null },
       { line: { speaker: LEAD, text: 'So this is the ship. It smells like ozone and old coffee.' } },
       { narrate: 'Word comes from the docks: the union saw who cleared the underlevels.' },
       { standing: { faction: 'dock-union', by: 1 } },
