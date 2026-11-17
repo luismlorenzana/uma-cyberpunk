@@ -1,5 +1,25 @@
 # Handoff: open work
 
+## Current packets
+
+The new campaign keeps this repo, the landscape app and the tactics engine. It starts with its own save. The first playable delivery is the authored opening, recruitment Training and first evening. The [campaign rework brief](../design/campaign-rework.md) sets the shared code, story and art milestones, including the alien antagonist and the final operation (D39).
+
+| Packet | Work | Integrated delivery |
+|---|---|---|
+| [CY20](tasks/CY20.md) | Campaign foundation and authoring contracts | New campaign entry, distinct save, private pack |
+| [CY21](tasks/CY21.md) | Opening, quarters and the first day | First recruit's scripted scenes and nightly visit |
+| [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
+| [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
+| [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
+| [CY25](tasks/CY25.md) | Occupied space, boarding and liberation | First boss capture and liberation, with a playable clue |
+| [CY26](tasks/CY26.md) | Recovery, release and shared quarters | First pair's recovery and residential choices |
+| [CY27](tasks/CY27.md) | Return home and defend it | First complete arc, with resettlement or staying aboard |
+| [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Later campaign deliveries, the alien reveal and final fight |
+
+Start with CY20. Open packet files define pending work. Completed prerequisites are recorded in the Done table. The phases, requests and status below record the earlier campaign's history.
+
+## Earlier campaign handoff
+
 > **Status: 2026-11-14, after D38: the story has a roadmap (private, ten milestones; M1 next: the ship and voices bible, then the Ring's Chapter 1 scripted).** After D37: only the owner's pre-ranked bosses are cast (110, each boss board's SS), and every one of the Ranker's 100 Umas has a boss in a conflict tie (private), on the Story Sandbox's new Ties page.** After D36: NIKKE and Punishing: Gray Raven left the story (WD50): the Authority Garrison, the treaty bloc's Collar and the Dimmed took their roles; the Story Sandbox has Profiles.** After D35: the foes are written for the story: the Standard every enemy wears (WD49), eight private faction bibles, and look data for every ranked unit, shown on the Story Sandbox's new Foes page.** After D34: the story's five requests are answered ([life aboard §10](../design/life-aboard.md#10-world-v2-the-storys-requests-answered-tc75tc80), TC75–TC80: ship battles, boarding, maintenance, districts, the Track) and the design revised from world v2; Phase 5 is the Lanes and the first worlds, its packets next.** After D33: CY19 is done, and with it Phase 4's code (the life-aboard loop plays every system of ship life on the stand-in); Phase 4's exit is the owner's phone play below, and Phase 5's packets are written when the story session's base elements land.** After D32: the cabins draw uma-art 2.29.0's pixel furniture. After D31: CY18 is done (squads and cohesion, operations, faction standing, readiness and finale conditions; save v10); CY19 is next.** After D30: the story's casting and the Ring's and Tidewell's bibles are written, privately, with a Bibles page in the Story Sandbox; CY18 is next for the game, and the Ring's Chapter 1 for the story.** After D29: CY17 is done (rules version 3: bond perks, Orders, ship support, meals, partners; save v9). After D28: the story's world v2 is in for the owner's read ([world.md](../design/world.md), [page](../design/previews/world.html); WD25–WD48), with **five story requests** below from the owner's six notes; the game session answers them and revises life-aboard from the world (SB16). After D27: CY16 is done (duties, the ship log, jump events; save v8; the ship screen loads on demand). After D26: CY15 is done (the ship as a build: decks, modules, the wallet, power, the Lab; save v7). After D25: CY14 is done (cabins, decor, visits; save v6; the approved looks served to the game). After D24: sprites are for combat only, as chibis, and ChatGPT's image request is written ([the combat sprites request](../design/combat-sprites-request.md)), with the Story Sandbox's Sprites page for reviewing the sheets. After D22: CY13 is done. After D21: Phase 4's packets are written (CY13–CY19, below). After D20: [life aboard](../design/life-aboard.md) is designed (the captain, bonds, cabins, duties, the ship as a build, squads and factions; TC55–TC74, a new Phase 4), with [the story session's open brief](../design/story-brief-life-aboard.md). After D17: the [Cyberpunk Story Sandbox](../design/story-sandbox.md) is built (`pnpm stories`, :4322). 2026-11-12, after D16: CY1–CY12 are done: Phases 1–3's code is complete and every push to `main` deploys
 > to [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app). What's left of Phases 2 and 3 is the owner's: the steps
 > below (the sandbox play is Phase 2's exit, the Chapter 1 play-through Phase 3's). **Phase 4's packets are written when
@@ -20,7 +40,7 @@
 > - Workers decide what a packet leaves open, record it, and flag their own packets done: delete the packet and add a
 >   Done row below. Claude merges and deploys its own finished packets; ChatGPT merges its own.
 
-Packet ids run CY1–CY19; decision numbers continue from D39.
+The earlier campaign ran from CY1 through CY19.
 
 ## Phase 1: the foundation
 
