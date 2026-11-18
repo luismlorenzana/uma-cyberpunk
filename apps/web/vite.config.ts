@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react'
 import { loadEnv, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
+import { CAMPAIGN_ENTRY } from './src/app/campaign'
 
 const buildId = (process.env.VITE_APP_BUILD_ID ?? process.env.GITHUB_SHA ?? 'local').slice(0, 12)
 
@@ -57,7 +58,9 @@ export default defineConfig(({ mode }) => {
           display: 'standalone',
           // iOS can't lock a web app's orientation; the turned stage (CY7, TC1) draws landscape either way.
           orientation: 'any',
-          start_url: '/',
+          id: '/',
+          scope: '/',
+          start_url: CAMPAIGN_ENTRY,
           background_color: '#0b0d17',
           theme_color: '#0b0d17',
           icons: [

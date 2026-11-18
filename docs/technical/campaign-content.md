@@ -11,6 +11,8 @@ through its existing owner guard for either source.
 Production uses the private `gs://uma-platform-content/campaign/cyberpunk/` prefix. Its Cloud Run service account has
 an object read grant scoped to that prefix. The public app exposes the **Tier 1 campaign** entry in the ship menu.
 It uses a separate save from the **Original campaign** entry, with independent local recovery and cloud sync.
+The Home Screen app launches Tier 1. On a connection failure, a signed-in owner can reopen the last validated
+release using the story files already on that device. The next online check reads the current selection.
 
 ## Source
 

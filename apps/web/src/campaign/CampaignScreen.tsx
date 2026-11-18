@@ -48,6 +48,7 @@ export function CampaignAccount() {
 
 function Campaign({ layout }: { layout: StageLayout }) {
   const save = useGame((g) => g.save)
+  const owner = useGame((g) => g.uid)
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -60,12 +61,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
     let live = true
     setPending(true)
     setError(null)
-    loadCampaign().then((value) => { if (live) setLoaded(value) }, (err: unknown) => {
+    loadCampaign(undefined, owner ?? undefined).then((value) => { if (live) setLoaded(value) }, (err: unknown) => {
       if (live) setError(err instanceof ContentError && err.status === 404 ? 'Campaign release unavailable.'
         : err instanceof Error ? err.message : String(err))
     }).finally(() => { if (live) setPending(false) })
     return () => { live = false }
-  }, [check])
+  }, [check, owner])
   useEffect(() => {
     if (loaded && save) void updateSave((current) => creditCampaignDates(current, loaded.book))
   }, [loaded, save])
