@@ -19,9 +19,9 @@ const stationForOrder: Record<CommandAction['order'], CommandStation> = { evade:
 const orderLine = (encounter: CommandEncounter, last: NonNullable<CommandState['last']>) =>
   last.emitterHit && encounter.assault ? encounter.assault.call : encounter.calls[last.order]
 
-export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, ashore, homeDefense, finale, emitterRoute, qualifications, portraits }: {
+export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, objectiveLabel, ashore, homeDefense, finale, emitterRoute, qualifications, portraits }: {
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
-  objectiveArt?: CampaignReleaseFile
+  objectiveArt?: CampaignReleaseFile; objectiveLabel?: string
   ashore: ReadonlySet<number>; homeDefense?: { name: string; relay: number }
   finale?: { allies: number; preparation: { alloy: number; integrity: number }; contributions?: string[] }
   qualifications?: ReadonlyMap<number, CommandStation>
@@ -95,7 +95,8 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         </button>
       </>}
       {state.step === 'battle' && (run ? <CommandBoard encounter={encounter} relay={!!homeDefense} {...run}
-        actions={state.battle!.actions as CommandAction[]} officers={save.commandCrew} names={names} portraits={portraits} objectiveArt={objectiveArt} />
+        actions={state.battle!.actions as CommandAction[]} officers={save.commandCrew} names={names} portraits={portraits}
+        objectiveArt={objectiveArt} objectiveLabel={objectiveLabel} />
         : <p role="alert">The saved defense can’t resume.</p>)}
       {state.step === 'results' && <div className="flex flex-wrap gap-2">
         {run?.state.last && <p className="w-full text-sm">{orderLine(encounter, run.state.last)}</p>}
@@ -108,10 +109,10 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   </main>
 }
 
-function CommandBoard({ encounter, input, state, relay, actions, officers, names, portraits, objectiveArt }: {
+function CommandBoard({ encounter, input, state, relay, actions, officers, names, portraits, objectiveArt, objectiveLabel }: {
   encounter: CommandEncounter; input: CommandInput; state: CommandState; relay: boolean; actions: readonly CommandAction[];
   officers: Save['commandCrew']; names: ReadonlyMap<number, string>; portraits?: ReadonlyMap<number, CampaignReleaseFile>
-  objectiveArt?: CampaignReleaseFile
+  objectiveArt?: CampaignReleaseFile; objectiveLabel?: string
 }) {
   const [action, setAction] = useState<CommandAction>({ order: 'fire', shields: 1, guns: 1, fighters: 1 })
   const [fast, setFast] = useState(false)
@@ -120,7 +121,7 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
   const spent = action.shields + action.guns + action.fighters
   const problem = commandActionError(state, action, input)
   const officer = state.last ? officers[stationForOrder[state.last.order]] : undefined
-  const objective = input.version !== 1 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport'
+  const objective = objectiveLabel ?? (input.version !== 1 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport')
   let replay = commandStart(input)
   const log = actions.map((action) => {
     replay = commandTurn(input, replay, action)
