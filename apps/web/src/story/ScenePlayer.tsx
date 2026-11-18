@@ -107,6 +107,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
     : presentation && (prompt?.kind === 'choice' || prompt?.kind === 'captain') ? said?.actor ?? null : null
   const image = illustration && presentation?.illustrations?.[illustration]
   const portrait = speaker === null || !presentation ? null : selectScenePortrait(presentation.portraits, speaker, expressions[speaker])
+  const promptInsets = { marginBottom: 'var(--inset-bottom)', marginLeft: 'var(--inset-left)', marginRight: 'var(--inset-right)' }
   return (
     <div data-scene={scene.id} className="absolute inset-0 select-none bg-gradient-to-b from-[#141827] via-[#0e1222] to-[#05060c] text-[#e8ebf5]">
       {image ? <img alt="" src={image} className="absolute inset-0 size-full object-cover" data-scene-illustration />
@@ -123,13 +124,13 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       </div>}
       {prompt?.kind === 'line' && (
         <button type="button" data-line onClick={() => advance()} className="absolute inset-x-4 bottom-3 min-h-28 rounded-xl border border-white/15 bg-[#0b0d17]/90 p-3 text-left"
-          style={{ marginBottom: 'var(--inset-bottom)', marginLeft: 'var(--inset-left)', marginRight: 'var(--inset-right)' }}>
+          style={promptInsets}>
           {prompt.speaker !== null && <div className="mb-1 font-display text-[14px] font-bold" style={{ color: hueOf(prompt.speaker) }}>{nameOf(pack, prompt.speaker)}</div>}
           <div className={`text-[16px] leading-6 ${prompt.style === 'thought' ? 'italic text-white/80' : prompt.style === 'narrate' ? 'text-white/85' : ''}`}>{prompt.style === 'thought' ? `(${fill(prompt.text)})` : fill(prompt.text)}</div>
         </button>
       )}
       {prompt?.kind === 'choice' && (
-        <div data-choice className="absolute inset-x-0 bottom-6 flex flex-col items-center gap-2">
+        <div data-choice style={promptInsets} className="absolute inset-x-0 bottom-6 flex flex-col items-center gap-2">
           {prompt.options.map((o, i) => (
             <button key={i} type="button" onClick={() => advance(i)} className="min-h-12 min-w-64 rounded-lg border border-[#2ee6ff]/50 bg-[#0b0d17]/90 px-4 font-semibold">
               {fill(o.text)}{o.lead && <span className="ml-2 rounded bg-[#2ee6ff]/20 px-1.5 text-[11px] font-bold text-[#2ee6ff]">Lead</span>}
@@ -138,20 +139,20 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
         </div>
       )}
       {prompt?.kind === 'call' && (
-        <div data-call className="absolute inset-x-6 bottom-6 space-y-2 rounded-xl border border-white/15 bg-[#0b0d17]/95 p-3">
+        <div data-call style={promptInsets} className="absolute inset-x-6 bottom-6 space-y-2 rounded-xl border border-white/15 bg-[#0b0d17]/95 p-3">
           <div className="font-display text-[16px] font-bold">{prompt.call.question}</div>
           {prompt.call.voters.map((v) => <div key={v.outfit} className="text-[13px] text-white/80"><b>{nameOf(pack, v.outfit)}:</b> {v.argument}</div>)}
           <div className="flex gap-2 pt-1">{prompt.call.branches.map((b, i) => <button key={b.id} type="button" onClick={() => advance(i)} className="min-h-11 flex-1 rounded-md bg-[#2ee6ff] font-bold text-[#0b0d17]">{b.text}</button>)}</div>
         </div>
       )}
       {prompt?.kind === 'battle' && (
-        <div data-battle-step className="absolute inset-x-6 bottom-6 rounded-xl border border-[#ff3d6e]/50 bg-[#0b0d17]/95 p-3">
+        <div data-battle-step style={promptInsets} className="absolute inset-x-6 bottom-6 rounded-xl border border-[#ff3d6e]/50 bg-[#0b0d17]/95 p-3">
           <div className="font-display text-[16px] font-bold">Mission: {prompt.mission}</div>
           <button type="button" onClick={() => advance()} className="mt-2 min-h-11 w-full rounded-md bg-[#ff3d6e] font-bold text-white">Deploy</button>
         </div>
       )}
       {prompt?.kind === 'captain' && (
-        <div data-captain className="absolute inset-x-0 bottom-6 flex flex-col items-center gap-2">
+        <div data-captain style={promptInsets} className="absolute inset-x-0 bottom-6 flex flex-col items-center gap-2">
           {saidLine}
           <div className="text-[12px] uppercase tracking-widest text-white/50">{captain.name}</div>
           {prompt.options.map((o, i) => (
@@ -162,7 +163,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
         </div>
       )}
       {prompt?.kind === 'path' && (
-        <div data-path className="absolute inset-x-6 bottom-6 space-y-2 rounded-xl border border-white/15 bg-[#0b0d17]/95 p-3">
+        <div data-path style={promptInsets} className="absolute inset-x-6 bottom-6 space-y-2 rounded-xl border border-white/15 bg-[#0b0d17]/95 p-3">
           {saidLine}
           <div className="font-display text-[16px] font-bold">What do you answer?</div>
           <div className="grid grid-cols-2 gap-2">

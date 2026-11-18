@@ -51,3 +51,8 @@ export function recruitProgress(save: Save, book: CampaignBook, recruit: Campaig
   const started = !!first && save.story.seen.includes(first.scene)
   return { joined, next, started }
 }
+
+export function recruitOnBoard(save: Save, book: CampaignBook, recruit: CampaignRecruit): boolean {
+  const signOn = book.quests.find(({ id }) => id === recruit.signOn)
+  return !!signOn && (questComplete(save, signOn, book) || questAvailable(save, book, signOn, signOn.port))
+}
