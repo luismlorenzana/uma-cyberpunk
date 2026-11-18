@@ -11,15 +11,14 @@ The new campaign keeps this repo, the landscape app and the tactics engine. It s
 | [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
 | [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Playable through the ending. Approved content and iPhone review pending. |
 
-CY20, CY21, CY25–CY27 and CY29–CY30 are complete. The private `baseline-11-revised` draft plays Selden's Captain bond and Alloy-funded boarding gear alongside all five local arcs and the finale. The [finale art packet](../design/art-requests/campaign-finale.md) and [Selden crew and gear art packet](../design/art-requests/selden-crew-prep.md) cover the art review. CY22–CY24 and CY28 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
+CY20, CY21, CY25–CY27 and CY29–CY31 are complete. The private `baseline-12-revised` draft adds shared evenings and resettlement readiness to all five local arcs. The [shared evenings art packet](../design/art-requests/shared-evenings.md), [finale art packet](../design/art-requests/campaign-finale.md) and [Selden crew and gear art packet](../design/art-requests/selden-crew-prep.md) cover the art review. CY22–CY24 and CY28 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
 
 ## Four-pillar implementation queue
 
-CY31 extends the Captain's relationships. CY32 and CY35 build on the delivered Hangar. Each packet carries its code, draft story and placeholder art together through the [campaign release workflow](../design/campaign-rework.md#how-the-pillar-packets-ship). CY22–CY24 and CY28 retain their approved content and device review work.
+CY32 builds local projects on the [residence outcomes](../technical/campaign-content.md#homeworld-return-and-defense), and CY32 and CY35 build on the delivered Hangar. Each packet carries its code, draft story and placeholder art together through the [campaign release workflow](../design/campaign-rework.md#how-the-pillar-packets-ship). CY22–CY24 and CY28 retain their approved content and device review work.
 
 | Packet | Pillar | Playable checkpoint | Depends on |
 |---|---|---|---|
-| [CY31](tasks/CY31.md) | Relationships | Two concurrent romances, shared evenings and a relationship-earned home decision | CY29 |
 | [CY32](tasks/CY32.md) | Ship and planet management | Planet projects and ship refits change upkeep, exports and route access | CY30 |
 | [CY33](tasks/CY33.md) | Ship combat | Persistent officer specialties and fighter-led system targeting alter a campaign outcome | CY32 supply and kit interfaces |
 | [CY34](tasks/CY34.md) | Ship combat | An authored bridge sequence plays through defense, offense and boarding approaches | CY33 cue contract |
@@ -146,6 +145,7 @@ Packets finished go here, newest first.
 | Id | Task | Commit |
 |---|---|---|
 | CY30 | Planet-funded squad prep (D52). The Selden Hangar draws Alloy from a port shipment and fits a Guard arm and Missile pod into the saved crew rig. Chrome verified the purchase, reload, boarding Forecast, loss and free retry. The headless run won with both crafted parts fitted. | _this commit_ |
+| CY31 | [Shared evenings and home readiness](../technical/campaign-content.md#shared-evenings-and-home-readiness) (D53). The five local leads have Captain arcs and all five pairs can share evenings. Private replays verified concurrent Hearts, both routes to readiness, both residence outcomes and the case gates. Chrome verified deferral, resettlement and a pending visit across the draft release change. Approved art, dialogue and physical iPhone review carry into CY36–CY37. | _this commit_ |
 | CY29 | Captain relationships (D51). Five milestone evenings and the convoy debrief lead to an independent Captain friendship or romance. Chrome verified both outcomes, morning resume and a private release replacement. | _this commit_ |
 | CY27 | Return home and defend it (D48). After the first morning, the liberated base hosts the resettlement choice. Local assignments add nightly production and relay shielding. Staying aboard keeps stations and quarters. Chrome verified both routes through defense and the same signal evidence, with an unchanged launch cost on retry. The [home defense art packet](../design/art-requests/selden-home.md) records final assets. | _this commit_ |
 | CY26 | Recovery, release and quarters (D47). Two brig visits establish trust and save the testimony before release. The bond and quarters decisions are independent. Chrome verified both residence paths through morning and resumed a pending scene with a revised line and image. The [recovery art packet](../design/art-requests/selden-recovery.md) records the final assets. | _this commit_ |

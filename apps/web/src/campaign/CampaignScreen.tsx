@@ -14,7 +14,7 @@ import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf, type BondEffect } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
-import { closePairScene, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, recordPairScene } from './pair'
+import { availableSharedVisit, closePairScene, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, postponeLockedHomeScene, recordPairScene } from './pair'
 import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
 import { FinalePanel } from './FinalePanel'
@@ -147,6 +147,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
     return <CampaignScene key={pendingPair.scene} loaded={loaded} sceneId={pendingPair.scene} fail={setError}
       finish={(effects) => commitScene((s) => closePairScene(s, loaded.book, pairScene, pendingPair.scene, effects))} />
   }
+  if (loaded && save && pairScene && postponeLockedHomeScene(save, loaded.book, pairScene) !== save) {
+    return <main className={viewport} style={insets}>
+      <p className="mb-3 text-sm">Share two evenings before discussing a move ashore.</p>
+      <button type="button" className={button} onClick={() => commitScene((s) => postponeLockedHomeScene(s, loaded.book, pairScene))}>Return to campaign</button>
+    </main>
+  }
 
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
     return supply && loaded ? settleCampaignDay(s, campaignDay, loaded.book) : { ...s, campaignDay }
@@ -206,10 +212,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const pairVisits = loaded && save && canRest ? pairs.flatMap((pair) => {
     const visit = pairVisit(pair, save.story, save.crew.flatMap(({ outfit }) => support?.ashore.has(outfit) ? [] : [outfit]))
     if (!visit) return []
+    const shared = availableSharedVisit(save, pair)
     const progress = pairProgress(pair, save.story)
     const [first, second] = pair.members.map(({ outfit }) => nameOf(loaded.book.story, outfit))
     const label = !progress.released ? `Visit ${second} in the brig` : progress.residency === 'shared' ? `Visit ${first} and ${second}` : `Visit ${second}’s cabin`
-    return [{ visit, label }]
+    return shared ? [{ visit: shared, label: `Share an evening with ${first} and ${second}` }, { visit, label }] : [{ visit, label }]
   }) : []
   function chooseEvening(visit: CampaignVisit | null) {
     setEveningOpen(false)
@@ -227,9 +234,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
       }
       if (visit?.kind === 'pair-visit') {
         const pair = loaded?.book.pairs.find((pair) => pair.id === visit.pair)
-        const live = pair && loaded && pairAvailable(s, loaded.book, pair)
-          && pairVisit(pair, s.story, s.crew.flatMap(({ outfit }) => ashore.has(outfit) ? [] : [outfit]))
-        if (!live || live.scene !== visit.scene || live.morning !== visit.morning) return s
+        if (!pair || !loaded || !pairAvailable(s, loaded.book, pair)) return s
+        const cabin = pairVisit(pair, s.story, s.crew.flatMap(({ outfit }) => ashore.has(outfit) ? [] : [outfit]))
+        if (![cabin, availableSharedVisit(s, pair)].some((option) => option?.scene === visit.scene && option.morning === visit.morning)) return s
       }
       const campaignDay = startCampaignNight(s.campaignDay, visit)
       return campaignDay === s.campaignDay ? s : settleDay(s, campaignDay)
@@ -263,7 +270,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
               onClick={() => chooseEvening({ kind: 'visit', ...visit })}>Visit {nameOf(loaded.book.story, visit.companion)}</button>)}
             {dateOptions.map(({ visit, title }) => <button key={visit.companion} type="button" className={button}
               onClick={() => chooseEvening(visit)}>{nameOf(loaded.book.story, visit.companion)} · {title}</button>)}
-            {pairVisits.map(({ visit, label }) => <button key={visit.pair} type="button" className={button} onClick={() => chooseEvening(visit)}>{label}</button>)}
+            {pairVisits.map(({ visit, label }) => <button key={visit.scene} type="button" className={button} onClick={() => chooseEvening(visit)}>{label}</button>)}
             <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
             <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
           </section>}

@@ -4,7 +4,7 @@ import {
   type CampaignBook, type CampaignPair, type CommandEncounter, type EffectStep, type Save, type SupplyNetwork,
 } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
-import { closePairScene, homeQuestReady, nextHomeScene, openPairScene, pairAvailable, recordPairScene } from './pair'
+import { availableSharedVisit, closePairScene, homeQuestReady, nextHomeScene, openPairScene, pairAvailable, postponeLockedHomeScene, recordPairScene } from './pair'
 import { assignOfficer, issueCommand, launchCommand, settleCommand } from './command'
 import { settleCampaignDay } from './watch'
 import { retry } from '../mission/director'
@@ -118,6 +118,12 @@ describe('return to a liberated port', () => {
     ...book.quests, { id: home.base, title: 'Base', scene: 'base-tour', port: home.port, after: pair.after },
     { id: home.defense, title: 'Defense', scene: 'defense-call', port: home.port, after: home.base, encounter: encounter.id },
   ] }
+  const gatedHome = { ...home, stayScene: 'stay-discussion' }
+  const sharedPair: CampaignPair = { ...localPair, home: gatedHome, sharedEvenings: {
+    friendship: [{ visit: 'friendship-invite', morning: 'friendship-morning' }, { visit: 'friendship-follow', morning: 'friendship-second-morning' }],
+    romance: [{ visit: 'romance-invite', morning: 'romance-morning' }, { visit: 'romance-follow', morning: 'romance-second-morning' }],
+  } }
+  const sharedBook = { ...homeBook, pairs: [sharedPair] }
   const ready = (): Save => {
     const released = finishDayScene(recovered(), pair.release, [{ kind: 'join', outfit: second }])
     const withBond = finishDayScene(released, pair.bond.scene, [flag(pair.bond.friendship)])
@@ -140,6 +146,60 @@ describe('return to a liberated port', () => {
     }
     const away = { ...save, campaignSupply: { ...save.campaignSupply!, port: 'elsewhere' } }
     expect(openPairScene(away, homeBook, localPair, home.scene)).toBe(away)
+  })
+
+  it.each(['friendship', 'romance'] as const)('earns the home choice after two shared evenings on the %s route', (bond) => {
+    let save = ready()
+    if (bond === 'romance') save = { ...save, story: setFlag(setFlag(save.story, pair.bond.friendship, false), pair.bond.romance) }
+    expect(visitOf(save)?.scene).toBe(pair.rooms.separate.visit)
+    expect(availableSharedVisit({ ...save, crew: save.crew.slice(0, 1) }, sharedPair)).toBeNull()
+    expect(nextHomeScene(save, sharedBook, sharedPair)).toBe(gatedHome.stayScene)
+    expect(openPairScene(save, sharedBook, sharedPair, home.scene)).toBe(save)
+    const start = save.campaignDay.day
+    for (const [index, scene] of sharedPair.sharedEvenings![bond].entries()) {
+      const visit = availableSharedVisit(save, sharedPair)!
+      expect(visit.scene).toBe(scene.visit)
+      const opened = reload({ ...save, campaignDay: startCampaignNight(save.campaignDay, visit) })
+      expect(opened.campaignDay.pending).toEqual(visit)
+      const day = finishCampaignNightScene(opened.campaignDay, opened.campaignDay.day, visit)
+      const dawn = reload(settleCampaignDay(recordPairScene(opened, sharedBook, sharedPair, visit.scene, []), day, sharedBook))
+      expect(dawn.campaignDay.day).toBe(start + index + 1)
+      expect(finishCampaignNightScene(dawn.campaignDay, opened.campaignDay.day, visit)).toBe(dawn.campaignDay)
+      expect(pairProgress(sharedPair, dawn.story).shared?.complete).toBe(index)
+      const morning = dawn.campaignDay.pending!
+      expect(morning.scene).toBe(scene.morning)
+      save = reload(settleCampaignDay(recordPairScene(dawn, sharedBook, sharedPair, morning.scene, []),
+        finishCampaignNightScene(dawn.campaignDay, dawn.campaignDay.day, morning), sharedBook))
+      expect(save.campaignDay.day).toBe(dawn.campaignDay.day)
+      expect(pairProgress(sharedPair, save.story).shared?.complete).toBe(index + 1)
+    }
+    expect(availableSharedVisit(save, sharedPair)).toBeNull()
+    expect(nextHomeScene(save, sharedBook, sharedPair)).toBe(home.scene)
+    const opened = openPairScene(save, sharedBook, sharedPair, home.scene)
+    expect(closePairScene(opened, sharedBook, sharedPair, home.scene, [])).toEqual(save)
+    const settled = closePairScene(opened, sharedBook, sharedPair, home.scene, [flag(home.resettle.flag)])
+    expect(homeOutcome(gatedHome, settled.story)).toBe('resettle')
+    expect(homeQuestReady(settled, sharedBook, home.defense)).toBe(true)
+    expect([...campaignHomeSupport(sharedBook.pairs, settled.story).ashore]).toEqual([first, second])
+  })
+
+  it('defers safely, accepts a stay before readiness and preserves legacy residence and pending choices', () => {
+    const save = ready()
+    const pending = reload(openPairScene(save, homeBook, localPair, home.scene))
+    expect(postponeLockedHomeScene(pending, sharedBook, sharedPair)).toEqual(save)
+    const early = openPairScene(save, sharedBook, sharedPair, gatedHome.stayScene)
+    expect(closePairScene(early, sharedBook, sharedPair, gatedHome.stayScene, [flag(home.resettle.flag)])).toEqual(save)
+    expect(closePairScene(early, sharedBook, sharedPair, gatedHome.stayScene, [])).toEqual(save)
+    const stayed = closePairScene(early, sharedBook, sharedPair, gatedHome.stayScene, [flag(home.stay.flag)])
+    expect(nextHomeScene(stayed, sharedBook, sharedPair)).toBeNull()
+    expect(homeOutcome(gatedHome, stayed.story)).toBe('stay')
+    expect(homeQuestReady(stayed, sharedBook, home.defense)).toBe(true)
+    expect(stayed.commandCrew).toEqual(save.commandCrew)
+    expect(visitOf(stayed)?.scene).toBe(pair.rooms.separate.visit)
+    for (const outcome of ['resettle', 'stay'] as const) {
+      const finished = closePairScene(pending, homeBook, localPair, home.scene, [flag(home[outcome].flag)])
+      expect(homeOutcome(gatedHome, finished.story)).toBe(outcome)
+    }
   })
 
   it.each(['resettle', 'stay'] as const)('keeps a %s outcome across restore, upkeep and defense', (path) => {

@@ -1,12 +1,18 @@
-import { COMMAND_STATIONS, awayMembers, fillFile, homeOutcome, pairProgress, seeScene,
+import { COMMAND_STATIONS, awayMembers, fillFile, homeOutcome, pairProgress, seeScene, sharedPairVisit,
   type CampaignBook, type CampaignPair, type EffectStep, type Save } from '@cyber/domain'
 import { applyStep } from '../mission/director'
 
 export function readyForHome(save: Save, pair: CampaignPair): boolean {
   const progress = pairProgress(pair, save.story)
-  if (!progress.moved || !progress.residency || !save.story.seen.includes(pair.rooms[progress.residency].morning)) return false
+  if (!progress.moved || !progress.residency) return false
+  if (!progress.shared?.complete && !save.story.seen.includes(pair.rooms[progress.residency].morning)) return false
   const away = awayMembers(save.operations, save.squads)
   return pair.members.every(({ outfit }) => !away.includes(outfit) && save.crew.some((member) => member.outfit === outfit))
+}
+
+export function availableSharedVisit(save: Save, pair: CampaignPair) {
+  const away = awayMembers(save.operations, save.squads)
+  return sharedPairVisit(pair, save.story, save.crew.flatMap(({ outfit }) => away.includes(outfit) ? [] : [outfit]))
 }
 
 export function homeQuestReady(save: Save, book: CampaignBook, quest: string): boolean {
@@ -28,7 +34,9 @@ export function nextHomeScene(save: Save, book: CampaignBook, pair: CampaignPair
     return !save.story.seen.includes(debrief) ? debrief : outcome === 'resettle' ? home.visit : null
   }
   const base = book.quests.find(({ id }) => id === home.base)
-  return base && save.story.seen.includes(base.scene) && readyForHome(save, pair) ? home.scene : null
+  if (!base || !save.story.seen.includes(base.scene) || !readyForHome(save, pair)) return null
+  const shared = pairProgress(pair, save.story).shared
+  return home.stayScene && (!shared || shared.complete < shared.total) ? home.stayScene : home.scene
 }
 
 export function pairAvailable(save: Save, book: CampaignBook, pair: CampaignPair): boolean {
@@ -45,6 +53,12 @@ export function openPairScene(save: Save, book: CampaignBook, pair: CampaignPair
 
 export function pairSceneReady(save: Save, book: CampaignBook, pair: CampaignPair, scene: string): boolean {
   return pairProgress(pair, save.story).next === scene || nextHomeScene(save, book, pair) === scene
+}
+
+/** A release can add the readiness gate while an older home decision is pending. */
+export function postponeLockedHomeScene(save: Save, book: CampaignBook, pair: CampaignPair): Save {
+  return pair.home?.stayScene && save.pairScene?.pair === pair.id && save.pairScene.scene === pair.home.scene
+    && nextHomeScene(save, book, pair) === pair.home.stayScene ? { ...save, pairScene: null } : save
 }
 
 /** Finishing a pair scene commits any choices and its milestone together. Returning to a room still uses the night clock. */
@@ -65,8 +79,15 @@ export function recordPairScene(save: Save, book: CampaignBook, pair: CampaignPa
 
 export function closePairScene(save: Save, book: CampaignBook, pair: CampaignPair, scene: string, effects: readonly EffectStep[]): Save {
   if (save.pairScene?.pair !== pair.id || save.pairScene.scene !== scene || !pairAvailable(save, book, pair) || !pairSceneReady(save, book, pair, scene)) return save
-  const next = { ...recordPairScene(save, book, pair, scene, effects), pairScene: null }
   const home = pair.home
+  if (home?.stayScene && (scene === home.scene || scene === home.stayScene)) {
+    const outcomes = effects.filter((step) => step.kind === 'flag' && (step.flag === home.stay.flag || step.flag === home.resettle.flag))
+    const result = outcomes[0]
+    if (outcomes.length !== 1 || result?.kind !== 'flag' || !result.set || (scene === home.stayScene && result.flag !== home.stay.flag)) {
+      return { ...save, pairScene: null }
+    }
+  }
+  const next = { ...recordPairScene(save, book, pair, scene, effects), pairScene: null }
   if (!home || scene !== home.scene || homeOutcome(home, next.story) !== 'resettle') return next
   const residents = new Set(pair.members.map(({ outfit }) => outfit))
   const commandCrew = { ...next.commandCrew }

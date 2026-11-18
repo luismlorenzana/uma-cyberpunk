@@ -4,6 +4,7 @@ import { SHIP_PROVISIONS_PER_NIGHT } from './campaign-supply'
 
 export interface PairMember { outfit: number; trust: string }
 export interface PairRoom { move: string; visit: string; morning: string }
+export interface SharedEvening { visit: string; morning: string }
 export interface PendingPairScene { pair: string; scene: string }
 
 export interface CampaignHome {
@@ -11,6 +12,7 @@ export interface CampaignHome {
   base: string
   defense: string
   scene: string
+  stayScene?: string
   resettle: { flag: string; debrief: string }
   stay: { flag: string; debrief: string }
   visit: string
@@ -29,14 +31,16 @@ export interface CampaignPair {
   bond: { scene: string; romance: string; friendship: string }
   residency: { scene: string; shared: string; separate: string }
   rooms: { shared: PairRoom; separate: PairRoom }
+  sharedEvenings?: Record<'romance' | 'friendship', [SharedEvening, SharedEvening]>
   home?: CampaignHome
 }
 
 export function homeOutcome(home: CampaignHome, story: StoryState): 'resettle' | 'stay' | null {
-  if (!story.seen.includes(home.scene)) return null
   const resettled = story.flags.includes(home.resettle.flag)
   const aboard = story.flags.includes(home.stay.flag)
-  return resettled === aboard ? null : resettled ? 'resettle' : 'stay'
+  if (resettled === aboard) return null
+  if (resettled) return story.seen.includes(home.scene) ? 'resettle' : null
+  return story.seen.includes(home.scene) || (home.stayScene && story.seen.includes(home.stayScene)) ? 'stay' : null
 }
 
 export function campaignHomeSupport(pairs: readonly CampaignPair[], story: StoryState) {
@@ -65,10 +69,23 @@ export function pairProgress(pair: CampaignPair, story: StoryState) {
   const residency = bond ? outcome(story, pair.residency.scene, 'shared', 'separate', pair.residency) : null
   const room = residency ? pair.rooms[residency] : null
   const moved = !!room && story.seen.includes(room.move)
+  const evenings = moved && bond ? pair.sharedEvenings?.[bond] : undefined
+  const upcoming = evenings?.findIndex(({ visit, morning }) => !story.seen.includes(visit) || !story.seen.includes(morning)) ?? -1
+  const shared = evenings ? {
+    complete: upcoming === -1 ? evenings.length : upcoming,
+    total: evenings.length,
+    next: evenings[upcoming],
+  } : null
   const next = recovery < pair.recovery.length ? null : !released ? pair.release : !bond ? pair.bond.scene
     : !residency ? pair.residency.scene : !moved ? room!.move : null
-  return { recovery, released, bond, residency, moved, next,
+  return { recovery, released, bond, residency, moved, shared, next,
     trust: pair.members.map((person) => story.flags.includes(person.trust)) }
+}
+
+export function sharedPairVisit(pair: CampaignPair, story: StoryState, aboard: readonly number[]): Extract<CampaignVisit, { kind: 'pair-visit' }> | null {
+  if (!pair.members.every(({ outfit }) => aboard.includes(outfit)) || (pair.home && homeOutcome(pair.home, story) === 'resettle')) return null
+  const next = pairProgress(pair, story).shared?.next
+  return next ? { kind: 'pair-visit', pair: pair.id, scene: next.visit, morning: next.morning } : null
 }
 
 export function pairVisit(pair: CampaignPair, story: StoryState, aboard: readonly number[]): Extract<CampaignVisit, { kind: 'pair-visit' }> | null {
