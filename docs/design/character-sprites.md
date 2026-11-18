@@ -1,5 +1,12 @@
 # Character looks and sprites: the authoring spec
 
+> **Next delivery (D64, 2026-11-18):** [CY57–CY60](../handoff/README.md#four-pillar-art-and-story-queue)
+> add loadout-aware composition, equipment designs and armored crew/enemy figures in the real
+> campaign. Use the [shared delivery contract](campaign-art-delivery.md#pillar-4-contracts-and-decisions-to-resolve)
+> and CY57's executable attachment/pose fixture before new bulk exports. The format and frame counts
+> below describe the earlier proposal; reconcile required grips, actions and helmet policy with that
+> fixture. Composed equipment and signature attacks are planned work, not current renderer behavior.
+
 > **Status: 2026-11-13 (D23, narrowed by D24).** The owner asked for the character art in the Uma Platform app's
 > Character Art (the Cyberpunk universe's approved looks of the first two pilot Umas) to inform the game's looks, and for
 > a spec of how the character sprites are authored from that art and Triangle Strategy's camera. On reading it, the
