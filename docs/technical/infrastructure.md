@@ -40,7 +40,7 @@ Never run `gcloud config set …`, and never touch the other apps' pieces: `(def
 | Deploy sign-in | Provider `projects/727687479415/locations/global/workloadIdentityPools/github-actions/providers/uma-cyberpunk`: `main` of `luismlorenzana/uma-cyberpunk` only |
 | Label | `app=cyber` on the service and the images |
 | Local | API on 8121, web on 5214 (uma-rpg uses 8081 and 5174, uma-quest 8091 and 5184, uma-farm 8101 and 5194) |
-| No content bucket yet | The story's private `gs://uma-cyberpunk-content` comes in Phase 4 with its own cost line (BP7) |
+| Owner-only Tier 1 campaign | `gs://uma-platform-content/campaign/cyberpunk/` serves immutable release content. The conditional grant `cyber-campaign-only` gives `cyber-api-runtime` read access to that prefix. |
 
 **Repository variables (CY2):** `GCP_PROJECT_ID=uma-rpg`, `WIF_PROVIDER` (the provider above), `DEPLOY_SA`
 (`cyber-deploy@uma-rpg.iam.gserviceaccount.com`), `ALLOWED_EMAIL` (copied from uma-rpg's), `MASTER_BUCKET`

@@ -8,6 +8,10 @@ set `CAMPAIGN_PACK_PREFIX` to the dedicated Cyberpunk path. Upload the verified 
 preview pointer. Keep the old manifest and hash files for rollback. The API serves the same campaign allowlist
 through its existing owner guard for either source.
 
+Production uses the private `gs://uma-platform-content/campaign/cyberpunk/` prefix. Its Cloud Run service account has
+an object read grant scoped to that prefix. The public app exposes the **Tier 1 campaign** entry in the ship menu.
+It uses a separate save from the **Original campaign** entry, with independent local recovery and cloud sync.
+
 ## Source
 
 Put `campaign.json`, `casting.json`, the story directories and `art/` in the same source directory. The default is
@@ -310,6 +314,12 @@ Use a new release slug for new content. Packing validates the source and images,
 art plus an immutable release manifest. Selecting verifies every referenced file and atomically replaces the preview
 index. Open the app or tap **Check release** to load it. The app verifies downloaded content against the manifest.
 Run `pnpm campaign select baseline-1` again to return to the first release.
+
+For the owner-only hosted build, upload the pack's `campaign/files/` and `campaign/releases/` objects to the
+production prefix. Check that the selected pack and rollback manifests both have their referenced objects. Copy the
+chosen immutable release manifest to `campaign/preview.json` with `Cache-Control: private, no-store`. Use the
+current pointer's object generation as the write precondition when replacing it. Roll back by copying the prior
+manifest to the same pointer. The original game and campaign save data have no role in selecting a release.
 
 Start `pnpm api` and `pnpm web`, then open `http://127.0.0.1:5214/campaign`. For the baseline rehearsal, play
 **A place aboard** in the first release, make a choice, and finish the scene. Select the second release, check for the
