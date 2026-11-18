@@ -57,6 +57,7 @@ export interface CampaignBook {
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
   supply?: SupplyNetwork
   commands: ReadonlyMap<string, CommandEncounter>
+  commandArt?: ReadonlyMap<string, { backdrop?: string; objective?: string }>
   ground: ReadonlyMap<string, GroundEncounter>
   pairs: CampaignPair[]
   dates?: CampaignDate[]
@@ -186,7 +187,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -299,7 +300,14 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     if (quest.port && !supply?.ports.some((port) => port.id === quest.port)) p.fail('quests', `${quest.id} uses unknown port ${quest.port}`)
   }
   const recruits = o.recruits === undefined ? undefined : parseCampaignRecruits(p, o.recruits, { opening, byQuest, scenes, story, supply })
-  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 24), (c) => c.id)
+  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 48), (c) => c.id)
+  const commandArt = o.commandArt === undefined ? undefined : unique(p, 'commandArt', p.list(o.commandArt, 'commandArt', (v, path) => {
+    const row = p.object(v, path, ['encounter', 'backdrop', 'objective'], ['encounter'])
+    const encounter = p.slug(row.encounter, `${path}.encounter`)
+    if (!commands.has(encounter)) p.fail(`${path}.encounter`, 'expected a ship command encounter')
+    return { encounter, backdrop: row.backdrop === undefined ? undefined : asset(row.backdrop, `${path}.backdrop`),
+      objective: row.objective === undefined ? undefined : asset(row.objective, `${path}.objective`) }
+  }), (row) => row.encounter)
   for (const command of commands.values()) {
     const mission = encounters.get(command.id)
     if (!supply || !mission || mission.scenario === 'training' || !quests.some((quest) => quest.encounter === command.id && quest.port)) {
@@ -354,7 +362,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })()
     return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
       ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), win: { flag, file, reward } }
-  }, 24), (g) => g.id)
+  }, 48), (g) => g.id)
   for (const port of supply?.ports ?? []) {
     if (port.liberation && ![...ground.values()].some((g) => g.win.flag === port.liberation?.flag)) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
   }
@@ -414,6 +422,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   if (projects) unique(p, 'projects', projects, ({ id }) => id)
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
+    ...(commandArt ? { commandArt } : {}),
     ...(portraitFaces ? { portraitFaces } : {}),
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
     ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }

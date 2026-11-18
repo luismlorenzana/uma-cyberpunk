@@ -9,7 +9,7 @@ preview pointer. Keep the old manifest and hash files for rollback. The API serv
 through its existing owner guard for either source.
 
 Production uses the private `gs://uma-platform-content/campaign/cyberpunk/` prefix. Its Cloud Run service account has
-an object read grant scoped to that prefix. The public app exposes the **Tier 1 campaign** entry in the ship menu.
+an object read grant scoped to that prefix. The public app exposes the **Campaign** entry in the ship menu.
 It uses a separate save from the **Original campaign** entry, with independent local recovery and cloud sync.
 The Home Screen app launches Tier 1. On a connection failure, a signed-in owner can reopen the last validated
 release using the story files already on that device. The next online check reads the current selection.
@@ -110,16 +110,41 @@ dialogue portrait and the matching profile. For each face expression, keep its p
 coordinates. The packer subtracts the dialogue crop's origin and rejects any expression that would be clipped.
 The crop plan is optional so each master can be framed and reviewed as it becomes ready.
 
+## Ship command presentation
+
+Register the command backdrop and the transparent artwork for the protected objective under `assets`.
+Bind them by encounter ID in the optional top-level `commandArt` list.
+
+```json
+{
+  "commandArt": [
+    { "encounter": "example-escort", "backdrop": "command-bridge", "objective": "relief-transport" }
+  ]
+}
+```
+
+Keep the dialogue art under the relevant `art[].scene` entry. Command uses the scene backdrop when its own
+is absent. The objective cutout sits beside the live integrity meter, outside the darkened bridge backdrop.
+Review the first wave, a damaged state, and a resumed battle at landscape phone size. The same mission ID,
+launch costs and saved orders apply when the presentation changes.
+
 ## Recruitment and personal stories
 
 Add a `recruits` list to show a recruitment board after the shared opening. Set `supply.after` to `opening` so the
 civilian routes open at the same time. A recruit has her casting `outfit`, a short `request`, a `signOn` quest ID,
 and a `story` list of personal quest IDs in play order.
 
-Each sign-on is a dialogue quest that depends directly on the opening. Its port must be reachable on the starting
-drive and fuel. Give its scene a direct `join` step for that recruit. The first personal quest depends on her sign-on.
+Each sign-on is a dialogue quest at a civilian port with an `after` prerequisite. Opening recruits are available
+after the shared opening at ports reachable with the starting drive and fuel. Later recruits appear on the board
+when their own quest prerequisites are met. For Tier 2, use Tier 1's existing Last Watch quest as the direct
+prerequisite for all ten sign-ons. Keep the Last Watch quest and scene IDs stable so existing saves unlock the same
+cards. Give each sign-on scene a direct `join` step for its recruit. The first personal quest depends on her sign-on.
 Each later quest depends on the previous quest in her story. The board uses crew membership to recognize sign-ons
 already completed in an existing save. Preserve outfit, quest and scene IDs when revising a release.
+
+Tier 2's Tarsa crossing uses `after` and `requires` together to check all three public service handovers.
+Other recruits, off-watch scenes and joint reports stay available through the crossing and supper.
+Keep Tier 1's quest, scene, encounter and asset IDs in the combined release.
 
 ## Training
 

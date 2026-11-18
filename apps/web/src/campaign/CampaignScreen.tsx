@@ -109,6 +109,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
   if (loaded && save && mission && command && supply && support) {
     const quest = loaded.book.quests.find((quest) => quest.encounter === mission.id)
     const art = loaded.book.art.find((entry) => entry.scene === quest?.scene)
+    const commandArt = loaded.book.commandArt?.get(command.id)
+    const backdrop = commandArt?.backdrop ?? art?.backdrop
     const home = pairs.find(({ home }) => home?.defense === quest?.id)?.home
     const homeDefense = home && port ? { name: port.name, relay: homeOutcome(home, save.story) === 'resettle' ? home.support.relay : 0 } : undefined
     const operation = loaded.book.finale
@@ -125,7 +127,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
       if (image) (profile ? profiles : portraits).set(speaker, image)
     }
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
-      <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply} backdrop={art?.backdrop ? loaded.assets.get(art.backdrop) : undefined}
+      <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply}
+        backdrop={backdrop ? loaded.assets.get(backdrop) : undefined}
+        objectiveArt={commandArt?.objective ? loaded.assets.get(commandArt.objective) : undefined}
         ashore={support.ashore} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
         portraits={new Map([...portraits, ...profiles])}

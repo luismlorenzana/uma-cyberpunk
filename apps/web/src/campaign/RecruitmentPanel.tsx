@@ -1,6 +1,6 @@
 import { nextCampaignStop, sectorAssignment, shipCapabilities, type CampaignBook, type CampaignQuest, type CampaignRecruit, type CampaignReleaseFile, type Save } from '@cyber/domain'
 import { nameOf } from '../story/runner'
-import { questAvailable, recruitProgress } from './quests'
+import { questAvailable, recruitOnBoard, recruitProgress } from './quests'
 import { sectorStatus } from './SectorPanel'
 import { CampaignThumbnail } from './CampaignThumbnail'
 
@@ -11,7 +11,8 @@ export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
   assets: ReadonlyMap<string, CampaignReleaseFile>
   open: (quest: CampaignQuest) => void
 }) {
-  const progress = recruits.map((recruit) => ({ recruit, ...recruitProgress(save, book, recruit) }))
+  const progress = recruits.filter((recruit) => recruitOnBoard(save, book, recruit))
+    .map((recruit) => ({ recruit, ...recruitProgress(save, book, recruit) }))
   const boards = [
     { title: 'Recruitment', entries: progress.filter(({ joined }) => !joined) },
     { title: 'Crew stories', entries: progress.filter(({ joined }) => joined) },

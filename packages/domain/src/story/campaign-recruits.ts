@@ -36,6 +36,7 @@ export function parseCampaignRecruits(p: P, value: unknown, context: {
   if (byQuest.get(opening)?.encounter) p.fail('opening', 'open recruitment needs a dialogue opening')
   if (!supply || supply.after !== opening) return p.fail('supply.after', 'open civilian travel after the shared opening')
   const reachable = withinStartingFuel(supply)
+  const ports = new Set(supply.ports.map(({ id }) => id))
   const cast = new Set([...story.casting.leads.map(({ outfit }) => outfit), ...story.casting.crewOrder])
   const outfits = new Set<number>()
   const usedQuests = new Set<string>()
@@ -46,8 +47,11 @@ export function parseCampaignRecruits(p: P, value: unknown, context: {
     outfits.add(outfit)
     const signOn = p.slug(row.signOn, `${path}.signOn`)
     const quest = byQuest.get(signOn)
-    if (!quest?.port || !reachable.has(quest.port) || quest.after !== opening || quest.encounter || quest.requires?.length || quest.flags?.length || usedQuests.has(signOn)) {
-      return p.fail(`${path}.signOn`, 'expected a unique dialogue quest after the opening at a port reachable on starting fuel')
+    if (!quest?.port || !ports.has(quest.port) || !quest.after || quest.encounter || usedQuests.has(signOn)) {
+      return p.fail(`${path}.signOn`, 'expected a unique dialogue quest at a civilian port with a campaign prerequisite')
+    }
+    if (quest.after === opening && (!reachable.has(quest.port) || quest.requires?.length || quest.flags?.length)) {
+      return p.fail(`${path}.signOn`, 'opening sign-ons must be available on starting fuel after the shared opening')
     }
     usedQuests.add(signOn)
     const scene = scenes.get(quest.scene)!

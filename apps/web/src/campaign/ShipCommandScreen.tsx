@@ -19,8 +19,9 @@ const stationForOrder: Record<CommandAction['order'], CommandStation> = { evade:
 const orderLine = (encounter: CommandEncounter, last: NonNullable<CommandState['last']>) =>
   last.emitterHit && encounter.assault ? encounter.assault.call : encounter.calls[last.order]
 
-export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, ashore, homeDefense, finale, emitterRoute, qualifications, portraits }: {
+export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, ashore, homeDefense, finale, emitterRoute, qualifications, portraits }: {
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
+  objectiveArt?: CampaignReleaseFile
   ashore: ReadonlySet<number>; homeDefense?: { name: string; relay: number }
   finale?: { allies: number; preparation: { alloy: number; integrity: number }; contributions?: string[] }
   qualifications?: ReadonlyMap<number, CommandStation>
@@ -30,6 +31,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const [background, setBackground] = useState<string | null>(null)
   const [reinforce, setReinforce] = useState(false)
   useEffect(() => {
+    setBackground(null)
     if (!backdrop) return
     let live = true
     let image: string | undefined
@@ -93,7 +95,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         </button>
       </>}
       {state.step === 'battle' && (run ? <CommandBoard encounter={encounter} relay={!!homeDefense} {...run}
-        actions={state.battle!.actions as CommandAction[]} officers={save.commandCrew} names={names} portraits={portraits} />
+        actions={state.battle!.actions as CommandAction[]} officers={save.commandCrew} names={names} portraits={portraits} objectiveArt={objectiveArt} />
         : <p role="alert">The saved defense can’t resume.</p>)}
       {state.step === 'results' && <div className="flex flex-wrap gap-2">
         {run?.state.last && <p className="w-full text-sm">{orderLine(encounter, run.state.last)}</p>}
@@ -106,9 +108,10 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   </main>
 }
 
-function CommandBoard({ encounter, input, state, relay, actions, officers, names, portraits }: {
+function CommandBoard({ encounter, input, state, relay, actions, officers, names, portraits, objectiveArt }: {
   encounter: CommandEncounter; input: CommandInput; state: CommandState; relay: boolean; actions: readonly CommandAction[];
   officers: Save['commandCrew']; names: ReadonlyMap<number, string>; portraits?: ReadonlyMap<number, CampaignReleaseFile>
+  objectiveArt?: CampaignReleaseFile
 }) {
   const [action, setAction] = useState<CommandAction>({ order: 'fire', shields: 1, guns: 1, fighters: 1 })
   const [fast, setFast] = useState(false)
@@ -117,6 +120,7 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
   const spent = action.shields + action.guns + action.fighters
   const problem = commandActionError(state, action, input)
   const officer = state.last ? officers[stationForOrder[state.last.order]] : undefined
+  const objective = input.version !== 1 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport'
   let replay = commandStart(input)
   const log = actions.map((action) => {
     replay = commandTurn(input, replay, action)
@@ -128,10 +132,18 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
         <span>Wave {state.turn + 1}/{input.threats.length}</span><span>Reactor {spent}/{state.power}</span>
       </div>
       <p className="rounded-lg bg-[#58263d] px-2 py-1 text-sm font-semibold">Incoming {threat.section} · {threat.power} fire · {threat.fighters} fighters</p>
+      {objectiveArt && <div className="flex min-h-14 items-center gap-3 rounded-lg bg-[#24314a] px-2" data-command-objective>
+        <CampaignThumbnail asset={objectiveArt} className="h-14 w-24 shrink-0 object-contain" />
+        <div className="min-w-0 flex-1 text-sm">
+          <div className="flex flex-wrap justify-between gap-x-2 font-semibold"><span>{objective}</span><span>{state.transport}/{input.transport}</span></div>
+          <progress className="block h-1.5 w-full accent-cyan-300" aria-label={objective} value={state.transport} max={input.transport} />
+        </div>
+      </div>}
       <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-sm">
         {([
           ['Fore shield', state.shields.fore, COMMAND_SHIELD], ['Aft shield', state.shields.aft, COMMAND_SHIELD],
-          ['Hull', state.hull, COMMAND_HULL], [input.version !== 1 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport', state.transport, input.transport],
+          ['Hull', state.hull, COMMAND_HULL],
+          ...(objectiveArt ? [] : [[objective, state.transport, input.transport] as const]),
           [input.version !== 1 ? 'Patrol ship' : 'Raider', state.enemy, input.enemy],
           ...(input.version !== 1 ? [['Shield emitter', state.emitter ?? 0, input.assault.emitter] as const] : []),
         ] as const).map(([label, value, max]) => <div key={label}><span>{label} {value}/{max}</span>
