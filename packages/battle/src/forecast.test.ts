@@ -21,6 +21,21 @@ function trial(seed: string, attacker: Partial<UnitInput>, mount: Mount, at: [nu
 const mainRolls = (cues: Cue[]) => cues.filter((c) => (c.kind === 'hit' || c.kind === 'miss') && c.unit === 'a')
 
 describe('the forecast', () => {
+  it('shows the extra target of a version 4 mortar and spends one shell', () => {
+    const rig = RIG.gunner()
+    const state = setup([{ id: 'a', at: [3, 6], opts: { bands: fast, loadout: { ...rig,
+      back: { ...rig.back, weapon: { ...rig.back.weapon!, blast: 1, accuracy: 150 } } } } }], [
+      { id: 'target', at: [3, 2], opts: { bands: sturdy } },
+      { id: 'adjacent', at: [4, 2], opts: { bands: sturdy } },
+    ], { version: 4, seed: 'splash' })
+    const turn = { kind: 'turn', unit: 'a', act: { kind: 'attack', with: 'back', target: 'target' }, face: 'N' } as const
+    const f = forecast(state, turn) as Forecast
+    expect(f.splash?.targets).toEqual(['adjacent'])
+    const after = applyBattleAction(state, turn)
+    expect(after.cues).toContainEqual(expect.objectContaining({ kind: 'hit', target: 'adjacent', amount: f.splash?.damage }))
+    expect(after.state.units.find(({ id }) => id === 'a')?.ammo).toBe(rig.back.ammo! - 1)
+  })
+
   const bands: [string, Partial<UnitInput>, Mount, [number, number]][] = [
     ['Melee', {}, 'right', [3, 3]],
     ['Short', { loadout: RIG.gunner() }, 'right', [3, 4]],

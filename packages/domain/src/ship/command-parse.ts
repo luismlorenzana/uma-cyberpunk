@@ -15,9 +15,10 @@ const durability = (p: P, value: unknown, field: string) => p.int(value, field, 
 
 function parseAssault(p: P, value: unknown, path: string, authored: boolean) {
   const fields = ['emitter', 'disabledFlag']
-  const a = p.object(value, path, authored ? [...fields, 'call'] : fields)
+  const a = p.object(value, path, authored ? [...fields, 'call', 'fighterTarget'] : fields, authored ? [...fields, 'call'] : fields)
+  if (a.fighterTarget !== undefined && a.fighterTarget !== true) p.fail(`${path}.fighterTarget`, 'expected true')
   return { emitter: durability(p, a.emitter, `${path}.emitter`), disabledFlag: p.slug(a.disabledFlag, `${path}.disabledFlag`),
-    ...(authored ? { call: p.text(a.call, `${path}.call`) } : {}) }
+    ...(authored ? { call: p.text(a.call, `${path}.call`), ...(a.fighterTarget ? { fighterTarget: true } : {}) } : {}) }
 }
 
 export function parseCommandEncounter(p: P, value: unknown, path: string): CommandEncounter {
@@ -40,19 +41,22 @@ export function resumeCommand(value: unknown, actions: readonly unknown[]) {
   const p = new P('ship encounter')
   try {
     const fields = ['version', 'transport', 'enemy', 'reactor', 'threats', 'officers']
-    const o = p.object(value, 'input', [...fields, 'assault'], fields)
-    if ((o.version !== 1 && o.version !== 2) || (o.version === 1 && o.assault !== undefined)) return null
+    const o = p.object(value, 'input', [...fields, 'assault', 'contributions'], fields)
+    if ((o.version !== 1 && o.version !== 2 && o.version !== 3) || (o.version === 1 && o.assault !== undefined) || (o.version !== 3 && o.contributions !== undefined)) return null
     const officers = p.object(o.officers, 'officers', COMMAND_STATIONS)
     const setup = { transport: durability(p, o.transport, 'transport'), enemy: durability(p, o.enemy, 'enemy'),
       reactor: p.int(o.reactor, 'reactor', 1, 12), threats: threats(p, o.threats, 'threats'),
       officers: Object.fromEntries(COMMAND_STATIONS.map((station) => [station, p.int(officers[station], `officers.${station}`, 0, MAX_DRILLS)])) as Record<CommandStation, number> }
-    const input: CommandInput = o.version === 2 ? { ...setup, version: 2, assault: parseAssault(p, o.assault, 'assault', false) } : { ...setup, version: 1 }
+    const input: CommandInput = o.version === 1 ? { ...setup, version: 1 } : o.version === 2
+      ? { ...setup, version: 2, assault: parseAssault(p, o.assault, 'assault', false) }
+      : { ...setup, version: 3, assault: parseAssault(p, o.assault, 'assault', false),
+        contributions: p.list(o.contributions, 'contributions', (value, path) => p.text(value, path, 160), 24) }
     const parsed = p.list(actions, 'actions', (value, field): CommandAction => {
       const fields = ['order', 'shields', 'guns', 'fighters']
       const a = p.object(value, field, [...fields, 'target'], fields)
       const order = a.order as CommandOrder
       if (!COMMAND_ORDERS.includes(order)) p.fail(`${field}.order`, 'unknown order')
-      if (a.target !== undefined && (input.version !== 2 || a.target !== 'emitter')) p.fail(`${field}.target`, 'invalid emitter target')
+      if (a.target !== undefined && (input.version === 1 || a.target !== 'emitter')) p.fail(`${field}.target`, 'invalid emitter target')
       return { order, shields: p.int(a.shields, `${field}.shields`, 0, 15), guns: p.int(a.guns, `${field}.guns`, 0, 15), fighters: p.int(a.fighters, `${field}.fighters`, 0, 15),
         ...(a.target === 'emitter' ? { target: 'emitter' } : {}) }
     }, 12)

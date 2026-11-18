@@ -1,6 +1,6 @@
 import { capacityOf, loadOf, type Bands } from '@cyber/battle'
 import {
-  CAMPAIGN_WORKSHOP_ALLOY_MAX, campaignHomeSupport, issuedCampaignRig, loadoutOf, loadShipment, PARTS_BY_ID, rigProblem, startSupply,
+  CAMPAIGN_WORKSHOP_ALLOY_MAX, campaignSupport, developedPort, issuedCampaignRig, loadoutOf, loadShipment, PARTS_BY_ID, rigProblem, startSupply,
   type CampaignBook, type Rig, type Save,
 } from '@cyber/domain'
 import { SCENARIOS } from '../mission/battleInput'
@@ -12,7 +12,7 @@ export function workshopAt(save: Save, book: CampaignBook) {
   const invitation = book.quests.find(({ id }) => id === workshop.after)
   const cargo = save.campaignSupply ?? startSupply(supply)
   const port = supply.ports.find(({ id }) => id === workshop.port)
-  return invitation && questComplete(save, invitation, book) && cargo.port === workshop.port && port ? { workshop, cargo, port } : null
+  return invitation && questComplete(save, invitation, book) && cargo.port === workshop.port && port ? { workshop, cargo, port: developedPort(book, save, port) } : null
 }
 
 export function sendWorkshopAlloy(save: Save, book: CampaignBook): Save {
@@ -59,7 +59,7 @@ function supportsWorkshopMissions(book: CampaignBook, rig: Rig): boolean {
 export function fitCampaignPart(save: Save, book: CampaignBook, outfit: number, part: string, equip: boolean): Save {
   const recipe = workshopAt(save, book)?.workshop.recipes.find((entry) => entry.part === part)
   const member = save.crew.find((entry) => entry.outfit === outfit)
-  if (!recipe || !member || !save.campaignGear.parts.includes(part) || campaignHomeSupport(book.pairs, save.story).ashore.has(outfit)) return save
+  if (!recipe || !member || !save.campaignGear.parts.includes(part) || campaignSupport(book, save).ashore.has(outfit)) return save
   const issued = issuedCampaignRig()
   const rig = member.rig ?? issued
   if ((rig[recipe.slot] === part) === equip) return save

@@ -33,10 +33,13 @@ export function storyPackModule(env: Record<string, string | undefined> = proces
   const story = fileSource({ bucket: env.STORY_BUCKET || undefined, dir: resolve(cwd, env.STORY_DIR || '../../content/story-release') }, (dir) => new DirectoryFileSource(dir))
   // The local mirror keeps the bucket's layout under the prefix, so both read the same relative paths.
   const looks = env.LOOKS_BUCKET ? new BucketFileSource(env.LOOKS_BUCKET) : new DirectoryFileSource(resolve(cwd, env.LOOKS_DIR || '../../content/looks'))
-  const campaign = new DirectoryFileSource(resolve(cwd, env.CAMPAIGN_PACK_DIR || '../../content/campaign-release'))
+  const campaignBucket = env.CAMPAIGN_PACK_BUCKET
+  const campaignPrefix = env.CAMPAIGN_PACK_PREFIX?.replace(/^\/+|\/+$/g, '')
+  const campaign = campaignBucket ? new BucketFileSource(campaignBucket) : new DirectoryFileSource(resolve(cwd, env.CAMPAIGN_PACK_DIR || '../../content/campaign-release'))
+  const campaignSource: FileSource = campaignBucket && campaignPrefix ? { read: (path) => campaign.read(`${campaignPrefix}/${path}`) } : campaign
   return PrivatePackModule.forRoot({
     route: 'content',
     allow: [...STORY_ALLOW, ...LOOKS_ALLOW, CAMPAIGN_PREVIEW_INDEX, CAMPAIGN_FILE_PATH],
-    source: contentSource(story, looks, env.LOOKS_PREFIX || LOOKS_PREFIX, campaign),
+    source: contentSource(story, looks, env.LOOKS_PREFIX || LOOKS_PREFIX, campaignSource),
   })
 }

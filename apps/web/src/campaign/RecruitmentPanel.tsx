@@ -1,6 +1,7 @@
-import type { CampaignBook, CampaignQuest, CampaignRecruit, Save } from '@cyber/domain'
+import { nextCampaignStop, sectorAssignment, shipCapabilities, type CampaignBook, type CampaignQuest, type CampaignRecruit, type Save } from '@cyber/domain'
 import { nameOf } from '../story/runner'
 import { questAvailable, recruitProgress } from './quests'
+import { sectorStatus } from './SectorPanel'
 
 const action = 'min-h-11 rounded-lg bg-cyan-200 px-3 text-sm font-semibold text-slate-950 disabled:bg-white/10 disabled:text-white/60'
 
@@ -19,12 +20,18 @@ export function RecruitmentPanel({ save, book, recruits, port, open }: {
       <ul className="space-y-2">
         {entries.map(({ recruit, joined, next, started }) => {
           const destination = book.supply?.ports.find((entry) => entry.id === next?.port)
+          const hop = destination && port && port !== destination.id && book.supply
+            ? nextCampaignStop(book.supply, port, destination.id, shipCapabilities(save.ship)) : null
+          const stop = hop && hop !== destination?.id ? book.supply?.ports.find(({ id }) => id === hop) : undefined
           const ready = !!next && questAvailable(save, book, next, port)
+          const sector = book.sectors?.find(({ officer }) => officer === recruit.outfit)
           return <li key={recruit.outfit} className="space-y-1 rounded-lg border border-white/15 bg-white/5 p-2">
             <h3 className="break-words font-semibold">{nameOf(book.story, recruit.outfit)}</h3>
             {!joined && <p className="text-sm">{recruit.request}</p>}
             {joined && <p className="text-sm">{next?.title ?? 'Objectives complete'}</p>}
+            {joined && sector && <p className="text-sm text-white/75">{sectorStatus[sectorAssignment(book, save.story, sector)]}</p>}
             {destination && <p className="text-sm text-white/75">{destination.name}{destination.id === port ? ' · Docked' : ''}</p>}
+            {stop && <p className="text-sm text-white/75">Via {stop.name}</p>}
             {next && <button type="button" className={action} disabled={!ready} onClick={() => open(next)}>
               {joined ? started ? 'Continue story' : 'Start story' : 'Sign on'}
             </button>}

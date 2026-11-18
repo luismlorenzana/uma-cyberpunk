@@ -11,7 +11,7 @@ The campaign keeps its own save, the landscape app and the tactics engine. Open 
 | [CY24](tasks/CY24.md) | Ship command and defense review | Paid Arclight escort in CY40 and CY34, device check in CY37 |
 | [CY28](tasks/CY28.md) | Campaign finale review | Authored investigation, fleet operation and handovers in CY45–CY47, device check in CY37 |
 
-CY20, CY21, CY25–CY27 and CY29–CY31 are complete. The private `baseline-12-revised` draft remains a reference and rollback pack. The private `tier-one-paired-review` draft stages the ten authored local journeys. Story Authoring also has scripts for the reveal, fleet operation and handovers. The Done table and earlier phases record the prototype deliveries.
+CY20, CY21, CY25–CY27 and CY29–CY31 are complete. The private `baseline-12-revised` draft remains a reference and rollback pack. The private `tier-one-integrated-revised` release plays First Watch through all ten local operations, both fleet entries and Last Watch. Approved content, hosted private selection and physical iPhone review are in CY36–CY37. The Done table and earlier phases record the prototype deliveries.
 
 ## Four-pillar implementation queue
 
@@ -19,21 +19,7 @@ Read this table from top to bottom. The order follows the contracts each playabl
 
 | Packet | Pillar | Playable checkpoint | Depends on |
 |---|---|---|---|
-| [CY38](tasks/CY38.md) | Opening and crew | First Watch, any-order recruitment at five berths and independent roster-launched stories | PR #17 |
-| [CY39](tasks/CY39.md) | Crew and relationships | A liberation appointment moves an officer to her sector while custody, cabins and bonds resolve on their own | CY38 and CY31 |
-| [CY40](tasks/CY40.md) | Arclight | Both operations, appointments, one required case, separate testimony and a joint watch in either order | CY39 |
-| [CY32](tasks/CY32.md) | Ship and planet management | Sector staffing and port projects change upkeep, exports, outfitting and refit routes | CY30 and CY40 |
-| [CY33](tasks/CY33.md) | Ship combat | Persistent qualifications and fighter-led targeting change real approaches | CY32 and CY40 |
-| [CY34](tasks/CY34.md) | Ship combat | Readable bridge presentation of the escort, approaches and boarding consequences | CY33 |
-| [CY35](tasks/CY35.md) | HD-2D tactics | Persistent squads and loadouts on the station and rescue objectives | CY34, CY40 and CY30 |
-| [CY41](tasks/CY41.md) | Nacre | Ration tender and reserve rescue, separate sector outcomes and one required case | CY32–CY35 and CY40 |
-| [CY42](tasks/CY42.md) | Cindervale | Yard bypass and clinic heat, with independent services and records | CY41 |
-| [CY43](tasks/CY43.md) | Far Meridian | Verified return passage and a separate ferry search | CY42 |
-| [CY44](tasks/CY44.md) | Virelai | Lift and reservoir restoration, public crossing, and receiver timing evidence | CY43 |
-| [CY45](tasks/CY45.md) | Investigation | Five verified cases open discovery. Ten mobilized commands open the fleet operation. | CY44 |
-| [CY46](tasks/CY46.md) | Joint operation | Visible command contributions, two breach entries and the civilian crossing | CY45 and CY33–CY35 |
-| [CY47](tasks/CY47.md) | Aftermath | Ten individual handovers and the final watch | CY46 |
-| [CY36](tasks/CY36.md) | All four | Integrated Tier 1 balance and approved content review from First Watch to last watch | CY32–CY35 and CY38–CY47 |
+| [CY36](tasks/CY36.md) | All four | Integrated Tier 1 balance and approved content review from First Watch to last watch | Tier 1 implementation (D55) |
 | [CY37](tasks/CY37.md) | Campaign release | Owner-only release, physical iPhone play and saved progress recovery | CY36 |
 
 ## Earlier campaign handoff
@@ -156,6 +142,20 @@ Packets finished go here, newest first.
 |---|---|---|
 | CY30 | Planet-funded squad prep (D52). The Selden Hangar draws Alloy from a port shipment and fits a Guard arm and Missile pod into the saved crew rig. Chrome verified the purchase, reload, boarding Forecast, loss and free retry. The headless run won with both crafted parts fitted. | _this commit_ |
 | CY31 | [Shared evenings and home readiness](../technical/campaign-content.md#shared-evenings-and-home-readiness) (D53). The five local leads have Captain arcs and all five pairs can share evenings. Private replays verified concurrent Hearts, both routes to readiness, both residence outcomes and the case gates. Chrome verified deferral, resettlement and a pending visit across the draft release change. Approved art, dialogue and physical iPhone review carry into CY36–CY37. | _this commit_ |
+| CY38 | Tier 1 opening. Ten sign-ons in two orders, optional Training and a late recruit’s independent story replayed. Chrome verified a non-Selden first recruit and roster reload. (D55) | _this commit_ |
+| CY39 | Sector appointments, independent custody and shared visits. Replays confirmed both quarters choices, a saved morning, assignment changes and preserved bonds. (D55) | _this commit_ |
+| CY40 | Both Arclight operations and entry maps, independent case and testimony, and the joint watch. Actual ship and ground battles played through both orders. (D55) | _this commit_ |
+| CY32 | Port projects, ship refits and reserve-aware exports. The private campaign replay completed both project types, fitted a funded part and opened the drive-II corridor. (D55) | _this commit_ |
+| CY33 | Persistent bridge specialties and fighter targets. The reviewed approaches use frozen command inputs. Reassignment and paid retry preserve progress. (D55) | _this commit_ |
+| CY34 | Bridge orders, portraits, objective state, fast playback and saved order logs. Chrome verified the escort and fighter-led approach at landscape phone size. (D55) | _this commit_ |
+| CY35 | Campaign squad selection and saveable groups, equipped companions, and version 4 close mounts and mortar splash. Ground battles and both gate entries played through the Hangar. (D55) | _this commit_ |
+| CY41 | Nacre paired operations. Tender and reserve objectives reached their appointments in both orders with one required case and a joint watch. (D55) | _this commit_ |
+| CY42 | Cindervale paired operations. Yard and clinic objectives played in both orders with separately recorded services. (D55) | _this commit_ |
+| CY43 | Far Meridian paired operations. Return passage and ferry search played in either order with separate records and appointment outcomes. (D55) | _this commit_ |
+| CY44 | Virelai paired operations. Lift and crossing played in both orders. Verified all five required files and ten appointments in the same release. (D55) | _this commit_ |
+| CY45 | Investigation and mobilization. Five case files exposed the invasion with multiple operations still open. All ten appointments were required before muster. (D55) | _this commit_ |
+| CY46 | Fleet launch, independent passage and both ground entries. Real campaign replays verified the saved contributor list, free retry and both victories. Chrome resumed after a fighter strike and showed the service entry. (D55) | _this commit_ |
+| CY47 | All ten civilian handovers and Last Watch. Two orders ended in a saved finished campaign with retirement and continued relationship records. (D55) | _this commit_ |
 | CY29 | Captain relationships (D51). Five milestone evenings and the convoy debrief lead to an independent Captain friendship or romance. Chrome verified both outcomes, morning resume and a private release replacement. | _this commit_ |
 | CY27 | Return home and defend it (D48). After the first morning, the liberated base hosts the resettlement choice. Local assignments add nightly production and relay shielding. Staying aboard keeps stations and quarters. Chrome verified both routes through defense and the same signal evidence, with an unchanged launch cost on retry. The [home defense art packet](../design/art-requests/selden-home.md) records final assets. | _this commit_ |
 | CY26 | Recovery, release and quarters (D47). Two brig visits establish trust and save the testimony before release. The bond and quarters decisions are independent. Chrome verified both residence paths through morning and resumed a pending scene with a revised line and image. The [recovery art packet](../design/art-requests/selden-recovery.md) records the final assets. | _this commit_ |

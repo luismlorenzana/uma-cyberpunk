@@ -1,7 +1,7 @@
 // The forecast card (TC29, CY4, CY5). It never resolves the attack on a copy, since the seed would leak the real rolls:
 // it calls the resolution's own pure functions (the strike's numbers, Cover, Crossfire and counter eligibility, the Tech
 // chance, the chance skills) and returns chances and ranges, so the card and the result can't disagree.
-import { counterFor, coverFor, crossfireFor, objectStrikeOf, skillChance, strikeOf, tileOf, unitById, type Strike } from './attack'
+import { blastTargets, counterFor, coverFor, crossfireFor, objectStrikeOf, skillChance, strikeOf, tileOf, unitById, type Strike } from './attack'
 import { v2 } from './harm'
 import { checkTurn } from './legal'
 import { dirTo, facingOf } from './sight'
@@ -51,6 +51,7 @@ export interface Forecast {
   tech: { tech: TechKind; target: string; chance: number } | null
   /** Rules version 2: the Steel Muster's marked tiles, and when they're hit. */
   volley: { tiles: Tile[]; at: number } | null
+  splash?: { targets: string[]; damage: number }
   /** Charge spent by each unit this turn (a gain shows negative). */
   charge: Record<string, number>
   /** The turns after this one. */
@@ -118,9 +119,10 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   const landed = facingOf(tileOf(target), target.facing, to)
   const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim })!
   const cover = coverFor(placed, act.target, landed)
-  const attack = cover
-    ? view(strikeOf(placed, turn.unit, act.with, cover, to, { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front' })!, unitById(placed, cover))
-    : view(main, target)
+  const actual = cover ? strikeOf(placed, turn.unit, act.with, cover, to, { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front' })! : main
+  const recipient = cover ? unitById(placed, cover) : target
+  const attack = view(actual, recipient)
+  const targets = blastTargets(placed, actual, recipient).map(({ id }) => id)
   if (cover) add(cover, TUNING.charge.cover)
   const crossfire = crossfireFor(placed, turn.unit, to, act.target).map((j) => {
     add(j.unit, TUNING.charge.crossfire)
@@ -147,5 +149,6 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
       if (first > 0) skills.first = first
     }
   }
-  return { attack, cover, crossfire, counter, skills, tech: null, volley, charge, timeline: upcomingAfter(state, 0) }
+  return { attack, cover, crossfire, counter, skills, tech: null, volley, charge, timeline: upcomingAfter(state, 0),
+    ...(targets.length ? { splash: { targets, damage: Math.max(1, Math.floor(actual.damage / 2)) } } : {}) }
 }

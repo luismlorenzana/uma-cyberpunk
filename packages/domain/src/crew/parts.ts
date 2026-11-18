@@ -60,6 +60,9 @@ export const STARTER_PARTS: readonly Part[] = [
 
 /** Parts issued by an authored campaign kit. */
 const CAMPAIGN_PARTS: readonly Part[] = [
+  { id: 'back-close-blade', slot: 'back', kind: 'launcher', name: 'Mounted blade', load: 3, weapon: melee(15, 85, 'P', 0), ammo: 2, note: 'Backup blade · 1 tile · 2 uses' },
+  { id: 'back-deck-cannon', slot: 'back', kind: 'launcher', name: 'Deck cannon', load: 3, weapon: short(12, 80, 'I', 0, 1, 3), ammo: 3, note: 'Backup cannon · 1–3 tiles · 3 shots' },
+  { id: 'back-campaign-mortar', slot: 'back', kind: 'launcher', name: 'Area mortar', load: 4, weapon: { ...long(15, 80, 'I'), blast: 1 }, ammo: 2, note: 'Adjacent enemy splash · 2 shells' },
   { id: 'back-sniper', slot: 'back', kind: 'launcher', name: 'Sniper rack', load: 4, weapon: long(18, 86, 'P'), ammo: 3, note: 'Gunner: Long P precision fire, 3 ammo' },
   { id: 'hand-arc-axe', slot: 'hand', name: 'Arc axe', item: melee(21, 70, 'I', 4, { twoHanded: true }), note: 'Melee I, two-handed' },
   { id: 'hand-lance', slot: 'hand', name: 'Pulse lance', item: melee(17, 88, 'P', 4, { twoHanded: true }), note: 'Accurate Melee P, two-handed' },

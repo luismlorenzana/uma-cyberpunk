@@ -2,8 +2,11 @@
 
 The campaign preview runs at `/campaign`. It uses the regular owner sign-in in a production build and its own save
 under the same account. Local development serves the selected release from the ignored `content/campaign-release/`
-directory. Set `CAMPAIGN_PACK_DIR` before starting the API to serve a different local output directory. Publishing here
-means selecting a release in the private preview directory served by that API.
+directory. Set `CAMPAIGN_PACK_DIR` before starting the API to serve a different local output directory. For hosted
+reads set `CAMPAIGN_PACK_BUCKET` to an existing private bucket readable by the Cyberpunk API service account and
+set `CAMPAIGN_PACK_PREFIX` to the dedicated Cyberpunk path. Upload the verified hash files before switching the
+preview pointer. Keep the old manifest and hash files for rollback. The API serves the same campaign allowlist
+through its existing owner guard for either source.
 
 ## Source
 
@@ -253,6 +256,43 @@ The battle input freezes the equipped loadout through reload and retry.
 The Selden draft prices the left Guard arm at three Alloy and the Missile pod at four. Both can be used in cargo
 or maintenance boarding. Stable asset IDs for the handover and the two parts are in the
 [Selden crew and gear art brief](../design/art-requests/selden-crew-prep.md).
+
+## Tier 1 sectors, projects and fleet
+
+The authored release uses `recruits` for its ten requests and a separate `sectors` entry for each officer. The sector
+names her `officer`, bridge `qualification`, `port`, `liberation` quest and dialogue `appointment`. Preserve those IDs
+when replacing the pack. Completing the appointment moves her to sector command and clears temporary ship posts.
+Her rig, duties history, earned specialties and bonds remain in the save. Two sectors can contribute separately to
+the same port. A retirement names a later quest and removes her from active deployment while retaining her record.
+
+Optional `former` flags record continued local custody, supervised release, and independent aboard or ashore living
+arrangements. Optional `shared` names a local `after` quest and two scenes, `visit` and `morning`. Both cast members
+must appear. A shared visit appears when they can meet at the same berth or aboard, records the evening choice once
+and resumes from the saved visit or morning. Captain bonds can continue when docked at the officer's sector.
+
+Quests can add `requires` for additional completed quests and `flags` for story prerequisites. Keep `after` as the
+main path. The parser checks the entire prerequisite graph for cycles. A joint watch can require both appointments.
+Prefer stable commissioning and custody flags when adding outcomes to existing sequences.
+
+`projects` name the owning `sector`, an Alloy price, days to build, and `production` and `upkeep` for each cargo type.
+The port must be docked and the sector appointed to fund a project. A completed project changes the port ledger and
+sets `project-ready-<id>` in the same night. Use that flag for the completion dialogue. Ship upkeep includes occupied
+crew berths, custody and powered systems. Installed drive levels open their declared routes. Port reserves still
+apply to both regular exports and shipments sent to the Hangar.
+
+An authored `finale.cases` entry can name `fileQuest`, the debrief that verifies its complete evidence file. Required
+files open `reveal`. `muster` additionally requires every sector appointment. Temporary fleet duty makes up to four
+commanders available for boarding while their sector contributions remain visible. In version 3 command encounters,
+`assault.fighterTarget: true` lets a fighter strike disable the named external system. The saved launch input records
+the contributors and command power. Legacy versions preserve gun targeting. Ground battle rules v4 add close-range
+Back mounts and area mortar splash while keeping old battle inputs replayable.
+
+The fleet `ending` opens local handovers. Optional `lastWatch` names the concluding dialogue that requires the ending
+and every sector handover. The player can finish individual handovers in any supported port order. The previous
+pair-home gate, case readiness and aftermath stay available to packs that use the original fields.
+
+Save v16 adds `campaignProjects` and `commandTraining`. Migration carries assigned drills into each officer's station
+record. Sector outcomes, visit progress, fleet duty and case files use stable story flags and scene IDs.
 
 ## Check, pack and select
 

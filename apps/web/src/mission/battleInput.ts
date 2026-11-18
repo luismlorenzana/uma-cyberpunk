@@ -52,7 +52,7 @@ export function lifeAboardInput(base: BattleInput, save: Save, bandOfPost: (post
   const systems = sortieSystems(save.ship, bandOfPost)
   const cohesion = squadCohesion(save, unitOf)
   return {
-    ...rest, rulesVersion: 3, units, orders: sortieOrders(save.ship, (base.bench ?? []).length > 0),
+    ...rest, rulesVersion: Math.max(3, base.rulesVersion), units, orders: sortieOrders(save.ship, (base.bench ?? []).length > 0),
     ...(systems.length ? { systems } : {}), ...(save.meal ? { meal: save.meal } : {}), ...(cohesion ? { cohesion } : {}),
     ...(conditions.length ? { conditions: [...new Set(conditions)] } : {}),
   }

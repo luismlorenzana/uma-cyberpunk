@@ -21,16 +21,16 @@ import { emptyStory, type StoryState } from '../story/state'
 import { firstCampaignDay, type CampaignDay, type SoloNight } from '../campaign-day'
 import type { PendingPairScene } from '../campaign-pair'
 import { CAMPAIGN_WORKSHOP_ALLOY_MAX, emptyCampaignGear, type CampaignGear } from '../campaign-gear'
-import { PORT_STOCK_MAX, SHIP_CARGO_MAX, SHIP_PROVISIONS_PER_NIGHT, SUPPLY_KINDS, type CampaignSupply } from '../campaign-supply'
-import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew } from '../ship/command'
+import { PORT_STOCK_MAX, SHIP_CARGO_MAX, SUPPLY_KINDS, type CampaignSupply } from '../campaign-supply'
+import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } from '../ship/command'
 
 /** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
  * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
  * item stock and the visits (CY14); 7 the ship as a build and the wallet (CY15); 8 duties: posts, presets, the meal,
  * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17); 10 squads, operations and faction
  * standing (CY18); 11 the campaign day and pending scenes (CY21); 12 the supply ledger (CY23); 13 command officers (CY24);
- * 14 saved daytime scenes, visits and mornings for a campaign pair (CY26); 15 the campaign workshop's materials and parts (CY30). */
-export const SAVE_VERSION = 15
+ * 14 saved pair scenes (CY26); 15 the campaign workshop (CY30); 16 port projects and officer specialties (CY32–CY33). */
+export const SAVE_VERSION = 16
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -180,7 +180,13 @@ export interface SaveV15 extends Omit<SaveV14, 'version'> {
 }
 
 /** The save as the app and the API use it: always the current version. */
-export type Save = SaveV15
+export interface SaveV16 extends Omit<SaveV15, 'version'> {
+  version: 16
+  campaignProjects: Record<string, number>
+  commandTraining: CommandTraining
+}
+
+export type Save = SaveV16
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -209,7 +215,16 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10)))))
+  return migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))
+}
+
+export function migrateV15(save: SaveV15): SaveV16 {
+  const commandTraining: CommandTraining = {}
+  for (const station of COMMAND_STATIONS) {
+    const entry = save.commandCrew[station]
+    if (entry) commandTraining[entry.outfit] = { [station]: { drills: entry.drills, trainedDay: entry.trainedDay } }
+  }
+  return { ...save, version: 16, campaignProjects: {}, commandTraining }
 }
 
 export const migrateV14 = (save: SaveV14): SaveV15 => ({ ...save, version: 15, campaignGear: emptyCampaignGear() })
@@ -647,9 +662,10 @@ export function versionOf(value: unknown): number {
 export function parseSave(value: unknown, path = 'save'): Save {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
-  if (version < 11) return migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(parseV10(value, path))))))
+  if (version < 11) return migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(parseV10(value, path)))))))
   const raw = object(value, path, Object.keys(value as Obj))
-  const { campaignDay, campaignSupply, commandCrew, pairScene, campaignGear, ...rest } = raw
+  const { campaignDay, campaignSupply, commandCrew, pairScene, campaignGear, campaignProjects, commandTraining, ...rest } = raw
+  if (version < 16 && ('campaignProjects' in raw || 'commandTraining' in raw)) throw new SaveParseError(path, 'unknown campaign version 16 keys')
   if (version < 15 && 'campaignGear' in raw) throw new SaveParseError(path, 'unknown keys campaignGear')
   if (version < 14 && 'pairScene' in raw) throw new SaveParseError(path, 'unknown keys pairScene')
   if (version < 13 && 'commandCrew' in raw) throw new SaveParseError(path, 'unknown keys commandCrew')
@@ -661,15 +677,26 @@ export function parseSave(value: unknown, path = 'save'): Save {
     const v14: SaveV14 = { ...base, version: 14, campaignDay: day, campaignSupply: parseCampaignSupply(campaignSupply, `${path}.campaignSupply`, day.day),
       commandCrew: parseCommandCrew(commandCrew, `${path}.commandCrew`, day.day),
       pairScene: pending ? { pair: id(pending.pair, `${path}.pairScene.pair`), scene: id(pending.scene, `${path}.pairScene.scene`) } : null }
-    return version === 14 ? migrateV14(v14) : { ...v14, version: 15, campaignGear: parseCampaignGear(campaignGear, `${path}.campaignGear`) }
+    const v15: SaveV15 = version === 14 ? migrateV14(v14) : { ...v14, version: 15, campaignGear: parseCampaignGear(campaignGear, `${path}.campaignGear`) }
+    if (version < 16) return migrateV15(v15)
+    const projects = object(campaignProjects, `${path}.campaignProjects`, Object.keys((campaignProjects ?? {}) as Obj))
+    const training = object(commandTraining, `${path}.commandTraining`, Object.keys((commandTraining ?? {}) as Obj))
+    return { ...v15, version: 16,
+      campaignProjects: Object.fromEntries(Object.entries(projects).map(([key, value]) => [id(key, `${path}.campaignProjects`), bounded(value, `${path}.campaignProjects.${key}`, 30)])),
+      commandTraining: Object.fromEntries(Object.entries(training).map(([key, value]) => {
+        const field = `${path}.commandTraining.${key}`
+        if (!/^[1-9][0-9]*$/.test(key) || !Number.isSafeInteger(Number(key))) throw new SaveParseError(field, 'expected an outfit id')
+        const rows = object(value, field, COMMAND_STATIONS)
+        return [key, Object.fromEntries(Object.entries(rows).map(([station, raw]) => [station, parseDrills(raw, `${field}.${station}`, day.day)]))]
+      })) }
   }
   const day = parseCampaignDay(campaignDay, `${path}.campaignDay`)
   if (version === 11) {
     if ('campaignSupply' in raw) throw new SaveParseError(path, 'unknown keys campaignSupply')
-    return migrateV14(migrateV13(migrateV12(migrateV11({ ...base, campaignDay: day, version: 11 }))))
+    return migrateV15(migrateV14(migrateV13(migrateV12(migrateV11({ ...base, campaignDay: day, version: 11 })))))
   }
   const v12: SaveV12 = { ...base, campaignDay: day, version: 12, campaignSupply: parseCampaignSupply(campaignSupply, `${path}.campaignSupply`, day.day) }
-  return migrateV14(migrateV13(version === 12 ? migrateV12(v12) : { ...v12, version: 13, commandCrew: parseCommandCrew(commandCrew, `${path}.commandCrew`, day.day) }))
+  return migrateV15(migrateV14(migrateV13(version === 12 ? migrateV12(v12) : { ...v12, version: 13, commandCrew: parseCommandCrew(commandCrew, `${path}.commandCrew`, day.day) })))
 }
 
 function parseCampaignGear(value: unknown, path: string): CampaignGear {
@@ -700,6 +727,14 @@ function parseCommandCrew(value: unknown, path: string, day: number): CommandCre
   return crew
 }
 
+function parseDrills(value: unknown, path: string, day: number) {
+  const o = object(value, path, ['drills', 'trainedDay'])
+  const drills = bounded(o.drills, `${path}.drills`, MAX_DRILLS)
+  const trainedDay = o.trainedDay === null ? null : bounded(o.trainedDay, `${path}.trainedDay`, day)
+  if (trainedDay === 0) throw new SaveParseError(path, 'expected a trained campaign day')
+  return { drills, trainedDay }
+}
+
 function parseCampaignSupply(value: unknown, path: string, day: number): CampaignSupply | null {
   if (value === null) return null
   const o = object(value, path, ['port', 'stores', 'fuel', 'provisions', 'shortfall', 'reliefDay'])
@@ -711,7 +746,7 @@ function parseCampaignSupply(value: unknown, path: string, day: number): Campaig
       provisions: bounded(stock.provisions, `${field}.provisions`, PORT_STOCK_MAX), alloy: bounded(stock.alloy, `${field}.alloy`, PORT_STOCK_MAX) }]
   }))
   return { port: id(o.port, `${path}.port`), stores, fuel: bounded(o.fuel, `${path}.fuel`, SHIP_CARGO_MAX),
-    provisions: bounded(o.provisions, `${path}.provisions`, SHIP_CARGO_MAX), shortfall: bounded(o.shortfall, `${path}.shortfall`, SHIP_PROVISIONS_PER_NIGHT),
+    provisions: bounded(o.provisions, `${path}.provisions`, SHIP_CARGO_MAX), shortfall: bounded(o.shortfall, `${path}.shortfall`, SHIP_CARGO_MAX),
     reliefDay: o.reliefDay === null ? null : bounded(o.reliefDay, `${path}.reliefDay`, day) }
 }
 
