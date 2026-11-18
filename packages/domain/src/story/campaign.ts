@@ -31,7 +31,7 @@ export interface CampaignQuest {
 export interface CampaignSceneArt {
   scene: string
   backdrop?: string
-  portraits: { speaker: Speaker; asset: string; emote?: string }[]
+  portraits: { speaker: Speaker; asset: string; emote?: string; profile?: string }[]
 }
 
 export interface CampaignPortraitFace {
@@ -261,11 +261,12 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
     const cast = new Set(declared.cast.map((c) => c.outfit ?? c.heroine ?? c.minor))
     const portraits = p.list(a.portraits, `${path}.portraits`, (x, xp) => {
-      const portrait = p.object(x, xp, ['speaker', 'asset', 'emote'], ['speaker', 'asset'])
+      const portrait = p.object(x, xp, ['speaker', 'asset', 'emote', 'profile'], ['speaker', 'asset'])
       const speaker = p.speaker(portrait.speaker, `${xp}.speaker`)
       if (!cast.has(speaker)) p.fail(`${xp}.speaker`, 'speaker is missing from the scene cast')
       return { speaker, asset: asset(portrait.asset, `${xp}.asset`),
-        ...(portrait.emote === undefined ? {} : { emote: p.slug(portrait.emote, `${xp}.emote`) }) }
+        ...(portrait.emote === undefined ? {} : { emote: p.slug(portrait.emote, `${xp}.emote`) }),
+        ...(portrait.profile === undefined ? {} : { profile: asset(portrait.profile, `${xp}.profile`) }) }
     })
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }) }

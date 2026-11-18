@@ -1,12 +1,14 @@
-import { nextCampaignStop, sectorAssignment, shipCapabilities, type CampaignBook, type CampaignQuest, type CampaignRecruit, type Save } from '@cyber/domain'
+import { nextCampaignStop, sectorAssignment, shipCapabilities, type CampaignBook, type CampaignQuest, type CampaignRecruit, type CampaignReleaseFile, type Save } from '@cyber/domain'
 import { nameOf } from '../story/runner'
 import { questAvailable, recruitProgress } from './quests'
 import { sectorStatus } from './SectorPanel'
+import { CampaignThumbnail } from './CampaignThumbnail'
 
 const action = 'min-h-11 rounded-lg bg-cyan-200 px-3 text-sm font-semibold text-slate-950 disabled:bg-white/10 disabled:text-white/60'
 
-export function RecruitmentPanel({ save, book, recruits, port, open }: {
+export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
   save: Save; book: CampaignBook; recruits: CampaignRecruit[]; port?: string
+  assets: ReadonlyMap<string, CampaignReleaseFile>
   open: (quest: CampaignQuest) => void
 }) {
   const progress = recruits.map((recruit) => ({ recruit, ...recruitProgress(save, book, recruit) }))
@@ -25,7 +27,11 @@ export function RecruitmentPanel({ save, book, recruits, port, open }: {
           const stop = hop && hop !== destination?.id ? book.supply?.ports.find(({ id }) => id === hop) : undefined
           const ready = !!next && questAvailable(save, book, next, port)
           const sector = book.sectors?.find(({ officer }) => officer === recruit.outfit)
+          const signOn = book.quests.find(({ id }) => id === recruit.signOn)
+          const profile = book.art.find(({ scene }) => scene === signOn?.scene)?.portraits.find(({ speaker, emote }) =>
+            speaker === recruit.outfit && emote === undefined)?.profile
           return <li key={recruit.outfit} className="space-y-1 rounded-lg border border-white/15 bg-white/5 p-2">
+            {profile && <CampaignThumbnail asset={assets.get(profile)} className="float-right size-12 rounded-md object-cover" />}
             <h3 className="break-words font-semibold">{nameOf(book.story, recruit.outfit)}</h3>
             {!joined && <p className="text-sm">{recruit.request}</p>}
             {joined && <p className="text-sm">{next?.title ?? 'Objectives complete'}</p>}

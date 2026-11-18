@@ -84,6 +84,32 @@ If a crop is unavailable, the scene uses its existing whole-portrait expression 
 that cannot decode or exceeds the base's bounds leaves the base visible. Check the first approved crop over the
 matching base in a landscape preview before selecting the new private pack.
 
+### Publish-time character and profile crops
+
+Put the approved full-body master under `art/` and register its asset ID as the neutral scene portrait.
+Record the two reviewed crop rectangles in a private `portrait-crops.json` next to `campaign.json`.
+Use whole pixel coordinates measured from the top-left of that exact master.
+
+```json
+{
+  "schemaVersion": 1,
+  "crops": [
+    {
+      "base": "pilot-neutral",
+      "dialogue": { "left": 260, "top": 0, "width": 504, "height": 672 },
+      "profile": { "left": 330, "top": 0, "size": 380 }
+    }
+  ]
+}
+```
+
+`pnpm campaign check` validates the plan and generates the crops in memory. `pnpm campaign pack <release>`
+includes the original master, a WebP dialogue portrait at the crop's native size, and a 192 × 192 WebP
+profile for Recruitment, Crew Stories, and Bridge crew cards. The packed scene points to the new neutral
+dialogue portrait and the matching profile. For each face expression, keep its placement in master
+coordinates. The packer subtracts the dialogue crop's origin and rejects any expression that would be clipped.
+The crop plan is optional so each master can be framed and reviewed as it becomes ready.
+
 ## Recruitment and personal stories
 
 Add a `recruits` list to show a recruitment board after the shared opening. Set `supply.after` to `opening` so the

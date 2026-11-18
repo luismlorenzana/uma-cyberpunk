@@ -1,7 +1,7 @@
 import {
   campaignSupport, campaignUpkeep, developedPort, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, pairProgress, pairVisit, seeScene,
   sectorNightId, sectorVisit, startCampaignNight, startSupply, walkSteps,
-  type CampaignDay, type CampaignQuest, type CampaignVisit, type EffectStep, type Save,
+  type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
@@ -117,12 +117,18 @@ function Campaign({ layout }: { layout: StageLayout }) {
         ...(operation.muster ? { contributions: fleetMobilized(loaded.book, save.story).map((sector) => `${sector.title} · ${sector.contribution}`) } : {}) } : undefined
     const emitterRoute = command.assault && [...loaded.book.ground.values()]
       .find(({ alternate }) => alternate?.flag === command.assault?.disabledFlag)?.alternate?.label
+    const portraits = new Map<number, CampaignReleaseFile>()
+    const profiles = new Map<number, CampaignReleaseFile>()
+    for (const entry of loaded.book.art) for (const { speaker, asset, emote, profile } of entry.portraits) {
+      if (typeof speaker !== 'number' || emote !== undefined) continue
+      const image = loaded.assets.get(profile ?? asset)
+      if (image) (profile ? profiles : portraits).set(speaker, image)
+    }
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
       <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply} backdrop={art?.backdrop ? loaded.assets.get(art.backdrop) : undefined}
         ashore={support.ashore} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
-        portraits={new Map(loaded.book.art.flatMap((entry) => entry.portraits.flatMap(({ speaker, asset, emote }) =>
-          typeof speaker === 'number' && !emote && loaded.assets.has(asset) ? [[speaker, loaded.assets.get(asset)!] as const] : [])))}
+        portraits={new Map([...portraits, ...profiles])}
         names={new Map(save.crew.filter(({ outfit }) => !support.ashore.has(outfit)).map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
     </Suspense>
   }
@@ -289,7 +295,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {missionState && loaded && !training && !ground && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved encounter.</p>}
           {save && !night && !pendingPair && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
             className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
-          {loaded && save && recruits.length > 0 && <RecruitmentPanel save={save} book={loaded.book} recruits={recruits} port={port?.id} open={setActive} />}
+          {loaded && save && recruits.length > 0 && <RecruitmentPanel save={save} book={loaded.book} assets={loaded.assets}
+            recruits={recruits} port={port?.id} open={setActive} />}
           {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
           {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
             {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
