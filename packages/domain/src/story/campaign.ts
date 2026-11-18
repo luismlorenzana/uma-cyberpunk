@@ -34,12 +34,21 @@ export interface CampaignSceneArt {
   portraits: { speaker: Speaker; asset: string; emote?: string }[]
 }
 
+export interface CampaignPortraitFace {
+  speaker: Speaker
+  base: string
+  emote: string
+  asset: string
+  at: { x: number; y: number }
+}
+
 export interface CampaignBook {
   opening: string
   draft: boolean
   quests: CampaignQuest[]
   assets: { id: string; file: string }[]
   art: CampaignSceneArt[]
+  portraitFaces?: CampaignPortraitFace[]
   story: StoryPack
   scenes: ReadonlyMap<string, Scene>
   recruits?: CampaignRecruit[]
@@ -177,7 +186,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -262,6 +271,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }) }
   })
   unique(p, 'art', art, (a) => a.scene)
+  const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset)
   const evening = o.evening === undefined ? undefined : (() => {
     const e = p.object(o.evening, 'evening', ['after', 'visits'])
     const after = p.slug(e.after, 'evening.after')
@@ -403,8 +413,32 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   if (projects) unique(p, 'projects', projects, ({ id }) => id)
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
+    ...(portraitFaces ? { portraitFaces } : {}),
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
     ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
+}
+
+function parsePortraitFaces(p: P, value: unknown, art: CampaignSceneArt[], asset: (id: unknown, path: string) => string): CampaignPortraitFace[] {
+  const baseKey = (speaker: Speaker, base: string) => `${speaker}:${base}`
+  const bases = new Set(art.flatMap(({ portraits }) =>
+    portraits.filter(({ emote }) => emote === undefined).map(({ speaker, asset }) => baseKey(speaker, asset))))
+  const faces = p.list(value, 'portraitFaces', (v, path) => {
+    const entry = p.object(v, path, ['speaker', 'base', 'emote', 'asset', 'at'])
+    const speaker = p.speaker(entry.speaker, `${path}.speaker`)
+    const base = asset(entry.base, `${path}.base`)
+    if (!bases.has(baseKey(speaker, base))) p.fail(`${path}.base`, 'expected a default scene portrait for this speaker')
+    const emote = p.slug(entry.emote, `${path}.emote`)
+    if (emote === 'neutral') p.fail(`${path}.emote`, 'neutral uses the base portrait')
+    const crop = asset(entry.asset, `${path}.asset`)
+    if (crop === base) p.fail(`${path}.asset`, 'expected a separate face crop asset')
+    const at = p.object(entry.at, `${path}.at`, ['x', 'y'])
+    return { speaker, base, emote, asset: crop, at: {
+      x: p.int(at.x, `${path}.at.x`, 0, Number.MAX_SAFE_INTEGER),
+      y: p.int(at.y, `${path}.at.y`, 0, Number.MAX_SAFE_INTEGER),
+    } }
+  })
+  unique(p, 'portraitFaces', faces, ({ speaker, base, emote }) => `${baseKey(speaker, base)}:${emote}`)
+  return faces
 }
 
 function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQuest>, pairs: readonly CampaignPair[],

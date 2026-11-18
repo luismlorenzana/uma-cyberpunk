@@ -58,6 +58,32 @@ when it ends. Closing mid-scene resumes from that scene's start. A content updat
 so the completed scene and choices carry forward. Coordinate a save compatibility change before publishing a new ID
 for a scene that already carries progress.
 
+### Dialogue face crops
+
+Keep the existing default portrait entry and scene backdrop. Add each approved transparent crop under `art/` and
+register it in `assets`. Add the crop's placement to the optional top-level `portraitFaces` list in `campaign.json`.
+
+```json
+{
+  "portraitFaces": [
+    { "speaker": 9000101, "base": "pilot-neutral", "emote": "worried", "asset": "officer-worried-face",
+      "at": { "x": 148, "y": 140 } },
+    { "speaker": 9000101, "base": "officer-street-neutral", "emote": "worried", "asset": "officer-worried-face",
+      "at": { "x": 149, "y": 138 } }
+  ]
+}
+```
+
+`base` is the asset ID of that speaker's default portrait in `art[].portraits`. Use the exact script tag in
+`emote`. `at` gives the crop's top-left position in pixels on the original base image. The renderer uses the native
+dimensions of both images, so the crop follows the portrait as the screen resizes. The example reuses one crop with
+two reviewed placements. A boss can use enemy and ally tags on the same neutral base. Keep a unique placement for
+each speaker, base and tag. Neutral uses the base portrait.
+
+If a crop is unavailable, the scene uses its existing whole-portrait expression or default portrait. An image
+that cannot decode or exceeds the base's bounds leaves the base visible. Check the first approved crop over the
+matching base in a landscape preview before selecting the new private pack.
+
 ## Recruitment and personal stories
 
 Add a `recruits` list to show a recruitment board after the shared opening. Set `supply.after` to `opening` so the

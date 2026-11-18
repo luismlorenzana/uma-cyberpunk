@@ -7,6 +7,7 @@ import { DEFAULT_CAPTAIN, fillCaptain, type BondPath, type Call, type CaptainOpt
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../save/game'
 import { nameOf, playScene, type BondEffect, type SceneUi } from './runner'
+import { ScenePortrait, selectScenePortrait, type ScenePortraitImage } from './ScenePortrait'
 
 type Prompt =
   | { kind: 'line'; speaker: Speaker | null; text: string; style: 'line' | 'thought' | 'narrate' }
@@ -35,7 +36,7 @@ function Bust({ pack, speaker }: { pack: StoryPack; speaker: Speaker }) {
 
 export interface ScenePresentation {
   backdrop?: string
-  portraits: { speaker: Speaker; url: string; emote?: string }[]
+  portraits: ScenePortraitImage[]
   illustrations?: Record<string, string>
 }
 
@@ -105,9 +106,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   const speaker = prompt?.kind === 'line' ? prompt.speaker
     : presentation && (prompt?.kind === 'choice' || prompt?.kind === 'captain') ? said?.actor ?? null : null
   const image = illustration && presentation?.illustrations?.[illustration]
-  const portrait = speaker === null ? undefined
-    : presentation?.portraits.find((p) => p.speaker === speaker && p.emote === expressions[speaker])
-      ?? presentation?.portraits.find((p) => p.speaker === speaker && p.emote === undefined)
+  const portrait = speaker === null || !presentation ? null : selectScenePortrait(presentation.portraits, speaker, expressions[speaker])
   return (
     <div data-scene={scene.id} className="absolute inset-0 select-none bg-gradient-to-b from-[#141827] via-[#0e1222] to-[#05060c] text-[#e8ebf5]">
       {image ? <img alt="" src={image} className="absolute inset-0 size-full object-cover" data-scene-illustration />
@@ -119,7 +118,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
         <button type="button" onClick={() => setShowLog(true)} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Log</button>
       </div>
       {!image && speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
-        {portrait ? <img alt="" src={portrait.url} className="max-h-[44vh] max-w-[35vw] rounded-lg object-contain" data-scene-portrait={portrait.emote ?? 'neutral'} />
+        {portrait ? <ScenePortrait key={portrait.image.url} image={portrait.image} face={portrait.face} />
           : <Bust pack={pack} speaker={speaker} />}
       </div>}
       {prompt?.kind === 'line' && (

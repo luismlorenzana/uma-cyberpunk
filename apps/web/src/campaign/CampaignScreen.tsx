@@ -14,6 +14,7 @@ import { updateSave, useGame } from '../save/game'
 import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf, type BondEffect } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
+import { loadScenePortraits } from './portraits'
 import { availableSharedVisit, closePairScene, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, postponeLockedHomeScene, recordPairScene } from './pair'
 import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
@@ -342,17 +343,23 @@ function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate }: {
   useEffect(() => {
     let live = true
     const urls: string[] = []
-    const read = async (id: string) => {
-      const url = await campaignImage(loaded.assets.get(id)!)
-      if (live) urls.push(url)
-      else URL.revokeObjectURL(url)
-      return url
+    const pendingImages = new Map<string, Promise<string>>()
+    const read = (id: string) => {
+      const pending = pendingImages.get(id)
+      if (pending) return pending
+      const image = campaignImage(loaded.assets.get(id)!).then((url) => {
+        if (live) urls.push(url)
+        else URL.revokeObjectURL(url)
+        return url
+      })
+      pendingImages.set(id, image)
+      return image
     }
     const illustrated = new Set([...walkSteps(scene.steps, '')].flatMap(({ step }) =>
       step.kind === 'illustration' && step.asset ? [step.asset] : []))
     void Promise.all([
       art?.backdrop ? read(art.backdrop) : undefined,
-      Promise.all(art?.portraits.map(async ({ speaker, asset, emote }) => ({ speaker, url: await read(asset), ...(emote === undefined ? {} : { emote }) })) ?? []),
+      loadScenePortraits(art?.portraits ?? [], loaded.book.portraitFaces ?? [], read),
       Promise.all([...illustrated].map(async (id) => [id, await read(id)] as const)),
     ]).then(([backdrop, portraits, illustrations]) => {
       if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations) })
