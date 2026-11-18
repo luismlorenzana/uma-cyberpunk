@@ -134,13 +134,14 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
   const known = unique(p, 'supply.ports', ports, (port) => port.id)
   if (!known.has(start)) p.fail('supply.start', `unknown port ${start}`)
   const routes = p.list(map.routes, 'supply.routes', (value, path) => {
-    const route = p.object(value, path, ['from', 'to', 'fuel', 'needs'], ['from', 'to', 'fuel'])
+    const route = p.object(value, path, ['from', 'to', 'fuel', 'needs', 'flag'], ['from', 'to', 'fuel'])
     const from = p.slug(route.from, `${path}.from`)
     const to = p.slug(route.to, `${path}.to`)
     if (from === to || !known.has(from) || !known.has(to)) p.fail(path, 'a route connects two different ports')
     const needs = route.needs === undefined ? undefined : p.slug(route.needs, `${path}.needs`)
     if (needs && !Object.hasOwn(CAPABILITY_NAME, needs)) p.fail(`${path}.needs`, `unknown ship capability ${needs}`)
-    return { from, to, fuel: p.int(route.fuel, `${path}.fuel`, 1, 3), ...(needs ? { needs } : {}) }
+    const flag = route.flag === undefined ? undefined : p.slug(route.flag, `${path}.flag`)
+    return { from, to, fuel: p.int(route.fuel, `${path}.fuel`, 1, 3), ...(needs ? { needs } : {}), ...(flag ? { flag } : {}) }
   }, 100)
   unique(p, 'supply.routes', routes, ({ from, to }) => [from, to].sort().join(':'))
   const reachable = new Set([start])
@@ -151,7 +152,7 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
       if (port === route.to) reachable.add(route.from)
     }
   }
-  if (reachable.size !== ports.length) p.fail('supply.routes', 'every landing port must be reachable before upgrades')
+  if (reachable.size !== ports.length) p.fail('supply.routes', 'every landing port must have a path that needs no drive upgrade')
   return { after, start, ports, routes }
 }
 
@@ -271,7 +272,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }) }
-  }, 1024)
+  }, 2048)
   unique(p, 'art', art, (a) => a.scene)
   const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset)
   const evening = o.evening === undefined ? undefined : (() => {
@@ -300,7 +301,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     if (quest.port && !supply?.ports.some((port) => port.id === quest.port)) p.fail('quests', `${quest.id} uses unknown port ${quest.port}`)
   }
   const recruits = o.recruits === undefined ? undefined : parseCampaignRecruits(p, o.recruits, { opening, byQuest, scenes, story, supply })
-  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 48), (c) => c.id)
+  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 64), (c) => c.id)
   const commandArt = o.commandArt === undefined ? undefined : unique(p, 'commandArt', p.list(o.commandArt, 'commandArt', (v, path) => {
     const row = p.object(v, path, ['encounter', 'backdrop', 'objective', 'objectiveLabel'], ['encounter'])
     const encounter = p.slug(row.encounter, `${path}.encounter`)

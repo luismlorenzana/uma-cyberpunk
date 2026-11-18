@@ -17,7 +17,7 @@ function withinStartingFuel(network: SupplyNetwork): Set<string> {
   reachable[0]!.add(network.start)
   for (const [spent, ports] of reachable.entries()) {
     for (const port of ports) for (const route of network.routes) {
-      if (route.needs || spent + route.fuel > fuel) continue
+      if (route.needs || route.flag || spent + route.fuel > fuel) continue
       const next = route.from === port ? route.to : route.to === port ? route.from : null
       if (next) reachable[spent + route.fuel]!.add(next)
     }

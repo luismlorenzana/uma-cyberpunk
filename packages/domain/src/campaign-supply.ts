@@ -18,6 +18,7 @@ export interface SupplyRoute {
   to: string
   fuel: number
   needs?: string
+  flag?: string
 }
 
 export interface SupplyNetwork {
@@ -63,13 +64,17 @@ export function loadShipment(supply: CampaignSupply, port: SupplyPort, kind: Sup
   return { supply: next, alloy: kind === 'alloy' ? count : 0 }
 }
 
-export function jumpRoute(supply: CampaignSupply, route: SupplyRoute, capabilities: readonly string[]): CampaignSupply {
-  if (supply.fuel < route.fuel || (route.needs && !capabilities.includes(route.needs))) return supply
+function routeOpen(route: SupplyRoute, capabilities: readonly string[], flags: readonly string[]): boolean {
+  return (!route.needs || capabilities.includes(route.needs)) && (!route.flag || flags.includes(route.flag))
+}
+
+export function jumpRoute(supply: CampaignSupply, route: SupplyRoute, capabilities: readonly string[], flags: readonly string[] = []): CampaignSupply {
+  if (supply.fuel < route.fuel || !routeOpen(route, capabilities, flags)) return supply
   const port = route.from === supply.port ? route.to : route.to === supply.port ? route.from : null
   return port ? { ...supply, port, fuel: supply.fuel - route.fuel } : supply
 }
 
-export function nextCampaignStop(network: SupplyNetwork, from: string, to: string, capabilities: readonly string[]): string | null {
+export function nextCampaignStop(network: SupplyNetwork, from: string, to: string, capabilities: readonly string[], flags: readonly string[] = []): string | null {
   const stops = new Map([[from, { fuel: 0, first: from }]])
   const open = new Set([from])
   while (open.size) {
@@ -78,7 +83,7 @@ export function nextCampaignStop(network: SupplyNetwork, from: string, to: strin
     const stop = stops.get(port!)!
     if (port === to) return stop.first
     for (const route of network.routes) {
-      if (route.needs && !capabilities.includes(route.needs)) continue
+      if (!routeOpen(route, capabilities, flags)) continue
       const next = route.from === port ? route.to : route.to === port ? route.from : null
       const fuel = stop.fuel + route.fuel
       if (!next || fuel >= (stops.get(next)?.fuel ?? Infinity)) continue

@@ -24,7 +24,7 @@ export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
         {entries.map(({ recruit, joined, next, started }) => {
           const destination = book.supply?.ports.find((entry) => entry.id === next?.port)
           const hop = destination && port && port !== destination.id && book.supply
-            ? nextCampaignStop(book.supply, port, destination.id, shipCapabilities(save.ship)) : null
+            ? nextCampaignStop(book.supply, port, destination.id, shipCapabilities(save.ship), save.story.flags) : null
           const stop = hop && hop !== destination?.id ? book.supply?.ports.find(({ id }) => id === hop) : undefined
           const ready = !!next && questAvailable(save, book, next, port)
           const sector = book.sectors?.find(({ officer }) => officer === recruit.outfit)

@@ -152,13 +152,20 @@ Tier 3 uses the same recruitment flow. The return-board conversation follows the
 unlocks the next ten sign-ons. The through trip requires both Far Meridian handovers. Each joint report
 requires both local journeys, and earlier officers' calls and public reports depend on their sign-on and
 handover respectively. Review the return board, trip and home arrival in the same release as their art.
-The combined pack supports 60 Captain relationship arcs and 1,024 scene art entries.
+The combined pack supports 60 Captain relationship arcs and 2,048 scene art entries.
 
 Tier 4's relay-school request follows the Tier 3 supper. The school scene opens the ten sign-ons.
 Use the school handover, convoy reserve bearing and public beacon handover together to unlock the relief
 call. The ferry skipper's choice is recorded before the escort and both branches reach the arrival and
 breakfast. Keep unfinished earlier journeys available, along with the new dispatches, visits and joint
 reports. The combined pack supports 1,024 quests and 64 ground encounters.
+
+Tier 5's receiver scene follows the Relief Watch breakfast and opens the next ten sign-ons. The Lark
+briefing requires the witnessed callback, observed hold, and travel and care handovers. The briefing sets
+a story flag that opens the route to Tarsa Landing. The tender escort leaves from Tarsa. The public quay
+and sheltered service landing use two ground scenarios for the same encounter and clear the opposite
+route outcome when the landing plan changes. The saved arrival leads to supper, and the posted offers
+can pay off in delivery receipts after the crossing. The combined pack supports 64 ship command encounters.
 
 ## Training
 

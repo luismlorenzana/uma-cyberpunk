@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { jumpRoute, loadShipment, requestRelief, shipmentAt, startSupply, storesAt, supplyNight, type SupplyNetwork } from './campaign-supply'
+import { jumpRoute, loadShipment, nextCampaignStop, requestRelief, shipmentAt, startSupply, storesAt, supplyNight, type SupplyNetwork } from './campaign-supply'
 import { newSave, parseSave } from './save/save'
 
 const relay = { id: 'relay', name: 'Relay', scene: 'hello-relay', stock: { fuel: 8, provisions: 9, alloy: 12 },
@@ -41,5 +41,16 @@ describe('campaign supply', () => {
     expect(parseSave({ ...v11, version: 11 })).toEqual(save)
     const campaignSupply = supplyNight(startSupply(network), network)
     expect(parseSave(JSON.parse(JSON.stringify({ ...save, campaignSupply }))).campaignSupply).toEqual(campaignSupply)
+  })
+
+  it('uses the same story clearance for jumping and route planning', () => {
+    const flagged = { from: 'relay', to: 'yard', fuel: 1, flag: 'tender-cleared' }
+    const networkWithClearance = { ...network, routes: [flagged] }
+    const supply = startSupply(networkWithClearance)
+    expect(jumpRoute(supply, flagged, [])).toBe(supply)
+    expect(nextCampaignStop(networkWithClearance, 'relay', 'yard', [])).toBeNull()
+    const flags = ['tender-cleared']
+    expect(jumpRoute(supply, flagged, [], flags)).toMatchObject({ port: 'yard', fuel: 5 })
+    expect(nextCampaignStop(networkWithClearance, 'relay', 'yard', [], flags)).toBe('yard')
   })
 })
