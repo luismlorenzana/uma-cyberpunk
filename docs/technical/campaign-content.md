@@ -125,6 +125,8 @@ Bind them by encounter ID in the optional top-level `commandArt` list.
 
 Keep the dialogue art under the relevant `art[].scene` entry. Command uses the scene backdrop when its own
 is absent. The objective cutout sits beside the live integrity meter, outside the darkened bridge backdrop.
+`objectiveLabel` gives the protected vessel or installation its story name on that meter. It works with
+the regular tactical display and with an objective cutout.
 Review the first wave, a damaged state, and a resumed battle at landscape phone size. The same mission ID,
 launch costs and saved orders apply when the presentation changes.
 
@@ -151,6 +153,12 @@ unlocks the next ten sign-ons. The through trip requires both Far Meridian hando
 requires both local journeys, and earlier officers' calls and public reports depend on their sign-on and
 handover respectively. Review the return board, trip and home arrival in the same release as their art.
 The combined pack supports 60 Captain relationship arcs and 1,024 scene art entries.
+
+Tier 4's relay-school request follows the Tier 3 supper. The school scene opens the ten sign-ons.
+Use the school handover, convoy reserve bearing and public beacon handover together to unlock the relief
+call. The ferry skipper's choice is recorded before the escort and both branches reach the arrival and
+breakfast. Keep unfinished earlier journeys available, along with the new dispatches, visits and joint
+reports. The combined pack supports 1,024 quests and 64 ground encounters.
 
 ## Training
 

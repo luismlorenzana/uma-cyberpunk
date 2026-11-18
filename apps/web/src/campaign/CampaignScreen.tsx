@@ -130,6 +130,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply}
         backdrop={backdrop ? loaded.assets.get(backdrop) : undefined}
         objectiveArt={commandArt?.objective ? loaded.assets.get(commandArt.objective) : undefined}
+        objectiveLabel={commandArt?.objectiveLabel}
         ashore={support.ashore} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
         portraits={new Map([...portraits, ...profiles])}

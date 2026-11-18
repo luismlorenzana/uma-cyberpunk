@@ -57,7 +57,7 @@ export interface CampaignBook {
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
   supply?: SupplyNetwork
   commands: ReadonlyMap<string, CommandEncounter>
-  commandArt?: ReadonlyMap<string, { backdrop?: string; objective?: string }>
+  commandArt?: ReadonlyMap<string, { backdrop?: string; objective?: string; objectiveLabel?: string }>
   ground: ReadonlyMap<string, GroundEncounter>
   pairs: CampaignPair[]
   dates?: CampaignDate[]
@@ -216,7 +216,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
       ...(q.requires === undefined ? {} : { requires: p.list(q.requires, `${path}.requires`, (id, field) => p.slug(id, field), 24) }),
       ...(q.flags === undefined ? {} : { flags: p.list(q.flags, `${path}.flags`, (id, field) => p.slug(id, field), 12) }),
       ...(q.port === undefined ? {} : { port: p.slug(q.port, `${path}.port`) }) }
-  })
+  }, 1024)
   const byQuest = unique(p, 'quests', quests, (q) => q.id)
   unique(p, 'quest scenes', quests, (q) => q.scene)
   const opening = p.slug(o.opening, 'opening')
@@ -302,11 +302,12 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const recruits = o.recruits === undefined ? undefined : parseCampaignRecruits(p, o.recruits, { opening, byQuest, scenes, story, supply })
   const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 48), (c) => c.id)
   const commandArt = o.commandArt === undefined ? undefined : unique(p, 'commandArt', p.list(o.commandArt, 'commandArt', (v, path) => {
-    const row = p.object(v, path, ['encounter', 'backdrop', 'objective'], ['encounter'])
+    const row = p.object(v, path, ['encounter', 'backdrop', 'objective', 'objectiveLabel'], ['encounter'])
     const encounter = p.slug(row.encounter, `${path}.encounter`)
     if (!commands.has(encounter)) p.fail(`${path}.encounter`, 'expected a ship command encounter')
     return { encounter, backdrop: row.backdrop === undefined ? undefined : asset(row.backdrop, `${path}.backdrop`),
-      objective: row.objective === undefined ? undefined : asset(row.objective, `${path}.objective`) }
+      objective: row.objective === undefined ? undefined : asset(row.objective, `${path}.objective`),
+      objectiveLabel: row.objectiveLabel === undefined ? undefined : p.text(row.objectiveLabel, `${path}.objectiveLabel`, 32) }
   }), (row) => row.encounter)
   for (const command of commands.values()) {
     const mission = encounters.get(command.id)
@@ -362,7 +363,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })()
     return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
       ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), win: { flag, file, reward } }
-  }, 48), (g) => g.id)
+  }, 64), (g) => g.id)
   for (const port of supply?.ports ?? []) {
     if (port.liberation && ![...ground.values()].some((g) => g.win.flag === port.liberation?.flag)) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
   }
