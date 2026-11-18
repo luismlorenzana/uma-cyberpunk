@@ -2,29 +2,39 @@
 
 ## Current packets
 
-The new campaign keeps this repo, the landscape app and the tactics engine. It starts with its own save. The first playable delivery is the authored opening, recruitment Training and first evening. The [campaign rework brief](../design/campaign-rework.md) sets the shared code, story and art milestones, including the alien antagonist and the final operation (D39).
+The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).
 
 | Packet | Work | Integrated delivery |
 |---|---|---|
-| [CY22](tasks/CY22.md) | Authored recruitment Training | Opening through the first morning in the real campaign |
-| [CY23](tasks/CY23.md) | Planet supply and ship upkeep | Early landing points, supplies, upgrades and travel |
-| [CY24](tasks/CY24.md) | Ship command and defense | First authored planetary defense |
-| [CY28](tasks/CY28.md) | Five faction campaigns and the final operation | Playable through the ending. Approved content and iPhone review pending. |
+| [CY22](tasks/CY22.md) | Authored Training review | Optional familiarization and first evening during CY38, device check in CY37 |
+| [CY23](tasks/CY23.md) | Planet supply and ship upkeep review | Civilian routes in CY38, projects and refits in CY32, device check in CY37 |
+| [CY24](tasks/CY24.md) | Ship command and defense review | Paid Arclight escort in CY40 and CY34, device check in CY37 |
+| [CY28](tasks/CY28.md) | Campaign finale review | Authored investigation, fleet operation and handovers in CY45–CY47, device check in CY37 |
 
-CY20, CY21, CY25–CY27 and CY29–CY31 are complete. The private `baseline-12-revised` draft adds shared evenings and resettlement readiness to all five local arcs. The [shared evenings art packet](../design/art-requests/shared-evenings.md), [finale art packet](../design/art-requests/campaign-finale.md) and [Selden crew and gear art packet](../design/art-requests/selden-crew-prep.md) cover the art review. CY22–CY24 and CY28 have playable drafts with outstanding work recorded in their packets. The Done table records completed prerequisites. The phases, requests and status below record the earlier campaign's history.
+CY20, CY21, CY25–CY27 and CY29–CY31 are complete. The private `baseline-12-revised` draft remains a reference and rollback pack. The private `tier-one-paired-review` draft stages the ten authored local journeys. Story Authoring also has scripts for the reveal, fleet operation and handovers. The Done table and earlier phases record the prototype deliveries.
 
 ## Four-pillar implementation queue
 
-CY32 builds local projects on the [residence outcomes](../technical/campaign-content.md#homeworld-return-and-defense), and CY32 and CY35 build on the delivered Hangar. Each packet carries its code, draft story and placeholder art together through the [campaign release workflow](../design/campaign-rework.md#how-the-pillar-packets-ship). CY22–CY24 and CY28 retain their approved content and device review work.
+Read this table from top to bottom. The order follows the contracts each playable checkpoint needs. Each delivery integrates its rules, script and art through the [campaign release workflow](../design/campaign-rework.md#how-the-pillar-packets-ship). Use the private Cyberpunk book in `uma-story-authoring` for current scripts, checks and approvals. Preserve prototype releases for historical saves and use a fresh profile for the authored cast checkpoint.
 
 | Packet | Pillar | Playable checkpoint | Depends on |
 |---|---|---|---|
-| [CY32](tasks/CY32.md) | Ship and planet management | Planet projects and ship refits change upkeep, exports and route access | CY30 |
-| [CY33](tasks/CY33.md) | Ship combat | Persistent officer specialties and fighter-led system targeting alter a campaign outcome | CY32 supply and kit interfaces |
-| [CY34](tasks/CY34.md) | Ship combat | An authored bridge sequence plays through defense, offense and boarding approaches | CY33 cue contract |
-| [CY35](tasks/CY35.md) | HD-2D tactics | Persistent multi-member squads and expanded weapon roles play on a real station mission | CY30 |
-| [CY36](tasks/CY36.md) | All four | Approved Selden arc and later arcs are tuned together through the finale | CY31–CY35 and approved content for CY22–CY24 and CY28 |
-| [CY37](tasks/CY37.md) | Campaign release | The owner can play the approved campaign on iPhone with private content, saved progress and release rollback | CY36 |
+| [CY38](tasks/CY38.md) | Opening and crew | First Watch, any-order recruitment at five berths and independent roster-launched stories | PR #17 |
+| [CY39](tasks/CY39.md) | Crew and relationships | A liberation appointment moves an officer to her sector while custody, cabins and bonds resolve on their own | CY38 and CY31 |
+| [CY40](tasks/CY40.md) | Arclight | Both operations, appointments, one required case, separate testimony and a joint watch in either order | CY39 |
+| [CY32](tasks/CY32.md) | Ship and planet management | Sector staffing and port projects change upkeep, exports, outfitting and refit routes | CY30 and CY40 |
+| [CY33](tasks/CY33.md) | Ship combat | Persistent qualifications and fighter-led targeting change real approaches | CY32 and CY40 |
+| [CY34](tasks/CY34.md) | Ship combat | Readable bridge presentation of the escort, approaches and boarding consequences | CY33 |
+| [CY35](tasks/CY35.md) | HD-2D tactics | Persistent squads and loadouts on the station and rescue objectives | CY34, CY40 and CY30 |
+| [CY41](tasks/CY41.md) | Nacre | Ration tender and reserve rescue, separate sector outcomes and one required case | CY32–CY35 and CY40 |
+| [CY42](tasks/CY42.md) | Cindervale | Yard bypass and clinic heat, with independent services and records | CY41 |
+| [CY43](tasks/CY43.md) | Far Meridian | Verified return passage and a separate ferry search | CY42 |
+| [CY44](tasks/CY44.md) | Virelai | Lift and reservoir restoration, public crossing, and receiver timing evidence | CY43 |
+| [CY45](tasks/CY45.md) | Investigation | Five verified cases open discovery. Ten mobilized commands open the fleet operation. | CY44 |
+| [CY46](tasks/CY46.md) | Joint operation | Visible command contributions, two breach entries and the civilian crossing | CY45 and CY33–CY35 |
+| [CY47](tasks/CY47.md) | Aftermath | Ten individual handovers and the final watch | CY46 |
+| [CY36](tasks/CY36.md) | All four | Integrated Tier 1 balance and approved content review from First Watch to last watch | CY32–CY35 and CY38–CY47 |
+| [CY37](tasks/CY37.md) | Campaign release | Owner-only release, physical iPhone play and saved progress recovery | CY36 |
 
 ## Earlier campaign handoff
 
