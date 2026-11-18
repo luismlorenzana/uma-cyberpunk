@@ -6,7 +6,7 @@ import { questComplete } from './quests'
 
 function cleared(save: Save, book: CampaignBook, id: string): boolean {
   const quest = book.quests.find((entry) => entry.id === id)
-  return !!quest && questComplete(save, quest)
+  return !!quest && questComplete(save, quest, book)
 }
 
 export function dateAvailable(save: Save, book: CampaignBook, date: CampaignDate): boolean {

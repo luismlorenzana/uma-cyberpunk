@@ -12,7 +12,7 @@ export function workshopAt(save: Save, book: CampaignBook) {
   const invitation = book.quests.find(({ id }) => id === workshop.after)
   const cargo = save.campaignSupply ?? startSupply(supply)
   const port = supply.ports.find(({ id }) => id === workshop.port)
-  return invitation && questComplete(save, invitation) && cargo.port === workshop.port && port ? { workshop, cargo, port } : null
+  return invitation && questComplete(save, invitation, book) && cargo.port === workshop.port && port ? { workshop, cargo, port } : null
 }
 
 export function sendWorkshopAlloy(save: Save, book: CampaignBook): Save {

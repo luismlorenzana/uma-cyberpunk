@@ -9,6 +9,7 @@ export interface PendingPairScene { pair: string; scene: string }
 
 export interface CampaignHome {
   port: string
+  liberation?: string
   base: string
   defense: string
   scene: string
@@ -50,7 +51,7 @@ export function campaignHomeSupport(pairs: readonly CampaignPair[], story: Story
   for (const { home, members } of pairs) {
     if (!home || homeOutcome(home, story) !== 'resettle') continue
     for (const { outfit } of members) ashore.add(outfit)
-    localAlloy.set(home.port, home.support.alloy)
+    localAlloy.set(home.port, (localAlloy.get(home.port) ?? 0) + home.support.alloy)
     provisions = Math.max(1, provisions - home.support.provisions)
   }
   return { ashore, localAlloy, provisions }

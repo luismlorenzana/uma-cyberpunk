@@ -12,6 +12,7 @@ import { parseCampaignPairs } from './campaign-pairs'
 import { parseCampaignDates, type CampaignDate } from './campaign-dates'
 import type { CampaignFinale } from '../campaign-finale'
 import type { CampaignWorkshop } from '../campaign-gear'
+import { parseCampaignRecruits, type CampaignRecruit } from './campaign-recruits'
 
 export interface CampaignQuest {
   id: string
@@ -36,6 +37,7 @@ export interface CampaignBook {
   art: CampaignSceneArt[]
   story: StoryPack
   scenes: ReadonlyMap<string, Scene>
+  recruits?: CampaignRecruit[]
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
   supply?: SupplyNetwork
   commands: ReadonlyMap<string, CommandEncounter>
@@ -168,7 +170,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -275,6 +277,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   for (const quest of quests) {
     if (quest.port && !supply?.ports.some((port) => port.id === quest.port)) p.fail('quests', `${quest.id} uses unknown port ${quest.port}`)
   }
+  const recruits = o.recruits === undefined ? undefined : parseCampaignRecruits(p, o.recruits, { opening, byQuest, scenes, story, supply })
   const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 24), (c) => c.id)
   for (const command of commands.values()) {
     const mission = encounters.get(command.id)
@@ -373,18 +376,21 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   })()
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, story, commands, ground)
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
-    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}), ...(workshop ? { workshop } : {}) }
+    ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
+    ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}) }
 }
 
 function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQuest>, pairs: readonly CampaignPair[],
   story: StoryPack, commands: ReadonlyMap<string, CommandEncounter>, ground: ReadonlyMap<string, GroundEncounter>): CampaignFinale {
   const f = p.object(value, 'finale', ['cases', 'reveal', 'approach', 'breach', 'ending', 'preparation'])
   const cases = p.list(f.cases, 'finale.cases', (value, path) => {
-    const c = p.object(value, path, ['port', 'title', 'file'])
+    const c = p.object(value, path, ['port', 'title', 'file', 'pair'], ['port', 'title', 'file'])
     const port = p.slug(c.port, `${path}.port`), file = p.slug(c.file, `${path}.file`)
-    if (!pairs.some((pair) => pair.home?.port === port)) p.fail(`${path}.port`, 'a case needs a pair and its local defense')
+    const pair = c.pair === undefined ? undefined : p.slug(c.pair, `${path}.pair`)
+    const matches = pairs.filter((candidate) => candidate.home?.port === port && (pair === undefined || candidate.id === pair))
+    if (matches.length !== 1) p.fail(`${path}.pair`, 'name the pair whose home defense files this case')
     if (!story.files[file]?.lines.length) p.fail(`${path}.file`, 'expected a nonempty evidence file')
-    return { port, file, title: p.text(c.title, `${path}.title`, 64) }
+    return { port, file, title: p.text(c.title, `${path}.title`, 64), ...(pair === undefined ? {} : { pair }) }
   }, 12)
   if (cases.length < 2) p.fail('finale.cases', 'expected multiple local cases')
   unique(p, 'finale.cases', cases, (entry) => entry.port)

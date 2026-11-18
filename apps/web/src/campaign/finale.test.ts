@@ -86,6 +86,25 @@ describe('campaign investigation and final operation', () => {
     expect(launchCommand(ready, supply, encounter).mission?.battle?.input).toMatchObject({ transport: 8 })
   })
 
+  it('files the case through its assigned pair when two homes share a port', () => {
+    const owner = pairs[0]!
+    const resident = pairs[1]!
+    const neighbor = { ...resident, home: { ...resident.home!, port: owner.home!.port } }
+    const entry = { ...cases[0]!, pair: owner.id }
+    const shared = { ...book, pairs: [neighbor, owner], finale: { ...book.finale!, cases: [entry] } }
+    const save = initial()
+    save.story.seen.push(neighbor.home.scene, owner.home!.scene)
+    save.story.flags.push(neighbor.home.resettle.flag, owner.home!.stay.flag)
+    const nearby = recordPairScene(save, shared, neighbor, neighbor.home.resettle.debrief, [])
+    expect(nearby.story.files[entry.file]).toBeUndefined()
+    expect(briefingReady(shared, nearby.story)).toBe(false)
+
+    const filed = recordPairScene(nearby, shared, owner, owner.home!.stay.debrief, [])
+    expect(filed.story.files[entry.file]).toEqual([0, 1])
+    expect(briefingReady(shared, filed.story)).toBe(true)
+    expect(finaleAllies(shared, filed.story)).toBe(0)
+  })
+
   it('deploys both final routes with two consoles and usable campaign weapon families', () => {
     for (const scenario of ['gate-breach', 'gate-service']) {
       const input = groundInput(scenario, 9, 'Lead', 'hand-lance', 'back-deck', undefined, [{ outfit: 10, label: 'Crew', rig: null }])
