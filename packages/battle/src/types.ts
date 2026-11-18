@@ -66,6 +66,8 @@ export interface Weapon {
   hits: number
   /** Crit % (TUNING.baseCrit when absent). */
   crit?: number
+  /** In rules v4, a hit also damages enemy rigs adjacent to its target. */
+  blast?: 1
   /** Held in the right hand with the left hand empty. */
   twoHanded?: boolean
   load: number

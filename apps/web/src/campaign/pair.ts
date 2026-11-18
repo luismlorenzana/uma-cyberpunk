@@ -90,14 +90,22 @@ export function closePairScene(save: Save, book: CampaignBook, pair: CampaignPai
   }
   const next = { ...recordPairScene(save, book, pair, scene, effects), pairScene: null }
   if (!home || scene !== home.scene || homeOutcome(home, next.story) !== 'resettle') return next
-  const residents = new Set(pair.members.map(({ outfit }) => outfit))
-  const commandCrew = { ...next.commandCrew }
+  return clearCampaignPosts(next, new Set(pair.members.map(({ outfit }) => outfit)))
+}
+
+export function clearCampaignPosts(save: Save, residents: ReadonlySet<number>): Save {
+  const commandCrew = { ...save.commandCrew }
+  const commandTraining = { ...save.commandTraining }
   for (const station of COMMAND_STATIONS) {
     const officer = commandCrew[station]
-    if (officer && residents.has(officer.outfit)) delete commandCrew[station]
+    if (officer && residents.has(officer.outfit)) {
+      const { outfit, drills, trainedDay } = officer
+      commandTraining[outfit] = { ...commandTraining[outfit], [station]: { drills, trainedDay } }
+      delete commandCrew[station]
+    }
   }
-  return { ...next, commandCrew,
-    crew: next.crew.map((member) => residents.has(member.outfit) ? { ...member, post: null } : member),
-    dutyPresets: next.dutyPresets.map((preset) => ({ ...preset,
+  return { ...save, commandCrew, commandTraining,
+    crew: save.crew.map((member) => residents.has(member.outfit) ? { ...member, post: null } : member),
+    dutyPresets: save.dutyPresets.map((preset) => ({ ...preset,
       posts: Object.fromEntries(Object.entries(preset.posts).filter(([outfit]) => !residents.has(Number(outfit)))) })) }
 }

@@ -8,19 +8,26 @@ export function assignOfficer(save: Save, station: CommandStation, outfit: numbe
   if (save.mission?.step !== 'deploy' || save.commandCrew[station]?.outfit === outfit) return save
   if (outfit !== null && (ashore?.has(outfit) || !save.crew.some((member) => member.outfit === outfit))) return save
   const commandCrew = { ...save.commandCrew }
+  const commandTraining = { ...save.commandTraining }
+  for (const role of COMMAND_STATIONS) {
+    const old = commandCrew[role]
+    if (old) commandTraining[old.outfit] = { ...commandTraining[old.outfit], [role]: { drills: old.drills, trainedDay: old.trainedDay } }
+  }
   delete commandCrew[station]
   if (outfit !== null) {
     for (const role of COMMAND_STATIONS) if (commandCrew[role]?.outfit === outfit) delete commandCrew[role]
-    commandCrew[station] = { outfit, drills: 0, trainedDay: null }
+    commandCrew[station] = { outfit, ...(commandTraining[outfit]?.[station] ?? { drills: 0, trainedDay: null }) }
   }
-  return { ...save, commandCrew }
+  return { ...save, commandCrew, commandTraining }
 }
 
 export function drillOfficer(save: Save, station: CommandStation, ashore?: ReadonlySet<number>): Save {
   const officer = save.commandCrew[station]
   if (save.mission?.step !== 'deploy' || !officer || ashore?.has(officer.outfit) || !save.crew.some((member) => member.outfit === officer.outfit)
     || officer.drills >= MAX_DRILLS || officer.trainedDay === save.campaignDay.day) return save
-  return { ...save, commandCrew: { ...save.commandCrew, [station]: { ...officer, drills: officer.drills + 1, trainedDay: save.campaignDay.day } } }
+  const record = { drills: officer.drills + 1, trainedDay: save.campaignDay.day }
+  return { ...save, commandCrew: { ...save.commandCrew, [station]: { outfit: officer.outfit, ...record } },
+    commandTraining: { ...save.commandTraining, [officer.outfit]: { ...save.commandTraining[officer.outfit], [station]: record } } }
 }
 
 export function canLaunch(supply: CampaignSupply, encounter: CommandEncounter): boolean {
@@ -28,18 +35,22 @@ export function canLaunch(supply: CampaignSupply, encounter: CommandEncounter): 
 }
 
 export function launchCommand(save: Save, supply: CampaignSupply, encounter: CommandEncounter,
-  support?: { ashore: ReadonlySet<number>; relay: number; preparation?: { alloy: number; integrity: number } }): Save {
+  support?: { ashore: ReadonlySet<number>; relay: number; preparation?: { alloy: number; integrity: number };
+    qualifications?: ReadonlyMap<number, CommandStation>; contributions?: string[] }): Save {
   if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id || !canLaunch(supply, encounter)) return save
   const cost = support?.preparation?.alloy ?? 0
   if (save.wallet.alloy < cost) return save
   const officers = Object.fromEntries(COMMAND_STATIONS.map((station) => {
     const assigned = save.commandCrew[station]
-    return [station, assigned && !support?.ashore.has(assigned.outfit) && save.crew.some((member) => member.outfit === assigned.outfit) ? assigned.drills : 0]
+    const qualified = assigned && support?.qualifications?.get(assigned.outfit) === station
+    return [station, assigned && !support?.ashore.has(assigned.outfit) && save.crew.some((member) => member.outfit === assigned.outfit) ? Math.min(MAX_DRILLS, assigned.drills + Number(!!qualified)) : 0]
   })) as CommandInput['officers']
   const setup = { transport: encounter.transport + (support?.relay ?? 0) + (support?.preparation?.integrity ?? 0), enemy: encounter.enemy, threats: encounter.threats,
     reactor: Math.max(3, reactorPips(save.ship)), officers }
   const assault = encounter.assault
-  const input: CommandInput = assault ? { ...setup, version: 2, assault: { emitter: assault.emitter, disabledFlag: assault.disabledFlag } }
+  const input: CommandInput = assault ? assault.fighterTarget
+    ? { ...setup, version: 3, assault: { emitter: assault.emitter, disabledFlag: assault.disabledFlag }, contributions: support?.contributions ?? [] }
+    : { ...setup, version: 2, assault: { emitter: assault.emitter, disabledFlag: assault.disabledFlag } }
     : { ...setup, version: 1 }
   const campaignSupply = { ...supply, fuel: supply.fuel - encounter.cost.fuel, provisions: supply.provisions - encounter.cost.provisions }
   const wallet = cost ? { ...save.wallet, alloy: save.wallet.alloy - cost } : save.wallet
@@ -64,6 +75,6 @@ export function settleCommand(save: Save, encounter: string): Save {
   const battle = save.mission.battle
   const run = battle && resumeCommand(battle.input, battle.actions)
   if (!run || run.state.result !== 'won') return save
-  const story = run.input.version === 2 && run.state.emitter === 0 ? setFlag(save.story, run.input.assault.disabledFlag) : save.story
+  const story = run.input.version !== 1 && run.state.emitter === 0 ? setFlag(save.story, run.input.assault.disabledFlag) : save.story
   return finishMission({ ...save, story, worlds: { ...save.worlds, missions } })
 }

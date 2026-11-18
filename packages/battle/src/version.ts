@@ -7,5 +7,6 @@
 //   cover tiles' bonus and grating's current. A version-1 battle plays exactly as CY4's did.
 // - **3** (CY17): life aboard in battle: the bond perks and Resonance, the captain's Orders and the ship's support, the
 //   powered systems' passives, the meals, partners and their duo technique. A version-2 battle plays exactly as before.
-export const RULES_VERSION = 3
-export const SUPPORTED_VERSIONS: readonly number[] = [1, 2, 3]
+// - **4** (CY35): close-range Back units and marked splash weapons. Older inputs keep their original rules.
+export const RULES_VERSION = 4
+export const SUPPORTED_VERSIONS: readonly number[] = [1, 2, 3, 4]

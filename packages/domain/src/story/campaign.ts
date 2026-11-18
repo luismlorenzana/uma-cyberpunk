@@ -13,12 +13,17 @@ import { parseCampaignDates, type CampaignDate } from './campaign-dates'
 import type { CampaignFinale } from '../campaign-finale'
 import type { CampaignWorkshop } from '../campaign-gear'
 import { parseCampaignRecruits, type CampaignRecruit } from './campaign-recruits'
+import type { CampaignSector } from '../campaign-sectors'
+import { parseCampaignSectors } from './campaign-sectors'
+import type { PortProject } from '../campaign-projects'
 
 export interface CampaignQuest {
   id: string
   title: string
   scene: string
   after?: string
+  requires?: string[]
+  flags?: string[]
   encounter?: string
   port?: string
 }
@@ -38,6 +43,8 @@ export interface CampaignBook {
   story: StoryPack
   scenes: ReadonlyMap<string, Scene>
   recruits?: CampaignRecruit[]
+  sectors?: CampaignSector[]
+  projects?: PortProject[]
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
   supply?: SupplyNetwork
   commands: ReadonlyMap<string, CommandEncounter>
@@ -170,7 +177,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -183,7 +190,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const scenes = unique(p, 'chapter scenes', chapters.flatMap((c) => c.scenes), (s) => s.id)
   const encounters = unique(p, 'chapter missions', chapters.flatMap((c) => c.missions), (m) => m.id)
   const quests = p.list(o.quests, 'quests', (v, path) => {
-    const q = p.object(v, path, ['id', 'title', 'scene', 'after', 'encounter', 'port'], ['id', 'title', 'scene'])
+    const q = p.object(v, path, ['id', 'title', 'scene', 'after', 'encounter', 'port', 'requires', 'flags'], ['id', 'title', 'scene'])
     const scene = p.slug(q.scene, `${path}.scene`)
     const declared = scenes.get(scene)
     if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
@@ -196,25 +203,28 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     }
     return { id: p.slug(q.id, `${path}.id`), title: p.text(q.title, `${path}.title`, 80), scene,
       ...(q.after === undefined ? {} : { after: p.slug(q.after, `${path}.after`) }), ...(encounter ? { encounter } : {}),
+      ...(q.requires === undefined ? {} : { requires: p.list(q.requires, `${path}.requires`, (id, field) => p.slug(id, field), 24) }),
+      ...(q.flags === undefined ? {} : { flags: p.list(q.flags, `${path}.flags`, (id, field) => p.slug(id, field), 12) }),
       ...(q.port === undefined ? {} : { port: p.slug(q.port, `${path}.port`) }) }
   })
   const byQuest = unique(p, 'quests', quests, (q) => q.id)
   unique(p, 'quest scenes', quests, (q) => q.scene)
   const opening = p.slug(o.opening, 'opening')
   if (!byQuest.has(opening)) p.fail('opening', `unknown quest ${opening}`)
-  quests.forEach((q, i) => {
-    const path = `quests[${i}].after`
-    if (q.id === opening ? q.after !== undefined : q.after === undefined) p.fail(path, 'only the opening quest starts without a prerequisite')
-    const seen = new Set([q.id])
-    let parent = q.after
-    while (parent !== undefined) {
-      const previous = byQuest.get(parent)
-      if (!previous) return p.fail(path, `unknown quest ${parent}`)
-      if (seen.has(parent)) return p.fail(path, 'quest prerequisites form a cycle')
-      seen.add(parent)
-      parent = previous.after
-    }
-  })
+  const checked = new Set<string>(), visiting = new Set<string>()
+  function validateQuest(q: CampaignQuest) {
+    if (checked.has(q.id)) return
+    const path = `quests.${q.id}`
+    if (visiting.has(q.id)) p.fail(path, 'quest prerequisites form a cycle')
+    if (q.id === opening ? q.after !== undefined || q.requires?.length || q.flags?.length : q.after === undefined) p.fail(path, 'only the opening quest starts without a prerequisite')
+    const dependencies = [...(q.after ? [q.after] : []), ...(q.requires ?? [])]
+    if (new Set(dependencies).size !== dependencies.length) p.fail(path, 'duplicate quest prerequisite')
+    visiting.add(q.id)
+    for (const id of dependencies) validateQuest(byQuest.get(id) ?? p.fail(path, `unknown quest ${id}`))
+    visiting.delete(q.id)
+    checked.add(q.id)
+  }
+  quests.forEach(validateQuest)
   const assets = p.list(o.assets, 'assets', (v, path) => {
     const a = p.object(v, path, ['id', 'file'])
     const file = p.text(a.file, `${path}.file`, 72)
@@ -374,23 +384,45 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     unique(p, 'workshop.recipes', recipes, (entry) => entry.part)
     return { after, port, missions, recipes }
   })()
-  const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, story, commands, ground)
+  const sectorReserved = new Set([...reserved, ...(dates?.flatMap((date) => [...date.milestones, date.regular]
+    .flatMap(({ scene, morning }) => morning ? [scene, morning] : [scene])) ?? [])])
+  const sectors = o.sectors === undefined ? undefined : parseCampaignSectors(o.sectors, byQuest, recruits ?? [], supply, story, scenes, sectorReserved)
+  if (sectors?.some((sector) => sector.shared && pairs.some((pair) => pair.id === `sector-${sector.id}`))) p.fail('sectors', 'duplicate saved night id')
+  const projects = o.projects === undefined ? undefined : p.list(o.projects, 'projects', (value, path) => {
+    const row = p.object(value, path, ['id', 'title', 'sector', 'alloy', 'days', 'production', 'upkeep'])
+    const sector = p.slug(row.sector, `${path}.sector`)
+    if (!sectors?.some(({ id }) => id === sector)) p.fail(`${path}.sector`, 'expected a sector command')
+    const supply = (key: 'production' | 'upkeep'): Supplies => {
+      const values = p.object(row[key], `${path}.${key}`, SUPPLY_KINDS)
+      return { fuel: p.int(values.fuel, `${path}.${key}.fuel`, 0, 10), provisions: p.int(values.provisions, `${path}.${key}.provisions`, 0, 10),
+        alloy: p.int(values.alloy, `${path}.${key}.alloy`, 0, 10) }
+    }
+    return { id: p.slug(row.id, `${path}.id`), title: p.text(row.title, `${path}.title`, 56), sector,
+      alloy: p.int(row.alloy, `${path}.alloy`, 1, 99), days: p.int(row.days, `${path}.days`, 1, 30), production: supply('production'), upkeep: supply('upkeep') }
+  }, 48)
+  if (projects) unique(p, 'projects', projects, ({ id }) => id)
+  const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
-    ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}) }
+    ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
 }
 
 function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQuest>, pairs: readonly CampaignPair[],
-  story: StoryPack, commands: ReadonlyMap<string, CommandEncounter>, ground: ReadonlyMap<string, GroundEncounter>): CampaignFinale {
-  const f = p.object(value, 'finale', ['cases', 'reveal', 'approach', 'breach', 'ending', 'preparation'])
+  sectors: readonly CampaignSector[], story: StoryPack, commands: ReadonlyMap<string, CommandEncounter>, ground: ReadonlyMap<string, GroundEncounter>): CampaignFinale {
+  const fields = ['cases', 'reveal', 'approach', 'breach', 'ending', 'preparation']
+  const f = p.object(value, 'finale', [...fields, 'muster', 'lastWatch'], fields)
   const cases = p.list(f.cases, 'finale.cases', (value, path) => {
-    const c = p.object(value, path, ['port', 'title', 'file', 'pair'], ['port', 'title', 'file'])
+    const c = p.object(value, path, ['port', 'title', 'file', 'pair', 'fileQuest'], ['port', 'title', 'file'])
     const port = p.slug(c.port, `${path}.port`), file = p.slug(c.file, `${path}.file`)
     const pair = c.pair === undefined ? undefined : p.slug(c.pair, `${path}.pair`)
     const matches = pairs.filter((candidate) => candidate.home?.port === port && (pair === undefined || candidate.id === pair))
-    if (matches.length !== 1) p.fail(`${path}.pair`, 'name the pair whose home defense files this case')
+    const fileQuest = c.fileQuest === undefined ? undefined : p.slug(c.fileQuest, `${path}.fileQuest`)
+    const debrief = fileQuest ? quests.get(fileQuest) : undefined
+    if (fileQuest ? pair !== undefined || debrief?.port !== port || debrief.encounter : matches.length !== 1) {
+      p.fail(path, 'name a local case debrief or the pair whose home defense files this case')
+    }
     if (!story.files[file]?.lines.length) p.fail(`${path}.file`, 'expected a nonempty evidence file')
-    return { port, file, title: p.text(c.title, `${path}.title`, 64), ...(pair === undefined ? {} : { pair }) }
+    return { port, file, title: p.text(c.title, `${path}.title`, 64), ...(pair === undefined ? {} : { pair }), ...(fileQuest ? { fileQuest } : {}) }
   }, 12)
   if (cases.length < 2) p.fail('finale.cases', 'expected multiple local cases')
   unique(p, 'finale.cases', cases, (entry) => entry.port)
@@ -400,7 +432,14 @@ function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQ
     return quests.get(id) ?? p.fail(`finale.${key}`, `unknown quest ${id}`)
   }
   const reveal = quest('reveal'), approach = quest('approach'), breach = quest('breach'), ending = quest('ending')
-  if (!reveal.port || reveal.encounter || approach.after !== reveal.id || breach.after !== approach.id || ending.after !== breach.id
+  const muster = f.muster === undefined ? undefined : quest('muster')
+  const lastWatch = f.lastWatch === undefined ? undefined : quest('lastWatch')
+  if (muster && (!sectors.length || muster.port !== reveal.port || muster.encounter)) p.fail('finale.muster', 'expected a local fleet briefing with sector commands')
+  if (lastWatch && (!muster || lastWatch.after !== ending.id || lastWatch.encounter || sectors.some((sector) => !sector.retirement
+    || quests.get(sector.retirement)?.after !== ending.id || !lastWatch.requires?.includes(sector.retirement)))) {
+    p.fail('finale.lastWatch', 'expected a dialogue after the fleet ending and every sector handover')
+  }
+  if (!reveal.port || reveal.encounter || approach.after !== (muster ?? reveal).id || breach.after !== approach.id || ending.after !== breach.id
     || [approach, breach, ending].some((q) => q.port !== reveal.port) || ending.encounter) {
     p.fail('finale', 'expected one local chain from briefing through approach, breach and ending')
   }
@@ -411,5 +450,6 @@ function parseFinale(p: P, value: unknown, quests: ReadonlyMap<string, CampaignQ
   const prep = p.object(f.preparation, 'finale.preparation', ['alloy', 'integrity'])
   const preparation = { alloy: p.int(prep.alloy, 'finale.preparation.alloy', 1, 99),
     integrity: p.int(prep.integrity, 'finale.preparation.integrity', 1, Math.min(10, 96 - command.transport)) }
-  return { cases, reveal: reveal.id, approach: approach.id, breach: breach.id, ending: ending.id, preparation }
+  return { cases, reveal: reveal.id, approach: approach.id, breach: breach.id, ending: ending.id, preparation,
+    ...(muster ? { muster: muster.id } : {}), ...(lastWatch ? { lastWatch: lastWatch.id } : {}) }
 }

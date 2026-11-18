@@ -1,4 +1,4 @@
-import { campaignHomeSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
+import { campaignSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
 import { applyBondEffect, giveRapport } from '../bonds/bonds'
 import { applyStep } from '../mission/director'
 import type { BondEffect } from '../story/runner'
@@ -10,8 +10,10 @@ function cleared(save: Save, book: CampaignBook, id: string): boolean {
 }
 
 export function dateAvailable(save: Save, book: CampaignBook, date: CampaignDate): boolean {
-  return cleared(save, book, date.after) && save.crew.some(({ outfit }) => outfit === date.companion)
-    && !campaignHomeSupport(book.pairs, save.story).ashore.has(date.companion)
+  if (!cleared(save, book, date.after) || !save.crew.some(({ outfit }) => outfit === date.companion)) return false
+  if (!campaignSupport(book, save).ashore.has(date.companion)) return true
+  const sector = book.sectors?.find(({ officer }) => officer === date.companion)
+  return !!sector && sector.port === (save.campaignSupply?.port ?? book.supply?.start)
 }
 
 export function dateProgress(save: Save, book: CampaignBook, date: CampaignDate) {
@@ -25,7 +27,7 @@ export function dateProgress(save: Save, book: CampaignBook, date: CampaignDate)
 export function creditCampaignDates(save: Save, book: CampaignBook): Save {
   let next = save
   for (const date of book.dates ?? []) {
-    if (!dateAvailable(next, book, date)) continue
+    if (!cleared(next, book, date.after) || !next.crew.some(({ outfit }) => outfit === date.companion)) continue
     for (const milestone of date.milestones) {
       if (!milestone.legacyFlag || !next.story.flags.includes(milestone.legacyFlag) || next.story.seen.includes(milestone.scene)) continue
       next = giveRapport({ ...next, story: seeScene(next.story, milestone.scene) }, book.story, date.companion, milestone.rapport)

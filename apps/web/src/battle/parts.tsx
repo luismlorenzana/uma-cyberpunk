@@ -84,6 +84,7 @@ export function ForecastCard({ state, f, onConfirm, onCancel, children }: { stat
     <Panel className="pointer-events-auto w-64">
       <div data-forecast className="space-y-1">
         {f.attack && <StrikeLine state={state} s={f.attack} title={f.cover ? `Covered by ${labelOf(state, f.cover)}` : 'Attack'} />}
+        {f.splash && <div className="text-[#ffb84d]">On hit · {f.splash.damage} splash to {f.splash.targets.map((id) => labelOf(state, id)).join(', ')}</div>}
         {f.crossfire.map((c) => <StrikeLine key={c.unit} state={state} s={c} title={`Crossfire (${c.how})`} />)}
         {f.counter && <StrikeLine state={state} s={f.counter} title="Counter" />}
         {f.tech && <div>{f.tech.tech}: {f.tech.chance}%</div>}

@@ -53,7 +53,7 @@ function checkInput(input: BattleInput): void {
     if (u.hold !== undefined && !['anchor', 'collar', 'none'].includes(u.hold)) throw new BattleInputError(`${path}.hold`, 'expected anchor, collar or none')
     if (u.holdHp !== undefined && !(Number.isSafeInteger(u.holdHp) && u.holdHp >= 1 && (u.hold === 'anchor' || u.hold === 'collar'))) throw new BattleInputError(`${path}.holdHp`, 'expected a positive integer on an Anchor or a Collar')
     if (u.faction !== undefined && u.faction !== 'steel-muster') throw new BattleInputError(`${path}.faction`, 'unknown faction')
-    checkLoadout(u, path)
+    checkLoadout(u, path, input.rulesVersion)
   })
   const squad = input.units.filter((u) => u.side === 'squad').length, enemies = input.units.length - squad
   if (squad < 1 || squad > TUNING.map.squad) throw new BattleInputError('units', `expected 1–${TUNING.map.squad} squad units`)

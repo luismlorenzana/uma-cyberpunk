@@ -46,7 +46,7 @@ export function parseCampaignRecruits(p: P, value: unknown, context: {
     outfits.add(outfit)
     const signOn = p.slug(row.signOn, `${path}.signOn`)
     const quest = byQuest.get(signOn)
-    if (!quest?.port || !reachable.has(quest.port) || quest.after !== opening || quest.encounter || usedQuests.has(signOn)) {
+    if (!quest?.port || !reachable.has(quest.port) || quest.after !== opening || quest.encounter || quest.requires?.length || quest.flags?.length || usedQuests.has(signOn)) {
       return p.fail(`${path}.signOn`, 'expected a unique dialogue quest after the opening at a port reachable on starting fuel')
     }
     usedQuests.add(signOn)

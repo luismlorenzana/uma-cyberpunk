@@ -73,6 +73,13 @@ Captain visits advance the companion's saved bond and settle the night. Save v15
 and owned parts. Fittings use the existing crew rig. Boarding saves its selected loadout with the rest of the
 frozen battle input.
 
+The Tier 1 campaign opens ten independent sign-ons after First Watch. A sector appointment moves the officer ashore
+and keeps her recorded relationships and rig. Five verified dossiers open the investigation. Ten commands ready the
+fleet, after which a bounded boarding squad and the command contributions are saved with the encounter. After the
+crossing, the handovers and Last Watch close the campaign. Save v16 also records port construction and per-officer
+training in each bridge station. The [content contract](../technical/campaign-content.md#tier-1-sectors-projects-and-fleet)
+describes pack reuse and the preserved legacy outcomes.
+
 ## The save
 
 **Save v6** (`packages/domain/src/save/save.ts`; v1 was CY3's, v2 added the story state in CY9, v3 the crew, the ship,

@@ -72,7 +72,7 @@ export function guardOf(input: UnitInput, state: Pick<UnitState, 'hp'>): number 
   return best
 }
 
-function checkWeapon(w: Weapon, path: string): void {
+function checkWeapon(w: Weapon, path: string, version: number): void {
   const [min, max] = w.range
   if (!(Number.isSafeInteger(min) && Number.isSafeInteger(max) && min >= 1 && max >= min)) throw new BattleInputError(`${path}.range`, 'expected [min, max] with 1 ≤ min ≤ max')
   if (w.band === 'melee' && (min !== 1 || max !== 1)) throw new BattleInputError(`${path}.range`, 'a Melee weapon reaches [1, 1]')
@@ -80,15 +80,16 @@ function checkWeapon(w: Weapon, path: string): void {
   if (w.band !== 'short' && w.hits !== 1) throw new BattleInputError(`${path}.hits`, 'only Short weapons hit more than once')
   if (!(w.power >= 1 && Number.isSafeInteger(w.power))) throw new BattleInputError(`${path}.power`, 'expected a positive integer')
   if (!(Number.isSafeInteger(w.accuracy) && w.accuracy >= 0 && w.accuracy <= 150)) throw new BattleInputError(`${path}.accuracy`, 'expected 0–150')
+  if (w.blast !== undefined && (version < 4 || w.blast !== 1)) throw new BattleInputError(`${path}.blast`, 'expected a version 4 blast weapon')
 }
 
 /** Refuses a rig the rules can't field: over Capacity, a two-handed weapon with something in the other hand, a Long
  * weapon in a hand, or a Launcher without its weapon and ammo. */
-export function checkLoadout(unit: UnitInput, path: string): void {
+export function checkLoadout(unit: UnitInput, path: string, version = 3): void {
   const l = unit.loadout
   for (const [hand, item] of [['leftHand', l.leftHand], ['rightHand', l.rightHand]] as const) {
     if (item?.kind === 'weapon') {
-      checkWeapon(item, `${path}.loadout.${hand}`)
+      checkWeapon(item, `${path}.loadout.${hand}`, version)
       if (item.band === 'long') throw new BattleInputError(`${path}.loadout.${hand}`, 'Long weapons fire from a Launcher Back unit')
       if (item.twoHanded && hand === 'leftHand') throw new BattleInputError(`${path}.loadout.leftHand`, 'a two-handed weapon goes in the right hand')
     }
@@ -96,8 +97,8 @@ export function checkLoadout(unit: UnitInput, path: string): void {
   }
   if (l.rightHand?.kind === 'weapon' && l.rightHand.twoHanded && l.leftHand) throw new BattleInputError(`${path}.loadout.leftHand`, 'the left hand is empty under a two-handed weapon')
   if (l.back.kind === 'launcher') {
-    if (!l.back.weapon || l.back.weapon.band !== 'long') throw new BattleInputError(`${path}.loadout.back.weapon`, 'a Launcher carries a Long weapon')
-    checkWeapon(l.back.weapon, `${path}.loadout.back.weapon`)
+    if (!l.back.weapon || (version < 4 && l.back.weapon.band !== 'long')) throw new BattleInputError(`${path}.loadout.back.weapon`, 'expected a compatible Back weapon')
+    checkWeapon(l.back.weapon, `${path}.loadout.back.weapon`, version)
     if (!(Number.isSafeInteger(l.back.ammo) && l.back.ammo! >= 1 && l.back.ammo! <= 9)) throw new BattleInputError(`${path}.loadout.back.ammo`, 'expected 1–9')
   } else if (l.back.weapon) throw new BattleInputError(`${path}.loadout.back.weapon`, 'only a Launcher carries a weapon')
   const load = loadOf(l), capacity = capacityOf(unit)

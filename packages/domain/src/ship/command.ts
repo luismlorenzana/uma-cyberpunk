@@ -5,6 +5,7 @@ export type CommandOrder = typeof COMMAND_ORDERS[number]
 export type ShieldSection = 'fore' | 'aft'
 export type Officer = { outfit: number; drills: number; trainedDay: number | null }
 export type CommandCrew = Partial<Record<CommandStation, Officer>>
+export type CommandTraining = Record<number, Partial<Record<CommandStation, Omit<Officer, 'outfit'>>>>
 
 export interface ShipThreat { section: ShieldSection; power: number; fighters: number }
 export interface CommandAssault { emitter: number; disabledFlag: string }
@@ -15,7 +16,7 @@ export interface CommandEncounter {
   enemy: number
   threats: ShipThreat[]
   calls: Record<CommandOrder, string>
-  assault?: CommandAssault & { call: string }
+  assault?: CommandAssault & { call: string; fighterTarget?: boolean }
 }
 
 interface CommandSetup {
@@ -25,7 +26,8 @@ interface CommandSetup {
   threats: ShipThreat[]
   officers: Record<CommandStation, number>
 }
-export type CommandInput = CommandSetup & ({ version: 1 } | { version: 2; assault: CommandAssault })
+export type CommandInput = CommandSetup & ({ version: 1 } | { version: 2; assault: CommandAssault }
+  | { version: 3; assault: CommandAssault; contributions: string[] })
 
 export interface CommandAction {
   order: CommandOrder
@@ -53,13 +55,13 @@ export const MAX_DRILLS = 2
 
 export function commandStart(input: CommandInput): CommandState {
   return { turn: 0, hull: COMMAND_HULL, transport: input.transport, enemy: input.enemy,
-    emitter: input.version === 2 ? input.assault.emitter : null, shields: { fore: 3, aft: 3 }, power: input.reactor, result: null, last: null }
+    emitter: input.version !== 1 ? input.assault.emitter : null, shields: { fore: 3, aft: 3 }, power: input.reactor, result: null, last: null }
 }
 
-export function commandActionError(state: CommandState, action: CommandAction): string | null {
+export function commandActionError(state: CommandState, action: CommandAction, input?: CommandInput): string | null {
   if (state.result) return 'The encounter has ended.'
   if (!COMMAND_ORDERS.includes(action.order)) return 'Choose an order.'
-  if (action.target && (action.order !== 'fire' || !state.emitter)) return 'The emitter can’t be targeted.'
+  if (action.target && (!state.emitter || action.order !== (input?.version === 3 ? 'strike' : 'fire'))) return 'The emitter can’t be targeted.'
   const pips = [action.shields, action.guns, action.fighters]
   if (pips.some((p) => !Number.isSafeInteger(p) || p < 0) || pips.reduce((sum, p) => sum + p, 0) > state.power) return 'Not enough reactor power.'
   if (action.order === 'brace' && action.shields === 0) return 'Power the shields.'
@@ -70,11 +72,11 @@ export function commandActionError(state: CommandState, action: CommandAction): 
 
 export function commandTurn(input: CommandInput, state: CommandState, action: CommandAction): CommandState {
   const threat = input.threats[state.turn]
-  if (!threat || commandActionError(state, action)) return state
+  if (!threat || commandActionError(state, action, input)) return state
   const { order } = action
   const { pilot, shields, gunnery, engineering } = input.officers
   const hit = action.guns + (order === 'fire' ? 2 + gunnery : 0) + (order === 'strike' ? 1 + action.fighters + pilot : 0)
-  const emitterHit = action.target === 'emitter' ? Math.min(hit, state.emitter ?? 0) : 0
+  const emitterHit = action.target === 'emitter' ? Math.min(input.version === 3 ? 1 + action.fighters + pilot : hit, state.emitter ?? 0) : 0
   const emitter = state.emitter === null ? null : state.emitter - emitterHit
   const enemy = action.target === 'emitter' ? state.enemy : Math.max(0, state.enemy - hit)
   const intercept = order === 'intercept' ? 1 + action.fighters + pilot : Math.max(0, action.fighters - 1)

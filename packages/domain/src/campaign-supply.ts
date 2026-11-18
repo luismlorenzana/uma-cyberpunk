@@ -69,6 +69,26 @@ export function jumpRoute(supply: CampaignSupply, route: SupplyRoute, capabiliti
   return port ? { ...supply, port, fuel: supply.fuel - route.fuel } : supply
 }
 
+export function nextCampaignStop(network: SupplyNetwork, from: string, to: string, capabilities: readonly string[]): string | null {
+  const stops = new Map([[from, { fuel: 0, first: from }]])
+  const open = new Set([from])
+  while (open.size) {
+    const [port] = [...open].sort((a, b) => stops.get(a)!.fuel - stops.get(b)!.fuel)
+    open.delete(port!)
+    const stop = stops.get(port!)!
+    if (port === to) return stop.first
+    for (const route of network.routes) {
+      if (route.needs && !capabilities.includes(route.needs)) continue
+      const next = route.from === port ? route.to : route.to === port ? route.from : null
+      const fuel = stop.fuel + route.fuel
+      if (!next || fuel >= (stops.get(next)?.fuel ?? Infinity)) continue
+      stops.set(next, { fuel, first: port === from ? next : stop.first })
+      open.add(next)
+    }
+  }
+  return null
+}
+
 /** A night first produces and pays locally; the ship then pays its provisions bill. */
 export function supplyNight(supply: CampaignSupply, network: SupplyNetwork, flags: readonly string[] = [],
   support?: { localAlloy: ReadonlyMap<string, number>; provisions: number }): CampaignSupply {

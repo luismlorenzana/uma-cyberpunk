@@ -31,7 +31,10 @@ export function groundInput(scenario: string, outfit: number, label: string, mai
       return [{ outfit: member.outfit, label: member.label, bands: slot.bands, loadout, stride: null }]
     })]
   const input = missionInput(scenario, squad, [], scenario)
-  return boss ? { ...input, units: input.units.map((unit) => unit.id === boss.unit ? { ...unit, label: boss.name } : unit) } : input
+  const mounted = input.units.some(({ loadout }) => loadout.back.kind === 'launcher' && loadout.back.weapon
+    && (loadout.back.weapon.band !== 'long' || loadout.back.weapon.blast))
+  const rules = mounted ? { ...input, rulesVersion: 4 } : input
+  return boss ? { ...rules, units: rules.units.map((unit) => unit.id === boss.unit ? { ...unit, label: boss.name } : unit) } : rules
 }
 
 /** Exercise results settle independently of mission rewards, supply costs and the day clock. */

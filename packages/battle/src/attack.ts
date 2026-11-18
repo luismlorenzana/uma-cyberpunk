@@ -312,7 +312,19 @@ export function resolveStrike(state: BattleState, s: Strike, role: AttackRole, c
     }
   }
   if (v2(state) && landed > 0 && s.weapon.type === 'F') setState(state, [tileOf(target)], 'fire', cues)
+  if (landed > 0) {
+    const amount = Math.max(1, Math.floor(s.damage / 2))
+    for (const neighbor of blastTargets(state, s, target)) {
+      harm(state, neighbor, 'core', amount, cues, (broke) => ({ kind: 'hit', unit: s.attacker, target: neighbor.id, part: 'core', amount, crit: false, broke }))
+    }
+  }
   return landed
+}
+
+export function blastTargets(state: Pick<BattleState, 'input' | 'units'>, strike: Strike, target: UnitState): UnitState[] {
+  if (state.input.rulesVersion < 4 || !strike.weapon.blast || strike.aim === 'hold') return []
+  return state.units.filter((unit) => unit.side === target.side && unit.id !== target.id && unit.status === 'active'
+    && distance(tileOf(unit), tileOf(target)) === 1)
 }
 
 /** A strike on a barrel, pipe or barrier: a barrel bursts into Oil (alight under an F weapon), a pipe into Wet, a barrier
