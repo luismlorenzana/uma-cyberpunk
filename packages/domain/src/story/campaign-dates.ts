@@ -87,5 +87,5 @@ export function parseCampaignDates(value: unknown, story: StoryPack, scenes: Rea
       return { quest: id, rapport: p.int(a.rapport, `${field}.rapport`, 1, 1000) }
     }, 24)
     return { companion, after: quest(d.after, `${path}.after`), milestones, regular, awards }
-  }, 24)
+  }, 60)
 }

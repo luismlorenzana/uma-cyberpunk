@@ -146,6 +146,12 @@ Tier 2's Tarsa crossing uses `after` and `requires` together to check all three 
 Other recruits, off-watch scenes and joint reports stay available through the crossing and supper.
 Keep Tier 1's quest, scene, encounter and asset IDs in the combined release.
 
+Tier 3 uses the same recruitment flow. The return-board conversation follows the Tier 2 supper and
+unlocks the next ten sign-ons. The through trip requires both Far Meridian handovers. Each joint report
+requires both local journeys, and earlier officers' calls and public reports depend on their sign-on and
+handover respectively. Review the return board, trip and home arrival in the same release as their art.
+The combined pack supports 60 Captain relationship arcs and 1,024 scene art entries.
+
 ## Training
 
 Set `encounter` on the Training quest and use `scenario: "training"` in its chapter mission. Give it one trainee in

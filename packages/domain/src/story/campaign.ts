@@ -271,7 +271,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }) }
-  })
+  }, 1024)
   unique(p, 'art', art, (a) => a.scene)
   const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset)
   const evening = o.evening === undefined ? undefined : (() => {
