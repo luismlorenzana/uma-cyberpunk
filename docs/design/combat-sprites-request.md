@@ -1,5 +1,12 @@
 # Combat sprites: the image request
 
+> **Next delivery (D64, 2026-11-18):** [CY59](../handoff/tasks/CY59.md) coordinates new playable
+> sheets with [CY57's composition contract](../handoff/tasks/CY57.md) and
+> [CY58's equipment](../handoff/tasks/CY58.md). Before expanding this earlier empty-hand request,
+> reconcile the actual frame/pose and attachment fixture, including two-handed grips and weapon-family
+> actions. Keep approved existing sheets and the owner's identity/walk review sequence. The next
+> acceptance checkpoint is an equipped squad in its real campaign boarding mission.
+
 > **For ChatGPT, image generation only (2026-11-13, D24).** This page asks for one thing: **chibi battle sprites of the
 > two pilot Umas in their combat armor**, helmet off and then helmet on, drawn as pose sheets. Cutting the sheets into
 > frames, alignment, the atlas, checks, publishing and how the game plays them come later, and aren't ChatGPT's. It's
