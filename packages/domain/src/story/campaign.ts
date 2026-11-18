@@ -341,8 +341,9 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   if (pairs.length && !evening) p.fail('pairs', 'recovery visits need an evening schedule')
   for (const pair of pairs) {
     const rooms = Object.values(pair.rooms).flatMap(({ move, visit, morning }) => [move, visit, morning])
-    const home = pair.home ? [pair.home.scene, pair.home.resettle.debrief, pair.home.stay.debrief, pair.home.visit] : []
-    for (const id of [...pair.recovery, pair.release, pair.bond.scene, pair.residency.scene, ...rooms, ...home]) reserved.add(id)
+    const home = pair.home ? [pair.home.scene, pair.home.stayScene, pair.home.resettle.debrief, pair.home.stay.debrief, pair.home.visit] : []
+    const shared = pair.sharedEvenings ? Object.values(pair.sharedEvenings).flatMap((route) => route.flatMap(({ visit, morning }) => [visit, morning])) : []
+    for (const id of [...pair.recovery, pair.release, pair.bond.scene, pair.residency.scene, ...rooms, ...shared, ...home]) if (id) reserved.add(id)
   }
   const dates = o.dates === undefined ? undefined : parseCampaignDates(o.dates, story, scenes, new Set(byQuest.keys()), reserved,
     new Set(evening?.visits.map(({ companion }) => companion)))

@@ -144,13 +144,33 @@ when the scene finishes. Reloads return to its start. The visit advances the day
 Keep pair IDs, milestone flags and scene IDs stable across revisions. The private `baseline-8` and `baseline-8-revised`
 releases use the same progress IDs with a different shared-morning line and illustration.
 
+## Shared evenings and home readiness
+
+`pairs[].sharedEvenings` supplies a `friendship` route and a `romance` route based on the pair's own bond decision.
+Each route has two ordered entries with a distinct `visit` and `morning`. The first visit includes the invitation and
+each participant's agreement. The follow-up and its morning establish that both crew are ready to discuss their home.
+Both residents must appear in all four scenes. Visits leave crew membership, quarters and individual Captain bonds intact.
+
+After release and move-in, both crew must be available aboard to share an evening. Solo dates and the existing room
+visit remain available alongside it. Completing the evening and its morning records one milestone. Both routes reach
+the same readiness at two milestones. The existing saved pair-night identity supports these visits and both mornings.
+
+If the pair has a `home`, also provide `home.stayScene`. It offers `stay` and a defer option. Once the pair reaches
+readiness, `home.scene` offers `resettle`, `stay` and defer. End each committed branch in its existing outcome flag.
+The defer branch sets neither flag and returns to the base without consuming the decision. Preserve previously filed
+outcomes. An older save with a pending decision can return to the campaign and continue toward readiness or stay aboard.
+
+The private `baseline-12-revised` draft includes both routes for all five pairs. The initial and revised packs use the
+same scene IDs and test a new invitation line and lounge image while the first evening is pending. The
+[shared evenings art handoff](../design/art-requests/shared-evenings.md) records the art slots and review beats.
+
 ## Homeworld return and defense
 
 A pair can define `home` at a supply `port` with a liberation outcome. Its `base` is a local dialogue quest after the
 pair's liberation quest. Its `defense` is a local ship-command quest after the base. The base opens once both crew
-members can attend and have completed their first morning. Both outcomes of `home.scene` unlock the defense.
+members can attend and have completed their first room or shared morning. Either residence outcome unlocks the defense.
 
-The choice uses the same two-branch format as the bond and room scenes. Each branch, `resettle` and `stay`, has a
+Each residence outcome, `resettle` and `stay`, has a
 `flag` and a `debrief`. The `jobs` list names one local assignment per pair member in casting order. After a resettled
 debrief, `visit` is available whenever the ship docks there. A visit can be replayed. Its effects apply once.
 
@@ -196,10 +216,12 @@ Write `captain` answers for tone and the existing `path` step at rank eight for 
 use `trust` and `heart`. The player chooses one evening plan. The visit records its scene and bond effects once,
 ends the day and queues its morning. The morning completes on the following day. Regular visits remain replayable.
 Quest awards use the companion and quest ID as their saved identity. Captain relationships use each crew member's
-bond record alongside the separate pair story milestones.
+bond record alongside the separate pair story milestones. Several crew can choose Heart with the Captain. Author
+each character's agreement in her own branch. A pair's own bond and cabin choices remain independent of that choice.
 
 `baseline-11-revised` uses five milestone evenings and Selden's convoy debrief. It carries the original first visit
-and morning forward at their released IDs.
+and morning forward at their released IDs. `baseline-12-revised` adds five-milestone arcs for the leads at the other
+four ports. Their sign-ons open visits and their liberation debriefs open the follow-up and grant rapport.
 
 ## Planet-funded squad preparation
 

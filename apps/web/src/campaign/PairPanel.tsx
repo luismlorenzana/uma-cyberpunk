@@ -18,6 +18,8 @@ export function PairPanel({ pair, story, pack, open }: { pair: CampaignPair; sto
     {!progress.released && <p className="text-sm">Recovery {progress.recovery}/{pair.recovery.length}{!next && ' · Visit the brig this evening'}</p>}
     {progress.bond && <p className="text-sm">{progress.bond === 'romance' ? 'Dating' : 'Friends'}</p>}
     {progress.moved && <p className="text-sm text-cyan-200">{progress.residency === 'shared' ? 'Shared quarters' : 'Separate cabins'}</p>}
+    {progress.shared && <p className="text-sm">Shared evenings {progress.shared.complete}/{progress.shared.total}
+      {progress.shared.next && ' · Available at the end of the day'}</p>}
     {next && <button type="button" onClick={() => open(next)} className="min-h-11 rounded-lg bg-[#2ee6ff] px-3 text-sm font-bold text-[#0b0d17]">{action}</button>}
   </section>
 }

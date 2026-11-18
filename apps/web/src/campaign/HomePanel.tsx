@@ -1,4 +1,4 @@
-import { homeOutcome, type CampaignHome, type CampaignPair, type StoryPack, type StoryState } from '@cyber/domain'
+import { homeOutcome, pairProgress, type CampaignHome, type CampaignPair, type StoryPack, type StoryState } from '@cyber/domain'
 import { nameOf } from '../story/runner'
 
 export function HomePanel({ pair, home, name, story, pack, next, defended, open }: {
@@ -6,7 +6,9 @@ export function HomePanel({ pair, home, name, story, pack, next, defended, open 
   next: string | null; defended: boolean; open: (scene: string) => void
 }) {
   const outcome = homeOutcome(home, story)
-  const action = next === home.scene ? 'Discuss returning home' : next === home.visit ? 'Visit the relay base' : 'Hear the defense debrief'
+  const shared = pairProgress(pair, story).shared
+  const action = next === home.scene ? 'Discuss returning home' : next === home.stayScene ? 'Discuss staying aboard'
+    : next === home.visit ? 'Visit the relay base' : 'Hear the defense debrief'
   return <section aria-label={`Home at ${name}`} className="space-y-2 rounded-xl border border-white/15 bg-white/5 p-3">
     <h2 className="font-display text-lg font-bold">{name} Base</h2>
     <p className="text-sm text-cyan-200">{defended ? 'Relay secured' : 'Civilian base reopened'}</p>
@@ -17,6 +19,7 @@ export function HomePanel({ pair, home, name, story, pack, next, defended, open 
       </li>)}
     </ul>}
     {outcome === 'stay' && <p className="text-sm">Staying aboard · Quarters and station assignments retained</p>}
+    {!outcome && shared?.next && <p className="text-sm">Share {shared.total - shared.complete} more {shared.total - shared.complete === 1 ? 'evening' : 'evenings'} to discuss resettlement.</p>}
     {next === home.scene && <p className="text-sm">Settling here frees both ship berths and stations. Staying keeps both crew members aboard.</p>}
     {(outcome === 'resettle' || next === home.scene) && <p className="text-sm">
       {next === home.scene && 'If they resettle · '}+{home.support.alloy} local alloy/night · −{home.support.provisions} ship provisions/night · +{home.support.relay} relay integrity
