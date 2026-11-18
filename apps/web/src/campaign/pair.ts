@@ -25,7 +25,8 @@ export function nextHomeScene(save: Save, book: CampaignBook, pair: CampaignPair
   const home = pair.home
   if (!home || save.campaignSupply?.port !== home.port) return null
   const port = book.supply?.ports.find(({ id }) => id === home.port)
-  if (!port?.liberation || !save.story.flags.includes(port.liberation.flag)) return null
+  const liberation = home.liberation ?? port?.liberation?.flag
+  if (!liberation || !save.story.flags.includes(liberation)) return null
   const outcome = homeOutcome(home, save.story)
   if (outcome) {
     const defense = book.quests.find(({ id }) => id === home.defense)
@@ -71,7 +72,7 @@ export function recordPairScene(save: Save, book: CampaignBook, pair: CampaignPa
   }
   const home = pair.home
   if (home && (scene === home.resettle.debrief || scene === home.stay.debrief)) {
-    const evidence = book.finale?.cases.find(({ port }) => port === home.port)?.file
+    const evidence = book.finale?.cases.find(({ port, pair: owner }) => port === home.port && (owner === undefined || owner === pair.id))?.file
     if (evidence) book.story.files[evidence]?.lines.forEach((_, index) => { story = fillFile(story, evidence, index) })
   }
   return { ...next, story }

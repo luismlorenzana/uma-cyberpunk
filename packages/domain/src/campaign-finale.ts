@@ -6,6 +6,7 @@ export interface CampaignCase {
   port: string
   title: string
   file: string
+  pair?: string
 }
 
 export interface CampaignFinale {
@@ -19,7 +20,7 @@ export interface CampaignFinale {
 
 export function campaignCases(book: CampaignBook, story: StoryState) {
   return book.finale?.cases.map((entry) => {
-    const home = book.pairs.find((pair) => pair.home?.port === entry.port)?.home
+    const home = book.pairs.find((pair) => pair.home?.port === entry.port && (entry.pair === undefined || pair.id === entry.pair))?.home
     const outcome = home && homeOutcome(home, story)
     const lines = book.story.files[entry.file]?.lines ?? []
     const found = story.files[entry.file] ?? []

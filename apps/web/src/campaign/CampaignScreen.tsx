@@ -18,7 +18,8 @@ import { availableSharedVisit, closePairScene, nextHomeScene, openPairScene, pai
 import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
 import { FinalePanel } from './FinalePanel'
-import { questAvailable, questComplete } from './quests'
+import { finishCampaignDialogue, questAvailable, questComplete } from './quests'
+import { RecruitmentPanel } from './RecruitmentPanel'
 import { SupplyPanel } from './SupplyPanel'
 import { settleCampaignDay } from './watch'
 import { creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
@@ -75,7 +76,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const day = save?.campaignDay
   const night = day?.pending
   const pendingPair = save?.pairScene
-  const complete = new Set(save ? loaded?.book.quests.filter((q) => questComplete(save, q)).map((q) => q.id) : [])
+  const complete = new Set(save && loaded ? loaded.book.quests.filter((q) => questComplete(save, q, loaded.book)).map((q) => q.id) : [])
   const network = loaded?.book.supply
   const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
   const port = supply && network?.ports.find((p) => p.id === supply.port)
@@ -86,6 +87,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const missionChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
   const mission = missionChapter && missionChapter.missions.find((m) => m.id === missionState?.id)
   const training = mission?.scenario === 'training'
+  const trainingQuest = training ? loaded?.book.quests.find(({ encounter }) => encounter === mission.id) : undefined
+  const optionalTraining = !!(trainingQuest && loaded?.book.recruits?.length
+    && !loaded.book.recruits.some(({ story }) => story.includes(trainingQuest.id)))
   const command = mission && loaded?.book.commands.get(mission.id)
   const ground = mission && loaded?.book.ground.get(mission.id)
   const trainee = missionState?.squad[0] ?? missionChapter?.leads[0]
@@ -134,11 +138,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
       }
       setActive(null)
     }}
-    finish={(effects) => void updateSave((s) => {
-      if (!questAvailable(s, loaded.book, active, s.campaignSupply?.port ?? supply?.port)) return s
-      const next = reduceEffects(s, effects)
-      return { ...next, story: seeScene(next.story, active.scene) }
-    }).then(() => setActive(null))}
+    finish={(effects) => void updateSave((s) =>
+      finishCampaignDialogue(s, loaded.book, active, effects, s.campaignSupply?.port ?? supply?.port)
+    ).then(() => setActive(null))}
     fail={(message) => { setError(message); setActive(null) }} />
 
   const pairScene = pendingPair && pairs.find((pair) => pair.id === pendingPair.pair)
@@ -180,7 +182,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
       })} />
   }
 
-  const available = loaded && save ? loaded.book.quests.filter((q) => questAvailable(save, loaded.book, q, supply?.port)) : []
+  const recruits = loaded && save && complete.has(loaded.book.opening) && !night && !pendingPair && !missionState && !eveningOpen
+    ? loaded.book.recruits ?? [] : []
+  const managedQuests = new Set(recruits.flatMap(({ signOn, story }) => [signOn, ...story]))
+  const available = loaded && save ? loaded.book.quests.filter((q) => !managedQuests.has(q.id) && questAvailable(save, loaded.book, q, supply?.port)) : []
   const evening = loaded?.book.evening
   const canRest = !!(day && !night && !pendingPair && !missionState && evening && complete.has(evening.after))
   const supplyPanel = loaded && save && supply && network && port && support && !night && !pendingPair && !missionState && !eveningOpen
@@ -251,7 +256,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
             <Link to="/campaign/account" className={button}>Account</Link>
           </nav>
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h1 className="font-display text-xl font-bold">Campaign preview</h1>
+            <h1 className="font-display text-xl font-bold">Campaign</h1>
             <button type="button" className={button} disabled={pending} onClick={() => setCheck((n) => n + 1)}>Check release</button>
           </div>
           {loaded && <p className="text-sm text-white/65" data-campaign-release>{loaded.release.release}{loaded.book.draft ? ' · Draft' : ''}</p>}
@@ -261,9 +266,13 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {(night || pendingPair) && !pending && !error && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved scene.</p>}
           {supply && !port && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved port.</p>}
           {missionState && (training || ground) && <button type="button" className={button} onClick={() => setGroundPaused(false)}>Resume {ground?.title ?? 'Training'}</button>}
+          {missionState && optionalTraining && <button type="button" className={button} onClick={() => void updateSave((s) =>
+            s.mission === missionState ? { ...s, mission: null } : s
+          )}>Leave Training</button>}
           {missionState && loaded && !training && !ground && <p role="alert" className="text-[#ffa7b7]">This release is missing the saved encounter.</p>}
           {save && !night && !pendingPair && !missionState && available.map((quest) => <button key={quest.id} type="button" onClick={() => setActive(quest)}
             className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
+          {loaded && save && recruits.length > 0 && <RecruitmentPanel save={save} book={loaded.book} recruits={recruits} port={port?.id} open={setActive} />}
           {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
           {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
             {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}

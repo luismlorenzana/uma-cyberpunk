@@ -49,7 +49,18 @@ when it ends. Closing mid-scene resumes from that scene's start. A content updat
 so the completed scene and choices carry forward. Coordinate a save compatibility change before publishing a new ID
 for a scene that already carries progress.
 
-## Recruitment Training
+## Recruitment and personal stories
+
+Add a `recruits` list to show a recruitment board after the shared opening. Set `supply.after` to `opening` so the
+civilian routes open at the same time. A recruit has her casting `outfit`, a short `request`, a `signOn` quest ID,
+and a `story` list of personal quest IDs in play order.
+
+Each sign-on is a dialogue quest that depends directly on the opening. Its port must be reachable on the starting
+drive and fuel. Give its scene a direct `join` step for that recruit. The first personal quest depends on her sign-on.
+Each later quest depends on the previous quest in her story. The board uses crew membership to recognize sign-ons
+already completed in an existing save. Preserve outfit, quest and scene IDs when revising a release.
+
+## Training
 
 Set `encounter` on the Training quest and use `scenario: "training"` in its chapter mission. Give it one trainee in
 `fixedSquad` or in the chapter's `leads`. The scene hands off to the mission briefing, then the Hangar supplies either a
@@ -57,9 +68,9 @@ great blade or a rifle and either a Bulwark or a Med unit. The battle freezes th
 Existing battle actions, Forecast and replay drive the exercise. A broken arm halves the two-handed blade's accuracy.
 The Bulwark and Med unit remain available with broken arms when they have enough Charge.
 
-Put the recruitment dialogue and `join` step in a quest after Training. A win clears Training once and unlocks that
-quest. A loss can retry the same exercise. The exercise advances neither the day nor supplies. Set `evening.after` to
-the recruitment quest to make the visit available once the trainee signs on.
+For an optional exercise, put Training after the trainee's sign-on and leave it outside the personal quest chain.
+Put a required exercise in the chain when it serves a specific story objective. A win clears Training once. A loss
+can retry the same exercise. The exercise advances neither the day nor supplies.
 
 ## Quarters and morning
 
@@ -169,6 +180,8 @@ same scene IDs and test a new invitation line and lounge image while the first e
 A pair can define `home` at a supply `port` with a liberation outcome. Its `base` is a local dialogue quest after the
 pair's liberation quest. Its `defense` is a local ship-command quest after the base. The base opens once both crew
 members can attend and have completed their first room or shared morning. Either residence outcome unlocks the defense.
+Two pairs can have homes at the same port. Each home supplies its own base and defense quests and can name its own
+ground victory flag in `liberation`. Omit that field to use the port's shared liberation flag.
 
 Each residence outcome, `resettle` and `stay`, has a
 `flag` and a `debrief`. The `jobs` list names one local assignment per pair member in casting order. After a resettled
@@ -186,8 +199,9 @@ while the home choice is pending. Keep local support available to later operatio
 
 ## Investigation and final operation
 
-`finale.cases` lists one `port`, player-facing `title` and Log `file` per local arc. Each port needs a pair with a home
-and defense. Either home debrief files every line once. The investigation lists the five cases and their evidence.
+`finale.cases` lists one `port`, player-facing `title` and Log `file` per system. Set `pair` to the home pair that
+owns the case when a port has several homes. Either of that pair's home debriefs files every line once. The
+investigation lists the five cases and their evidence.
 Completing all five debriefs is the only extra lock on the reveal. Dock at its port to read it. All travel and local
 quests retain their own prerequisites.
 
