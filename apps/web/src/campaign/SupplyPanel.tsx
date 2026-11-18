@@ -21,6 +21,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
   save: Save; network: SupplyNetwork; supply: CampaignSupply; port: SupplyPort; worlds: Record<string, World>; upkeep: number
 }) {
   const drives = shipCapabilities(save.ship)
+  const flags = save.story.flags
   const engine = moduleAt(save.ship, 'engines')
   const bay = driveBay(save)
   const liberated = port.liberation && save.story.flags.includes(port.liberation.flag) ? port.liberation : null
@@ -42,14 +43,15 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
       {mapped && network.routes.map((route) => {
         const from = worlds[route.from]!, to = worlds[route.to]!
         const dx = to.x! - from.x!, dy = (to.y! - from.y!) / 2.3
-        const locked = route.needs && !drives.includes(route.needs)
+        const locked = (route.needs && !drives.includes(route.needs)) || (route.flag && !flags.includes(route.flag))
         return <li key={`${route.from}:${route.to}`} aria-hidden="true" className={`pointer-events-none absolute origin-left border-t ${locked ? 'border-dashed border-white/35' : 'border-cyan-200/40'}`}
           style={{ left: `${from.x}%`, top: `${from.y}%`, width: `${Math.hypot(dx, dy)}%`, transform: `rotate(${Math.atan2(dy, dx)}rad)` }} />
       })}
       {network.ports.map((destination) => {
         const route = network.routes.find(({ from, to }) => (from === port.id && to === destination.id) || (to === port.id && from === destination.id))
-        const jump = route && jumpRoute(supply, route, drives)
-        const status = destination.id === port.id ? 'Docked' : !route ? 'Via another port' : route.needs && !drives.includes(route.needs)
+        const jump = route && jumpRoute(supply, route, drives, flags)
+        const status = destination.id === port.id ? 'Docked' : !route ? 'Via another port'
+          : route.flag && !flags.includes(route.flag) ? 'Awaiting clearance' : route.needs && !drives.includes(route.needs)
           ? `Needs ${CAPABILITY_NAME[route.needs]}` : `${supply.fuel < route.fuel ? 'Needs ' : ''}${route.fuel} fuel`
         return <li key={destination.id} className={mapped ? 'absolute -translate-x-1/2 -translate-y-1/2' : ''}
           style={mapped ? { left: `${worlds[destination.id]!.x}%`, top: `${worlds[destination.id]!.y}%` } : undefined}>
@@ -57,7 +59,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
             disabled={!jump || jump === supply} onClick={() => {
             if (!route) return
             change((current, stock) => {
-              const next = jumpRoute(stock, route, shipCapabilities(current.ship))
+              const next = jumpRoute(stock, route, shipCapabilities(current.ship), current.story.flags)
               return next === stock ? current : { ...current, campaignSupply: next }
             })
           }}><span className="block">{destination.name}</span><span className="block font-normal text-white/75">{status}</span></button>
