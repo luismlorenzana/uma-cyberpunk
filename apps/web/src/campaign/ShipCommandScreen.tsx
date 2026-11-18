@@ -7,6 +7,7 @@ import { finishMission, retry, toDeploy } from '../mission/director'
 import { updateSave } from '../save/game'
 import { assignOfficer, canLaunch, drillOfficer, issueCommand, launchCommand, settleCommand } from './command'
 import { campaignImage } from './load'
+import { CampaignThumbnail } from './CampaignThumbnail'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm font-semibold text-white disabled:opacity-50'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-3 text-sm font-bold text-[#0b0d17] disabled:opacity-50'
@@ -137,7 +138,8 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
           <progress className="block h-1.5 w-full accent-cyan-300" aria-label={label} value={value} max={max} /></div>)}
       </div>
       {state.last && <div role="status" className="text-sm" key={state.turn}>
-        <BridgePortrait asset={officer ? portraits?.get(officer.outfit) : undefined} />
+        <CampaignThumbnail asset={officer ? portraits?.get(officer.outfit) : undefined}
+          className="float-right h-16 w-14 rounded-md object-cover object-top" />
         <p className="text-xs font-semibold text-cyan-200">{officer ? names.get(officer.outfit) ?? 'Watch officer' : 'Watch officer'}</p>
         <p>{orderLine(encounter, state.last)}</p>
         <p className="text-white/70">{state.last.blocked} blocked · {state.last.intercepted} intercepted · {state.last.emitterHit || state.last.hit} {state.last.emitterHit ? 'emitter' : 'enemy'} damage · {state.last.hullDamage + state.last.transportDamage} friendly damage</p>
@@ -181,21 +183,4 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
       </div>
     </section>
   </div>
-}
-
-function BridgePortrait({ asset }: { asset?: CampaignReleaseFile }) {
-  const [url, setUrl] = useState<string>()
-  useEffect(() => {
-    setUrl(undefined)
-    if (!asset) return
-    let live = true
-    let image: string | undefined
-    void campaignImage(asset).then((result) => {
-      if (!live) return URL.revokeObjectURL(result)
-      image = result
-      setUrl(result)
-    }, () => {})
-    return () => { live = false; if (image) URL.revokeObjectURL(image) }
-  }, [asset])
-  return url ? <img src={url} alt="" className="float-right h-16 w-14 rounded-md object-cover object-top" /> : null
 }

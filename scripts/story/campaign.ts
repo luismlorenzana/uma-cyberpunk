@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
-import { closeSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
+import { closeSync, existsSync, mkdirSync, openSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, extname, join, resolve } from 'node:path'
 import { loadScenarios } from '../../packages/battle/src/scenarios'
 import {
@@ -7,6 +7,7 @@ import {
   type CampaignRelease, type CampaignReleaseFile,
 } from '../../packages/domain/src/story/index'
 import { readStoryFiles } from './files'
+import { derivePortraitCrops } from './portrait-crops'
 
 const sha = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex')
 
@@ -54,7 +55,7 @@ function verifiedArt(path: string): Buffer {
   return bytes
 }
 
-function source(dir: string) {
+async function source(dir: string) {
   const story = readStoryFiles(dir)
   if (!story) throw new Error(`${dir}: no story source`)
   if (story.problems.length) throw new Error(story.problems.map((p) => `${p.file}: ${p.message}`).join('\n'))
@@ -86,14 +87,19 @@ function source(dir: string) {
     const bytes = verifiedArt(join(dir, 'art', file))
     return { id, bytes, extension: extname(file) }
   })
-  return { files, assets }
+  const cropPlan = join(dir, 'portrait-crops.json')
+  if (!existsSync(cropPlan)) return { files, assets }
+  const derived = await derivePortraitCrops(files['campaign.json'] as object, book, assets, readJson(cropPlan))
+  const packedFiles = { ...files, 'campaign.json': derived.config }
+  parseCampaignBook(packedFiles)
+  return { files: packedFiles, assets: derived.assets }
 }
 
 /** Assemble an immutable release in the private preview directory. Selecting it is a separate operation. */
-export function packCampaign(dir: string, out: string, release: string): CampaignRelease {
+export async function packCampaign(dir: string, out: string, release: string): Promise<CampaignRelease> {
   const path = campaignReleasePath(release)
   if (!CAMPAIGN_RELEASE_PATH.test(path)) throw new Error('Release must be a lowercase slug')
-  const input = source(dir)
+  const input = await source(dir)
   const files = Object.entries(input.files).sort(([a], [b]) => a.localeCompare(b)).map(([name, value]) => {
     const bytes = Buffer.from(JSON.stringify(value))
     return { bytes, ref: { source: name, ...packed(bytes, '.json') } }
@@ -119,7 +125,7 @@ export function selectCampaign(out: string, release: string): CampaignRelease {
   return index
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename)) {
+async function main() {
   const [command, release] = process.argv.slice(2)
   const arg = (flag: string) => {
     const index = process.argv.indexOf(flag)
@@ -128,8 +134,8 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename
   const dir = resolve(arg('--dir') ?? 'content/campaign')
   const out = resolve(arg('--out') ?? 'content/campaign-release')
   try {
-    if (command === 'check') { source(dir); console.log('Campaign source and art are valid') }
-    else if (command === 'pack' && release) { const index = packCampaign(dir, out, release); console.log(`Packed ${index.release} with ${index.files.length} story files and ${index.assets.length} images`) }
+    if (command === 'check') { await source(dir); console.log('Campaign source and art are valid') }
+    else if (command === 'pack' && release) { const index = await packCampaign(dir, out, release); console.log(`Packed ${index.release} with ${index.files.length} story files and ${index.assets.length} images`) }
     else if (command === 'select' && release) { selectCampaign(out, release); console.log(`Preview now serves ${release}`) }
     else throw new Error('Use pnpm campaign check, pack <release>, or select <release>')
   } catch (error) {
@@ -137,3 +143,5 @@ if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename
     process.exitCode = 1
   }
 }
+
+if (process.argv[1] && resolve(process.argv[1]) === resolve(import.meta.filename)) void main()
