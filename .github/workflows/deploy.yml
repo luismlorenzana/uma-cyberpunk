@@ -32,6 +32,8 @@ env:
   MASTER_BUCKET: ${{ vars.MASTER_BUCKET || 'uma-platform-master-data' }}
   # The Cyberpunk universe's approved looks (D25): uma-platform's content bucket, read-only, its art/universes/cyberpunk/ only.
   LOOKS_BUCKET: ${{ vars.LOOKS_BUCKET || 'uma-platform-content' }}
+  CAMPAIGN_PACK_BUCKET: uma-platform-content
+  CAMPAIGN_PACK_PREFIX: campaign/cyberpunk
   # @luismlorenzana/* packages (uma-platform) on GitHub Packages.
   NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -135,6 +137,8 @@ jobs:
             FIRESTORE_DATABASE=${{ env.FIRESTORE_DATABASE }}
             MASTER_BUCKET=${{ env.MASTER_BUCKET }}
             LOOKS_BUCKET=${{ env.LOOKS_BUCKET }}
+            CAMPAIGN_PACK_BUCKET=${{ env.CAMPAIGN_PACK_BUCKET }}
+            CAMPAIGN_PACK_PREFIX=${{ env.CAMPAIGN_PACK_PREFIX }}
             ALLOWED_ORIGIN=${{ env.HOSTING_URL }}
             ALLOWED_EMAIL=${{ vars.ALLOWED_EMAIL }}
             BUILD_ID=${{ github.sha }}
@@ -158,5 +162,8 @@ jobs:
           curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "${HOSTING_URL}/api/health" > /dev/null
           test "$(curl --silent "${HOSTING_URL}/api/health" | python3 -c 'import json,sys; print(json.load(sys.stdin)["build"])')" = "${GITHUB_SHA}"
           test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${HOSTING_URL}/api/save")" = "401"
+          curl --fail --silent --show-error "${HOSTING_URL}/campaign" > /dev/null
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${HOSTING_URL}/api/campaign/save")" = "401"
+          test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${HOSTING_URL}/api/content/campaign/preview.json")" = "401"
           # A guard against a site mix-up: uma-rpg's own site still answers.
           curl --fail --silent --show-error https://uma-rpg.web.app/api/health > /dev/null
