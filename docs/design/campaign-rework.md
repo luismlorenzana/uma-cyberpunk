@@ -10,6 +10,12 @@ The Captain chooses one evening plan per day. Individual friendships and romance
 
 Five systems each have an early civilian berth and two separately opened operations. Ground tactics retain the board, forecast and AI. Main weapons and limited armor expansions give each fighter her own style. Optional Training is a crew exercise in the real campaign after sign-on. The day ends by player choice, with one nightly visit and upkeep resolution.
 
+The next presentation/authoring delivery is [the four-pillar plan](campaign-art-delivery.md) (D64).
+It starts with meeting, confession, seated cabin chat and spending the night, then carries coordinated
+development, Art and Story packets through management rooms, ship cinematics, composed equipment
+sprites and signature attacks. These are planned extensions on the current campaign, with draft
+content integrated alongside implementation and approved replacements using the same bindings.
+
 ## Story and art milestones
 
 | Playable delivery | Story | Art |

@@ -2,6 +2,10 @@
 
 ## Current packets
 
+**Next implementation: [CY48–CY50](#four-pillar-art-and-story-queue), Pillar 1's four splash scenes.**
+The new queue separates development, Art and Story and carries the work through all four pillars.
+CY36–CY37 collect its integrated review and device/release results.
+
 The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).
 
 | Packet | Work | Integrated delivery |
@@ -41,6 +45,34 @@ The private Tier 5 review opens with the receiver call after the Relief Watch br
 three handovers, a cleared route to Tarsa, and the hired-tender escort lead to either Lark landing and
 supper. The combined pack also includes the paired skiff scene, five joint reports, and the delivery
 receipts. Tier 5 uses exact-outfit review portraits while its commissioned looks are pending.
+
+## Four-pillar art and story queue
+
+The owner set the next direction in D64. The [shared delivery plan](../design/campaign-art-delivery.md)
+defines scene families, state and art handoffs, source ownership and campaign checkpoints. These are
+open implementation/authoring packets. Their creation does not complete the work or select a hosted
+pack. Start with Pillar 1's four scenes in one actual recruit's arc, then expand through the same
+Tier 1–5 campaign save. CY36 and CY37 remain the integrated-content and installed-iPhone exit checks.
+
+| Pillar | Development | Art authoring | Story authoring | First campaign checkpoint |
+|---|---|---|---|---|
+| 1 · Relationships | [CY48](tasks/CY48.md) · layers, confession and one-evening chat/stay flow | [CY49](tasks/CY49.md) · meeting, confession, seated cabin chat and bed compositions | [CY50](tasks/CY50.md) · staging, consent, branches and all fifty arc mappings | First Watch recruit through confession, stay/leave and morning; then second recruit and paired visit |
+| 2 · Management | [CY51](tasks/CY51.md) · reachable room and resource-state art | [CY52](tasks/CY52.md) · ship locations, bases and props | [CY53](tasks/CY53.md) · life aboard and civilian-management context | Real shipment funds a fitting/refit and its art reflects completion |
+| 3 · Ship combat | [CY54](tasks/CY54.md) · saved-result cinematic playback | [CY55](tasks/CY55.md) · crew/boss pilot-suit splashes and general combat kit | [CY56](tasks/CY56.md) · order, response and outcome cues | First escort and occupied approach, with loss/retry/resume |
+| 4 · Tactics figures | [CY57](tasks/CY57.md) · equipment composition and guest/larger figures | [CY58](tasks/CY58.md) · equipment; [CY59](tasks/CY59.md) · crew sprites; [CY60](tasks/CY60.md) · enemy sprites | [CY63](tasks/CY63.md) · equipment and actual encounter cast | Planet-funded rig is visible in the next real boarding battle |
+| 4 · Tactics signatures | [CY61](tasks/CY61.md) · selectable hero and warned boss actions | [CY62](tasks/CY62.md) · armored attack splashes | [CY63](tasks/CY63.md) · signature intent, warnings and lines | First recruit and actual boss use forecasted, resumable signature actions |
+
+**Execution.** CY48–CY50 work as one coordinated delivery, with draft lines and placeholder art wired
+early. After its first four-scene checkpoint, P2/P3 implementation can start while P1 authoring rolls
+through later tiers. CY57's contract can be prepared with equipment/sprite artists in parallel with
+that work; final sprite exports follow its executable fixture. CY61 follows the first composed
+boarding checkpoint. CY63 supplies the equipment/cast brief before bulk P4 art and the signature brief
+before final attack compositions. Packet numbers identify work; these dependencies set the order.
+
+Each cohort records code, Story and Art revisions and statuses separately in the private shared
+record. A mechanic or staging change updates all three briefs and affected bindings. Review happens
+in the real campaign, using disposable copies for repeated checks. Source images, named cast,
+dialogue, approvals and screenshots remain in ignored content and private publication paths.
 
 ## Earlier campaign handoff
 
