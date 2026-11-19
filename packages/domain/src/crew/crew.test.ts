@@ -76,7 +76,7 @@ describe('best for her role (TC18)', () => {
       expect(rigStats(rig, b).problem).toBeNull()
       expect(rigStats(rig, b).weapons.some((w) => w.mount !== 'Back unit')).toBe(true)
     }
-  })
+  }, 15_000) // Exhaustive role/band search can exceed five seconds on shared CI runners.
   it('suits the role: a Vanguard takes a shield, a Striker a melee weapon, a Gunner an Aim visor', () => {
     const b: Bands = { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 }
     const hand = (r: Rig) => [r.leftHand, r.rightHand].map((h) => (h ? PARTS_BY_ID.get(h) : undefined))

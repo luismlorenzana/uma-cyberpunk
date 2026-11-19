@@ -12,6 +12,15 @@ expressions and Story approval remain in CY49/CY50.
 
 ## Two deliveries and their boundaries
 
+The six-look crew wardrobe is queued in [CY65](../handoff/tasks/CY65.md) and
+[CY66](../handoff/tasks/CY66.md). The current reader accepts five roles; Ship Casual requires reader
+and context routing before the complete wardrobe can appear. The CY54 registry snapshot contains
+199 of 300 identity/role selectors. CY66 records the missing 101, verifies actual consumers and
+handles derived portrait/profile refresh where needed. These packets are prerequisites, not a
+claim that a full wardrobe push has occurred. [CY67](../handoff/tasks/CY67.md) separately takes the
+approved general-art completion handoff; [CY68](../handoff/tasks/CY68.md) and
+[CY69](../handoff/tasks/CY69.md) are General Art's remaining effect/environment briefs.
+
 | Delivery | Destination | What it changes |
 |---|---|---|
 | Authoring publisher | `art/universes/cyberpunk/` and `enemy-art/cyberpunk/` in the existing private content bucket | Approved looks, splashes, portrait recipes and supported categories visible to Platform |
