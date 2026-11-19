@@ -128,7 +128,7 @@ function CommandBoard({ encounter, input, state, relay, actions, portraits, obje
   objectiveArt?: CampaignReleaseFile; objectiveLabel?: string
 }) {
   const [pending, setPending] = useState(false)
-  const threat = input.threats[state.turn]
+  const threat = state.result ? undefined : input.threats[state.turn]
   const spent = action.shields + action.guns + action.fighters
   const problem = commandActionError(state, action, input)
   const event = state.last ? resolvedCommand(input, actions, state.turn) : null
@@ -141,7 +141,7 @@ function CommandBoard({ encounter, input, state, relay, actions, portraits, obje
   return <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
     <section className="space-y-2 rounded-lg border border-white/15 bg-[#131c30] p-3" aria-label="Tactical display">
       <div className="flex flex-wrap justify-between gap-1 text-sm font-bold">
-        <span>Wave {Math.min(state.turn + 1, input.threats.length)}/{input.threats.length}</span><span>Reactor {spent}/{state.power}</span>
+        <span>{state.result ? `Resolved · ${state.turn} orders` : `Wave ${state.turn + 1}/${input.threats.length}`}</span><span>{state.result ? `Reactor ${state.power}` : `Reactor ${spent}/${state.power}`}</span>
       </div>
       <p className="rounded-lg bg-[#58263d] px-2 py-1 text-sm font-semibold">{threat ? `Incoming ${threat.section} · ${threat.power} fire · ${threat.fighters} fighters` : 'Encounter resolved'}</p>
       {objectiveArt && <div className="flex min-h-14 items-center gap-3 rounded-lg bg-[#24314a] px-2" data-command-objective>
