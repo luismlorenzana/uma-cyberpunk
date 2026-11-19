@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**CY65–CY67 are implemented: six-look wardrobe, all 300 bindings, refreshed crops, approved general-art intake and publication. Next development is CY57–CY63 (Pillar 4). CY68/CY69 remain General Art briefs; CY49/CY50, CY52/CY53 and CY55/CY56 retain their scoped Art/Story acceptance.**
+**CY65–CY68 and CY69's first approved cohort are integrated: six-look wardrobe, all 300 bindings, general art, confirmed fighter strikes and the first scene-setting batch. Next development is CY57–CY63 (Pillar 4). CY69 retains its remaining setting/reuse audit; CY49/CY50, CY52/CY53 and CY55/CY56 retain scoped Art/Story acceptance.**
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -66,12 +66,12 @@ receipt records reader deployment, Platform-first publication and the conditiona
 | CY65 complete | Development with Story | Six roles in both consumers; explicit operational/private staging and public Ship Casual; no save reset |
 | CY66 complete | Development and Character Art publisher | All 300 native bindings and 600 crops; Platform-first publication; guarded expression/crop replacements and repeat no-op |
 | CY67 complete | Development with General Art | All 46 approved sources, including 25 newly integrated; independent resource props; nineteen locations and forty-six visual slots |
-| [CY68](tasks/CY68.md) | General Art in this repo | One confirmed fighter-strike effect; review further kit needs against actual slots |
-| [CY69](tasks/CY69.md) | General Art with Story | Classify 878 remaining review-backdrop bindings, reuse approved places first and lock the new environment list |
+| CY68 complete | General Art with Development | Approved fighter-strike source bound to confirmed target damage; normal/fast/skip, reload and missing-art checks |
+| [CY69](tasks/CY69.md) | General Art with Story | First approved nine-scene cohort integrated; 868 current review-backdrop bindings remain for setting/reuse review |
 
-CY52's completion/social sources are owner-approved and integrated. Nine reusable cutouts retain
-an exact shared Platform-family extension request; they are already usable in the game. CY68/CY69
-are General Art briefs. Character expressions, poses,
+CY52's completion/social sources and CY68/CY69's first approved batch are integrated. Ten reusable
+cutouts, including the new strike, retain an exact shared Platform-family extension request; they
+are already usable in the game. CY69 retains the wider environment brief. Character expressions, poses,
 boss/lieutenant portraits and splashes remain in `uma-art-authoring` under CY49/CY55; the completed
 six-look neutral wardrobe does not complete those scene poses. Canonical reusable equipment remains
 CY58's shared/character-art responsibility, with CY57 fixing sprite export mechanics before bulk work.
@@ -102,6 +102,11 @@ through later tiers. CY57's contract can be prepared with equipment/sprite artis
 that work; final sprite exports follow its executable fixture. CY61 follows the first composed
 boarding checkpoint. CY63 supplies the equipment/cast brief before bulk P4 art and the signature brief
 before final attack compositions. Packet numbers identify work; these dependencies set the order.
+
+CY58 equipment, CY59 playable figures, CY60 enemy figures and CY62 attack-art packets are already
+delivered to the Character Art repo's private `content/cyberpunk-four-pillars/` handoff. Canonical
+design work uses the actual catalog; bulk sprite/attachment exports follow CY57's executable format.
+CY63 supplies their encounter/equipment Story brief. See the [latest intake contract](../technical/campaign-art-intake.md).
 
 Each cohort records code, Story and Art revisions and statuses separately in the private shared
 record. A mechanic or staging change updates all three briefs and affected bindings. Review happens
@@ -226,6 +231,8 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY68 | Approved fighter-strike effect on the real campaign (D72). Native transparent source and one-layer composition follow committed damage only; actual pilot/profile, partial/disabled emitter, fast/skip, reload, missing art and old/new content swaps pass. No rules or save changes; shared-atlas export and CY37 physical-device acceptance remain separate. | _this commit_ |
+| CY69 · first approved cohort | Nine approved scene backgrounds verified (D72): four already current, five changed; three new environment sources and five approved reuses. All 559 prior Story files, 1,417 prior images, 300 wardrobe bindings and 600 crops remain exact. The packet stays open for 868 remaining review-backdrop bindings. | _this commit_ |
 | CY65 | Six-role wardrobe and reviewed scene routing (D71). Both Platform-index and explicit campaign consumers support Ship Casual, safe fallbacks and read-only outfit selection. Public ship, cabin, station and equipped staging remain distinct. | _this commit_ |
 | CY66 | All 300 approved neutral looks and 600 mechanical dialogue/profile crops (D71). Platform-first publishing preserves scripts, gameplay and saves; future native replacements refresh crops and require matching face recipes. Real fifty-recruit replay and both portrait consumers pass. | _this commit_ |
 | CY67 | All 46 approved general sources (25 newly integrated), nineteen locations and forty-six visual slots (D71). Fuel/Provisions props follow actual stock and loadable surplus, with reserve/capacity/night/reload checks. Nine reusable cutouts have an exact shared-family extension request; CY37 retains physical iPhone acceptance. | _this commit_ |

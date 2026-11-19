@@ -3,6 +3,10 @@
 Prepare the four stations, allocate reactor power and choose an order. Launch pays its displayed
 cargo cost once. The ship then resolves each order before showing its cinematic.
 
+Confirmed fighter strikes now show the approved strike-wing art beside the assigned pilot and
+result. It appears only when the strike damages its target. An emitter hit, emitter disablement
+and winning the approach remain separate outcomes; missing art keeps the factual display usable.
+
 The Captain's order leads into the assigned officer's response, the action and its confirmed result.
 The overlay keeps hull, shields, the protected craft and any emitter visible. **Skip to result**
 shortens the sequence; **Fast orders** goes straight to the result. **Continue** returns to the same

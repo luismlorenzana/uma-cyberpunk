@@ -102,6 +102,7 @@ the same. The fifty sign-ons were replayed through their actual campaign prerequ
 Phone-size Chrome at 844 × 390 with safe areas verifies both portrait consumers, early/later cohorts,
 the real public conversation, read-only wardrobe and stock depletion. Physical installed-iPhone
 acceptance remains CY37. Neutral wardrobe completion does not finish CY49/CY55 poses or expression
-approval. CY68's strike effect and CY69's setting/reuse audit remain open. The nine reusable general
-cutouts have a precise Platform-family extension request; campaign-local publication does not imply
+approval. [CY68 and CY69's first approved cohort](campaign-art-intake.md) are integrated; the remaining
+CY69 setting/reuse audit stays open. Ten reusable general cutouts, including the strike, have a precise
+Platform-family extension request; campaign-local publication does not imply
 that they are in a shared Platform gallery or atlas.
