@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**Next implementation: [CY48–CY50](#four-pillar-art-and-story-queue), Pillar 1's four splash scenes.**
+**Next implementation: CY51–CY53 (Pillar 2), while CY49/CY50 finish the relationship art and story review.**
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -51,8 +51,8 @@ receipts. Tier 5 uses exact-outfit review portraits while its commissioned looks
 
 The approved-art publishing pipeline is implemented (CY64, D65). See the
 [publishing runbook](../technical/campaign-art-publishing.md) for scoped authoring pushes, private
-bindings, candidate verification and recovery. CY48 retains its relationship-flow work; the optional
-layer contract and portrait-over-CG policy are now available to CY49/CY50.
+bindings, candidate verification and recovery. CY48 implements the full reserved evening, stay/leave and morning flow (D67).
+CY49/CY50 retain final art, source approval and integrated authoring review.
 
 ## Four-pillar art and story queue
 
@@ -64,7 +64,7 @@ Tier 1–5 campaign save. CY36 and CY37 remain the integrated-content and instal
 
 | Pillar | Development | Art authoring | Story authoring | First campaign checkpoint |
 |---|---|---|---|---|
-| 1 · Relationships | [CY48](tasks/CY48.md) · layers, confession and one-evening chat/stay flow | [CY49](tasks/CY49.md) · meeting, confession, seated cabin chat and bed compositions | [CY50](tasks/CY50.md) · staging, consent, branches and all fifty arc mappings | First Watch recruit through confession, stay/leave and morning; then second recruit and paired visit |
+| 1 · Relationships | CY48 complete (D67) · layers, confession and one-evening chat/stay flow | [CY49](tasks/CY49.md) · meeting, confession, seated cabin chat and bed compositions | [CY50](tasks/CY50.md) · staging, consent, branches and all fifty arc mappings | First Watch recruit through confession, stay/leave and morning; then second recruit and paired visit |
 | 2 · Management | [CY51](tasks/CY51.md) · reachable room and resource-state art | [CY52](tasks/CY52.md) · ship locations, bases and props | [CY53](tasks/CY53.md) · life aboard and civilian-management context | Real shipment funds a fitting/refit and its art reflects completion |
 | 3 · Ship combat | [CY54](tasks/CY54.md) · saved-result cinematic playback | [CY55](tasks/CY55.md) · crew/boss pilot-suit splashes and general combat kit | [CY56](tasks/CY56.md) · order, response and outcome cues | First escort and occupied approach, with loss/retry/resume |
 | 4 · Tactics figures | [CY57](tasks/CY57.md) · equipment composition and guest/larger figures | [CY58](tasks/CY58.md) · equipment; [CY59](tasks/CY59.md) · crew sprites; [CY60](tasks/CY60.md) · enemy sprites | [CY63](tasks/CY63.md) · equipment and actual encounter cast | Planet-funded rig is visible in the next real boarding battle |
@@ -200,6 +200,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY48 | Reserved cabin evenings and mornings (D67). All fifty Captain arcs and ten existing shared sector visits use the draft Story export and approved room/neutral art. Save v17 freezes choices, rotation and rewards. Real service replays cover concurrent Hearts and all five intakes; Chrome verified the saved invitation, bed and morning at phone size. CY49/CY50 keep final pose/expression and Story approval; CY37 keeps physical iPhone review. | _this commit_ |
 | CY64 | Approved Cyberpunk art to Platform and the game (D65). Scoped source verification, immutable art-only candidates, conditional selection, private receipts and rollback preserve campaign story/save IDs. Farm retains its existing release path. CY48 layer/policy foundation is additive; full evening flow remains open. | _this commit_ |
 | CY30 | Planet-funded squad prep (D52). The Selden Hangar draws Alloy from a port shipment and fits a Guard arm and Missile pod into the saved crew rig. Chrome verified the purchase, reload, boarding Forecast, loss and free retry. The headless run won with both crafted parts fitted. | _this commit_ |
 | CY31 | [Shared evenings and home readiness](../technical/campaign-content.md#shared-evenings-and-home-readiness) (D53). The five local leads have Captain arcs and all five pairs can share evenings. Private replays verified concurrent Hearts, both routes to readiness, both residence outcomes and the case gates. Chrome verified deferral, resettlement and a pending visit across the draft release change. Approved art, dialogue and physical iPhone review carry into CY36–CY37. | _this commit_ |

@@ -1,4 +1,4 @@
-import { campaignSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
+import { awayMembers, campaignSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
 import { applyBondEffect, giveRapport } from '../bonds/bonds'
 import { applyStep } from '../mission/director'
 import type { BondEffect } from '../story/runner'
@@ -10,6 +10,7 @@ function cleared(save: Save, book: CampaignBook, id: string): boolean {
 }
 
 export function dateAvailable(save: Save, book: CampaignBook, date: CampaignDate): boolean {
+  if (awayMembers(save.operations, save.squads).includes(date.companion)) return false
   if (!cleared(save, book, date.after) || !save.crew.some(({ outfit }) => outfit === date.companion)) return false
   if (!campaignSupport(book, save).ashore.has(date.companion)) return true
   const sector = book.sectors?.find(({ officer }) => officer === date.companion)

@@ -1,10 +1,12 @@
+import type { CabinNight } from './campaign-cabins'
+
 export type SoloNight =
   | { kind: 'visit'; companion: number; scene: string; morning: string | null }
   | { kind: 'morning'; companion: number; scene: string }
 export type PairNight =
   | { kind: 'pair-visit'; pair: string; scene: string; morning: string | null }
   | { kind: 'pair-morning'; pair: string; scene: string }
-export type CampaignNight = SoloNight | PairNight
+export type CampaignNight = SoloNight | PairNight | CabinNight
 export type CampaignVisit = Extract<CampaignNight, { kind: 'visit' | 'pair-visit' }>
 
 export interface CampaignDay<N extends CampaignNight = CampaignNight> {
@@ -22,6 +24,7 @@ export function startCampaignNight(day: CampaignDay, visit: CampaignVisit | null
 
 export function finishCampaignNightScene(day: CampaignDay, finishedDay: number, finished: CampaignNight): CampaignDay {
   const pending = day.pending
+  if (pending?.kind === 'cabin' || finished.kind === 'cabin') return day
   if (day.day !== finishedDay || !pending || pending.kind !== finished.kind || pending.scene !== finished.scene) return day
   if (('pair' in pending && (!('pair' in finished) || pending.pair !== finished.pair))
     || ('companion' in pending && (!('companion' in finished) || pending.companion !== finished.companion))) return day

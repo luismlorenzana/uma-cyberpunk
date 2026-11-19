@@ -7,7 +7,8 @@ is required for a replacement that the deployed presentation format already supp
 
 The source of truth for scenes and layering is the [campaign contract](campaign-content.md).
 CY48's optional composition supports room plates/poses and a talking portrait over the illustration.
-The complete relationship flow, its approved art and new overnight scripts remain in CY48–CY50.
+The relationship flow and draft overnight scripts are implemented in CY48. Final character poses,
+expressions and Story approval remain in CY49/CY50.
 
 ## Two deliveries and their boundaries
 

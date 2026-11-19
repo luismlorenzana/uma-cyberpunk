@@ -35,6 +35,7 @@ function Bust({ pack, speaker }: { pack: StoryPack; speaker: Speaker }) {
 }
 
 export interface ScenePresentation {
+  location?: string
   backdrop?: string
   portraits: ScenePortraitImage[]
   illustrations?: Record<string, string>
@@ -48,7 +49,9 @@ function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentation['com
     onError={() => setFailed(true)} data-scene-layer={layer.asset} />
 }
 
-export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter }: {
+export interface SceneDecision { selected?: number; commit: (index: number) => Promise<void> }
+
+export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit }: {
   pack: StoryPack
   scene: Scene | { id: string; place: string; steps: Step[] }
   squad: readonly number[]
@@ -59,6 +62,8 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   onBond?: (effect: BondEffect) => void
   presentation?: ScenePresentation
   pathFooter?: string
+  decision?: SceneDecision
+  onExit?: () => void
 }) {
   const captain = useGame((g) => g.save?.captain) ?? DEFAULT_CAPTAIN
   const fill = (text: string) => fillCaptain(text, captain)
@@ -71,6 +76,10 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   const saidLine = said && <div data-said className="mx-auto mb-1 max-w-[80%] rounded-lg bg-[#0b0d17]/80 px-3 py-2 text-[14px]">{said.speaker && <b>{said.speaker}: </b>}{said.text}</div>
   const [auto, setAuto] = useState(false)
   const [showLog, setShowLog] = useState(false)
+  const [savingChoice, setSavingChoice] = useState(false)
+  const [choiceError, setChoiceError] = useState<string | null>(null)
+  const decisionRef = useRef(decision)
+  decisionRef.current = decision
   const skipping = useRef(false)
   const resolve = useRef<((v: number) => void) | null>(null)
   const autoRef = useRef(auto)
@@ -97,7 +106,23 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       },
       illustration: (asset) => { if (live) setIllustration(asset) },
       wait: async (ms) => { await new Promise((r) => setTimeout(r, Math.min(ms, 2000))) },
-      choose: (options) => ask({ kind: 'choice', options }),
+      choose: async (options) => {
+        const saved = decisionRef.current?.selected
+        if (saved !== undefined) return saved
+        while (live) {
+          const index = await ask({ kind: 'choice', options })
+          if (!live) return index
+          try {
+            setSavingChoice(true)
+            await decisionRef.current?.commit(index)
+            setChoiceError(null)
+            return index
+          } catch (error) {
+            setChoiceError(error instanceof Error ? error.message : 'Could not save. Try again.')
+          } finally { if (live) setSavingChoice(false) }
+        }
+        return 0
+      },
       call: (call) => ask({ kind: 'call', call }),
       battle: async (mission) => { await ask({ kind: 'battle', mission }); await onBattle(mission) },
       effect: (step) => { if (live) onEffect(step) },
@@ -126,8 +151,9 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
         preserveAspectRatio="xMidYMid meet" data-scene-composition>
         {composition.layers.map((layer) => <CompositionLayer key={layer.url + ':' + layer.asset} layer={layer} />)}
       </svg>}
-      <div className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{scene.place}</div>
+      <div className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{presentation?.location ?? scene.place}</div>
       <div className="absolute right-3 top-3 flex gap-2" style={{ marginTop: 'var(--inset-top)', marginRight: 'var(--inset-right)' }}>
+        {onExit && <button type="button" onClick={onExit} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Leave tonight</button>}
         <button type="button" onClick={() => setAuto((a) => !a)} className={`min-h-11 rounded-md px-3 text-[13px] font-bold ${auto ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>Auto</button>
         <button type="button" onClick={skip} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Skip</button>
         <button type="button" onClick={() => setShowLog(true)} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Log</button>
@@ -145,8 +171,9 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       )}
       {prompt?.kind === 'choice' && (
         <div data-choice style={promptInsets} className="absolute inset-x-0 bottom-6 flex flex-col items-center gap-2">
+          {choiceError && <p role="alert" className="rounded bg-[#0b0d17]/95 px-3 py-1 text-sm text-[#ffa7b7]">{choiceError}</p>}
           {prompt.options.map((o, i) => (
-            <button key={i} type="button" onClick={() => advance(i)} className="min-h-12 min-w-64 rounded-lg border border-[#2ee6ff]/50 bg-[#0b0d17]/90 px-4 font-semibold">
+            <button key={i} type="button" disabled={savingChoice} onClick={() => advance(i)} className="min-h-12 min-w-64 rounded-lg border border-[#2ee6ff]/50 bg-[#0b0d17]/90 px-4 font-semibold disabled:opacity-50">
               {fill(o.text)}{o.lead && <span className="ml-2 rounded bg-[#2ee6ff]/20 px-1.5 text-[11px] font-bold text-[#2ee6ff]">Lead</span>}
             </button>
           ))}

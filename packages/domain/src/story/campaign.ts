@@ -16,6 +16,8 @@ import { parseCampaignRecruits, type CampaignRecruit } from './campaign-recruits
 import type { CampaignSector } from '../campaign-sectors'
 import { parseCampaignSectors } from './campaign-sectors'
 import type { PortProject } from '../campaign-projects'
+import type { CabinEvening } from '../campaign-cabins'
+import { parseCabinEvenings } from './campaign-cabins'
 
 export interface CampaignQuest {
   id: string
@@ -69,6 +71,7 @@ export interface CampaignBook {
   ground: ReadonlyMap<string, GroundEncounter>
   pairs: CampaignPair[]
   dates?: CampaignDate[]
+  cabinEvenings?: CabinEvening[]
   workshop?: CampaignWorkshop
   finale?: CampaignFinale
 }
@@ -182,7 +185,7 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     const source = p.text(o.source, `${path}.source`, 100)
     if (!STORY_FILE.test(source)) p.fail(`${path}.source`, 'expected a campaign or story source file')
     return { source, ...entry(o, path, false) }
-  })
+  }, 1024)
   const assets = p.list(index.assets, 'assets', (v, path) => {
     const o = p.object(v, path, ['id', 'path', 'sha256', 'bytes'])
     return { id: p.slug(o.id, `${path}.id`), ...entry(o, path, true) }
@@ -196,7 +199,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -295,7 +298,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
       return { width, height, portraits: c.portraits as 'show' | 'hide', layers }
     })()
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}) }
-  }, 2048)
+  }, 4096)
   unique(p, 'art', art, (a) => a.scene)
   const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset)
   const evening = o.evening === undefined ? undefined : (() => {
@@ -446,9 +449,12 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   }, 48)
   if (projects) unique(p, 'projects', projects, ({ id }) => id)
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
+  const cabinEvenings = o.cabinEvenings === undefined ? undefined : parseCabinEvenings(o.cabinEvenings, { dates, pairs, sectors, scenes },
+    new Set([...sectorReserved, ...(sectors?.flatMap(s => s.shared ? [s.shared.visit, s.shared.morning] : []) ?? [])]))
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
     ...(commandArt ? { commandArt } : {}),
     ...(portraitFaces ? { portraitFaces } : {}),
+    ...(cabinEvenings ? { cabinEvenings } : {}),
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
     ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
 }
