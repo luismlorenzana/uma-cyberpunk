@@ -6,6 +6,9 @@
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
+Art work follows the [approved art and visual world direction](../design/art-direction.md) (D66).
+The private shared register records the approved general-art source hashes and campaign integration.
+
 The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).
 
 | Packet | Work | Integrated delivery |

@@ -6,6 +6,10 @@ recruit's meeting, confession, seated cabin conversation and stay overnight. The
 extend that same campaign. The [queue](../handoff/README.md#four-pillar-art-and-story-queue) contains
 separate development, art-authoring and story-authoring packets.
 
+Use the [approved art and visual world direction](art-direction.md) for character/environment style,
+color, lived-in room dressing and reference review. The owner approved that direction and the private
+general-art source set on 2026-11-19 (D66).
+
 This is an implementation plan. Fields and actions described here become supported contracts only
 when their development packet implements, documents and checks them. Existing rules are recorded in
 the [game manual](../game/README.md) and [campaign format](../technical/campaign-content.md).
