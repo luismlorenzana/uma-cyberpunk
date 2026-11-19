@@ -14,6 +14,7 @@ this before changing anything.
 3. `docs/game/`: the manual of the game as built. It is empty until the hello app (CY3); after that, look up any rule or
    screen there first.
 4. `docs/decisions.md` (append-only, from D1), and the cross-game plan in uma-platform `docs/architecture.md`.
+5. For art work, `docs/design/art-direction.md`: the approved rendering, visual world and reference-review standard.
 
 ## Hard rules
 
