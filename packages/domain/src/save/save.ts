@@ -3,6 +3,7 @@
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
 // takes any version this game ever wrote and returns the current one, and never moves `account.updatedAt`.
 
+import { MANAGEMENT_EVENTS, type CampaignManagementState, type ManagementReceipt } from '../campaign-management'
 import type { Role } from '@cyber/battle'
 import { CAPTAIN_NAME_MAX, DEFAULT_CAPTAIN, PRONOUNS, ROMANCE, type Captain, type Pronouns, type Romance } from '../captain'
 import { BOND_MAX, BOND_PATHS, BOND_TUNING, newBond, type Bond, type BondPath } from '../crew/bonds'
@@ -31,8 +32,9 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } 
  * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17); 10 squads, operations and faction
  * standing (CY18); 11 the campaign day and pending scenes (CY21); 12 the supply ledger (CY23); 13 command officers (CY24);
  * 14 saved pair scenes (CY26); 15 the campaign workshop (CY30); 16 port projects and officer specialties (CY32–CY33);
- * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48). */
-export const SAVE_VERSION = 17
+ * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
+ * 18 management receipts and independent first-use/report acknowledgements (CY51). */
+export const SAVE_VERSION = 18
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -193,7 +195,12 @@ export interface SaveV17 extends Omit<SaveV16, 'version'> {
   cabinVisits: Record<string, number>
 }
 
-export type Save = SaveV17
+export interface SaveV18 extends Omit<SaveV17, 'version'> {
+  version: 18
+  management: CampaignManagementState
+}
+
+export type Save = SaveV18
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -222,8 +229,10 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10)))))))
+  return migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))
 }
+
+export const migrateV17 = (save: SaveV17): SaveV18 => ({ ...save, version: 18, management: { sequence: 0, receipts: [], acknowledged: [] } })
 
 export const migrateV16 = (save: SaveV16): SaveV17 => ({ ...save, version: 17, cabinVisits: {} })
 
@@ -669,6 +678,37 @@ export function versionOf(value: unknown): number {
 /** Parses a save of any version this game has written and returns the current one, migrating as it goes. A version from
  * a newer app is refused, so an old client never half-reads a newer save. Never moves `account.updatedAt`. */
 export function parseSave(value: unknown, path = 'save'): Save {
+  const version = versionOf(value)
+  if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
+  if (version < 18) {
+    if (value && typeof value === 'object' && 'management' in value) throw new SaveParseError(path, 'unknown version 18 keys')
+    return migrateV17(parseSaveV17(value, path))
+  }
+  const raw = object(value, path, Object.keys(value as Obj))
+  const { management, ...older } = raw
+  const base = parseSaveV17({ ...older, version: 17 }, path)
+  const state = object(management, `${path}.management`, ['sequence', 'receipts', 'acknowledged'])
+  const sequence = count(state.sequence, `${path}.management.sequence`)
+  if (!Array.isArray(state.receipts) || state.receipts.length > 32) throw new SaveParseError(path, 'expected at most 32 management receipts')
+  let previous = 0
+  const receipts: ManagementReceipt[] = state.receipts.map((value, index) => {
+    const field = `${path}.management.receipts[${index}]`
+    const row = object(value, field, ['sequence', 'day', 'kind', 'subject', 'port', 'destination', 'amount', 'officer'])
+    const number = count(row.sequence, field), day = count(row.day, field), amount = count(row.amount, field)
+    if (!number || number <= previous || number > sequence || !day || day > base.campaignDay.day || !amount) throw new SaveParseError(field, 'invalid receipt order, day or amount')
+    if (!MANAGEMENT_EVENTS.includes(row.kind as ManagementReceipt['kind']) || !['ship', 'hangar', 'port'].includes(row.destination as string)) throw new SaveParseError(field, 'invalid receipt kind or destination')
+    previous = number
+    const officer = row.officer === undefined ? undefined : count(row.officer, field)
+    if (officer === 0) throw new SaveParseError(field, 'expected an officer id')
+    return { sequence: number, day, amount, kind: row.kind as ManagementReceipt['kind'], subject: id(row.subject, field),
+      port: row.port === null ? null : id(row.port, field), destination: row.destination as ManagementReceipt['destination'], ...(officer ? { officer } : {}) }
+  })
+  const acknowledged = slugs(state.acknowledged, `${path}.management.acknowledged`)
+  if (acknowledged.length > 2048 || new Set(acknowledged).size !== acknowledged.length) throw new SaveParseError(path, 'invalid management acknowledgements')
+  return { ...base, version: 18, management: { sequence, receipts, acknowledged } }
+}
+
+function parseSaveV17(value: unknown, path: string): SaveV17 {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version < 17) {

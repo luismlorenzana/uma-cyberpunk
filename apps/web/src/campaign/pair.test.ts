@@ -93,7 +93,7 @@ describe('Selden pair recovery', () => {
   })
 
   it('keeps a solo visit when migrating a v13 save', () => {
-    const { cabinVisits: _cabins, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...previous } = captured()
+    const { management: _management, cabinVisits: _cabins, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...previous } = captured()
     const pending = { kind: 'visit', companion: first, scene: 'solo', morning: null }
     const migrated = parseSave({ ...previous, version: 13, campaignDay: { day: 4, pending } })
     expect(migrated.campaignDay).toEqual({ day: 4, pending })

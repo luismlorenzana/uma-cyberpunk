@@ -156,3 +156,11 @@ A scene's `refit` step (`{ "refit": true }`) adds a deck, to six. The stand-in's
 | `wallet` | `{ credits, alloy, data }` |
 
 A v6 save migrates on the device with `account.updatedAt` untouched.
+
+## Campaign locations and work (CY51)
+
+The combined campaign’s **Ship and port** entries open the current Bridge, Cargo, Hangar, Engineering and local civilian facilities. The picture, state badge and live ledger follow the same save. A funded project shows nights remaining; only completed work is operational. Engineering lists installed levels and every active ship build.
+
+Cargo exports leave local reserve and the next upkeep untouched. Ship Alloy pays for refits/projects; **Send Alloy to Hangar** supplies recipes separately. Building a part puts it in stock; fitting it changes the selected aboard crew member’s actual boarding rig. Optional handovers can be read once without paying another cost or passing another night. **Look around** revisits the room without starting a visit or changing consent.
+
+Rooms without an installed module or actual custody/residence are not offered. Some room and state illustrations use declared temporary reuse while CY52 authoring continues. See the [location inventory](../technical/campaign-management.md) for exact availability and save behavior.

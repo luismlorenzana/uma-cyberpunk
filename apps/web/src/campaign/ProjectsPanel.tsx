@@ -1,4 +1,4 @@
-import { assignPost, campaignSupport, freePlace, fundPortProject, installedSystems, moduleAt, MODULES_BY_ID, placeModule, placeProblem, powerChoice,
+import { observeManagement, assignPost, campaignSupport, freePlace, fundPortProject, installedSystems, moduleAt, MODULES_BY_ID, placeModule, placeProblem, powerChoice,
   sectorAppointed, shipPosts, startSupply, SUPPLY_KINDS, upgradeModule, upgradeProblem, type CampaignBook, type Save, type SupplyPort } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
@@ -6,8 +6,8 @@ import { nameOf } from '../story/runner'
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm disabled:opacity-50'
 const refits = ['engines', 'engineering', 'hangar', 'quarters'] as const
 
-export function ProjectsPanel({ book, save, port }: { book: CampaignBook; save: Save; port: SupplyPort }) {
-  const projects = book.projects?.filter(({ sector }) => book.sectors?.some((row) => row.id === sector && row.port === port.id && sectorAppointed(book, save.story, row))) ?? []
+export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly }: { book: CampaignBook; save: Save; port: SupplyPort; onlyProject?: string; refitsOnly?: boolean }) {
+  const projects = book.projects?.filter(({ id, sector }) => !refitsOnly && (!onlyProject || onlyProject === id) && book.sectors?.some((row) => row.id === sector && row.port === port.id && sectorAppointed(book, save.story, row))) ?? []
   const crew = save.crew.filter(({ outfit }) => !campaignSupport(book, save).ashore.has(outfit))
   const posts = shipPosts(save.ship).filter(({ module }) => module === 'engineering' || module === 'hangar' || module === 'log')
   function change(change: (save: Save) => Save) {
@@ -15,7 +15,7 @@ export function ProjectsPanel({ book, save, port }: { book: CampaignBook; save: 
       const stock = current.campaignSupply ?? (book.supply ? startSupply(book.supply) : undefined)
       if (!stock || stock.port !== port.id || current.mission || current.pairScene || current.campaignDay.pending) return current
       const selected = change(current)
-      return selected === current ? current : { ...selected, campaignSupply: selected.campaignSupply ?? stock }
+      return selected === current ? current : observeManagement(current, { ...selected, campaignSupply: selected.campaignSupply ?? stock })
     })
   }
   return <section aria-label="Projects and refits" className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3">
@@ -34,12 +34,12 @@ export function ProjectsPanel({ book, save, port }: { book: CampaignBook; save: 
         </div>
       })}
     </div>}
-    <details>
+    {!onlyProject && <details>
       <summary className="min-h-11 cursor-pointer py-2 font-semibold">Ship refits and duties</summary>
       <div className="space-y-2 text-sm">
         {refits.flatMap((id) => {
           const module = moduleAt(save.ship, id)
-          if (!module?.level) return []
+          if (!module) return []
           const definition = MODULES_BY_ID.get(id)!
           const next = definition.levels[module.level]
           return <div key={id} className="flex items-center justify-between gap-2">
@@ -90,6 +90,6 @@ export function ProjectsPanel({ book, save, port }: { book: CampaignBook; save: 
           </label>
         })}
       </div>
-    </details>
+    </details>}
   </section>
 }

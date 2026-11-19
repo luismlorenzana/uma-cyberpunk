@@ -1,4 +1,4 @@
-import { issuedCampaignRig, PARTS_BY_ID, shipmentAt, SLOT_NAME, storesAt, type CampaignReleaseFile, type Save } from '@cyber/domain'
+import { awayMembers, issuedCampaignRig, PARTS_BY_ID, shipmentAt, SLOT_NAME, storesAt, type CampaignReleaseFile, type Save } from '@cyber/domain'
 import { useEffect, useState } from 'react'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
@@ -28,7 +28,7 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
   const [busy, setBusy] = useState(false)
   const at = workshopAt(save, loaded.book)
   if (!at) return null
-  const crew = save.crew.filter(({ outfit }) => !ashore.has(outfit))
+  const crew = save.crew.filter(({ outfit }) => !ashore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit))
   const member = crew.find(({ outfit }) => outfit === selection) ?? crew[0]
   const rig = member?.rig ?? issuedCampaignRig()
   const gear = save.campaignGear

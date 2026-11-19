@@ -51,7 +51,7 @@ function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentation['com
 
 export interface SceneDecision { selected?: number; commit: (index: number) => Promise<void> }
 
-export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit }: {
+export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit, exitLabel }: {
   pack: StoryPack
   scene: Scene | { id: string; place: string; steps: Step[] }
   squad: readonly number[]
@@ -64,6 +64,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   pathFooter?: string
   decision?: SceneDecision
   onExit?: () => void
+  exitLabel?: string
 }) {
   const captain = useGame((g) => g.save?.captain) ?? DEFAULT_CAPTAIN
   const fill = (text: string) => fillCaptain(text, captain)
@@ -153,7 +154,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       </svg>}
       <div className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{presentation?.location ?? scene.place}</div>
       <div className="absolute right-3 top-3 flex gap-2" style={{ marginTop: 'var(--inset-top)', marginRight: 'var(--inset-right)' }}>
-        {onExit && <button type="button" onClick={onExit} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Leave tonight</button>}
+        {onExit && <button type="button" onClick={onExit} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">{exitLabel ?? 'Leave tonight'}</button>}
         <button type="button" onClick={() => setAuto((a) => !a)} className={`min-h-11 rounded-md px-3 text-[13px] font-bold ${auto ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>Auto</button>
         <button type="button" onClick={skip} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Skip</button>
         <button type="button" onClick={() => setShowLog(true)} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Log</button>

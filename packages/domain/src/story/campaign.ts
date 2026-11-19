@@ -1,3 +1,5 @@
+import type { CampaignManagement } from '../campaign-management'
+import { parseCampaignManagement } from './campaign-management'
 import { checkPack, walkSteps } from './check'
 import { P, parsePack } from './parse'
 import type { Scene, Speaker, StoryPack } from './types'
@@ -53,6 +55,7 @@ export interface CampaignPortraitFace {
 }
 
 export interface CampaignBook {
+  management?: CampaignManagement
   opening: string
   draft: boolean
   quests: CampaignQuest[]
@@ -199,7 +202,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -451,7 +454,9 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
   const cabinEvenings = o.cabinEvenings === undefined ? undefined : parseCabinEvenings(o.cabinEvenings, { dates, pairs, sectors, scenes },
     new Set([...sectorReserved, ...(sectors?.flatMap(s => s.shared ? [s.shared.visit, s.shared.morning] : []) ?? [])]))
+  const management = o.management === undefined ? undefined : parseCampaignManagement(o.management, { quests, projects, scenes, assets, workshop })
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
+    ...(management ? { management } : {}),
     ...(commandArt ? { commandArt } : {}),
     ...(portraitFaces ? { portraitFaces } : {}),
     ...(cabinEvenings ? { cabinEvenings } : {}),

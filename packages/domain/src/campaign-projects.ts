@@ -1,3 +1,4 @@
+import { observeManagement } from './campaign-management'
 import { campaignSupport, formerDisposition, sectorAppointed } from './campaign-sectors'
 import { SHIP_PROVISIONS_PER_NIGHT, type Supplies, type SupplyPort } from './campaign-supply'
 import type { Save } from './save/save'
@@ -39,6 +40,6 @@ export function fundPortProject(save: Save, book: CampaignBook, project: PortPro
   const sector = book.sectors?.find(({ id }) => id === project.sector)
   if (!sector || save.campaignSupply?.port !== sector.port || !sectorAppointed(book, save.story, sector)
     || save.mission || save.pairScene || save.campaignDay.pending || Object.hasOwn(save.campaignProjects, project.id) || save.wallet.alloy < project.alloy) return save
-  return { ...save, wallet: { ...save.wallet, alloy: save.wallet.alloy - project.alloy },
-    campaignProjects: { ...save.campaignProjects, [project.id]: project.days } }
+  return observeManagement(save, { ...save, wallet: { ...save.wallet, alloy: save.wallet.alloy - project.alloy },
+    campaignProjects: { ...save.campaignProjects, [project.id]: project.days } })
 }
