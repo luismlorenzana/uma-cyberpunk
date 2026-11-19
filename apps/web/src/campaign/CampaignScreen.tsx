@@ -1,20 +1,21 @@
+import type { SceneDecision } from '../story/ScenePlayer'
 import {
   campaignSupport, campaignUpkeep, developedPort, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, pairProgress, pairVisit, seeScene,
-  sectorNightId, sectorVisit, startCampaignNight, startSupply, walkSteps,
+  sectorNightId, sectorVisit, startCampaignNight, startSupply,
   type CabinEvening, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { CAMPAIGN_ENTRY } from '../app/campaign'
 import { Account } from '../home/Account'
 import { applyStep } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
-import { ScenePlayer, type SceneDecision, type ScenePresentation } from '../story/ScenePlayer'
-import { nameOf, type BondEffect } from '../story/runner'
-import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
-import { loadScenePortraits } from './portraits'
+import { nameOf } from '../story/runner'
+import { loadCampaign, type LoadedCampaign } from './load'
+import { CampaignScene } from './CampaignScene'
+import { locationAvailable, locationState, managementAt } from './management'
 import { availableSharedVisit, closePairScene, nextHomeScene, openPairScene, pairAvailable, pairSceneReady, postponeLockedHomeScene, recordPairScene } from './pair'
 import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
@@ -36,6 +37,7 @@ const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom
 const GroundScreen = lazy(() => import('./GroundScreen'))
 const ShipCommandScreen = lazy(() => import('./ShipCommandScreen'))
 const WorkshopPanel = lazy(() => import('./WorkshopPanel'))
+const LocationScreen = lazy(() => import('./LocationScreen'))
 
 export default function CampaignScreen() {
   return <TurnedStage>{(layout) => <Campaign layout={layout} />}</TurnedStage>
@@ -52,6 +54,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const save = useGame((g) => g.save)
   const owner = useGame((g) => g.uid)
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
+  const [location, setLocation] = useState<string | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(true)
@@ -221,6 +224,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
       })} />
   }
 
+  if (location && loaded && save && managementAt(save, loaded.book)) {
+    const room = loaded.book.management?.locations.find(({ id }) => id === location)
+    if (room && locationAvailable(save, loaded.book, room)) return <Suspense fallback={<div className={viewport}>Opening location…</div>}>
+      <LocationScreen key={room.id} loaded={loaded} save={save} location={room} back={() => setLocation(null)}
+        checkRelease={() => setCheck(n => n + 1)} checking={pending} error={error} />
+    </Suspense>
+  }
+
   const recruits = loaded && save && complete.has(loaded.book.opening) && !night && !pendingPair && !missionState && !eveningOpen
     ? loaded.book.recruits ?? [] : []
   const managedQuests = new Set(recruits.flatMap(({ signOn, story }) => [signOn, ...story]))
@@ -332,6 +343,15 @@ function Campaign({ layout }: { layout: StageLayout }) {
             className="block min-h-11 w-full rounded-lg bg-[#2ee6ff] px-4 text-left font-bold text-[#0b0d17]">{quest.title}</button>)}
           {loaded && save && recruits.length > 0 && <RecruitmentPanel save={save} book={loaded.book} assets={loaded.assets}
             recruits={recruits} port={port?.id} open={setActive} />}
+          {loaded && save && !eveningOpen && managementAt(save, loaded.book) && <section aria-label="Ship and port" className="space-y-2">
+            <h2 className="font-display text-lg font-bold">Ship and port</h2>
+            <div className="grid grid-cols-2 gap-2">
+              {loaded.book.management?.locations.filter(room => locationAvailable(save, loaded.book, room)).map(room =>
+                <button key={room.id} type="button" className={button} onClick={() => setLocation(room.id)}>
+                  {room.title}<span className="ml-2 text-xs capitalize text-white/60">{locationState(save, loaded.book, room)}</span>
+                </button>)}
+            </div>
+          </section>}
           {canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
           {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
             {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
@@ -374,69 +394,4 @@ function Campaign({ layout }: { layout: StageLayout }) {
       </div>
     </main>
   )
-}
-
-function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate, decision, onExit, placeLabel }: {
-  loaded: LoadedCampaign; sceneId: string; finish: (effects: readonly EffectStep[], bondEffects: readonly BondEffect[]) => void; fail: (message: string) => void
-  captainDate?: boolean
-  decision?: SceneDecision
-  onExit?: () => void
-  placeLabel?: string
-  battle?: (id: string, effects: readonly EffectStep[]) => Promise<void>
-}) {
-  const scene = loaded.book.scenes.get(sceneId)!
-  const art = loaded.book.art.find((entry) => entry.scene === sceneId)
-  const [presentation, setPresentation] = useState<ScenePresentation | null>(null)
-  const steps = useRef<EffectStep[]>([])
-  const bonds = useRef<BondEffect[]>([])
-  const leaving = useRef(false)
-
-  useEffect(() => {
-    let live = true
-    const urls: string[] = []
-    const pendingImages = new Map<string, Promise<string>>()
-    const read = (id: string) => {
-      const pending = pendingImages.get(id)
-      if (pending) return pending
-      const image = campaignImage(loaded.assets.get(id)!).then((url) => {
-        if (live) urls.push(url)
-        else URL.revokeObjectURL(url)
-        return url
-      })
-      pendingImages.set(id, image)
-      return image
-    }
-    const illustrated = new Set([...walkSteps(scene.steps, '')].flatMap(({ step }) =>
-      step.kind === 'illustration' && step.asset ? [step.asset] : []))
-    void Promise.all([
-      art?.backdrop ? read(art.backdrop) : undefined,
-      loadScenePortraits(art?.portraits ?? [], loaded.book.portraitFaces ?? [], read),
-      Promise.all([...illustrated].map(async (id) => [id, await read(id)] as const)),
-      art?.composition ? Promise.all(art.composition.layers.map(async (layer) => {
-        try { return { ...layer, url: await read(layer.asset) } } catch { return null }
-      })) : undefined,
-    ]).then(([backdrop, portraits, illustrations, layers]) => {
-      if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations),
-        ...(art?.composition && layers ? { composition: { ...art.composition, layers: layers.filter((layer) => layer !== null) } } : {}) })
-    }, (err: unknown) => { if (live) fail(err instanceof Error ? err.message : String(err)) })
-    return () => { live = false; urls.forEach((url) => URL.revokeObjectURL(url)) }
-  }, [loaded, art, scene])
-
-  if (!presentation) return <div className={viewport} style={insets} role="status">Loading the scene…</div>
-  return <ScenePlayer pack={loaded.book.story} scene={scene} squad={[]} presentation={{ ...presentation, location: placeLabel }}
-    decision={decision} onExit={onExit}
-    pathFooter={captainDate ? 'Either choice keeps the campaign open.' : undefined}
-    onEffect={(step) => { steps.current.push(step) }}
-    onBond={(effect) => { bonds.current.push(effect) }}
-    onBattle={async (id) => {
-      if (leaving.current) return
-      leaving.current = true
-      if (battle) await battle(id, steps.current)
-      else fail('This scene can’t start an exercise.')
-    }}
-    onDone={() => {
-      if (leaving.current) return
-      leaving.current = true
-      finish(steps.current, bonds.current)
-    }} />
 }

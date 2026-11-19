@@ -1,5 +1,5 @@
 import {
-  CAPABILITY_NAME, earn, freePlace, jumpRoute, loadShipment, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
+  CAPABILITY_NAME, managementReceipt, observeManagement, earn, freePlace, jumpRoute, loadShipment, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
   shipCapabilities, shipmentAt, startSupply, storesAt, SUPPLY_KINDS,
   type CampaignSupply, type Save, type SupplyNetwork, type SupplyPort, type World,
 } from '@cyber/domain'
@@ -30,7 +30,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
     void updateSave((current) => {
       const stock = current.campaignSupply ?? startSupply(network)
       if (stock.port !== port.id || current.mission || current.campaignDay.pending || current.pairScene) return current
-      return action(current, stock)
+      return observeManagement(current, action(current, stock))
     })
   }
   return <section className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3" aria-label="Star map and supply">
@@ -80,7 +80,8 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
             <p className="text-sm">{label[kind]} {storesAt(supply, port)[kind]}</p>
             <button type="button" className={action} disabled={count === 0} onClick={() => change((current, stock) => {
               const shipment = loadShipment(stock, port, kind)
-              return shipment ? { ...current, campaignSupply: shipment.supply, wallet: earn(current.wallet, { alloy: shipment.alloy }) } : current
+              return shipment ? managementReceipt({ ...current, campaignSupply: shipment.supply, wallet: earn(current.wallet, { alloy: shipment.alloy }) },
+                { kind: 'shipment', subject: kind, destination: 'ship', amount: shipmentAt(stock, port, kind) }) : current
             })}>Load {count} {label[kind].toLowerCase()}</button>
           </div>
         })}
@@ -89,7 +90,8 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep }: {
     <div className="flex flex-wrap items-center gap-2">
       {requestRelief(supply, save.campaignDay.day) !== supply && <button type="button" className={action} onClick={() => change((current, stock) => {
         const next = requestRelief(stock, current.campaignDay.day)
-        return next === stock ? current : { ...current, campaignSupply: next }
+        return next === stock ? current : managementReceipt({ ...current, campaignSupply: next },
+          { kind: 'relief', subject: 'supplies', destination: 'ship', amount: next.fuel - stock.fuel + next.provisions - stock.provisions })
       })}>Request relief · up to 3 fuel and 2 provisions</button>}
       {engine ? <p className="text-sm">{engine.building ? `Long-range drive · ${engine.building.left} nights left` : 'Long-range drive fitted'}</p>
         : <button type="button" className={action} disabled={bay.problem !== null} onClick={() => change((current, stock) => {

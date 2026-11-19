@@ -534,3 +534,7 @@ paired seated/bed slots as transparent placeholders. Exports use the 1844 × 853
 with subject placement authored in that canvas. Return the approved source identity and hash for the
 private publishing registry. Replacing a registered pose slot can then update art without changing
 scene IDs or game code. Neutral dialogue portraits remain available while poses are pending.
+
+## Management locations (CY51)
+
+The optional `management` contract binds existing campaign rooms, live stock, project counters, refits and owned/fitted rigs. Save v18 adds bounded dated receipts and independent context/report acknowledgements. See the [full format, predicates and delivery evidence](campaign-management.md). Old content packs keep their earlier interface on the new reader.
