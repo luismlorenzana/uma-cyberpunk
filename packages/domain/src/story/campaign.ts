@@ -32,6 +32,14 @@ export interface CampaignSceneArt {
   scene: string
   backdrop?: string
   portraits: { speaker: Speaker; asset: string; emote?: string; profile?: string }[]
+  composition?: CampaignComposition
+}
+
+export interface CampaignComposition {
+  width: number
+  height: number
+  portraits: 'show' | 'hide'
+  layers: { asset: string; x: number; y: number; width: number; height: number; opacity: number; fit: 'contain' | 'cover' }[]
 }
 
 export interface CampaignPortraitFace {
@@ -178,7 +186,7 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
   const assets = p.list(index.assets, 'assets', (v, path) => {
     const o = p.object(v, path, ['id', 'path', 'sha256', 'bytes'])
     return { id: p.slug(o.id, `${path}.id`), ...entry(o, path, true) }
-  })
+  }, 4096)
   if (!unique(p, 'files', files, (f) => f.source).has('campaign.json')) p.fail('files', 'campaign.json is missing')
   unique(p, 'assets', assets, (a) => a.id)
   return { schemaVersion: 1, release: p.slug(index.release, 'release'), files, assets }
@@ -241,7 +249,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     const file = p.text(a.file, `${path}.file`, 72)
     if (!ART_FILE.test(file)) p.fail(`${path}.file`, 'expected a PNG or WebP filename under art/')
     return { id: p.slug(a.id, `${path}.id`), file }
-  })
+  }, 4096)
   const byAsset = unique(p, 'assets', assets, (a) => a.id)
   const asset = (id: unknown, path: string): string => {
     const key = p.slug(id, path)
@@ -257,7 +265,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })
   }
   const art = p.list(o.art, 'art', (v, path) => {
-    const a = p.object(v, path, ['scene', 'backdrop', 'portraits'], ['scene', 'portraits'])
+    const a = p.object(v, path, ['scene', 'backdrop', 'portraits', 'composition'], ['scene', 'portraits'])
     const scene = p.slug(a.scene, `${path}.scene`)
     const declared = scenes.get(scene)
     if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
@@ -271,7 +279,22 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
         ...(portrait.profile === undefined ? {} : { profile: asset(portrait.profile, `${xp}.profile`) }) }
     })
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
-    return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }) }
+    const composition = a.composition === undefined ? undefined : (() => {
+      const c = p.object(a.composition, `${path}.composition`, ['width', 'height', 'portraits', 'layers'])
+      const width = p.int(c.width, `${path}.composition.width`, 1, 8192), height = p.int(c.height, `${path}.composition.height`, 1, 8192)
+      if (c.portraits !== 'show' && c.portraits !== 'hide') p.fail(path, 'composition portraits must be show or hide')
+      const layers = p.list(c.layers, `${path}.composition.layers`, (value, field) => {
+        const l = p.object(value, field, ['asset', 'x', 'y', 'width', 'height', 'opacity', 'fit'], ['asset', 'x', 'y', 'width', 'height'])
+        const x = p.int(l.x, `${field}.x`, 0, width), y = p.int(l.y, `${field}.y`, 0, height)
+        const w = p.int(l.width, `${field}.width`, 1, width), h = p.int(l.height, `${field}.height`, 1, height)
+        if (x + w > width || y + h > height) p.fail(field, 'layer extends beyond the composition')
+        const opacity = l.opacity === undefined ? 100 : p.int(l.opacity, `${field}.opacity`, 0, 100)
+        if (l.fit !== undefined && l.fit !== 'contain' && l.fit !== 'cover') p.fail(field, 'layer fit must be contain or cover')
+        return { asset: asset(l.asset, `${field}.asset`), x, y, width: w, height: h, opacity, fit: (l.fit ?? 'contain') as 'contain' | 'cover' }
+      }, 12)
+      return { width, height, portraits: c.portraits as 'show' | 'hide', layers }
+    })()
+    return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}) }
   }, 2048)
   unique(p, 'art', art, (a) => a.scene)
   const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset)
@@ -448,7 +471,7 @@ function parsePortraitFaces(p: P, value: unknown, art: CampaignSceneArt[], asset
       x: p.int(at.x, `${path}.at.x`, 0, Number.MAX_SAFE_INTEGER),
       y: p.int(at.y, `${path}.at.y`, 0, Number.MAX_SAFE_INTEGER),
     } }
-  })
+  }, 8192)
   unique(p, 'portraitFaces', faces, ({ speaker, base, emote }) => `${baseKey(speaker, base)}:${emote}`)
   return faces
 }

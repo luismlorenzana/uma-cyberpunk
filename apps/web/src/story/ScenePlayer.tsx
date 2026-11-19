@@ -3,7 +3,7 @@
 // voters' arguments. **Auto** moves on by the line's length, **Skip** passes to the next choice or the end, **Log** shows
 // the scene so far. Busts: master data's by outfit id once the album is wired (CY11); stand-in cards now. CY13: the
 // captain's choices (a tone each) and Trust or Heart in bond scenes, and the captain's name and pronouns in every line.
-import { DEFAULT_CAPTAIN, fillCaptain, type BondPath, type Call, type CaptainOption, type ChoiceOption, type Scene, type Speaker, type Step, type StoryPack } from '@cyber/domain'
+import { DEFAULT_CAPTAIN, fillCaptain, type BondPath, type Call, type CampaignComposition, type CaptainOption, type ChoiceOption, type Scene, type Speaker, type Step, type StoryPack } from '@cyber/domain'
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../save/game'
 import { nameOf, playScene, type BondEffect, type SceneUi } from './runner'
@@ -38,6 +38,14 @@ export interface ScenePresentation {
   backdrop?: string
   portraits: ScenePortraitImage[]
   illustrations?: Record<string, string>
+  composition?: Omit<CampaignComposition, 'layers'> & { layers: (CampaignComposition['layers'][number] & { url: string })[] }
+}
+
+function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentation['composition']>['layers'][number] }) {
+  const [failed, setFailed] = useState(false)
+  return failed ? null : <image href={layer.url} x={layer.x} y={layer.y} width={layer.width} height={layer.height}
+    opacity={layer.opacity / 100} preserveAspectRatio={layer.fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}
+    onError={() => setFailed(true)} data-scene-layer={layer.asset} />
 }
 
 export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter }: {
@@ -107,18 +115,24 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
     : presentation && (prompt?.kind === 'choice' || prompt?.kind === 'captain') ? said?.actor ?? null : null
   const image = illustration && presentation?.illustrations?.[illustration]
   const portrait = speaker === null || !presentation ? null : selectScenePortrait(presentation.portraits, speaker, expressions[speaker])
+  const composition = presentation?.composition
+  const showPortrait = composition ? composition.portraits === 'show' : !image
   const promptInsets = { marginBottom: 'var(--inset-bottom)', marginLeft: 'var(--inset-left)', marginRight: 'var(--inset-right)' }
   return (
     <div data-scene={scene.id} className="absolute inset-0 select-none bg-gradient-to-b from-[#141827] via-[#0e1222] to-[#05060c] text-[#e8ebf5]">
       {image ? <img alt="" src={image} className="absolute inset-0 size-full object-cover" data-scene-illustration />
         : presentation?.backdrop && <img alt="" src={presentation.backdrop} className="absolute inset-0 size-full object-cover opacity-70" data-scene-backdrop />}
+      {!image && composition && <svg aria-hidden className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${composition.width} ${composition.height}`}
+        preserveAspectRatio="xMidYMid meet" data-scene-composition>
+        {composition.layers.map((layer) => <CompositionLayer key={layer.url + ':' + layer.asset} layer={layer} />)}
+      </svg>}
       <div className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{scene.place}</div>
       <div className="absolute right-3 top-3 flex gap-2" style={{ marginTop: 'var(--inset-top)', marginRight: 'var(--inset-right)' }}>
         <button type="button" onClick={() => setAuto((a) => !a)} className={`min-h-11 rounded-md px-3 text-[13px] font-bold ${auto ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>Auto</button>
         <button type="button" onClick={skip} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Skip</button>
         <button type="button" onClick={() => setShowLog(true)} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">Log</button>
       </div>
-      {!image && speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
+      {showPortrait && speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
         {portrait ? <ScenePortrait key={portrait.image.url} image={portrait.image} face={portrait.face} />
           : <Bust pack={pack} speaker={speaker} />}
       </div>}

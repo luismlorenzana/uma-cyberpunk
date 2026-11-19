@@ -46,6 +46,11 @@ three handovers, a cleared route to Tarsa, and the hired-tender escort lead to e
 supper. The combined pack also includes the paired skiff scene, five joint reports, and the delivery
 receipts. Tier 5 uses exact-outfit review portraits while its commissioned looks are pending.
 
+The approved-art publishing pipeline is implemented (CY64, D65). See the
+[publishing runbook](../technical/campaign-art-publishing.md) for scoped authoring pushes, private
+bindings, candidate verification and recovery. CY48 retains its relationship-flow work; the optional
+layer contract and portrait-over-CG policy are now available to CY49/CY50.
+
 ## Four-pillar art and story queue
 
 The owner set the next direction in D64. The [shared delivery plan](../design/campaign-art-delivery.md)
@@ -192,6 +197,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY64 | Approved Cyberpunk art to Platform and the game (D65). Scoped source verification, immutable art-only candidates, conditional selection, private receipts and rollback preserve campaign story/save IDs. Farm retains its existing release path. CY48 layer/policy foundation is additive; full evening flow remains open. | _this commit_ |
 | CY30 | Planet-funded squad prep (D52). The Selden Hangar draws Alloy from a port shipment and fits a Guard arm and Missile pod into the saved crew rig. Chrome verified the purchase, reload, boarding Forecast, loss and free retry. The headless run won with both crafted parts fitted. | _this commit_ |
 | CY31 | [Shared evenings and home readiness](../technical/campaign-content.md#shared-evenings-and-home-readiness) (D53). The five local leads have Captain arcs and all five pairs can share evenings. Private replays verified concurrent Hearts, both routes to readiness, both residence outcomes and the case gates. Chrome verified deferral, resettlement and a pending visit across the draft release change. Approved art, dialogue and physical iPhone review carry into CY36–CY37. | _this commit_ |
 | CY38 | Tier 1 opening. Ten sign-ons in two orders, optional Training and a late recruit’s independent story replayed. Chrome verified a non-Selden first recruit and roster reload. (D55) | _this commit_ |
