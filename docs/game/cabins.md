@@ -163,3 +163,23 @@ universe. cyber-api serves it to the signed-in owner at `/api/content/looks/…`
 
 The game matches a look to an Uma by her character's English name from master data. Without one, master data's bust
 stands in.
+
+
+## Campaign evenings (CY48)
+
+From **End day**, choose an available officer. A ready relationship milestone plays first; regular visits
+rotate acquaintance, friend or partner conversations. A completed solo chat earns its authored rapport
+once. Independent Captain relationships keep their own progress.
+
+An established rank-10 Heart can receive a mutual invitation to stay. Choose to stay, leave, or take more
+time. The choice is saved before its response. Staying opens the overnight conversation; **Leave tonight**
+remains available there. Both outcomes use one evening and one upkeep, followed by the matching morning.
+The morning adds no second charge. Leaving is followed by a personal call rather than an assumed stay.
+
+Existing shared visits retain their release, posting and residence choices. Their later cabin evenings
+require everyone to be available at the same actual location, with separate berths and individual consent.
+An officer ashore is visited at home when docked there. Officers away on operations are unavailable.
+
+Save v17 resumes the reserved conversation and committed outcome, including after a content update.
+Earlier pending visits and mornings migrate without restarting their costs or relationship decisions.
+[The authoring contract](../technical/campaign-content.md#reserved-cabin-evenings-cy48) defines the scene bindings.

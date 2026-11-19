@@ -1,7 +1,7 @@
 import {
   campaignSupport, campaignUpkeep, developedPort, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, pairProgress, pairVisit, seeScene,
   sectorNightId, sectorVisit, startCampaignNight, startSupply, walkSteps,
-  type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save,
+  type CabinEvening, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
@@ -11,7 +11,7 @@ import { CAMPAIGN_ENTRY } from '../app/campaign'
 import { Account } from '../home/Account'
 import { applyStep } from '../mission/director'
 import { updateSave, useGame } from '../save/game'
-import { ScenePlayer, type ScenePresentation } from '../story/ScenePlayer'
+import { ScenePlayer, type SceneDecision, type ScenePresentation } from '../story/ScenePlayer'
 import { nameOf, type BondEffect } from '../story/runner'
 import { campaignImage, loadCampaign, type LoadedCampaign } from './load'
 import { loadScenePortraits } from './portraits'
@@ -28,6 +28,7 @@ import { settleCampaignDay } from './watch'
 import { creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
 import { DatePanel } from './DatePanel'
 import { beginCampaignEncounter } from './sortie'
+import { cabinAvailable, chooseCabinOutcome, finishCabinScene, leaveCabinEarly, startCabinEvening } from './cabins'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
@@ -173,12 +174,34 @@ function Campaign({ layout }: { layout: StageLayout }) {
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
     return supply && loaded ? settleCampaignDay(s, campaignDay, loaded.book) : { ...s, campaignDay }
   }
+  if (loaded && save && night?.kind === 'cabin' && !error && loaded.book.scenes.has(night.scene)) {
+    const invite = night.plan.invitation, dayNumber = save.campaignDay.day
+    const decision: SceneDecision | undefined = night.phase === 'invitation' && invite ? {
+      selected: night.choice ?? undefined,
+      commit: async (index) => {
+        let accepted = false
+        await updateSave((s) => {
+          const next = chooseCabinOutcome(s, loaded.book, dayNumber, night, index)
+          const p = next.campaignDay.pending
+          accepted = next !== s || (p?.kind === 'cabin' && p.id === night.id && p.phase === 'invitation' && p.round === night.round
+            && s.campaignDay.day === dayNumber && (index === invite.wait && p.outcome === null || p.outcome !== null && p.choice === index))
+          return accepted ? { ...next } : s // Also retries a failed device write before continuing the branch.
+        })
+        if (!accepted) throw new Error('This choice is unavailable. You can leave tonight.')
+      },
+    } : undefined
+    return <CampaignScene key={`${dayNumber}:${night.id}:${night.phase}:${night.scene}:${night.round}`} loaded={loaded} sceneId={night.scene}
+      fail={setError} decision={decision}
+      placeLabel={night.phase === 'morning' && night.outcome === 'leave' ? 'Personal call' : night.plan.location === 'ashore' ? 'Home visit' : 'Cabin aboard'}
+      onExit={night.phase === 'bed' ? () => commitScene(s => leaveCabinEarly(s, dayNumber, night)) : undefined}
+      finish={(effects) => commitScene(s => finishCabinScene(s, loaded.book, dayNumber, night, effects))} />
+  }
   const nightPair = night && 'pair' in night ? pairs.find((pair) => pair.id === night.pair) : undefined
   const nightSector = night && 'pair' in night ? loaded?.book.sectors?.find((sector) => sectorNightId(sector) === night.pair
     && (sector.shared?.visit === night.scene || sector.shared?.morning === night.scene)) : undefined
   const nightDate = night && 'companion' in night
     ? loaded?.book.dates?.find((date) => date.companion === night.companion && dateScene(date, night.scene)) : undefined
-  if (loaded && day && night && !error && loaded.book.scenes.has(night.scene) && (!('pair' in night) || nightPair || nightSector)) {
+  if (loaded && day && night && night.kind !== 'cabin' && !error && loaded.book.scenes.has(night.scene) && (!('pair' in night) || nightPair || nightSector)) {
     return <CampaignScene key={`${day.day}:${night.kind}:${night.scene}`} loaded={loaded} sceneId={night.scene}
       fail={setError} captainDate={!!nightDate}
       finish={(effects, bondEffects) => (nightPair || nightDate || nightSector ? commitScene : updateSave)((s) => {
@@ -229,8 +252,15 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const visitOptions = canRest ? evening?.visits.filter((v) => !support?.ashore.has(v.companion) && save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
   const dateOptions = loaded && save && canRest ? dates.map((date) => {
     const visit = dateProgress(save, loaded.book, date).visit
-    return { visit: { kind: 'visit' as const, companion: date.companion, scene: visit.scene, morning: visit.morning }, title: visit.title }
+    const cabin = visit === date.regular ? loaded.book.cabinEvenings?.find(c => 'companion' in c.source && c.source.companion === date.companion) : undefined
+    return { visit: { kind: 'visit' as const, companion: date.companion, scene: visit.scene, morning: visit.morning }, title: visit.title, cabin }
   }) : []
+  const sharedCabins = loaded && save && canRest ? loaded.book.cabinEvenings?.filter(c => !('companion' in c.source) && cabinAvailable(save, loaded.book, c)) ?? [] : []
+  function chooseCabin(cabin: CabinEvening) {
+    if (!loaded || !day || !canRest) return
+    setEveningOpen(false)
+    commitScene(s => startCabinEvening(s, loaded.book, cabin, day.day))
+  }
   const pairVisits = loaded && save && canRest ? pairs.flatMap((pair) => {
     const visit = pairVisit(pair, save.story, save.crew.flatMap(({ outfit }) => support?.ashore.has(outfit) ? [] : [outfit]))
     if (!visit) return []
@@ -306,8 +336,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
             {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
               onClick={() => chooseEvening({ kind: 'visit', ...visit })}>Visit {nameOf(loaded.book.story, visit.companion)}</button>)}
-            {dateOptions.map(({ visit, title }) => <button key={visit.companion} type="button" className={button}
-              onClick={() => chooseEvening(visit)}>{nameOf(loaded.book.story, visit.companion)} · {title}</button>)}
+            {dateOptions.map(({ visit, title, cabin }) => <button key={visit.companion} type="button" className={button}
+              onClick={() => cabin ? chooseCabin(cabin) : chooseEvening(visit)}>{nameOf(loaded.book.story, visit.companion)} · {title}</button>)}
+            {sharedCabins.map(cabin => {
+              const source = cabin.source
+              const officer = 'sector' in source ? loaded.book.sectors?.find(s => s.id === source.sector)?.officer
+                : 'pair' in source ? loaded.book.pairs.find(p => p.id === source.pair)?.members[0].outfit : undefined
+              return <button key={cabin.id} type="button" className={button} onClick={() => chooseCabin(cabin)}>Shared cabin evening · {officer ? nameOf(loaded.book.story, officer) : 'Crew'}</button>
+            })}
             {[...pairVisits, ...sectorVisits].map(({ visit, label }) => <button key={visit.scene} type="button" className={button} onClick={() => chooseEvening(visit)}>{label}</button>)}
             <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
             <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
@@ -340,9 +376,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
   )
 }
 
-function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate }: {
+function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate, decision, onExit, placeLabel }: {
   loaded: LoadedCampaign; sceneId: string; finish: (effects: readonly EffectStep[], bondEffects: readonly BondEffect[]) => void; fail: (message: string) => void
   captainDate?: boolean
+  decision?: SceneDecision
+  onExit?: () => void
+  placeLabel?: string
   battle?: (id: string, effects: readonly EffectStep[]) => Promise<void>
 }) {
   const scene = loaded.book.scenes.get(sceneId)!
@@ -384,7 +423,8 @@ function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate }: {
   }, [loaded, art, scene])
 
   if (!presentation) return <div className={viewport} style={insets} role="status">Loading the scene…</div>
-  return <ScenePlayer pack={loaded.book.story} scene={scene} squad={[]} presentation={presentation}
+  return <ScenePlayer pack={loaded.book.story} scene={scene} squad={[]} presentation={{ ...presentation, location: placeLabel }}
+    decision={decision} onExit={onExit}
     pathFooter={captainDate ? 'Either choice keeps the campaign open.' : undefined}
     onEffect={(step) => { steps.current.push(step) }}
     onBond={(effect) => { bonds.current.push(effect) }}

@@ -99,8 +99,8 @@ other games' data and release channels are outside this queue.
 The [approved-art publisher](../technical/campaign-art-publishing.md) implements the scoped delivery
 step. The private `art-publish.json` registry binds published Cyberpunk sources to current game slots;
 its receipts identify source hashes, unchanged gameplay and selected release. New art-only candidates
-start from the selected story, not a working story draft. CY48's layer contract is now supported;
-its new evening branches and full authoring acceptance remain work in CY48–CY50.
+start from the selected story, not a working story draft. CY48's layer contract and reserved evening/stay/leave/morning flow are implemented.
+The scoped draft scripts and approved rooms/neutral art are integrated; final authoring acceptance stays in CY49/CY50.
 
 ## Pillar 1 scene and composition contract
 

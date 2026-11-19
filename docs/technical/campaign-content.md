@@ -468,3 +468,69 @@ The private `baseline-7` rehearsal adds the contested approach, boarding, custod
 art. Final asset requirements are in the [Selden art packet](../design/art-requests/selden-quarantine.md).
 The private `baseline-8` rehearsal adds recovery, testimony, release and both room paths with reused placeholders.
 Replacement assets are in the [recovery art packet](../design/art-requests/selden-recovery.md).
+
+## Reserved cabin evenings (CY48)
+
+Optional `cabinEvenings` binds authored dialogue to a saved evening. Its scenes remain ordinary chapter
+scenes; the binding owns scheduling, eligibility, rotation and the committed outcome. Synthetic example:
+
+```json
+{
+  "id": "officer-cabin",
+  "source": { "companion": 9000001 },
+  "chatRapport": 100,
+  "chats": {
+    "acquaintance": ["officer-new-1", "officer-new-2"],
+    "friend": ["officer-friend-1", "officer-friend-2"],
+    "partner": ["officer-partner-1", "officer-partner-2"]
+  },
+  "invitation": { "scene": "officer-invitation", "stay": 0, "leave": 1, "wait": 2 },
+  "bed": ["officer-overnight-1", "officer-overnight-2"],
+  "morning": { "stay": "officer-morning-stay", "leave": "officer-morning-leave" },
+  "changeMind": "officer-change-mind"
+}
+```
+
+The companion must have an existing Captain date. Eligible milestones take priority over regular chats.
+Acquaintance applies below rank 4, friend at rank 4 or on Trust, and partner on mutual Heart. Rotation
+advances per companion and stage when the evening is reserved. A reload keeps the selected scene.
+Household, marriage and new guest-alliance outcomes are independent future contracts.
+
+A solo stay requires rank 10, Heart, completed service/milestone gates, an invitation and current physical
+availability. Absent officers cannot start a visit. An appointed officer can receive a local home visit
+when docked at her port; she is not shown as physically aboard. The screen labels the saved location.
+
+An invitation has exactly one top-level ordinary choice. Zero-based `stay`, `leave`, optional `wait`
+and optional `decline` map every option to its scheduling meaning. They must be distinct. A shared
+invitation's withdrawal option uses `decline`, which closes the evening as leave. It must never be
+mapped to `wait`. Waiting plays its response and returns to the invitation within the same reservation.
+The chosen index and outcome persist before response dialogue. Reloads replay that same branch.
+
+`source: { "sector": "local-command" }` requires the original joint visit/morning, lawful release and
+co-location under the existing posting/disposition. Sector residence does not infer romance. Shared
+scripts invite every person to separate berths. `source: { "pair": "existing-pair" }` uses that pair's
+release, relationship, residence and room-morning progress, including its actual home when ashore.
+Both participants must appear in every bound scene. Shared visits award no individual Captain rapport.
+
+Cabin scripts may contain dialogue, expressions, illustrations, waits and narrative choices. Captain
+replies must grant zero rapport. Roster, flags, wallet, ship, battle and relationship effects are refused.
+The binding's optional `chatRapport` (0–250, default 0) pays once on each reserved solo chat completion.
+The review pack uses 100 before existing catch-up rules. Staying, waiting, withdrawing and morning add
+no further rapport. Quest and milestone awards retain their existing one-time markers.
+
+Save v17 adds `cabinVisits` counters and a `kind: "cabin"` pending night. It freezes scene IDs, choice
+indexes, the overnight/morning plan, location and chat reward. Chat leads to the invitation when eligible;
+otherwise it closes as leave. Stay leads to bed; **Leave tonight** plays the withdrawal response. Either
+outcome settles exactly one day and upkeep, then its corresponding morning. Morning completion only
+clears the pending scene. Repeated completion and stale callbacks change nothing. Earlier pending solo,
+pair and morning scenes retain their identities; migration preserves timestamps, bonds and story progress.
+
+The release supports 1,024 story files and 4,096 scene-art entries. The CY48 review binds all fifty solo
+arcs and the ten existing sector shared visits. Its approved rooms and neutral looks are integrated;
+seated/lying character poses, paired compositions and expression crops retain their CY49 review status.
+
+The private review predeclares the four `relationship-<outfit>-<family>` pose slots and the inventoried
+paired seated/bed slots as transparent placeholders. Exports use the 1844 × 853 composition canvas,
+with subject placement authored in that canvas. Return the approved source identity and hash for the
+private publishing registry. Replacing a registered pose slot can then update art without changing
+scene IDs or game code. Neutral dialogue portraits remain available while poses are pending.

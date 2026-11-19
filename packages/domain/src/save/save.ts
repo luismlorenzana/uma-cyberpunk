@@ -19,6 +19,7 @@ import { MODULE_IDS, MODULES_BY_ID, PROJECTS_BY_ID, SYSTEM_IDS, type ModuleId, t
 import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
 import { emptyStory, type StoryState } from '../story/state'
 import { firstCampaignDay, type CampaignDay, type SoloNight } from '../campaign-day'
+import { parseCabinNight } from '../story/campaign-cabins'
 import type { PendingPairScene } from '../campaign-pair'
 import { CAMPAIGN_WORKSHOP_ALLOY_MAX, emptyCampaignGear, type CampaignGear } from '../campaign-gear'
 import { PORT_STOCK_MAX, SHIP_CARGO_MAX, SUPPLY_KINDS, type CampaignSupply } from '../campaign-supply'
@@ -29,8 +30,9 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } 
  * item stock and the visits (CY14); 7 the ship as a build and the wallet (CY15); 8 duties: posts, presets, the meal,
  * camaraderie, the ship log and a jump's pending event (CY16); 9 partners (CY17); 10 squads, operations and faction
  * standing (CY18); 11 the campaign day and pending scenes (CY21); 12 the supply ledger (CY23); 13 command officers (CY24);
- * 14 saved pair scenes (CY26); 15 the campaign workshop (CY30); 16 port projects and officer specialties (CY32–CY33). */
-export const SAVE_VERSION = 16
+ * 14 saved pair scenes (CY26); 15 the campaign workshop (CY30); 16 port projects and officer specialties (CY32–CY33);
+ * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48). */
+export const SAVE_VERSION = 17
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -186,7 +188,12 @@ export interface SaveV16 extends Omit<SaveV15, 'version'> {
   commandTraining: CommandTraining
 }
 
-export type Save = SaveV16
+export interface SaveV17 extends Omit<SaveV16, 'version'> {
+  version: 17
+  cabinVisits: Record<string, number>
+}
+
+export type Save = SaveV17
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -215,8 +222,10 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))
+  return migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10)))))))
 }
+
+export const migrateV16 = (save: SaveV16): SaveV17 => ({ ...save, version: 17, cabinVisits: {} })
 
 export function migrateV15(save: SaveV15): SaveV16 {
   const commandTraining: CommandTraining = {}
@@ -660,6 +669,28 @@ export function versionOf(value: unknown): number {
 /** Parses a save of any version this game has written and returns the current one, migrating as it goes. A version from
  * a newer app is refused, so an old client never half-reads a newer save. Never moves `account.updatedAt`. */
 export function parseSave(value: unknown, path = 'save'): Save {
+  const version = versionOf(value)
+  if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
+  if (version < 17) {
+    if (value && typeof value === 'object' && 'cabinVisits' in value) throw new SaveParseError(path, 'unknown version 17 keys')
+    return migrateV16(parseSaveV16(value, path))
+  }
+  const raw = object(value, path, Object.keys(value as Obj))
+  const { cabinVisits, ...older } = raw
+  const day = object(raw.campaignDay, `${path}.campaignDay`, ['day', 'pending'])
+  let pending = null
+  if ((day.pending as { kind?: unknown } | null)?.kind === 'cabin') {
+    try { pending = parseCabinNight(day.pending) } catch (error) { throw new SaveParseError(`${path}.campaignDay`, error instanceof Error ? error.message : 'invalid cabin night') }
+    if (raw.pairScene !== null || raw.mission !== null) throw new SaveParseError(`${path}.campaignDay`, 'another activity is already pending')
+  }
+  const base = parseSaveV16({ ...older, version: 16, ...(pending ? { campaignDay: { day: day.day, pending: null } } : {}) }, path)
+  const counts = object(cabinVisits, `${path}.cabinVisits`, Object.keys((cabinVisits ?? {}) as Obj))
+  if (Object.keys(counts).length > 1000) throw new SaveParseError(`${path}.cabinVisits`, 'too many visit counters')
+  return { ...base, version: 17, campaignDay: pending ? { day: base.campaignDay.day, pending } : base.campaignDay,
+    cabinVisits: Object.fromEntries(Object.entries(counts).map(([key, value]) => [id(key, `${path}.cabinVisits`), bounded(value, `${path}.cabinVisits.${key}`, 1000000)])) }
+}
+
+function parseSaveV16(value: unknown, path: string): SaveV16 {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version < 11) return migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(parseV10(value, path)))))))

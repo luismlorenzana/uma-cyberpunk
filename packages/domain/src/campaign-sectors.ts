@@ -4,6 +4,7 @@ import type { Save } from './save/save'
 import type { StoryState } from './story/state'
 import type { CommandStation } from './ship/command'
 import type { CampaignVisit } from './campaign-day'
+import { awayMembers } from './crew/squads'
 
 export interface CampaignSector {
   id: string
@@ -55,6 +56,7 @@ export function formerDisposition(book: CampaignBook, story: StoryState, sector:
 export function sectorVisit(book: CampaignBook, save: Save, sector: CampaignSector): Extract<CampaignVisit, { kind: 'pair-visit' }> | null {
   const { shared, former } = sector
   if (!shared || !former || save.story.seen.includes(shared.visit) || !seenQuest(book, save.story, shared.after)
+    || awayMembers(save.operations, save.squads).includes(sector.officer)
     || !save.crew.some(({ outfit }) => outfit === sector.officer)) return null
   const assignment = sectorAssignment(book, save.story, sector)
   const togetherAboard = (assignment === 'aboard' || assignment === 'assigned') && save.story.flags.includes(former.aboard)
