@@ -100,6 +100,15 @@ Strain in the corners, dimmed while resting, and her cabin's Comfort lights belo
 Below the doors: who rests next mission, and everyone's Strain. A rest in a comfortable cabin sheds more Strain
 ([cabins.md](cabins.md#comfort-tc61)).
 
+## Approved outfits in the combined campaign
+
+Crew Stories offers **Wardrobe** after a recruit joins. Its six buttons show Street, Ship Casual,
+Quarters, Pilot suit, Combat armor and Helmet on. This is a portrait viewer; it costs nothing and
+does not change the saved rig or battle role. Public ship conversations use Ship Casual, private
+cabin scenes use Quarters, active stations use Pilot, and equipped missions keep their authored suit.
+Explicit scene staging takes priority. The original app's Quarters Profile tab offers the same six
+portrait choices. See the [wardrobe contract](../technical/campaign-wardrobe.md).
+
 ## The save (v4)
 
 `crew` holds one record each, in join order:

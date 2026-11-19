@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**Current detour: CY65–CY69 authoring and publishing intake. Implementation resumes afterward with CY65/CY66 wardrobe support, CY67 approved general-art intake, then CY57–CY63 (Pillar 4). CY54 is complete; CY49/CY50, CY52/CY53 and CY55/CY56 retain their scoped Art/Story acceptance.**
+**CY65–CY67 are implemented: six-look wardrobe, all 300 bindings, refreshed crops, approved general-art intake and publication. Next development is CY57–CY63 (Pillar 4). CY68/CY69 remain General Art briefs; CY49/CY50, CY52/CY53 and CY55/CY56 retain their scoped Art/Story acceptance.**
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -56,21 +56,22 @@ CY49/CY50 retain final art, source approval and integrated authoring review.
 
 ## Art intake detour · 2026-11-19
 
-The owner requested formal General Art packets and supplied Character Art's six-look publication
-preflight. These packets prepare the work; their creation does not change the live campaign or
-publish the 300 looks. The current reader has five roles. Recheck the private CY54 source snapshot,
-authoring manifests and live selection when taking an implementation packet.
+CY65–CY67 implement Character Art's six-look publication handoff and General Art's approved
+completion sources. The [wardrobe contract](../technical/campaign-wardrobe.md) records both consumers,
+scene routing, mechanical dialogue/profile crops and future replacement guards. The private delivery
+receipt records reader deployment, Platform-first publication and the conditionally selected campaign.
 
 | Packet | Owner | Concrete handoff |
 |---|---|---|
-| [CY65](tasks/CY65.md) | Development with Story | Ship Casual role, display/crops and exact public-ship/cabin/station/briefing routing |
-| [CY66](tasks/CY66.md) | Development and Character Art publisher | Close 101 missing wardrobe bindings, verify both consumers, then repeat preflight and publish all supported approved looks |
-| [CY67](tasks/CY67.md) | Development; General Art supplies approved exports | Integrate the 25 approved general sources absent from CY54; wire Fuel/Provisions and preserve the nineteen-location/forty-six-slot matrix |
+| CY65 complete | Development with Story | Six roles in both consumers; explicit operational/private staging and public Ship Casual; no save reset |
+| CY66 complete | Development and Character Art publisher | All 300 native bindings and 600 crops; Platform-first publication; guarded expression/crop replacements and repeat no-op |
+| CY67 complete | Development with General Art | All 46 approved sources, including 25 newly integrated; independent resource props; nineteen locations and forty-six visual slots |
 | [CY68](tasks/CY68.md) | General Art in this repo | One confirmed fighter-strike effect; review further kit needs against actual slots |
 | [CY69](tasks/CY69.md) | General Art with Story | Classify 878 remaining review-backdrop bindings, reuse approved places first and lock the new environment list |
 
-CY52's completion/social sources are owner-approved. The remaining intake is development work,
-not another art pass. CY68/CY69 are new General Art briefs. Character outfits, expressions, poses,
+CY52's completion/social sources are owner-approved and integrated. Nine reusable cutouts retain
+an exact shared Platform-family extension request; they are already usable in the game. CY68/CY69
+are General Art briefs. Character expressions, poses,
 boss/lieutenant portraits and splashes remain in `uma-art-authoring` under CY49/CY55; the completed
 six-look neutral wardrobe does not complete those scene poses. Canonical reusable equipment remains
 CY58's shared/character-art responsibility, with CY57 fixing sprite export mechanics before bulk work.
@@ -225,6 +226,9 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY65 | Six-role wardrobe and reviewed scene routing (D71). Both Platform-index and explicit campaign consumers support Ship Casual, safe fallbacks and read-only outfit selection. Public ship, cabin, station and equipped staging remain distinct. | _this commit_ |
+| CY66 | All 300 approved neutral looks and 600 mechanical dialogue/profile crops (D71). Platform-first publishing preserves scripts, gameplay and saves; future native replacements refresh crops and require matching face recipes. Real fifty-recruit replay and both portrait consumers pass. | _this commit_ |
+| CY67 | All 46 approved general sources (25 newly integrated), nineteen locations and forty-six visual slots (D71). Fuel/Provisions props follow actual stock and loadable surplus, with reserve/capacity/night/reload checks. Nine reusable cutouts have an exact shared-family extension request; CY37 retains physical iPhone acceptance. | _this commit_ |
 | CY54 | Ship command cinematics (D69). Save v19 resumes the committed beat; frozen input records participants and objective labels. All 56 encounters have bindings/fallbacks, 50 officer voices and 102 art slots; nine FX slots derive only from actual outcomes. Real escort, loss/free retry, both entries and later protected craft pass, including phone-size reload/pack swap/missing-art checks. CY55/CY56 retain final art and Story integration acceptance; CY37 keeps physical iPhone review. | _this commit_ |
 | CY51 | Campaign ship/planet locations (D68). Save v18 adds real management receipts and independent acknowledgements; nineteen private room slots and twenty-three report bindings use the latest scoped Story draft and approved operations art. Paid export/fitting/boarding/refit and phone-size construction/reload/pack-switch checks pass. CY52 retains remaining room/state art, CY53 owner review, CY37 physical iPhone acceptance. | _this commit_ |
 | CY48 | Reserved cabin evenings and mornings (D67). All fifty Captain arcs and ten existing shared sector visits use the draft Story export and approved room/neutral art. Save v17 freezes choices, rotation and rewards. Real service replays cover concurrent Hearts and all five intakes; Chrome verified the saved invitation, bed and morning at phone size. CY49/CY50 keep final pose/expression and Story approval; CY37 keeps physical iPhone review. | _this commit_ |

@@ -1,5 +1,5 @@
 import {
-  newMember, newSave, parseSave, startSupply, storesAt,
+  loadShipment, newMember, newSave, parseSave, startSupply, storesAt,
   type Scene, type CampaignBook, type CampaignWorkshop, type Save, type SupplyNetwork,
 } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
@@ -7,7 +7,7 @@ import { groundInput } from './training'
 import { settleCampaignDay } from './watch'
 import { craftCampaignPart, fitCampaignPart, fittedGroundRig, sendWorkshopAlloy } from './workshop'
 import { fundPortProject, developedPort, freePlace, moduleAt, observeManagement, placeModule } from '@cyber/domain'
-import { acknowledgeManagement, locationAvailable, locationPropVisible, locationState, managementReports } from './management'
+import { visibleLocationProps, acknowledgeManagement, locationAvailable, locationPropVisible, locationState, managementReports } from './management'
 
 const outfit = 9000301
 const second = 9000302
@@ -176,4 +176,40 @@ describe('campaign management locations', () => {
     expect(observeManagement(save, { ...save })).toEqual(save)
     expect(save.wallet).toEqual({ credits: 0, alloy: 0, data: 0 })
   })
+})
+
+it('renders Fuel and Provisions independently from saved ship stock, leaving reserves and the save untouched', () => {
+  const original = recruited(), room = { ...hangar, prop: undefined, props: [
+    { asset: 'fuel', when: 'ship-stock' as const, resource: 'fuel' as const, x: 0, y: 0, width: 100, height: 100 },
+    { asset: 'food', when: 'ship-stock' as const, resource: 'provisions' as const, x: 100, y: 0, width: 100, height: 100 },
+  ] }
+  const save = { ...original, campaignSupply: { ...original.campaignSupply!, fuel: 0, provisions: 1 } }
+  const before = JSON.stringify(save)
+  expect(visibleLocationProps(save, book, room).map(p => p.asset)).toEqual(['food'])
+  expect(JSON.stringify(save)).toBe(before)
+  const changed = { ...save, campaignSupply: { ...save.campaignSupply, fuel: 2, provisions: 0 } }
+  expect(visibleLocationProps(changed, book, room).map(p => p.asset)).toEqual(['fuel'])
+  expect(visibleLocationProps({ ...changed, campaignSupply: { ...changed.campaignSupply, fuel: 0 } }, book, room)).toEqual([])
+})
+
+it('tracks loadable port surplus through protected reserves, capacity, transfer, night and reload', () => {
+  const original = recruited(), room = { ...hangar, prop: undefined, props: [
+    { asset: 'fuel', when: 'port-surplus' as const, resource: 'fuel' as const, x: 0, y: 0, width: 100, height: 100 },
+    { asset: 'food', when: 'port-surplus' as const, resource: 'provisions' as const, x: 100, y: 0, width: 100, height: 100 },
+  ] }
+  const protectedStock = { fuel: port.reserve.fuel + port.upkeep.fuel, provisions: port.reserve.provisions + port.upkeep.provisions, alloy: 3 }
+  let save = restored({ ...original, campaignSupply: { ...original.campaignSupply!, fuel: 98,
+    stores: { [port.id]: { ...protectedStock, fuel: protectedStock.fuel + 2 } } } })
+  expect(visibleLocationProps(save, book, room).map(p => p.asset)).toEqual(['fuel'])
+  const transfer = loadShipment(save.campaignSupply!, port, 'fuel')!
+  expect(transfer.supply.fuel).toBe(99)
+  expect(storesAt(transfer.supply, port).fuel).toBe(protectedStock.fuel + 1)
+  save = restored({ ...save, campaignSupply: transfer.supply })
+  expect(visibleLocationProps(save, book, room)).toEqual([]) // Ship full; local surplus cannot be loaded.
+  expect(loadShipment(save.campaignSupply!, port, 'provisions')).toBeNull()
+  const next = restored(settleCampaignDay(save, { day: save.campaignDay.day + 1, pending: null }, book))
+  expect(storesAt(next.campaignSupply!, port).provisions).toBe(protectedStock.provisions)
+  expect(next.campaignSupply!.provisions).toBeLessThan(save.campaignSupply!.provisions)
+  expect(visibleLocationProps(next, book, room)).toEqual([])
+  expect(visibleLocationProps({ ...next, campaignSupply: { ...next.campaignSupply!, fuel: 98 } }, book, room).map(p => p.asset)).toEqual(['fuel'])
 })

@@ -47,3 +47,10 @@ describe('campaign dialogue portraits', () => {
     expect(faceBox(base, { width: 0, height: 0 }, { x: 0, y: 0 })).toBeUndefined()
   })
 })
+
+it('falls back from a missing derived portrait to its native image without pasting derived-coordinate faces', async () => {
+  const result = await loadScenePortraits([{ speaker: 9000001, asset: 'dialogue' }], [{ speaker: 9000001, base: 'dialogue', emote: 'happy', asset: 'face', at: { x: 0, y: 0 } }],
+    async id => { if (id === 'dialogue') throw Error('offline'); return 'url:' + id }, () => ['native'])
+  expect(result).toEqual([{ speaker: 9000001, url: 'url:native' }])
+  expect(await loadScenePortraits([{ speaker: 9000001, asset: 'missing' }], [], async () => { throw Error('offline') })).toEqual([])
+})

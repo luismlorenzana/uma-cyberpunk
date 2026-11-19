@@ -25,6 +25,11 @@ export const LOCATION_STATES = ['ready', 'unfunded', 'building', 'complete', 'st
 export type LocationState = typeof LOCATION_STATES[number]
 /** An absent state export deliberately uses its named fallback, rather than masquerading as final art. */
 export interface LocationVisual { slot: string; asset?: string; fallback: string }
+export interface LocationProp {
+  asset: string; when: 'hangar-alloy' | 'ship-alloy' | 'port-surplus' | 'ship-stock'
+  resource?: 'fuel' | 'provisions' | 'alloy'
+  x: number; y: number; width: number; height: number
+}
 export interface ManagementLocation {
   id: string
   title: string
@@ -34,7 +39,8 @@ export interface ManagementLocation {
   visual: LocationVisual
   states: Partial<Record<LocationState, LocationVisual>>
   contexts?: { state: LocationState; scene: string; fallback: string }[]
-  prop?: { asset: string; when: 'hangar-alloy' | 'ship-alloy' | 'port-surplus'; x: number; y: number; width: number; height: number }
+  prop?: LocationProp
+  props?: LocationProp[]
 }
 export interface CampaignManagement {
   after: string

@@ -1,5 +1,5 @@
-import { walkSteps, type EffectStep } from '@cyber/domain'
-import { useEffect, useRef, useState } from 'react'
+import { wardrobeSceneArt, walkSteps, type EffectStep } from '@cyber/domain'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ScenePlayer, type SceneDecision, type ScenePresentation } from '../story/ScenePlayer'
 import type { BondEffect } from '../story/runner'
 import { campaignImage, type LoadedCampaign } from './load'
@@ -17,7 +17,7 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
   battle?: (id: string, effects: readonly EffectStep[]) => Promise<void>
 }) {
   const scene = loaded.book.scenes.get(sceneId)!
-  const art = loaded.book.art.find((entry) => entry.scene === sceneId)
+  const art = useMemo(() => wardrobeSceneArt(loaded.book, sceneId), [loaded, sceneId])
   const [presentation, setPresentation] = useState<ScenePresentation | null>(null)
   const steps = useRef<EffectStep[]>([])
   const bonds = useRef<BondEffect[]>([])
@@ -42,7 +42,11 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
       step.kind === 'illustration' && step.asset ? [step.asset] : []))
     void Promise.all([
       art?.backdrop ? read(art.backdrop) : undefined,
-      loadScenePortraits(art?.portraits ?? [], loaded.book.portraitFaces ?? [], read),
+      loadScenePortraits(art?.portraits ?? [], loaded.book.portraitFaces ?? [], read, (speaker, asset) => {
+        const native = loaded.book.wardrobe?.crops.find(row => row.dialogue.asset === asset)?.base
+        const previous = loaded.book.art.find(row => row.scene === sceneId)?.portraits.find(row => row.speaker === speaker && row.emote === undefined)?.asset
+        return [...new Set([native, previous].filter((id): id is string => !!id && id !== asset))]
+      }),
       Promise.all([...illustrated].map(async (id) => [id, await read(id)] as const)),
       art?.composition ? Promise.all(art.composition.layers.map(async (layer) => {
         try { return { ...layer, url: await read(layer.asset) } } catch { return null }

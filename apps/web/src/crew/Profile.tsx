@@ -1,7 +1,9 @@
+import { useState } from 'react'
+import { LookPortrait } from '../looks/looks'
 // Her profile (CY11, TC4, TC5, TC27, TC46): her bands with each band's job in combat and on the rig, her role and its
 // Back unit (changed here, aboard), her Stride, level and Strain with the bench rule.
 import { TUNING, type Band, type Role } from '@cyber/battle'
-import { changeRole, PARTS_BY_ID, ROLE_NAME, ROLE_PLAYS, ROLES, STRAIN_REST, STRIDE_DOES, STRIDE_NAME, STYLE_NAME } from '@cyber/domain'
+import { LOOKS, LOOK_NAME, type Look, changeRole, PARTS_BY_ID, ROLE_NAME, ROLE_PLAYS, ROLES, STRAIN_REST, STRIDE_DOES, STRIDE_NAME, STYLE_NAME } from '@cyber/domain'
 import { AlbumArtProvider, UmaBust } from '@luismlorenzana/uma-kit/album'
 import { useNavigate } from 'react-router'
 import { updateSave } from '../save/game'
@@ -23,13 +25,14 @@ export function bandJobs(b: Record<'speed' | 'stamina' | 'power' | 'guts' | 'wit
 
 export function Profile({ view, nameOf, bond }: { view: CrewView; nameOf: (id: string) => string; bond?: React.ReactNode }) {
   const navigate = useNavigate()
+  const [look, setLook] = useState<Look>('ship-casual')
   const back = view.rig.back ? PARTS_BY_ID.get(view.rig.back) : undefined
   const setRole = (role: Role) => void updateSave((s) => updateMember(s, view.outfit, (m) => changeRole(m, role, view.rig)))
   return (
     <div data-profile={view.outfit} className="space-y-3">
       <div className="flex gap-3">
         <div className="h-36 w-28 shrink-0 overflow-hidden rounded-lg ring-1 ring-white/15">
-          <AlbumArtProvider art={albumArt(nameOf)}><UmaBust outfitId={String(view.outfit)} label={view.name} size={112} className="size-full" /></AlbumArtProvider>
+          <LookPortrait outfit={view.outfit} name={view.name} look={look} mode="bust" className="size-full" fallback={<AlbumArtProvider art={albumArt(nameOf)}><UmaBust outfitId={String(view.outfit)} label={view.name} size={112} className="size-full" /></AlbumArtProvider>} />
         </div>
         <div className="min-w-0 flex-1">
           <h2 className="font-display text-[22px] font-bold">{view.name}</h2>
@@ -41,6 +44,10 @@ export function Profile({ view, nameOf, bond }: { view: CrewView; nameOf: (id: s
             <span className="text-white/60">{view.resting ? 'Resting: she sits the next mission out' : `${view.member.strain}/${STRAIN_REST}`}</span>
           </div>
         </div>
+      </div>
+      <div className="flex flex-wrap gap-1.5" aria-label="Outfits">
+        {LOOKS.map(role => <button type="button" key={role} aria-pressed={look === role} onClick={() => setLook(role)}
+          className={`min-h-11 rounded-md px-3 text-sm ${look === role ? 'bg-cyan-200 text-slate-950' : 'bg-white/10'}`}>{LOOK_NAME[role]}</button>)}
       </div>
       <div>
         <div className="mb-1 text-[12px] uppercase tracking-widest text-white/50">Role (changed aboard; her Back unit changes with it)</div>

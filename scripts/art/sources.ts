@@ -39,7 +39,7 @@ async function image(asset: string, bytes: Buffer, ref: Row): Promise<ImageRepla
 
 /** Reads published Cyberpunk collections only. Local assets require an explicit owner/hash approval. */
 export async function resolveArt(storage: ArtStorage, config: PublishConfig, options: {
-  event: ArtEvent; only: readonly string[]; contentRoot: string; allowMissing?: boolean;
+  event: ArtEvent; only: readonly string[]; contentRoot: string; allowMissing?: boolean; currentImages?: ReadonlyMap<string, string>;
 }): Promise<ResolvedArt> {
   const result: ResolvedArt = { images: [], portraits: [], skipped: [], sourceChecks: [], sources: [] }
   const indexes = new Map<string, Promise<Row>>()
@@ -102,6 +102,7 @@ export async function resolveArt(storage: ArtStorage, config: PublishConfig, opt
     const row = found[0]!
     if (!selected(row, options.only)) continue
     if (!/^\d{4}-\d{2}-\d{2}$/.test(String(row.approvedOn))) throw new Error(`${binding.asset}: source has no dated approval`)
+    if (options.currentImages?.get(binding.asset) === row.sha256) continue
     result.images.push(await remoteImage(binding.asset, root, row))
   }
 

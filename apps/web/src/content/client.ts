@@ -8,7 +8,7 @@ export const CONTENT = createContentClient({
   token: () => idToken(FIREBASE),
   cacheName: 'cyber-master',
   // The pointer is mutable, and Hosting can retain an earlier 404 for its URL.
-  fetch: (input, init) => input.endsWith('/content/campaign/preview.json')
+  fetch: (input, init) => input.endsWith('/content/campaign/preview.json') || input.endsWith('/content/looks/index.json')
     ? fetch(`${input}?check=${Date.now()}`, { ...init, cache: 'no-store' })
     : fetch(input, init),
 })

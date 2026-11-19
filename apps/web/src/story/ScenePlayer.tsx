@@ -1,3 +1,5 @@
+import { lookFor, placeLookContext, type Look, type LookContext } from '@cyber/domain'
+import { LookPortrait } from '../looks/looks'
 // The scene player (CY9, TC36): a text box with the speaker's name and bust over the place's backdrop. A tap moves on; an
 // interjection slot plays the first squad lead's line; choices are one-tap buttons, a Lead marked as one; a Call shows the
 // voters' arguments. **Auto** moves on by the line's length, **Skip** passes to the next choice or the end, **Log** shows
@@ -51,9 +53,9 @@ export function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentati
 
 export interface SceneDecision { selected?: number; commit: (index: number) => Promise<void> }
 
-export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit, exitLabel }: {
+export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit, exitLabel, lookContext }: {
   pack: StoryPack
-  scene: Scene | { id: string; place: string; steps: Step[] }
+  scene: Scene | { id: string; place: string; steps: Step[]; look?: Look }
   squad: readonly number[]
   onEffect: Parameters<typeof playScene>[1]['effect']
   onBattle: (mission: string) => Promise<void>
@@ -61,6 +63,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   /** A bond scene's effects: a captain's choice's rapport, the path chosen (CY13). */
   onBond?: (effect: BondEffect) => void
   presentation?: ScenePresentation
+  lookContext?: LookContext
   pathFooter?: string
   decision?: SceneDecision
   onExit?: () => void
@@ -161,7 +164,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       </div>
       {showPortrait && speaker !== null && <div className="absolute bottom-[34%] max-h-[48%]" style={{ left: 'calc(var(--inset-left) + 16px)' }}>
         {portrait ? <ScenePortrait key={portrait.image.url} image={portrait.image} face={portrait.face} />
-          : <Bust pack={pack} speaker={speaker} />}
+          : typeof speaker === 'number' && !presentation ? <LookPortrait outfit={speaker} name={nameOf(pack, speaker)} look={lookFor(lookContext ?? placeLookContext(scene.place), scene.look)} mode="bust" className="h-40 w-32" fallback={<Bust pack={pack} speaker={speaker} />} /> : <Bust pack={pack} speaker={speaker} />}
       </div>}
       {prompt?.kind === 'line' && (
         <button type="button" data-line onClick={() => advance()} className="absolute inset-x-4 bottom-3 min-h-28 rounded-xl border border-white/15 bg-[#0b0d17]/90 p-3 text-left"

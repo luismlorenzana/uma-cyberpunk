@@ -39,3 +39,13 @@ describe('private management presentation contract', () => {
     for (const steps of invalid) expect(() => parseCampaignManagement(raw(), { ...book, scenes: new Map([['room', { ...room, steps }]]) })).toThrow()
   })
 })
+
+it('validates up to three resource props and keeps the single Alloy prop backward compatible', () => {
+  const prop = { asset: 'plate', when: 'ship-stock', resource: 'fuel', x: 0, y: 0, width: 100, height: 100 }
+  const value = raw(), room = value.locations[0]!
+  expect(parseCampaignManagement({ ...value, locations: [{ ...room, props: [prop, { ...prop, asset: 'food', resource: 'provisions' }] }] }, { ...book, assets: [...book.assets, { id: 'food', file: 'food.png' }] }).locations[0]!.props).toHaveLength(2)
+  for (const wrong of [{ ...prop, resource: 'imaginary' }, { ...prop, when: 'hangar-alloy' }, { ...prop, x: 1844 }]) {
+    expect(() => parseCampaignManagement({ ...value, locations: [{ ...room, props: [wrong] }] }, book)).toThrow()
+  }
+  expect(() => parseCampaignManagement({ ...value, locations: [{ ...room, prop, props: [prop] }] }, book)).toThrow()
+})

@@ -12,14 +12,12 @@ expressions and Story approval remain in CY49/CY50.
 
 ## Two deliveries and their boundaries
 
-The six-look crew wardrobe is queued in [CY65](../handoff/tasks/CY65.md) and
-[CY66](../handoff/tasks/CY66.md). The current reader accepts five roles; Ship Casual requires reader
-and context routing before the complete wardrobe can appear. The CY54 registry snapshot contains
-199 of 300 identity/role selectors. CY66 records the missing 101, verifies actual consumers and
-handles derived portrait/profile refresh where needed. These packets are prerequisites, not a
-claim that a full wardrobe push has occurred. [CY67](../handoff/tasks/CY67.md) separately takes the
-approved general-art completion handoff; [CY68](../handoff/tasks/CY68.md) and
-[CY69](../handoff/tasks/CY69.md) are General Art's remaining effect/environment briefs.
+The [six-look wardrobe](campaign-wardrobe.md) implements Ship Casual and all 300 identity/role
+bindings, with 600 dialogue/profile crops and reviewed scene routing. CY67 integrates the 46
+approved general sources, including the 25 absent from CY54, and independent Fuel/Provisions props.
+The compatible reader must deploy before selecting this reviewed content migration. Subsequent
+approved replacements use the art-only path below. [CY68](../handoff/tasks/CY68.md) and
+[CY69](../handoff/tasks/CY69.md) remain General Art's effect/environment briefs.
 
 | Delivery | Destination | What it changes |
 |---|---|---|
@@ -101,6 +99,13 @@ pixels and reuses identical face bytes across outfit placements. An optional rev
 a 192 × 192 WebP profile. New base bytes invalidate an old profile crop's hash binding; review and
 update the registry instead of silently using stale coordinates. Replacing a base that already has
 face placements requires its expression recipe in the same publication.
+
+The optional campaign wardrobe declares native-master crop recipes and their dialogue/profile
+consumers. A compatible replacement regenerates both mechanical crops from new native bytes.
+Changed dimensions require a reviewed recipe; native or derived face placements require their new
+recipe in the same push. Coordinates are translated into the dialogue crop and checked against its
+bounds. The existing gameplay fingerprint includes wardrobe routing and framing. Neither changes
+through an art-only push. Identical published native hashes avoid downloading the full image again.
 
 ## Commands
 

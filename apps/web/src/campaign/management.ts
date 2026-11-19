@@ -1,7 +1,7 @@
 import {
   awayMembers, campaignSupport, developedPort, formerDisposition, managementReportKey, moduleAt, MODULES_BY_ID, pairProgress,
   sectorAppointed, shipmentAt, startSupply, storesAt, walkSteps,
-  type CampaignBook, type LocationState, type ManagementLocation, type ManagementReceipt, type Save,
+  type CampaignBook, type LocationProp, type LocationState, type ManagementLocation, type ManagementReceipt, type Save,
 } from '@cyber/domain'
 import { questComplete } from './quests'
 import { workshopAt } from './workshop'
@@ -56,7 +56,7 @@ export function locationState(save: Save, book: CampaignBook, location: Manageme
     return save.campaignGear.alloy > 0 ? 'stocked' : 'ready'
   }
   if (location.family === 'planet' && at?.port.liberation) return save.story.flags.includes(at.port.liberation.flag) ? 'restored' : 'occupied'
-  if (location.prop?.when === 'ship-alloy' && save.wallet.alloy > 0) return 'stocked'
+  if (visibleLocationProps(save, book, location).length && location.family === 'operations') return 'stocked'
   return 'ready'
 }
 
@@ -66,11 +66,19 @@ export function fittedMembers(save: Save, book: CampaignBook) {
     && member.rig && Object.values(member.rig).some(part => part && save.campaignGear.parts.includes(part)))
 }
 
-export function locationPropVisible(save: Save, book: CampaignBook, location: ManagementLocation): boolean {
+export function visibleLocationProps(save: Save, book: CampaignBook, location: ManagementLocation): LocationProp[] {
   const at = managementAt(save, book)
-  if (!at || !locationAvailable(save, book, location) || !location.prop) return false
-  return location.prop.when === 'hangar-alloy' ? save.campaignGear.alloy > 0
-    : location.prop.when === 'ship-alloy' ? save.wallet.alloy > 0 : shipmentAt(at.supply, at.port, 'alloy') > 0
+  if (!at || !locationAvailable(save, book, location)) return []
+  return (location.props ?? (location.prop ? [location.prop] : [])).filter(prop => {
+    const kind = prop.resource ?? 'alloy'
+    return prop.when === 'hangar-alloy' ? save.campaignGear.alloy > 0
+      : prop.when === 'ship-alloy' || (prop.when === 'ship-stock' && kind === 'alloy') ? save.wallet.alloy > 0
+      : prop.when === 'ship-stock' ? at.supply[kind as 'fuel' | 'provisions'] > 0
+      : shipmentAt(at.supply, at.port, kind) > 0
+  })
+}
+export function locationPropVisible(save: Save, book: CampaignBook, location: ManagementLocation): boolean {
+  return visibleLocationProps(save, book, location).length > 0
 }
 
 function scenePresent(save: Save, book: CampaignBook, scene: string, event?: ManagementReceipt): boolean {

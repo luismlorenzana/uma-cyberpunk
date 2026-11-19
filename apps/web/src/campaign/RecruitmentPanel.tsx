@@ -3,6 +3,8 @@ import { nameOf } from '../story/runner'
 import { questAvailable, recruitOnBoard, recruitProgress } from './quests'
 import { sectorStatus } from './SectorPanel'
 import { CampaignThumbnail } from './CampaignThumbnail'
+import { useState } from 'react'
+import { Wardrobe } from './Wardrobe'
 
 const action = 'min-h-11 rounded-lg bg-cyan-200 px-3 text-sm font-semibold text-slate-950 disabled:bg-white/10 disabled:text-white/60'
 
@@ -11,6 +13,7 @@ export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
   assets: ReadonlyMap<string, CampaignReleaseFile>
   open: (quest: CampaignQuest) => void
 }) {
+  const [wardrobe, setWardrobe] = useState<number | null>(null)
   const progress = recruits.filter((recruit) => recruitOnBoard(save, book, recruit))
     .map((recruit) => ({ recruit, ...recruitProgress(save, book, recruit) }))
   const boards = [
@@ -18,6 +21,7 @@ export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
     { title: 'Crew stories', entries: progress.filter(({ joined }) => joined) },
   ]
   return <div className="space-y-3">
+    {wardrobe !== null && progress.some(row => row.joined && row.recruit.outfit === wardrobe) && <Wardrobe book={book} assets={assets} speaker={wardrobe} back={() => setWardrobe(null)} />}
     {boards.map(({ title, entries }) => entries.length > 0 && <section key={title} aria-label={title} className="space-y-2">
       <h2 className="font-display text-lg font-bold">{title}</h2>
       <ul className="space-y-2">
@@ -29,9 +33,9 @@ export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
           const ready = !!next && questAvailable(save, book, next, port)
           const sector = book.sectors?.find(({ officer }) => officer === recruit.outfit)
           const signOn = book.quests.find(({ id }) => id === recruit.signOn)
-          const profile = book.art.find(({ scene }) => scene === signOn?.scene)?.portraits.find(({ speaker, emote }) =>
+          const profile = book.wardrobe?.members.find(row => row.speaker === recruit.outfit)?.looks['ship-casual'].profile ?? book.art.find(({ scene }) => scene === signOn?.scene)?.portraits.find(({ speaker, emote }) =>
             speaker === recruit.outfit && emote === undefined)?.profile
-          return <li key={recruit.outfit} className="space-y-1 rounded-lg border border-white/15 bg-white/5 p-2">
+          return <li key={recruit.outfit} data-recruit={recruit.outfit} className="space-y-1 rounded-lg border border-white/15 bg-white/5 p-2">
             {profile && <CampaignThumbnail asset={assets.get(profile)} className="float-right size-12 rounded-md object-cover" />}
             <h3 className="break-words font-semibold">{nameOf(book.story, recruit.outfit)}</h3>
             {!joined && <p className="text-sm">{recruit.request}</p>}
@@ -42,6 +46,7 @@ export function RecruitmentPanel({ save, book, assets, recruits, port, open }: {
             {next && <button type="button" className={action} disabled={!ready} onClick={() => open(next)}>
               {joined ? started ? 'Continue story' : 'Start story' : 'Sign on'}
             </button>}
+            {joined && book.wardrobe?.members.some(row => row.speaker === recruit.outfit) && <button type="button" className="ml-2 min-h-11 rounded-lg bg-white/10 px-3 text-sm" onClick={() => setWardrobe(recruit.outfit)}>Wardrobe</button>}
           </li>
         })}
       </ul>

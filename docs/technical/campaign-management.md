@@ -58,9 +58,14 @@ cancellation exists in this campaign; CY51 adds neither.
 - State variants: `ready`, `unfunded`, `building`, `complete`, `stocked`, `fitted`, `occupied`,
   `restored`, `powered`. Unsupported health/repair variants are refused. Undefined variants use the
   base visual. Download failures try the named fallback; unavailable art leaves the controls usable.
-- Optional `prop`: asset ID, `when` (`hangar-alloy`, `ship-alloy`, `port-surplus`) and integer
-  `x`, `y`, `width`, `height` within the 1844 × 853 composition. Offered local cargo is distinct from
-  accepted ship/Hangar stock. The crate disappears when its corresponding saved stock is empty.
+- Optional `props` (at most three) or legacy single `prop`: asset ID, `when` and integer
+  `x`, `y`, `width`, `height` within the 1844 × 853 composition. `hangar-alloy` reads Hangar stock;
+  `ship-alloy` reads the wallet. `ship-stock` requires `resource` (`fuel`, `provisions`, `alloy`).
+  `port-surplus` defaults to Alloy or names the same resource, and reads the real loadable shipment:
+  reserve and next upkeep stay protected; full ship capacity hides that resource's offer. Stock
+  props disappear independently at zero. Transfers, spending, nightly production/upkeep and reload
+  use the same saved ledgers as the controls. Duplicate resources, conflicting lists, bad predicates
+  and out-of-bounds placements are refused. Viewing a prop never changes inventory.
 - Optional `contexts`: unique `{ state, scene, fallback }` rows select read-only context for that
   saved state. Numeric speakers require actual physical availability; otherwise the fallback plays.
 - Reports bind actual receipt kinds, optional subject/destination, location, scene and fallback.
@@ -104,8 +109,11 @@ cabin and berth plates, the scoped second Story draft and short Steward fallback
 slots and twenty-three report bindings are in the private fixture. The existing Hangar introduction
 gets its own plate; shared placeholder assets used by unrelated scenes are preserved.
 
-CY52's completion/social sources are now owner-approved; [CY67](../handoff/tasks/CY67.md) queues the
-remaining approved-source intake and Fuel/Provisions prop support. CY53 retains owner review and
+CY67 integrates all 46 approved completion/social sources across nineteen locations and forty-six
+visual slots, with separate Fuel/Provisions props in cargo and offered local surplus. Seventy-four
+reviewed scene backdrops change without altering character layers. Conditional module/custody/shared
+locations retain their actual gates. The nine reusable cutouts have a separate Platform-family
+extension request; their campaign-local publication is complete. CY53 retains owner review and
 the recorded staging adaptations; unsupported role/alliance proposals are
 not imported. The current optional room contexts omit an authoring placeholder narration, and three
 project reports keep their established campaign place/trigger while using the latest dialogue.

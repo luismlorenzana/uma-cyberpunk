@@ -2,6 +2,7 @@ import { CAMPAIGN_PREVIEW_INDEX, campaignReleasePath, parseCampaignBook, parseCa
   type CampaignRelease, type CampaignReleaseFile } from '../../packages/domain/src/story/index'
 import { sha, type ImageReplacement, type ResolvedArt } from './model'
 import { CAMPAIGN_PREFIX, GenerationConflict, type ArtStorage } from './storage'
+import { refreshWardrobeImages } from './derivations'
 
 const json = (bytes: Buffer): unknown => JSON.parse(bytes.toString('utf8'))
 const bytesOf = (value: unknown) => Buffer.from(JSON.stringify(value))
@@ -93,7 +94,8 @@ export function buildArtCandidate(selected: SelectedCampaign, resolved: Resolved
   let faces = (config.portraitFaces ?? []) as Face[]
   for (const portrait of resolved.portraits) {
     if (!definitions.has(portrait.base)) { skipped.push(`${portrait.base}: portrait not bound`); continue }
-    if (!art.some(scene => scene.portraits.some(p => p.asset === portrait.base && p.speaker === portrait.speaker && p.emote === undefined))) throw new Error(`${portrait.base}: not this speaker's neutral base`)
+    if (!art.some(scene => scene.portraits.some(p => p.asset === portrait.base && p.speaker === portrait.speaker && p.emote === undefined))
+      && !selected.book.wardrobe?.members.some(member => member.speaker === portrait.speaker && Object.values(member.looks).some(look => look.asset === portrait.base || look.dialogue === portrait.base))) throw new Error(`${portrait.base}: not this speaker's neutral base`)
     const old = faces.filter(face => face.base === portrait.base && face.speaker === portrait.speaker)
     const next = portrait.faces.map(face => ({ speaker: portrait.speaker, base: portrait.base, emote: face.emote, asset: face.image.asset, at: face.at }))
     faces = faces.filter(face => !(face.base === portrait.base && face.speaker === portrait.speaker)).concat(next)
@@ -134,7 +136,7 @@ async function immutable(storage: ArtStorage, path: string, bytes: Buffer) {
 
 export async function publishArtCandidate(storage: ArtStorage, selected: SelectedCampaign, resolved: ResolvedArt,
   options: { dryRun?: boolean; stageOnly?: boolean } = {}) {
-  const candidate = buildArtCandidate(selected, resolved)
+  const candidate = buildArtCandidate(selected, await refreshWardrobeImages(selected, resolved))
   if (options.dryRun || !candidate.changes.length) return { ...candidate, promoted: false }
   for (const check of resolved.sourceChecks) await check()
   for (const [path, bytes] of candidate.payloads) await immutable(storage, path, bytes)

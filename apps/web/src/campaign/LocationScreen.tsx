@@ -1,10 +1,10 @@
-import { campaignSupport, campaignUpkeep, MODULES_BY_ID, PARTS_BY_ID, type ModuleId, type ManagementLocation, type ManagementReceipt, type Save } from '@cyber/domain'
+import { campaignSupport, campaignUpkeep, MODULES_BY_ID, PARTS_BY_ID, type ModuleId, type ManagementLocation, type LocationProp, type ManagementReceipt, type Save } from '@cyber/domain'
 import { useEffect, useState } from 'react'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
 import { CampaignScene } from './CampaignScene'
 import { campaignImage, type LoadedCampaign } from './load'
-import { acknowledgeManagement, locationContext, locationLedger, locationPropVisible, locationState, managementAt, managementReports } from './management'
+import { acknowledgeManagement, locationContext, locationLedger, visibleLocationProps, locationState, managementAt, managementReports } from './management'
 import { ProjectsPanel } from './ProjectsPanel'
 import { SectorPanel } from './SectorPanel'
 import { SupplyPanel } from './SupplyPanel'
@@ -25,33 +25,33 @@ function receiptLabel(event: ManagementReceipt, loaded: LoadedCampaign) {
   return `Day ${event.day} · ${event.kind.replaceAll('-', ' ')} · ${subject}${event.kind === 'shipment' ? ` × ${event.amount} → ${event.destination === 'hangar' ? 'Hangar' : 'ship cargo'}` : ''}${officer}`
 }
 
-function LocationArt({ loaded, location, state, prop }: { loaded: LoadedCampaign; location: ManagementLocation; state: ReturnType<typeof locationState>; prop: boolean }) {
-  const visual = location.states[state] ?? location.visual
-  const [images, setImages] = useState<{ plate?: string; prop?: string }>({})
+function LocationArt({ loaded, location, state, props }: { loaded: LoadedCampaign; location: ManagementLocation; state: ReturnType<typeof locationState>; props: LocationProp[] }) {
+  const visual = location.states[state] ?? location.visual, keys = props.map(prop => prop.asset).join(':')
+  const [images, setImages] = useState<{ plate?: string; props: Record<string, string> }>({ props: {} })
   useEffect(() => {
     let live = true
     const urls: string[] = []
-    setImages({})
+    setImages({ props: {} })
     const read = async (id: string) => {
       const ref = loaded.assets.get(id)
       if (!ref) throw new Error('Missing room asset')
       const url = await campaignImage(ref)
-      if (live) urls.push(url)
-      else URL.revokeObjectURL(url)
+      if (live) urls.push(url); else URL.revokeObjectURL(url)
       return url
     }
     const plate = visual.asset ? read(visual.asset).catch(() => read(visual.fallback)) : read(visual.fallback)
-    void Promise.all([plate.catch(() => undefined), prop && location.prop ? read(location.prop.asset).catch(() => undefined) : undefined])
-      .then(([plate, prop]) => { if (live) setImages({ plate, prop }) })
+    void Promise.all([plate.catch(() => undefined), Promise.all(props.map(async prop => {
+      try { return [[prop.asset, await read(prop.asset)]] as [string, string][] } catch { return [] }
+    }))]).then(([plate, props]) => { if (live) setImages({ plate, props: Object.fromEntries(props.flat()) }) })
     return () => { live = false; urls.forEach(url => URL.revokeObjectURL(url)) }
-  }, [loaded, visual, location.prop, prop])
+  }, [loaded, visual, keys])
   return <div className="pointer-events-none absolute inset-0 overflow-hidden bg-[#10182a]" aria-hidden="true">
     <div className="absolute left-0 top-1/2 w-full -translate-y-1/2" style={{ aspectRatio: '1844 / 853' }}>
       {images.plate && <img src={images.plate} alt="" className="absolute inset-0 h-full w-full object-cover opacity-70" />}
-      {images.prop && location.prop && <img src={images.prop} alt="" className="absolute object-contain" style={{
-        left: `${location.prop.x / 1844 * 100}%`, top: `${location.prop.y / 853 * 100}%`,
-        width: `${location.prop.width / 1844 * 100}%`, height: `${location.prop.height / 853 * 100}%`,
-      }} />}
+      {props.map(prop => images.props[prop.asset] && <img key={prop.asset} src={images.props[prop.asset]} alt="" data-location-prop={prop.asset} className="absolute object-contain" style={{
+        left: `${prop.x / 1844 * 100}%`, top: `${prop.y / 853 * 100}%`,
+        width: `${prop.width / 1844 * 100}%`, height: `${prop.height / 853 * 100}%`,
+      }} />)}
     </div>
   </div>
 }
@@ -75,7 +75,7 @@ export default function LocationScreen({ save, loaded, location, back, checkRele
         ? acknowledgeManagement(current, scene.key) : current).then(() => setScene(null), error => { setFailure(String(error)); setScene(null) })
     }} />
   return <main className="absolute inset-0 overflow-hidden bg-[#0b0d17] text-[#e8ebf5]" style={{ margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }}>
-    <LocationArt loaded={loaded} location={location} state={state} prop={locationPropVisible(save, loaded.book, location)} />
+    <LocationArt loaded={loaded} location={location} state={state} props={visibleLocationProps(save, loaded.book, location)} />
     <div className="relative grid h-full grid-rows-[auto_1fr] gap-2 p-2">
       <header className="flex min-w-0 items-center gap-2">
         <button type="button" className={button} onClick={back}>Campaign</button>
