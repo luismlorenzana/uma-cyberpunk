@@ -77,13 +77,13 @@ export function commandFacts(event: ResolvedCommand): string {
 
 export function commandEffectKeys(event: ResolvedCommand): CommandEffectKey[] {
   const last = event.after.last!, effects: CommandEffectKey[] = []
-  if (event.action.shields > 0 || last.blocked > 0) effects.push('shields')
-  if (event.action.guns > 0 && (last.hit > 0 || (event.action.order === 'fire' && last.emitterHit > 0))) effects.push('guns')
+  if (last.blocked > 0) effects.push('shields')
+  if (event.action.order === 'fire' && event.action.guns > 0 && (last.hit > 0 || last.emitterHit > 0)) effects.push('guns')
   if (event.action.order === 'strike' && (last.hit > 0 || last.emitterHit > 0)) effects.push('fighter-strike')
-  if (last.intercepted > 0) effects.push('intercept')
+  if (event.action.order === 'intercept' && last.intercepted > 0) effects.push('intercept')
   if (last.hit > 0) effects.push('hit')
   if (last.emitterHit > 0) effects.push(event.disabled ? 'emitter-disabled' : 'emitter-hit')
   if (last.hullDamage > 0 || last.transportDamage > 0) effects.push('friendly-damage')
-  if (event.after.power > event.before.power) effects.push('power')
+  if (event.action.order === 'reroute' && event.after.power > event.before.power) effects.push('power')
   return effects
 }

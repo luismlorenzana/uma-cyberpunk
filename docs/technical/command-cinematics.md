@@ -86,18 +86,21 @@ The renderer derives effect keys from `ResolvedCommand`; authoring cannot choose
 
 | Key | Required resolved fact |
 |---|---|
-| `shields` | Shield allocation or actual blocking |
-| `guns` | Allocated guns contribute confirmed ship damage, or a v2 gun hit on the emitter |
+| `shields` | Actual blocking; the approved absorption arc cannot claim protection from allocation alone |
+| `guns` | A fire order with allocated guns contributes confirmed ship or emitter damage |
 | `fighter-strike` | A strike order actually damages its selected target |
-| `intercept` | At least one incoming fighter intercepted |
+| `intercept` | An intercept order actually intercepts at least one incoming fighter |
 | `hit` | Confirmed opposing-ship damage |
 | `emitter-hit` | Partial emitter damage with the emitter still live |
 | `emitter-disabled` | Transition from positive emitter integrity to zero |
 | `friendly-damage` | Confirmed hull or protected-objective damage |
-| `power` | Confirmed increase in next-order reactor power |
+| `power` | A reroute order confirms an increase in next-order reactor power |
 
-The initial fixture has nine named FX slots and temporary code-native marks. Approved exports can
-provide positioned image layers under these keys; missing exports retain the factual fallback.
+The fixture has nine named FX slots. Five approved general-art sources supply absorption, gunfire,
+target contact, fighter interception and power rerouting. A contact spark also supports actual emitter
+and friendly-damage keys; a fighter strike retains its factual code-native mark. The newly approved
+neutral command station and two later protected craft are integrated from the scoped CY52/CY55 handoff.
+Approved exports provide positioned image layers under these keys; missing exports retain the factual fallback.
 Layers load only for active effects and are released on event/release changes. General FX art and
 actor art never change the committed result.
 
@@ -117,7 +120,7 @@ The original encounter quests, scenes, numeric data and subsequent boarding gate
 Read-only prep/result/retry drafts use their actual campaign world/place. Non-emitter escorts omit
 unsupported emitter contexts/references. Two short hostile-channel baselines are explicitly returned
 to CY56 because its boss station voices describe allied service. Other unlocked enemy communications
-use factual fallback rather than an invented commander. Final poses, FX, craft replacements and
+use factual fallback rather than an invented commander. Final poses, reviewed station variants and
 Story integration acceptance remain CY55/CY56; source and game-release approval are distinct.
 
 Unit and private campaign checks cover frozen identities, stale callbacks, cursor migration, old

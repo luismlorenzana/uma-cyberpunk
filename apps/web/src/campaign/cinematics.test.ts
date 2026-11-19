@@ -113,6 +113,12 @@ describe('committed ship order cinematics', () => {
     expect(ordinary.after.result).toBe('won')
     expect(ordinary.after.emitter).toBe(4)
     expect(ordinary.disabled).toBe(false)
+    const passive = resolvedCommand({ ...input, threats: [{ section: 'fore', power: 0, fighters: 3 }] },
+      [{ order: 'reroute', shields: 1, guns: 0, fighters: 2 }], 1)!
+    expect(passive.after.last!.intercepted).toBe(1)
+    expect(commandEffectKeys(passive)).not.toContain('intercept')
+    expect(commandEffectKeys(passive)).not.toContain('shields')
+    expect(commandEffectKeys(passive)).toContain('power')
     expect(resolvedCommand(input, [{ ...strike, fighters: 4 }], 1)).toBeNull()
   })
 
