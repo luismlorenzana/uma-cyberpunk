@@ -1,3 +1,6 @@
+import { parseComposition } from './composition'
+import type { CommandCinematics } from '../ship/command-cinema'
+import { parseCommandCinematics } from './command-cinematics'
 import type { CampaignManagement } from '../campaign-management'
 import { parseCampaignManagement } from './campaign-management'
 import { checkPack, walkSteps } from './check'
@@ -55,6 +58,7 @@ export interface CampaignPortraitFace {
 }
 
 export interface CampaignBook {
+  commandCinematics?: CommandCinematics
   management?: CampaignManagement
   opening: string
   draft: boolean
@@ -202,7 +206,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -285,21 +289,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
         ...(portrait.profile === undefined ? {} : { profile: asset(portrait.profile, `${xp}.profile`) }) }
     })
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
-    const composition = a.composition === undefined ? undefined : (() => {
-      const c = p.object(a.composition, `${path}.composition`, ['width', 'height', 'portraits', 'layers'])
-      const width = p.int(c.width, `${path}.composition.width`, 1, 8192), height = p.int(c.height, `${path}.composition.height`, 1, 8192)
-      if (c.portraits !== 'show' && c.portraits !== 'hide') p.fail(path, 'composition portraits must be show or hide')
-      const layers = p.list(c.layers, `${path}.composition.layers`, (value, field) => {
-        const l = p.object(value, field, ['asset', 'x', 'y', 'width', 'height', 'opacity', 'fit'], ['asset', 'x', 'y', 'width', 'height'])
-        const x = p.int(l.x, `${field}.x`, 0, width), y = p.int(l.y, `${field}.y`, 0, height)
-        const w = p.int(l.width, `${field}.width`, 1, width), h = p.int(l.height, `${field}.height`, 1, height)
-        if (x + w > width || y + h > height) p.fail(field, 'layer extends beyond the composition')
-        const opacity = l.opacity === undefined ? 100 : p.int(l.opacity, `${field}.opacity`, 0, 100)
-        if (l.fit !== undefined && l.fit !== 'contain' && l.fit !== 'cover') p.fail(field, 'layer fit must be contain or cover')
-        return { asset: asset(l.asset, `${field}.asset`), x, y, width: w, height: h, opacity, fit: (l.fit ?? 'contain') as 'contain' | 'cover' }
-      }, 12)
-      return { width, height, portraits: c.portraits as 'show' | 'hide', layers }
-    })()
+    const composition = a.composition === undefined ? undefined : parseComposition(p, a.composition, path + '.composition', asset)
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}) }
   }, 4096)
   unique(p, 'art', art, (a) => a.scene)
@@ -454,9 +444,11 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
   const cabinEvenings = o.cabinEvenings === undefined ? undefined : parseCabinEvenings(o.cabinEvenings, { dates, pairs, sectors, scenes },
     new Set([...sectorReserved, ...(sectors?.flatMap(s => s.shared ? [s.shared.visit, s.shared.morning] : []) ?? [])]))
+  const commandCinematics = o.commandCinematics === undefined ? undefined : parseCommandCinematics(o.commandCinematics, { assets, commands, scenes, story })
   const management = o.management === undefined ? undefined : parseCampaignManagement(o.management, { quests, projects, scenes, assets, workshop })
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
     ...(management ? { management } : {}),
+    ...(commandCinematics ? { commandCinematics } : {}),
     ...(commandArt ? { commandArt } : {}),
     ...(portraitFaces ? { portraitFaces } : {}),
     ...(cabinEvenings ? { cabinEvenings } : {}),

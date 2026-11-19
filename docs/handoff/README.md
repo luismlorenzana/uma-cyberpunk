@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**Next implementation: CY54–CY56 (Pillar 3). CY51 is complete; CY49/CY50 and CY52/CY53 retain final Art/Story acceptance.**
+**Next implementation: CY57–CY63 (Pillar 4). CY54 is complete; CY49/CY50, CY52/CY53 and CY55/CY56 retain final Art/Story acceptance.**
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -66,7 +66,7 @@ Tier 1–5 campaign save. CY36 and CY37 remain the integrated-content and instal
 |---|---|---|---|---|
 | 1 · Relationships | CY48 complete (D67) · layers, confession and one-evening chat/stay flow | [CY49](tasks/CY49.md) · meeting, confession, seated cabin chat and bed compositions | [CY50](tasks/CY50.md) · staging, consent, branches and all fifty arc mappings | First Watch recruit through confession, stay/leave and morning; then second recruit and paired visit |
 | 2 · Management | [CY51 complete (D68)](../technical/campaign-management.md) · saved location states, receipts and funded prep | [CY52](tasks/CY52.md) · ship locations, bases and props | [CY53](tasks/CY53.md) · life aboard and civilian-management context | Real shipment funds a fitting/refit and its art reflects completion |
-| 3 · Ship combat | [CY54](tasks/CY54.md) · saved-result cinematic playback | [CY55](tasks/CY55.md) · crew/boss pilot-suit splashes and general combat kit | [CY56](tasks/CY56.md) · order, response and outcome cues | First escort and occupied approach, with loss/retry/resume |
+| 3 · Ship combat | [CY54 complete (D69)](../technical/command-cinematics.md) · frozen participants and committed-result cinematics | [CY55](tasks/CY55.md) · crew/boss pilot-suit splashes and general combat kit | [CY56](tasks/CY56.md) · order, response and outcome cues | First escort and occupied approach, with loss/retry/resume |
 | 4 · Tactics figures | [CY57](tasks/CY57.md) · equipment composition and guest/larger figures | [CY58](tasks/CY58.md) · equipment; [CY59](tasks/CY59.md) · crew sprites; [CY60](tasks/CY60.md) · enemy sprites | [CY63](tasks/CY63.md) · equipment and actual encounter cast | Planet-funded rig is visible in the next real boarding battle |
 | 4 · Tactics signatures | [CY61](tasks/CY61.md) · selectable hero and warned boss actions | [CY62](tasks/CY62.md) · armored attack splashes | [CY63](tasks/CY63.md) · signature intent, warnings and lines | First recruit and actual boss use forecasted, resumable signature actions |
 
@@ -200,6 +200,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY54 | Ship command cinematics (D69). Save v19 resumes the committed beat; frozen input records participants and objective labels. All 56 encounters have bindings/fallbacks, 50 officer voices and 102 art slots; nine FX slots derive only from actual outcomes. Real escort, loss/free retry, both entries and later protected craft pass, including phone-size reload/pack swap/missing-art checks. CY55/CY56 retain final art and Story integration acceptance; CY37 keeps physical iPhone review. | _this commit_ |
 | CY51 | Campaign ship/planet locations (D68). Save v18 adds real management receipts and independent acknowledgements; nineteen private room slots and twenty-three report bindings use the latest scoped Story draft and approved operations art. Paid export/fitting/boarding/refit and phone-size construction/reload/pack-switch checks pass. CY52 retains remaining room/state art, CY53 owner review, CY37 physical iPhone acceptance. | _this commit_ |
 | CY48 | Reserved cabin evenings and mornings (D67). All fifty Captain arcs and ten existing shared sector visits use the draft Story export and approved room/neutral art. Save v17 freezes choices, rotation and rewards. Real service replays cover concurrent Hearts and all five intakes; Chrome verified the saved invitation, bed and morning at phone size. CY49/CY50 keep final pose/expression and Story approval; CY37 keeps physical iPhone review. | _this commit_ |
 | CY64 | Approved Cyberpunk art to Platform and the game (D65). Scoped source verification, immutable art-only candidates, conditional selection, private receipts and rollback preserve campaign story/save IDs. Farm retains its existing release path. CY48 layer/policy foundation is additive; full evening flow remains open. | _this commit_ |

@@ -30,6 +30,7 @@ test('pack publishes native dialogue and 192-pixel profiles and keeps face place
       quests: [{ id: 'opening', scene: 'sw1-ch1-s1', title: 'Opening' }],
       assets: [{ id: 'pilot', file: 'neutral.png' }, { id: 'worried', file: 'face.png' }],
       art: [{ scene: 'sw1-ch1-s1', backdrop: 'pilot', portraits: [{ speaker: 9000001, asset: 'pilot' }] }],
+      commandCinematics: { stations: [], actors: [{ speaker: 9000001, role: 'crew', base: 'pilot', poseSlot: 'officer-operating' }], encounters: [] },
       portraitFaces: [{ speaker: 9000001, base: 'pilot', emote: 'worried', asset: 'worried', at: { x: 100, y: 120 } }],
     })
     const source = { schemaVersion: 1, crops: [{
@@ -40,6 +41,7 @@ test('pack publishes native dialogue and 192-pixel profiles and keeps face place
     const packed = JSON.parse(read('release/' + release.files.find(({ source }) => source === 'campaign.json').path))
     assert.deepEqual(packed.art[0], { scene: 'sw1-ch1-s1', backdrop: 'pilot',
       portraits: [{ speaker: 9000001, asset: 'pilot-dialogue', profile: 'pilot-profile' }] })
+    assert.deepEqual(packed.commandCinematics.actors[0], { speaker: 9000001, role: 'crew', base: 'pilot-dialogue', profile: 'pilot-profile', poseSlot: 'officer-operating', poseFallback: 'pilot' })
     assert.deepEqual(packed.portraitFaces[0].at, { x: 50, y: 100 })
     assert.equal(packed.portraitFaces[0].base, 'pilot-dialogue')
     assert.equal(release.assets.find(({ id }) => id === 'pilot').sha256, createHash('sha256').update(neutral).digest('hex'))

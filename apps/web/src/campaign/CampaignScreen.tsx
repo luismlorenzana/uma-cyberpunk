@@ -1,6 +1,6 @@
 import type { SceneDecision } from '../story/ScenePlayer'
 import {
-  campaignSupport, campaignUpkeep, developedPort, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, pairProgress, pairVisit, seeScene,
+  awayMembers, campaignSupport, campaignUpkeep, developedPort, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, pairProgress, pairVisit, seeScene,
   sectorNightId, sectorVisit, startCampaignNight, startSupply,
   type CabinEvening, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save,
 } from '@cyber/domain'
@@ -131,14 +131,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
       if (image) (profile ? profiles : portraits).set(speaker, image)
     }
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
-      <ShipCommandScreen save={save} mission={mission} encounter={command} supply={supply}
+      <ShipCommandScreen loaded={loaded} checkRelease={() => setCheck(n => n + 1)} save={save} mission={mission} encounter={command} supply={supply}
         backdrop={backdrop ? loaded.assets.get(backdrop) : undefined}
         objectiveArt={commandArt?.objective ? loaded.assets.get(commandArt.objective) : undefined}
         objectiveLabel={commandArt?.objectiveLabel}
         ashore={support.ashore} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
         portraits={new Map([...portraits, ...profiles])}
-        names={new Map(save.crew.filter(({ outfit }) => !support.ashore.has(outfit)).map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
+        names={new Map(save.crew.filter(({ outfit }) => !support.ashore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit)).map(({ outfit }) => [outfit, nameOf(loaded.book.story, outfit)]))} />
     </Suspense>
   }
   if (loaded && active) return <CampaignScene key={active.scene} loaded={loaded} sceneId={active.scene}

@@ -1,12 +1,15 @@
 import {
-  COMMAND_HULL, COMMAND_ORDERS, COMMAND_SHIELD, COMMAND_STATIONS, MAX_DRILLS, commandActionError, commandStart, commandTurn, resumeCommand,
+  COMMAND_HULL, COMMAND_ORDERS, COMMAND_SHIELD, COMMAND_STATIONS, MAX_DRILLS, commandActionError, commandFacts, resolvedCommand, resumeCommand,
   type CampaignSupply, type CampaignReleaseFile, type CommandAction, type CommandEncounter, type CommandInput, type CommandState, type CommandStation, type Mission, type Save,
 } from '@cyber/domain'
-import { useEffect, useState } from 'react'
-import { finishMission, retry, toDeploy } from '../mission/director'
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
+import { finishMission, toDeploy } from '../mission/director'
 import { updateSave } from '../save/game'
 import { assignOfficer, canLaunch, drillOfficer, issueCommand, launchCommand, settleCommand } from './command'
-import { campaignImage } from './load'
+import { campaignImage, type LoadedCampaign } from './load'
+import { CampaignScene } from './CampaignScene'
+import { CommandCinematic } from './CommandCinematic'
+import { commandContextScene, freezeCommandCast, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
 import { CampaignThumbnail } from './CampaignThumbnail'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm font-semibold text-white disabled:opacity-50'
@@ -15,11 +18,9 @@ const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom
 const stations = { pilot: 'Pilot', shields: 'Shields', gunnery: 'Gunnery', engineering: 'Engineering' }
 const orders = { evade: 'Evade', brace: 'Brace shields', fire: 'Fire guns', intercept: 'Intercept', strike: 'Fighter strike', reroute: 'Reroute power' }
 const powerLabels = { shields: 'Shields', guns: 'Guns', fighters: 'Fighters' }
-const stationForOrder: Record<CommandAction['order'], CommandStation> = { evade: 'pilot', brace: 'shields', fire: 'gunnery', intercept: 'pilot', strike: 'pilot', reroute: 'engineering' }
-const orderLine = (encounter: CommandEncounter, last: NonNullable<CommandState['last']>) =>
-  last.emitterHit && encounter.assault ? encounter.assault.call : encounter.calls[last.order]
 
-export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, objectiveLabel, ashore, homeDefense, finale, emitterRoute, qualifications, portraits }: {
+export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, objectiveLabel, ashore, homeDefense, finale, emitterRoute, qualifications, portraits, loaded, checkRelease }: {
+  loaded: LoadedCampaign; checkRelease: () => void
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
   objectiveArt?: CampaignReleaseFile; objectiveLabel?: string
   ashore: ReadonlySet<number>; homeDefense?: { name: string; relay: number }
@@ -30,6 +31,9 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
 }) {
   const [background, setBackground] = useState<string | null>(null)
   const [reinforce, setReinforce] = useState(false)
+  const [action, setAction] = useState<CommandAction>({ order: 'fire', shields: 1, guns: 1, fighters: 1 })
+  const [context, setContext] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
   useEffect(() => {
     setBackground(null)
     if (!backdrop) return
@@ -47,9 +51,17 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const run = state.battle ? resumeCommand(state.battle.input, state.battle.actions) : null
   const assault = run ? run.input.version !== 1 : !!encounter.assault
   const preparation = reinforce ? finale?.preparation : undefined
+  const contextButtons = (['preparation', 'victory', 'withdrawal', 'retry', 'disabled'] as const).flatMap(kind => {
+    const scene = commandContextScene(save, loaded.book, kind)
+    return scene ? [<button key={kind} type="button" className={button} onClick={() => setContext(scene)}>{kind === 'preparation' ? 'Mission context' : kind === 'retry' ? 'Retry briefing' : kind === 'disabled' ? 'Emitter report' : 'Crew report'}</button>] : []
+  })
+  if (context && loaded.book.scenes.has(context)) return <CampaignScene key={loaded.release.release + ':' + context} loaded={loaded} sceneId={context}
+    finish={() => setContext(null)} fail={message => { setError(message); setContext(null) }} onExit={() => setContext(null)} exitLabel="Back to bridge" />
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"
     style={{ ...insets, ...(background ? { backgroundImage: `linear-gradient(#080d1aeb, #080d1acf), url(${background})` } : {}) }}>
     <div className="mx-auto max-w-4xl space-y-3">
+      <div className="flex items-center justify-between gap-2"><button type="button" className={button} onClick={checkRelease}>Check release</button><p className="text-xs text-white/60" data-campaign-release>{loaded.release.release}</p></div>
+      {error && <p role="alert">{error}</p>}
       <h1 className="font-display text-xl font-bold">{assault
         ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : finale ? 'Gate approach' : 'Station approach'
         : homeDefense ? state.step === 'results' ? state.won ? 'Relay secured' : 'Defense lost' : `Defend ${homeDefense.name}`
@@ -90,49 +102,48 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         </button>}
         <button type="button" className={primary} disabled={!canLaunch(supply, encounter) || save.wallet.alloy < (preparation?.alloy ?? 0)}
           onClick={() => void updateSave((s) => launchCommand(s, s.campaignSupply ?? supply, encounter,
-            { ashore, relay: homeDefense?.relay ?? finale?.allies ?? 0, preparation, qualifications, contributions: finale?.contributions }))}>
+            { ashore, relay: homeDefense?.relay ?? finale?.allies ?? 0, preparation, qualifications, contributions: finale?.contributions, cast: freezeCommandCast(s, loaded.book, encounter.id, objectiveLabel ?? (encounter.assault ? 'Boarding shuttle' : homeDefense ? 'Relay integrity' : 'Transport')) }))}>
           Launch · {encounter.cost.fuel} fuel · {encounter.cost.provisions} provisions
         </button>
       </>}
-      {state.step === 'battle' && (run ? <CommandBoard encounter={encounter} relay={!!homeDefense} {...run}
-        actions={state.battle!.actions as CommandAction[]} officers={save.commandCrew} names={names} portraits={portraits}
+      {(state.step === 'battle' || state.step === 'results') && (run ? <CommandBoard encounter={encounter} relay={!!homeDefense} {...run}
+        actions={state.battle!.actions as CommandAction[]} portraits={portraits} loaded={loaded} cinema={save.commandCinema} checkRelease={checkRelease} action={action} setAction={setAction}
         objectiveArt={objectiveArt} objectiveLabel={objectiveLabel} />
         : <p role="alert">The saved defense can’t resume.</p>)}
-      {state.step === 'results' && <div className="flex flex-wrap gap-2">
-        {run?.state.last && <p className="w-full text-sm">{orderLine(encounter, run.state.last)}</p>}
-        {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{emitterRoute && ` · ${emitterRoute}`}</p>}
+      {state.step === 'results' && !save.commandCinema.pending && <div className="flex flex-wrap gap-2">
+        {run?.state.last && <p className="w-full text-sm">{commandFacts(savedCommandEvent(save, run.state.turn)!)}</p>}
+        {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{state.won && emitterRoute && ` · ${emitterRoute}`}</p>}
         {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id))}>Debrief</button>
-          : <button type="button" className={primary} onClick={() => void updateSave(retry)}>{assault ? 'Retry approach' : 'Retry defense'}</button>}
+          : <button type="button" className={primary} onClick={() => void updateSave(retryCommand)}>{assault ? 'Retry approach' : 'Retry defense'}</button>}
       </div>}
-      {(state.step !== 'battle' || !run) && !state.won && <button type="button" className={button} onClick={() => void updateSave(finishMission)}>Return to port</button>}
+      <div className="flex flex-wrap gap-2">{contextButtons}</div>
+      {(state.step !== 'battle' || !run) && !state.won && !save.commandCinema.pending && <button type="button" className={button} onClick={() => void updateSave(finishMission)}>Return to port</button>}
     </div>
   </main>
 }
 
-function CommandBoard({ encounter, input, state, relay, actions, officers, names, portraits, objectiveArt, objectiveLabel }: {
+function CommandBoard({ encounter, input, state, relay, actions, portraits, objectiveArt, objectiveLabel, loaded, cinema, action, setAction, checkRelease }: {
   encounter: CommandEncounter; input: CommandInput; state: CommandState; relay: boolean; actions: readonly CommandAction[];
-  officers: Save['commandCrew']; names: ReadonlyMap<number, string>; portraits?: ReadonlyMap<number, CampaignReleaseFile>
+  checkRelease: () => void; loaded: LoadedCampaign; cinema: Save['commandCinema']; action: CommandAction; setAction: Dispatch<SetStateAction<CommandAction>>; portraits?: ReadonlyMap<number, CampaignReleaseFile>
   objectiveArt?: CampaignReleaseFile; objectiveLabel?: string
 }) {
-  const [action, setAction] = useState<CommandAction>({ order: 'fire', shields: 1, guns: 1, fighters: 1 })
-  const [fast, setFast] = useState(false)
   const [pending, setPending] = useState(false)
-  const threat = input.threats[state.turn]!
+  const threat = input.threats[state.turn]
   const spent = action.shields + action.guns + action.fighters
   const problem = commandActionError(state, action, input)
-  const officer = state.last ? officers[stationForOrder[state.last.order]] : undefined
-  const objective = objectiveLabel ?? (input.version !== 1 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport')
-  let replay = commandStart(input)
-  const log = actions.map((action) => {
-    replay = commandTurn(input, replay, action)
-    return replay.last ? orderLine(encounter, replay.last) : ''
+  const event = state.last ? resolvedCommand(input, actions, state.turn) : null
+  const officer = event?.actor
+  const objective = input.presentation?.objective ?? objectiveLabel ?? (input.version !== 1 ? 'Boarding shuttle' : relay ? 'Relay integrity' : 'Transport')
+  const log = actions.flatMap((_, index) => {
+    const event = resolvedCommand(input, actions, index + 1)
+    return event ? [`${event.actor?.name ?? 'Watch officer'} · ${orders[event.action.order]} · ${commandFacts(event)}`] : []
   })
   return <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
     <section className="space-y-2 rounded-lg border border-white/15 bg-[#131c30] p-3" aria-label="Tactical display">
       <div className="flex flex-wrap justify-between gap-1 text-sm font-bold">
-        <span>Wave {state.turn + 1}/{input.threats.length}</span><span>Reactor {spent}/{state.power}</span>
+        <span>Wave {Math.min(state.turn + 1, input.threats.length)}/{input.threats.length}</span><span>Reactor {spent}/{state.power}</span>
       </div>
-      <p className="rounded-lg bg-[#58263d] px-2 py-1 text-sm font-semibold">Incoming {threat.section} · {threat.power} fire · {threat.fighters} fighters</p>
+      <p className="rounded-lg bg-[#58263d] px-2 py-1 text-sm font-semibold">{threat ? `Incoming ${threat.section} · ${threat.power} fire · ${threat.fighters} fighters` : 'Encounter resolved'}</p>
       {objectiveArt && <div className="flex min-h-14 items-center gap-3 rounded-lg bg-[#24314a] px-2" data-command-objective>
         <CampaignThumbnail asset={objectiveArt} className="h-14 w-24 shrink-0 object-contain" />
         <div className="min-w-0 flex-1 text-sm">
@@ -151,10 +162,10 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
           <progress className="block h-1.5 w-full accent-cyan-300" aria-label={label} value={value} max={max} /></div>)}
       </div>
       {state.last && <div role="status" className="text-sm" key={state.turn}>
-        <CampaignThumbnail asset={officer ? portraits?.get(officer.outfit) : undefined}
+        <CampaignThumbnail asset={officer ? portraits?.get(officer.speaker as number) : undefined}
           className="float-right h-16 w-14 rounded-md object-cover object-top" />
-        <p className="text-xs font-semibold text-cyan-200">{officer ? names.get(officer.outfit) ?? 'Watch officer' : 'Watch officer'}</p>
-        <p>{orderLine(encounter, state.last)}</p>
+        <p className="text-xs font-semibold text-cyan-200">{officer?.name ?? 'Watch officer'}</p>
+        <p>{orders[state.last.order]}{event?.disabled ? ' · Emitter disabled' : state.last.emitterHit ? ' · Emitter hit' : ''}</p>
         <p className="text-white/70">{state.last.blocked} blocked · {state.last.intercepted} intercepted · {state.last.emitterHit || state.last.hit} {state.last.emitterHit ? 'emitter' : 'enemy'} damage · {state.last.hullDamage + state.last.transportDamage} friendly damage</p>
       </div>}
       {log.length > 0 && <details className="text-sm"><summary className="min-h-11 cursor-pointer py-2">Order log · {log.length}</summary>
@@ -165,6 +176,7 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
       </details>}
     </section>
     <section className="space-y-2" aria-label="Commands">
+      {cinema.pending && event ? <CommandCinematic event={event} encounter={encounter.id} loaded={loaded} beat={cinema.pending.beat} fast={cinema.fast} checkRelease={checkRelease} /> : state.result ? <button type="button" className={button} onClick={() => void updateSave(replayCommandCinema)}>Replay last order</button> : <>
       <div className="grid grid-cols-3 gap-2">
         {(['shields', 'guns', 'fighters'] as const).map((system) => <div key={system} className="space-y-1 text-sm">
           <p>{powerLabels[system]} {action[system]}</p>
@@ -187,13 +199,14 @@ function CommandBoard({ encounter, input, state, relay, actions, officers, names
       <div className="flex items-center gap-2">
         <button type="button" className={primary} disabled={!!problem || pending} onClick={() => {
           setPending(true)
-          const playback = fast ? Promise.resolve() : new Promise((resolve) => setTimeout(resolve, 280))
-          void updateSave((s) => issueCommand(s, encounter.id, state.turn, action)).finally(() => void playback.then(() => setPending(false)))
+          void updateSave((s) => issueCommand(s, encounter.id, state.turn, action)).finally(() => setPending(false))
           if (action.target) setAction((a) => ({ ...a, target: undefined }))
         }}>Execute order</button>
-        <button type="button" className={button} aria-pressed={fast} onClick={() => setFast(!fast)}>Fast orders</button>
+
         {problem && <p className="text-sm">{problem}</p>}
       </div>
+      </>}
+      {!cinema.pending && <button type="button" className={button} aria-pressed={cinema.fast} onClick={() => void updateSave(s => ({ ...s, commandCinema: { ...s.commandCinema, fast: !s.commandCinema.fast, pending: !s.commandCinema.fast && s.commandCinema.pending ? { ...s.commandCinema.pending, beat: 3 } : s.commandCinema.pending } }))}>Fast orders</button>}
     </section>
   </div>
 }
