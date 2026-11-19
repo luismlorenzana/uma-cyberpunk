@@ -96,9 +96,11 @@ The renderer derives effect keys from `ResolvedCommand`; authoring cannot choose
 | `friendly-damage` | Confirmed hull or protected-objective damage |
 | `power` | A reroute order confirms an increase in next-order reactor power |
 
-The fixture has nine named FX slots. Five approved general-art sources supply absorption, gunfire,
-target contact, fighter interception and power rerouting. A contact spark also supports actual emitter
-and friendly-damage keys; a fighter strike retains its factual code-native mark. The newly approved
+The fixture has nine named FX slots. Six approved general-art sources supply absorption, gunfire,
+target contact, fighter interception, power rerouting and confirmed fighter strikes. CY68's strike
+uses one transparent native layer with portraits shown; [its integration contract](campaign-art-intake.md)
+records the exact predicate and fallback. A contact spark also supports actual emitter
+and friendly-damage keys. The approved
 neutral command station and two later protected craft are integrated from the scoped CY52/CY55 handoff.
 Approved exports provide positioned image layers under these keys; missing exports retain the factual fallback.
 Layers load only for active effects and are released on event/release changes. General FX art and
