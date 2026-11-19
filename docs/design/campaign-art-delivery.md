@@ -92,6 +92,12 @@ authoring publication path, then is bound into the campaign release. Request a s
 change only if that package must understand a new format. The game can implement a local adapter;
 other games' data and release channels are outside this queue.
 
+The [approved-art publisher](../technical/campaign-art-publishing.md) implements the scoped delivery
+step. The private `art-publish.json` registry binds published Cyberpunk sources to current game slots;
+its receipts identify source hashes, unchanged gameplay and selected release. New art-only candidates
+start from the selected story, not a working story draft. CY48's layer contract is now supported;
+its new evening branches and full authoring acceptance remain work in CY48–CY50.
+
 ## Pillar 1 scene and composition contract
 
 | Family | Required staging | Existing binding | Behavior to preserve or add |

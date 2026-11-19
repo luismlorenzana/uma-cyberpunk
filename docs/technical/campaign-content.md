@@ -14,6 +14,11 @@ It uses a separate save from the **Original campaign** entry, with independent l
 The Home Screen app launches Tier 1. On a connection failure, a signed-in owner can reopen the last validated
 release using the story files already on that device. The next online check reads the current selection.
 
+Approved authoring updates can reach Platform and this campaign through the
+[scoped art publisher](campaign-art-publishing.md). It builds from the selected immutable story,
+updates registered art only, verifies a candidate and conditionally switches the campaign pointer.
+Farm's master-data art families and release channel remain separate.
+
 ## Source
 
 Put `campaign.json`, `casting.json`, the story directories and `art/` in the same source directory. The default is
@@ -57,6 +62,32 @@ The opening's choice sets a story flag in the preview save. The scene applies it
 when it ends. Closing mid-scene resumes from that scene's start. A content update keeps the scene and asset IDs stable
 so the completed scene and choices carry forward. Coordinate a save compatibility change before publishing a new ID
 for a scene that already carries progress.
+
+### Layered scene composition
+
+An optional `art[].composition` places approved character poses, props and effects over the existing
+backdrop. Coordinates are pixels in the declared canvas; the canvas is centered and contained in the
+viewport. Layer order is the list order. `portraits` explicitly shows or hides the speaking profile,
+including over a full illustration. Earlier scenes retain their original portrait behavior.
+
+```json
+{
+  "width": 1844,
+  "height": 853,
+  "portraits": "show",
+  "layers": [
+    { "asset": "officer-seated", "x": 400, "y": 0, "width": 600, "height": 800,
+      "fit": "contain", "opacity": 100 }
+  ]
+}
+```
+
+Each layer names a declared asset and stays within the canvas. Fit is `contain` (default) or `cover`;
+opacity is an integer percentage, default 100. There are at most twelve layers. A scripted full
+illustration replaces these pose layers until cleared; its portrait policy still comes from the
+composition. An image decode failure hides that layer while preserving the dialogue and backdrop.
+Assets are loaded for the current scene and released on exit. Campaign books/releases support 4,096
+assets and 8,192 reused face placements for the combined cast.
 
 ### Dialogue face crops
 

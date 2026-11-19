@@ -373,8 +373,10 @@ function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate }: {
       art?.backdrop ? read(art.backdrop) : undefined,
       loadScenePortraits(art?.portraits ?? [], loaded.book.portraitFaces ?? [], read),
       Promise.all([...illustrated].map(async (id) => [id, await read(id)] as const)),
-    ]).then(([backdrop, portraits, illustrations]) => {
-      if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations) })
+      art?.composition ? Promise.all(art.composition.layers.map(async (layer) => ({ ...layer, url: await read(layer.asset) }))) : undefined,
+    ]).then(([backdrop, portraits, illustrations, layers]) => {
+      if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations),
+        ...(art?.composition && layers ? { composition: { ...art.composition, layers } } : {}) })
     }, (err: unknown) => { if (live) fail(err instanceof Error ? err.message : String(err)) })
     return () => { live = false; urls.forEach((url) => URL.revokeObjectURL(url)) }
   }, [loaded, art, scene])

@@ -10,9 +10,9 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "turbo run lint",
-    "test": "node --test scripts/check-size.test.mjs scripts/check-private-content.test.mjs scripts/check-hosting-site.test.mjs scripts/make-icons.test.mjs scripts/manual-pages.test.mjs scripts/story/story.test.mjs scripts/story/portrait-crops.test.mjs scripts/story/cast-model.test.mjs scripts/story/import-cast.test.mjs && turbo run test",
-    "test:ci": "node --test scripts/check-size.test.mjs scripts/check-private-content.test.mjs scripts/check-hosting-site.test.mjs scripts/make-icons.test.mjs scripts/manual-pages.test.mjs scripts/story/story.test.mjs scripts/story/portrait-crops.test.mjs scripts/story/cast-model.test.mjs scripts/story/import-cast.test.mjs && turbo run test --concurrency=1",
+    "lint": "tsc -p scripts/art/tsconfig.json && turbo run lint",
+    "test": "node --test scripts/art/publish.test.mjs scripts/check-size.test.mjs scripts/check-private-content.test.mjs scripts/check-hosting-site.test.mjs scripts/make-icons.test.mjs scripts/manual-pages.test.mjs scripts/story/story.test.mjs scripts/story/portrait-crops.test.mjs scripts/story/cast-model.test.mjs scripts/story/import-cast.test.mjs && turbo run test",
+    "test:ci": "node --test scripts/art/publish.test.mjs scripts/check-size.test.mjs scripts/check-private-content.test.mjs scripts/check-hosting-site.test.mjs scripts/make-icons.test.mjs scripts/manual-pages.test.mjs scripts/story/story.test.mjs scripts/story/portrait-crops.test.mjs scripts/story/cast-model.test.mjs scripts/story/import-cast.test.mjs && turbo run test --concurrency=1",
     "web": "pnpm --filter @cyber/web dev",
     "api": "pnpm --filter @cyber/api dev",
     "docs:update": "UPDATE_DOCS=1 pnpm --filter @cyber/battle exec vitest run src/docs.test.ts && UPDATE_DOCS=1 pnpm --filter @cyber/domain exec vitest run src/crew/docs.test.ts src/cabins/docs.test.ts src/ship/docs.test.ts && node scripts/manual-pages.mjs",
@@ -20,12 +20,15 @@
     "story:check": "tsx scripts/story/check.ts",
     "story:pack": "tsx scripts/story/pack.ts",
     "campaign": "tsx scripts/story/campaign.ts",
+    "art:publish": "tsx scripts/art/cli.ts",
     "stories:import-cast": "node scripts/story/import-cast.mjs"
   },
   "devDependencies": {
+    "@types/node": "22.20.5",
     "sharp": "0.34.5",
     "tsx": "^4.20.6",
-    "turbo": "^2.10.13"
+    "turbo": "^2.10.13",
+    "typescript": "5.9.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
