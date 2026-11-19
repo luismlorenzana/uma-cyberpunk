@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ship combat in the campaign</title>
+<!-- Generated from docs/game/ship-command.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>Ship combat in the campaign</b></a></nav>
+<main id="top">
+<h1 id="ship-combat-in-the-campaign">Ship combat in the campaign</h1>
+<p>Prepare the four stations, allocate reactor power and choose an order. Launch pays its displayed cargo cost once. The ship then resolves each order before showing its cinematic.</p>
+<p>The Captain's order leads into the assigned officer's response, the action and its confirmed result. The overlay keeps hull, shields, the protected craft and any emitter visible. <b>Skip to result</b> shortens the sequence; <b>Fast orders</b> goes straight to the result. <b>Continue</b> returns to the same allocation. The order log keeps the actor, target, allocation, damage and actual outcome.</p>
+<p>Reload resumes the saved result without firing again. <b>Retry defense/approach</b> reuses the original starting situation and launch payment. The officer and protected-craft names come from that launch, even when a later content release replaces the pictures. Older battles without recorded identities use <b>Watch officer</b>.</p>
+<p>An emitter hit is distinct from an emitter disabled. Disabling it does not finish the approach; winning and debriefing establish the boarding route. Boarding, custody and civilian handovers remain their own campaign actions. A ship leaving the fight is not described as destroyed.</p>
+<p>Optional mission, crew, retry and emitter reports use the existing campaign drafts and participants. They spend nothing and grant no extra battle result. A missing officer or image has a factual fallback. The first release reuses neutral portraits while final operating poses and combat art are authored.</p>
+<p>See the <a href="../../technical/command-cinematics.md">runtime contract</a> for authoring bindings and verification.</p>
+<p class="foot">From <a href="../ship-command.md">docs/game/ship-command.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+</body>
+</html>

@@ -91,7 +91,7 @@ describe('Captain evenings in the campaign', () => {
   })
 
   it('credits an earlier campaign visit once while keeping a saved pending morning', () => {
-    const { management: _management, cabinVisits: _cabinVisits, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...old } = recruited()
+    const { commandCinema: _cinema1, management: _management, cabinVisits: _cabinVisits, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...old } = recruited()
     const before = parseSave({ ...old, version: 14, story: setFlag(old.story, 'legacy-visit'),
       campaignDay: { day: 3, pending: { kind: 'morning', companion: outfit, scene: 'first-morning' } } })
     const migrated = creditCampaignDates(before, book)

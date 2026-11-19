@@ -1,3 +1,4 @@
+import type { CommandCast } from './command-cinema'
 export const COMMAND_STATIONS = ['pilot', 'shields', 'gunnery', 'engineering'] as const
 export type CommandStation = typeof COMMAND_STATIONS[number]
 export const COMMAND_ORDERS = ['evade', 'brace', 'fire', 'intercept', 'strike', 'reroute'] as const
@@ -20,6 +21,7 @@ export interface CommandEncounter {
 }
 
 interface CommandSetup {
+  presentation?: CommandCast
   transport: number
   enemy: number
   reactor: number

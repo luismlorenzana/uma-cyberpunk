@@ -96,6 +96,10 @@ export async function derivePortraitCrops(config: object, book: CampaignBook, as
   return {
     config: {
       ...config, art,
+      ...(book.commandCinematics ? { commandCinematics: { ...book.commandCinematics, actors: book.commandCinematics.actors.map(actor => {
+        const crop = crops.get(actor.base)
+        return crop ? { ...actor, base: crop.dialogue, profile: crop.profile, poseFallback: actor.poseFallback ?? actor.base } : actor
+      }) } } : {}),
       assets: [...book.assets, ...generated.map(({ id, extension }) => ({ id, file: id + extension }))],
       ...(book.portraitFaces ? { portraitFaces } : {}),
     },

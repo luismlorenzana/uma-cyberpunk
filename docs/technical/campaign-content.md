@@ -538,3 +538,7 @@ scene IDs or game code. Neutral dialogue portraits remain available while poses 
 ## Management locations (CY51)
 
 The optional `management` contract binds existing campaign rooms, live stock, project counters, refits and owned/fitted rigs. Save v18 adds bounded dated receipts and independent context/report acknowledgements. See the [full format, predicates and delivery evidence](campaign-management.md). Old content packs keep their earlier interface on the new reader.
+
+## Resolved ship cinematics (CY54)
+
+The additive `commandCinematics` format binds actual frozen station participants, enemy communications, read-only encounter contexts and outcome-selected art/FX. Save v19 resumes the committed playback beat. See the [complete contract and verification](command-cinematics.md) and [player guide](../game/ship-command.md). Existing command rules versions and the combined campaign save are preserved.

@@ -1,3 +1,4 @@
+import type { CommandCast, CommandParticipant } from './command-cinema'
 import { P } from '../story/parse'
 import { COMMAND_ORDERS, COMMAND_STATIONS, MAX_DRILLS, replayCommand, type CommandAction, type CommandEncounter,
   type CommandInput, type CommandOrder, type CommandStation, type ShipThreat } from './command'
@@ -41,10 +42,25 @@ export function resumeCommand(value: unknown, actions: readonly unknown[]) {
   const p = new P('ship encounter')
   try {
     const fields = ['version', 'transport', 'enemy', 'reactor', 'threats', 'officers']
-    const o = p.object(value, 'input', [...fields, 'assault', 'contributions'], fields)
+    const o = p.object(value, 'input', [...fields, 'assault', 'contributions', 'presentation'], fields)
     if ((o.version !== 1 && o.version !== 2 && o.version !== 3) || (o.version === 1 && o.assault !== undefined) || (o.version !== 3 && o.contributions !== undefined)) return null
     const officers = p.object(o.officers, 'officers', COMMAND_STATIONS)
-    const setup = { transport: durability(p, o.transport, 'transport'), enemy: durability(p, o.enemy, 'enemy'),
+    const participant = (value: unknown, field: string): CommandParticipant => {
+      const row = p.object(value, field, ['speaker', 'name'])
+      return { speaker: p.speaker(row.speaker, field + '.speaker'), name: p.text(row.name, field + '.name', 80) }
+    }
+    const presentation: CommandCast | undefined = o.presentation === undefined ? undefined : (() => {
+      const row = p.object(o.presentation, 'presentation', ['crew', 'present', 'objective', 'commander'], ['crew', 'present', 'objective'])
+      const crew = p.object(row.crew, 'presentation.crew', [...COMMAND_STATIONS], [])
+      const present = p.list(row.present, 'presentation.present', participant, 200)
+      if (new Set(present.map(x => x.speaker)).size !== present.length) p.fail('presentation.present', 'duplicate participant')
+      const parsed = Object.fromEntries(Object.entries(crew).map(([station, actor]) => [station, participant(actor, 'presentation.crew.' + station)]))
+      const ids = Object.values(parsed).map(x => x.speaker)
+      if (new Set(ids).size !== ids.length || ids.some(id => typeof id !== 'number' || !present.some(x => x.speaker === id))) p.fail('presentation.crew', 'crew must be distinct present officers')
+      return { crew: parsed, present, objective: p.text(row.objective, 'presentation.objective', 80),
+        ...(row.commander === undefined ? {} : { commander: participant(row.commander, 'presentation.commander') }) }
+    })()
+    const setup = { ...(presentation ? { presentation } : {}), transport: durability(p, o.transport, 'transport'), enemy: durability(p, o.enemy, 'enemy'),
       reactor: p.int(o.reactor, 'reactor', 1, 12), threats: threats(p, o.threats, 'threats'),
       officers: Object.fromEntries(COMMAND_STATIONS.map((station) => [station, p.int(officers[station], `officers.${station}`, 0, MAX_DRILLS)])) as Record<CommandStation, number> }
     const input: CommandInput = o.version === 1 ? { ...setup, version: 1 } : o.version === 2

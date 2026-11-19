@@ -1,3 +1,4 @@
+import type { CommandCinemaState } from '../ship/command-cinema'
 // uma-cyberpunk's save (CY3, TC11): local first in Dexie, synced through `cyber-api`. Nothing carries over from any
 // other game (P4, TC14). Copied from uma-quest's at cc42fd1 (its Q14, D11), itself from uma-rpg's at 30a322a (its D32,
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
@@ -33,8 +34,9 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } 
  * standing (CY18); 11 the campaign day and pending scenes (CY21); 12 the supply ledger (CY23); 13 command officers (CY24);
  * 14 saved pair scenes (CY26); 15 the campaign workshop (CY30); 16 port projects and officer specialties (CY32–CY33);
  * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
- * 18 management receipts and independent first-use/report acknowledgements (CY51). */
-export const SAVE_VERSION = 18
+ * 18 management receipts and independent first-use/report acknowledgements (CY51);
+ * 19 saved command cinematic position and fast-playback preference (CY54). */
+export const SAVE_VERSION = 19
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -200,7 +202,12 @@ export interface SaveV18 extends Omit<SaveV17, 'version'> {
   management: CampaignManagementState
 }
 
-export type Save = SaveV18
+export interface SaveV19 extends Omit<SaveV18, 'version'> {
+  version: 19
+  commandCinema: CommandCinemaState
+}
+
+export type Save = SaveV19
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -229,8 +236,10 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))
+  return migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10)))))))))
 }
+
+export const migrateV18 = (save: SaveV18): SaveV19 => ({ ...save, version: 19, commandCinema: { fast: false, retries: 0, pending: null } })
 
 export const migrateV17 = (save: SaveV17): SaveV18 => ({ ...save, version: 18, management: { sequence: 0, receipts: [], acknowledged: [] } })
 
@@ -678,6 +687,30 @@ export function versionOf(value: unknown): number {
 /** Parses a save of any version this game has written and returns the current one, migrating as it goes. A version from
  * a newer app is refused, so an old client never half-reads a newer save. Never moves `account.updatedAt`. */
 export function parseSave(value: unknown, path = 'save'): Save {
+  const version = versionOf(value)
+  if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
+  if (version < 19) {
+    if (value && typeof value === 'object' && 'commandCinema' in value) throw new SaveParseError(path, 'unknown version 19 keys')
+    return migrateV18(parseSaveV18(value, path))
+  }
+  const raw = object(value, path, Object.keys(value as Obj))
+  const { commandCinema, ...older } = raw
+  const base = parseSaveV18({ ...older, version: 18 }, path)
+  const cinema = object(commandCinema, path + '.commandCinema', ['fast', 'retries', 'pending'])
+  if (typeof cinema.fast !== 'boolean') throw new SaveParseError(path + '.commandCinema.fast', 'expected boolean')
+  const pending = cinema.pending === null ? null : (() => {
+    const row = object(cinema.pending, path + '.commandCinema.pending', ['encounter', 'turn', 'beat'])
+    const field = path + '.commandCinema.pending'
+    const encounter = id(row.encounter, field + '.encounter'), turn = bounded(row.turn, field + '.turn', 12), beat = bounded(row.beat, field + '.beat', 3)
+    if (!turn || !base.mission?.battle || base.mission.id !== encounter || !['battle', 'results'].includes(base.mission.step)
+      || base.mission.battle.actions.length !== turn || !base.mission.battle.input || typeof base.mission.battle.input !== 'object'
+      || !('officers' in base.mission.battle.input) || !('reactor' in base.mission.battle.input)) throw new SaveParseError(path + '.commandCinema.pending', 'expected the latest committed ship order')
+    return { encounter, turn, beat }
+  })()
+  return { ...base, version: 19, commandCinema: { fast: cinema.fast, retries: bounded(cinema.retries, path + '.commandCinema.retries', 1000), pending } }
+}
+
+function parseSaveV18(value: unknown, path: string): SaveV18 {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version < 18) {

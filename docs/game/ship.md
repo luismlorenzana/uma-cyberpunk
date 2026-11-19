@@ -95,3 +95,7 @@ later lead ("Opens later in the story").
 A v2 save opens as v3 on the device: the account and story as they were (`account.updatedAt` untouched), no crew, no
 known world, no mission, and the four rooms open from the start. Any change on the ship is the player's own, so it moves
 `account.updatedAt` and syncs.
+
+## Combined campaign ship orders
+
+The combined campaign uses [ship combat cinematics](ship-command.md) for its actual escorts, approaches, defenses and later civilian craft. Orders resolve before playback; skip, reload and free retry preserve the committed result and launch payment.

@@ -199,12 +199,12 @@ export function startMission(save: Save, chapter: Chapter, mission: Mission): Sa
 export const toDeploy = (save: Save): Save => (save.mission ? withMission(save, { ...save.mission, step: 'deploy' }) : save)
 export const setSquad = (save: Save, squad: number[]): Save => (save.mission ? withMission(save, { ...save.mission, squad }) : save)
 /** Deploys: the battle's frozen input (built by the caller from the mission's scenario and the squad), no actions yet. */
-export const deploy = (save: Save, input: unknown): Save => (save.mission ? withMission(save, { ...save.mission, step: 'battle', battle: { input, actions: [] }, won: null }) : save)
+export const deploy = (save: Save, input: unknown): Save => (save.mission ? withMission({ ...save, commandCinema: { ...save.commandCinema, pending: null } }, { ...save.mission, step: 'battle', battle: { input, actions: [] }, won: null }) : save)
 export const recordAction = (save: Save, action: unknown): Save =>
   (save.mission?.battle ? withMission(save, { ...save.mission, battle: { ...save.mission.battle, actions: [...save.mission.battle.actions, action] } }) : save)
 export const finishBattle = (save: Save, won: boolean): Save => (save.mission ? withMission(save, { ...save.mission, step: 'results', won }) : save)
 /** Retry after a loss: the same squad and the same battle, from its start. */
-export const retry = (save: Save): Save => (save.mission?.battle ? withMission(save, { ...save.mission, step: 'battle', battle: { ...save.mission.battle, actions: [] }, won: null }) : save)
+export const retry = (save: Save): Save => (save.mission?.battle ? withMission({ ...save, commandCinema: { ...save.commandCinema, pending: null } }, { ...save.mission, step: 'battle', battle: { ...save.mission.battle, actions: [] }, won: null }) : save)
 /** Leaves the results: the crew takes its XP and Strain (the squad in full and +1 Strain, the bench half and a rest), the
  * Umas aboard who fought take the battle's rapport and send a message (CY13), a watch passes; then a win counts the
  * mission and goes aboard (its next scene) and a loss ends the mission. */
@@ -231,7 +231,7 @@ export function closeResults(save: Save, pack: StoryPack | null = null, rapport:
   // The battle stays until the mission ends: a lead who fought it comes aboard at its XP (`joiningXp`).
   return { ...bonded, items, worlds: { ...save.worlds, missions }, mission: { ...m, step: 'aboard' } }
 }
-export const finishMission = (save: Save): Save => withMission(save, null)
+export const finishMission = (save: Save): Save => withMission({ ...save, commandCinema: { ...save.commandCinema, pending: null } }, null)
 
 /** The place on the current world where the next scene waits, or null. */
 export function nextPlace(pack: StoryPack, save: Save): string | null {

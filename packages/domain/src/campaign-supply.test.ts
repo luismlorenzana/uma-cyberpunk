@@ -37,7 +37,7 @@ describe('campaign supply', () => {
 
   it('preserves the ledger across saves and adds no ledger to a migrated v11 account', () => {
     const save = newSave('captain', NOW)
-    const { management: _management, cabinVisits: _cabins, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...v11 } = save
+    const { commandCinema: _cinema1, management: _management, cabinVisits: _cabins, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...v11 } = save
     expect(parseSave({ ...v11, version: 11 })).toEqual(save)
     const campaignSupply = supplyNight(startSupply(network), network)
     expect(parseSave(JSON.parse(JSON.stringify({ ...save, campaignSupply }))).campaignSupply).toEqual(campaignSupply)

@@ -20,7 +20,7 @@ describe('the campaign day', () => {
   })
 
   it('adds a fresh clock when migrating a v10 save without changing its story or timestamp', () => {
-    const { management: _management, cabinVisits: _cabinVisits, campaignDay: _, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...old } = newSave('u', NOW)
+    const { commandCinema: _cinema1, management: _management, cabinVisits: _cabinVisits, campaignDay: _, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...old } = newSave('u', NOW)
     const migrated = parseSave({ ...old, version: 10, story: { ...old.story, flags: ['previous-choice'] } })
     expect(migrated.campaignDay).toEqual(firstCampaignDay())
     expect(migrated.story.flags).toEqual(['previous-choice'])

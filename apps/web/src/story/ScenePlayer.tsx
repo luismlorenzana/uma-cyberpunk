@@ -42,7 +42,7 @@ export interface ScenePresentation {
   composition?: Omit<CampaignComposition, 'layers'> & { layers: (CampaignComposition['layers'][number] & { url: string })[] }
 }
 
-function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentation['composition']>['layers'][number] }) {
+export function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentation['composition']>['layers'][number] }) {
   const [failed, setFailed] = useState(false)
   return failed ? null : <image href={layer.url} x={layer.x} y={layer.y} width={layer.width} height={layer.height}
     opacity={layer.opacity / 100} preserveAspectRatio={layer.fit === 'cover' ? 'xMidYMid slice' : 'xMidYMid meet'}
