@@ -104,8 +104,9 @@ cabin and berth plates, the scoped second Story draft and short Steward fallback
 slots and twenty-three report bindings are in the private fixture. The existing Hangar introduction
 gets its own plate; shared placeholder assets used by unrelated scenes are preserved.
 
-CY52 retains missing room/state illustrations, including its social batch pending approval. CY53
-retains owner review and the recorded staging adaptations; unsupported role/alliance proposals are
+CY52's completion/social sources are now owner-approved; [CY67](../handoff/tasks/CY67.md) queues the
+remaining approved-source intake and Fuel/Provisions prop support. CY53 retains owner review and
+the recorded staging adaptations; unsupported role/alliance proposals are
 not imported. The current optional room contexts omit an authoring placeholder narration, and three
 project reports keep their established campaign place/trigger while using the latest dialogue.
 

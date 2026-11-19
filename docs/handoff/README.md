@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**Next implementation: CY57–CY63 (Pillar 4). CY54 is complete; CY49/CY50, CY52/CY53 and CY55/CY56 retain final Art/Story acceptance.**
+**Current detour: CY65–CY69 authoring and publishing intake. Implementation resumes afterward with CY65/CY66 wardrobe support, CY67 approved general-art intake, then CY57–CY63 (Pillar 4). CY54 is complete; CY49/CY50, CY52/CY53 and CY55/CY56 retain their scoped Art/Story acceptance.**
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -53,6 +53,31 @@ The approved-art publishing pipeline is implemented (CY64, D65). See the
 [publishing runbook](../technical/campaign-art-publishing.md) for scoped authoring pushes, private
 bindings, candidate verification and recovery. CY48 implements the full reserved evening, stay/leave and morning flow (D67).
 CY49/CY50 retain final art, source approval and integrated authoring review.
+
+## Art intake detour · 2026-11-19
+
+The owner requested formal General Art packets and supplied Character Art's six-look publication
+preflight. These packets prepare the work; their creation does not change the live campaign or
+publish the 300 looks. The current reader has five roles. Recheck the private CY54 source snapshot,
+authoring manifests and live selection when taking an implementation packet.
+
+| Packet | Owner | Concrete handoff |
+|---|---|---|
+| [CY65](tasks/CY65.md) | Development with Story | Ship Casual role, display/crops and exact public-ship/cabin/station/briefing routing |
+| [CY66](tasks/CY66.md) | Development and Character Art publisher | Close 101 missing wardrobe bindings, verify both consumers, then repeat preflight and publish all supported approved looks |
+| [CY67](tasks/CY67.md) | Development; General Art supplies approved exports | Integrate the 25 approved general sources absent from CY54; wire Fuel/Provisions and preserve the nineteen-location/forty-six-slot matrix |
+| [CY68](tasks/CY68.md) | General Art in this repo | One confirmed fighter-strike effect; review further kit needs against actual slots |
+| [CY69](tasks/CY69.md) | General Art with Story | Classify 878 remaining review-backdrop bindings, reuse approved places first and lock the new environment list |
+
+CY52's completion/social sources are owner-approved. The remaining intake is development work,
+not another art pass. CY68/CY69 are new General Art briefs. Character outfits, expressions, poses,
+boss/lieutenant portraits and splashes remain in `uma-art-authoring` under CY49/CY55; the completed
+six-look neutral wardrobe does not complete those scene poses. Canonical reusable equipment remains
+CY58's shared/character-art responsibility, with CY57 fixing sprite export mechanics before bulk work.
+
+The ignored intake handoff contains exact source hashes, 300 wardrobe rows, pending approved general
+IDs and the scene-by-scene setting inventory. Story reviews wardrobe/place exceptions through
+CY50/CY53/CY56. Existing approval history and the real campaign's scripts, mechanics and saves remain.
 
 ## Four-pillar art and story queue
 
