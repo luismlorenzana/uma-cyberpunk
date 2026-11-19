@@ -29,8 +29,13 @@ export async function main(args = process.argv.slice(2)) {
   const config = parsePublishConfig(raw)
   const selected = await loadSelected(storage)
   const assetIds = new Set(selected.release.assets.map(asset => asset.id))
-  const skipped = [...config.bindings.filter(b => !assetIds.has(b.asset)).map(b => `${b.asset}: not in selected campaign`),
-    ...config.portraits.filter(b => !assetIds.has(b.base)).map(b => `${b.base}: not in selected campaign`)]
+  const only = (value('--only') ?? '').split(',').map(s => s.trim()).filter(Boolean)
+  const normalized = (s: unknown) => String(s ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const inScope = (row: Record<string, unknown>) => !only.length || only.some(key => Object.values(row).some(v => normalized(v) === normalized(key)))
+  const skipped = [...config.bindings.filter(b => !assetIds.has(b.asset)
+    && (event === 'all' || event === (b.from.category ?? (b.from.collection === 'local' ? 'general' : b.from.collection)))
+    && inScope(b.from as unknown as Record<string, unknown>)).map(b => `${b.asset}: not in selected campaign`),
+    ...config.portraits.filter(b => !assetIds.has(b.base) && ['all', 'portraits'].includes(event) && inScope(b as unknown as Record<string, unknown>)).map(b => `${b.base}: not in selected campaign`)]
   const scoped = { ...config, bindings: config.bindings.filter(b => assetIds.has(b.asset)), portraits: config.portraits.filter(b => assetIds.has(b.base)) }
   const output = resolve(value('--receipt') ?? `content/campaign-art-plan/receipts/${Date.now()}.json`)
   await mkdir(dirname(output), { recursive: true })
@@ -38,7 +43,7 @@ export async function main(args = process.argv.slice(2)) {
   let sources
   try {
     const art = await resolveArt(storage, scoped, { event: event as ArtEvent, allowMissing: dryRun,
-      only: (value('--only') ?? '').split(',').map(s => s.trim()).filter(Boolean), contentRoot: resolve('content') })
+      only, contentRoot: resolve('content'), currentImages: new Map(selected.release.assets.map(asset => [asset.id, asset.sha256])) })
     art.skipped.push(...skipped)
     sources = art.sources
     result = await publishArtCandidate(storage, selected, art, { dryRun, stageOnly: args.includes('--stage-only') })

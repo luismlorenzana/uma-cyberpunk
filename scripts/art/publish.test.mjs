@@ -23,7 +23,7 @@ class MemoryStorage {
     this.add(path, bytes)
   }
 }
-async function fixture() {
+async function fixture(configure = () => {}) {
   const storage = new MemoryStorage()
   const original = await sharp({ create: { width: 40, height: 60, channels: 4, background: '#203040' } }).png().toBuffer()
   const newer = await sharp({ create: { width: 40, height: 60, channels: 4, background: '#805090' } }).png().toBuffer()
@@ -32,10 +32,11 @@ async function fixture() {
     quests: [{ id: 'opening', scene: 'sw1-ch1-s1', title: 'Opening' }],
     assets: [{ id: 'pilot', file: 'pilot.png' }, { id: 'other', file: 'other.png' }],
     art: [{ scene: 'sw1-ch1-s1', backdrop: 'other', portraits: [{ speaker: 9000001, asset: 'pilot' }] }] } }
+  await configure(files['campaign.json'])
   const ref = (bytes, extension) => ({ path: `campaign/files/pack.${sha(bytes)}.${extension}`, sha256: sha(bytes), bytes: bytes.length })
   const release = { schemaVersion: 1, release: 'baseline', files: Object.entries(files).map(([source, data]) => {
     const bytes = encode(data), file = { source, ...ref(bytes, 'json') }; storage.add(PREFIX + file.path, bytes); return file
-  }), assets: ['pilot', 'other'].map(id => {
+  }), assets: files['campaign.json'].assets.map(({ id }) => {
     const file = { id, ...ref(original, 'png') }; storage.add(PREFIX + file.path, original); return file
   }) }
   storage.add(PREFIX + 'campaign/preview.json', encode(release))
@@ -141,4 +142,38 @@ test('cloud adapter rejects non-Cyberpunk paths before obtaining credentials or 
   await assert.rejects(storage.put('channels/v1/latest.json', Buffer.from('x'), '0'), /outside/)
   await assert.rejects(storage.read('art/universes/farm-life/index.json'), /outside/)
   await assert.rejects(storage.read('campaign/cyberpunk/../farm/index.json'), /Unsafe/)
+})
+
+test('native replacement refreshes declared dialogue/profile crops, preserves gameplay and is a no-op on repeat', async () => {
+  const configure = config => {
+    config.assets.push({ id: 'dialogue', file: 'dialogue.png' }, { id: 'profile', file: 'profile.png' })
+    config.wardrobe = { members: [{ speaker: 9000001, looks: Object.fromEntries(['street','ship-casual','quarters','pilot','armor','armor-helmet'].map(role => [role,{ asset:'pilot',dialogue:'dialogue',profile:'profile' }])) }],
+      scenes: [{ scene: 'sw1-ch1-s1', context: 'bridge' }], crops: [{ base:'pilot',width:40,height:60,dialogue:{asset:'dialogue',left:4,top:6,width:32,height:40},profile:{asset:'profile',left:8,top:6,size:24} }] }
+  }
+  const f = await fixture(configure), before = f.selected.files['campaign.json'].wardrobe
+  const result = await publishArtCandidate(f.storage, f.selected, f.resolved)
+  assert(result.promoted)
+  const selected = await loadSelected(f.storage)
+  assert.deepEqual(selected.files['campaign.json'].wardrobe, before)
+  for (const [id,width,height] of [['dialogue',32,40],['profile',192,192]]) {
+    const ref = selected.release.assets.find(a=>a.id===id), bytes = (await f.storage.read(PREFIX+ref.path)).bytes
+    const size = await sharp(bytes).metadata();assert.equal(size.width,width);assert.equal(size.height,height)
+    assert.notEqual(ref.sha256,sha(f.original))
+  }
+  const writes = f.storage.writes.length
+  assert.equal((await publishArtCandidate(f.storage, selected, f.resolved)).promoted,false)
+  assert.equal(f.storage.writes.length,writes)
+  const wrong = { ...f.resolved,images:[{ ...f.resolved.images[0],bytes:f.original,width:41 }] }
+  await assert.rejects(publishArtCandidate(f.storage, selected, wrong),/framing needs review/)
+  selected.book.portraitFaces = [{speaker:9000001,base:'dialogue',emote:'happy',asset:'other',at:{x:0,y:0}}]
+  await assert.rejects(publishArtCandidate(f.storage, selected, { ...f.resolved, images:[{ ...f.resolved.images[0],bytes:f.original }] }),/recipe together/)
+  assert.equal(f.storage.writes.length,writes)
+  const withFaces = { ...f.resolved, images:[{ ...f.resolved.images[0],bytes:f.original }], portraits:[{
+    base:'pilot',speaker:9000001,faces:[{emote:'happy',image:{asset:'happy-face',bytes:f.face,extension:'.png',width:8,height:10},at:{x:8,y:10}}],
+  }] }
+  await publishArtCandidate(f.storage, selected, withFaces)
+  const refreshed = await loadSelected(f.storage)
+  assert.deepEqual(refreshed.book.portraitFaces.find(face=>face.base==='dialogue').at,{x:4,y:4})
+  assert.deepEqual(refreshed.book.portraitFaces.find(face=>face.base==='pilot').at,{x:8,y:10})
+  assert.equal(refreshed.book.wardrobe.members[0].looks.pilot.profile,'profile')
 })

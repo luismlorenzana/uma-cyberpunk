@@ -1,3 +1,5 @@
+import type { CampaignWardrobe } from '../campaign-wardrobe'
+import { parseCampaignWardrobe } from './campaign-wardrobe'
 import { parseComposition } from './composition'
 import type { CommandCinematics } from '../ship/command-cinema'
 import { parseCommandCinematics } from './command-cinematics'
@@ -58,6 +60,7 @@ export interface CampaignPortraitFace {
 }
 
 export interface CampaignBook {
+  wardrobe?: CampaignWardrobe
   commandCinematics?: CommandCinematics
   management?: CampaignManagement
   opening: string
@@ -206,7 +209,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe'], fields)
   p.version(o)
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
   const parsed = parsePack(storyFiles)
@@ -293,7 +296,8 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}) }
   }, 4096)
   unique(p, 'art', art, (a) => a.scene)
-  const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset)
+  const wardrobe = o.wardrobe === undefined ? undefined : parseCampaignWardrobe(o.wardrobe, { assets, scenes, story })
+  const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset, wardrobe)
   const evening = o.evening === undefined ? undefined : (() => {
     const e = p.object(o.evening, 'evening', ['after', 'visits'])
     const after = p.slug(e.after, 'evening.after')
@@ -447,6 +451,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const commandCinematics = o.commandCinematics === undefined ? undefined : parseCommandCinematics(o.commandCinematics, { assets, commands, scenes, story })
   const management = o.management === undefined ? undefined : parseCampaignManagement(o.management, { quests, projects, scenes, assets, workshop })
   return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
+    ...(wardrobe ? { wardrobe } : {}),
     ...(management ? { management } : {}),
     ...(commandCinematics ? { commandCinematics } : {}),
     ...(commandArt ? { commandArt } : {}),
@@ -456,10 +461,14 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
 }
 
-function parsePortraitFaces(p: P, value: unknown, art: CampaignSceneArt[], asset: (id: unknown, path: string) => string): CampaignPortraitFace[] {
+function parsePortraitFaces(p: P, value: unknown, art: CampaignSceneArt[], asset: (id: unknown, path: string) => string, wardrobe?: CampaignWardrobe): CampaignPortraitFace[] {
   const baseKey = (speaker: Speaker, base: string) => `${speaker}:${base}`
   const bases = new Set(art.flatMap(({ portraits }) =>
     portraits.filter(({ emote }) => emote === undefined).map(({ speaker, asset }) => baseKey(speaker, asset))))
+  for (const member of wardrobe?.members ?? []) for (const look of Object.values(member.looks)) {
+    bases.add(baseKey(member.speaker, look.asset))
+    if (look.dialogue) bases.add(baseKey(member.speaker, look.dialogue))
+  }
   const faces = p.list(value, 'portraitFaces', (v, path) => {
     const entry = p.object(v, path, ['speaker', 'base', 'emote', 'asset', 'at'])
     const speaker = p.speaker(entry.speaker, `${path}.speaker`)

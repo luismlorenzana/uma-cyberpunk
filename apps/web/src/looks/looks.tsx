@@ -14,7 +14,7 @@ export function parseLooks(value: unknown): LookEntry[] {
   const looks = (value as { looks?: unknown } | null)?.looks
   if (!Array.isArray(looks)) return []
   return looks.flatMap((l: Record<string, unknown>) =>
-    typeof l?.character === 'string' && LOOKS.includes(l.outfit as Look) && typeof l.path === 'string' && /^images\/[a-z0-9-]+\.[a-f0-9]{16}\.png$/.test(l.path)
+    typeof l?.character === 'string' && !l.category && l.kind !== 'splash' && LOOKS.includes(l.outfit as Look) && typeof l.path === 'string' && /^images\/[a-z0-9-]+\.[a-f0-9]{16}\.png$/.test(l.path)
       ? [{ id: String(l.id ?? ''), character: l.character, outfit: l.outfit as Look, path: l.path }] : [])
 }
 
@@ -22,13 +22,15 @@ export function parseLooks(value: unknown): LookEntry[] {
 export function lookPath(entries: readonly LookEntry[], character: string | undefined, look: Look): string | null {
   if (!character) return null
   const e = entries.find((x) => x.character.toLowerCase() === character.toLowerCase() && x.outfit === look)
+    ?? (look === 'ship-casual' ? entries.find(x => x.character.toLowerCase() === character.toLowerCase() && x.outfit === 'quarters') : undefined)
   return e ? `looks/${e.path}` : null
 }
 
-let index: Promise<LookEntry[]> | null = null
-/** The index, once a session; empty when the route serves none (a 404 locally without the mirror, or offline). */
+let index: Promise<LookEntry[]> | null = null, checkedAt = 0
+/** Recheck on entry after thirty seconds; immutable image paths remain cacheable. */
 export function looksIndex(): Promise<LookEntry[]> {
-  index ??= CONTENT.pack('looks/index.json').then((bytes) => parseLooks(JSON.parse(new TextDecoder().decode(bytes)))).catch(() => { index = null; return [] })
+  if (Date.now() - checkedAt > 30_000) index = null
+  if (!index) { checkedAt = Date.now(); index = CONTENT.pack('looks/index.json').then((bytes) => parseLooks(JSON.parse(new TextDecoder().decode(bytes)))).catch(() => { index = null; return [] }) }
   return index
 }
 
@@ -36,29 +38,37 @@ export function looksIndex(): Promise<LookEntry[]> {
 export function useLookUrl(outfit: number, look: Look): string | null {
   const master = useMaster()
   const character = master.status === 'ready' ? master.view.characters.get(outfit) : undefined
-  const [url, setUrl] = useState<string | null>(null)
+  const [result, setResult] = useState<{ character: string; look: Look; url: string } | null>(null)
   useEffect(() => {
     let live = true
-    setUrl(null)
+    let image: string | undefined
+    setResult(null)
     if (!character) return
-    void looksIndex().then((entries) => { const path = lookPath(entries, character, look); return path ? CONTENT.packUrl(path) : null })
-      .then((u) => { if (live) setUrl(u) }).catch(() => {})
-    return () => { live = false }
+    void looksIndex().then(async entries => {
+      const path = lookPath(entries, character, look)
+      if (!path) return null
+      return URL.createObjectURL(new Blob([Uint8Array.from(await CONTENT.pack(path))], { type: 'image/png' }))
+    }).then(url => { if (!live) { if (url) URL.revokeObjectURL(url); return }; image = url ?? undefined; setResult(url ? { character, look, url } : null) }).catch(() => {})
+    return () => { live = false; if (image) URL.revokeObjectURL(image) }
   }, [character, look])
-  return url
+  return result && result.character === character && result.look === look ? result.url : null
 }
 
 /** Her look as a full-body image (`full`) or its bust crop (`bust`, in a 3:4 frame), else `fallback`. */
 export function LookPortrait({ outfit, name, look, mode, fallback, className }: { outfit: number; name: string; look: Look; mode: 'full' | 'bust'; fallback: ReactNode; className?: string }) {
   const url = useLookUrl(outfit, look)
-  if (!url) return <>{fallback}</>
+  const [size, setSize] = useState<{ width: number; height: number }>()
+  const [failed, setFailed] = useState(false)
+  useEffect(() => { setSize(undefined); setFailed(false) }, [url])
+  if (!url || failed) return <>{fallback}</>
   const alt = `${name}, ${LOOK_NAME[look]}`
-  if (mode === 'full') return <img data-look={look} src={url} alt={alt} className={`h-full w-auto object-contain ${className ?? ''}`} />
+  const onError = () => setFailed(true)
+  if (mode === 'full') return <img data-look={look} src={url} alt={alt} onError={onError} className={`h-full w-auto object-contain ${className ?? ''}`} />
   // The bust: the image's top band, `height` of it tall, a 3:4 window centred across the 2:3 picture.
-  const crop = BUST_CROP[look], bandH = crop.height * 1536, bandW = bandH * 0.75
+  const crop = BUST_CROP[look], bandH = crop.height * (size?.height ?? 1536), bandW = bandH * 0.75, width = size?.width ?? 1024
   return (
     <div data-look={look} className={`relative aspect-[3/4] overflow-hidden ${className ?? ''}`}>
-      <img src={url} alt={alt} className="absolute max-w-none" style={{ width: `${(1024 / bandW) * 100}%`, left: `${(-(512 - bandW / 2) / bandW) * 100}%`, top: `${(-(crop.top * 1536) / bandH) * 100}%` }} />
+      <img src={url} alt={alt} onError={onError} onLoad={event => setSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} className="absolute max-w-none" style={{ width: `${(width / bandW) * 100}%`, left: `${(-((width - bandW) / 2) / bandW) * 100}%`, top: `${(-crop.top / crop.height) * 100}%` }} />
     </div>
   )
 }

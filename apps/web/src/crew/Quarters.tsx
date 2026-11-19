@@ -29,7 +29,7 @@ export function Quarters() {
     const outfit = playing.outfit
     return (
       <div className="absolute inset-0 z-30">
-        <ScenePlayer key={`bond-${outfit}-${scene.rank}`} pack={pack} scene={{ id: `bond-${outfit}-${scene.rank}`, place: scene.place, steps: scene.steps }} squad={sceneSquad(pack, save)}
+        <ScenePlayer key={`bond-${outfit}-${scene.rank}`} pack={pack} scene={{ id: `bond-${outfit}-${scene.rank}`, place: scene.place, steps: scene.steps, look: scene.look }} lookContext={scene.place === 'cabin' ? 'cabin' : 'spot'} squad={sceneSquad(pack, save)}
           onEffect={() => {}} onBattle={async () => {}} onBond={(e) => void updateSave((s) => applyBondEffect(s, pack, outfit, e))}
           onDone={() => { void updateSave((s) => bondSceneDone(s, outfit, scene.rank)); setPlaying(null) }} />
       </div>
