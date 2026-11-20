@@ -162,13 +162,15 @@ the Back slot. CY58/CY59 replace the earlier per-item/per-outfit production appr
 equipment, compatible family poses, reusable masks and an initial actual-campaign cohort. CY60
 applies the same method to enemies; CY63 reconciles grips, terminology and helmet staging.
 
-**D75 baseline review (2026-11-20).** The [current image brief](combat-sprites-request.md) asks for
-one helmeted recruit in four directions: matched clean-body and two-handed rifle fittings from
-a consistent slightly elevated viewpoint. Review those eight stills in the actual campaign before
-selecting the final painted angle, defining animation exports and expanding the roster. The board
-keeps its fixed 35-degree camera and four logical directions. Its height compensation preserves
-painted proportions; it does not impose an eye-level drawing perspective. CY57 remains open for
-the executable composition fixture and integrated acceptance.
+**D76 source/export method (2026-11-20).** The [first-character brief](combat-sprites-request.md)
+starts one helmeted recruit with the existing rifle/Bulwark Training rig. Reusable 3D character,
+rig and equipment sources produce four-direction pixel frames under one fixed orthographic setup.
+Begin with standing renders and the 128-pixel native profile, then short motion/action samples.
+CY57 integrates an exact equipped atlas in real Training and boarding before generalizing
+supported variants or reusable render passes. Keep body and equipment reusable at source, with
+bounded export/cache coverage. The game keeps its 2D renderer, 35-degree camera and battle rules.
+Model/export approval remains separate from source design, publication and campaign acceptance.
+The approved shield and compact normal-shoulder pod keep their exact scopes for later fittings.
 
 The current part catalog is the authority for equipment IDs and legal combinations. Publish designs
 and small icons for every entry; coatings may use material swatches. Shared designs carry palette
@@ -176,9 +178,10 @@ masks and character adaptation notes. Attachment positions, facing and depth ord
 sprite frame contract. Different weapon families need compatible arm poses, including two-handed
 grips. Empty-hand bodies alone do not establish usable attack animation.
 
-CY57 resolves the scoped attachment/composition format and performance approach on an actual
-campaign loadout. Compare layered playback with composing/caching the equipped set, without baking
-every possible loadout. Keep readable missing-layer fallbacks. Any new shared sprite format needs a
+CY57 resolves the scoped attachment/composition format and performance approach after the first
+exact equipped atlas. Compare source-generated reusable passes/layers with supported rendered
+variants and composing/caching, exporting actual cohort needs. Keep accurate missing-layer and
+unsupported-rig fallbacks. Any new shared sprite format needs a
 versioned platform request and a compatible local adapter. Preserve recorded battle inputs/replays.
 
 Boss art may be visually larger while using the existing single-tile combat rules. Literal creatures,
