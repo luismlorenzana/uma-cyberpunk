@@ -37,9 +37,9 @@
 > [story-brief-life-aboard.md](story-brief-life-aboard.md). It amends TC8, TC15, TC36, TC42, TC44, TC49, TC50 and
 > TC51, each marked "amended D20" below.
 >
-> **Looks and sprites (D73, D76):** the [wardrobe contract](../technical/campaign-wardrobe.md) defines
+> **Looks and sprites (D73, D77):** the [wardrobe contract](../technical/campaign-wardrobe.md) defines
 > the current six playable look roles and scene routing. [Character sprites](character-sprites.md)
-> are helmeted combat pixel sprites rendered from reusable 3D authoring sources. The
+> are full-proportion helmeted cel-shaded sprites rendered from reusable 3D authoring sources. The
 > [first-character brief](combat-sprites-request.md) starts one equipped recruit in real Training
 > and boarding before the rig/export method expands.
 > Other contexts use their approved illustrations, portraits and expressions.
@@ -603,7 +603,7 @@ art only (enemies included) and Claude draws everything else in code. Nothing he
 
 | What | Stand-in first | The real art | Who | Where |
 |---|---|---|---|---|
-| Umas on the map | Their **chibi sets** from master data, which already walk in four facings (D19) | **Helmeted pixel sprites from reusable 3D sources**, starting with the [first equipped character](combat-sprites-request.md) (D76) | Art authoring | Private |
+| Umas on the map | Their **chibi sets** from master data, which already walk in four facings (D19) | **Full-proportion cel-shaded sprites from reusable 3D sources**, starting with the [first equipped character](combat-sprites-request.md) (D77) | Art authoring | Private |
 | Umas in the cut-in | Their **full-body renders** from master data | **Combat Adult Character** keys in a rig, side-on, facing left, from the Character Art Studio's "Uma Cyberpunk" category (P143) | ChatGPT | A private uma-cyberpunk pack, as uma-quest's keys are (its D45) |
 | Heroines on the map | **Standees** from the Ranker's figure images | Drawn map sprites, wave by wave, bosses first | ChatGPT | Private |
 | Heroines in the cut-in | The Ranker's figure and splash images | Combat keys, side-on, facing right | ChatGPT | Private |

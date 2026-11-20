@@ -1,14 +1,15 @@
-# Combat sprites: 3D-to-pixel first-character brief
+# Combat sprites: full-proportion cel-shaded first character
 
-**Current request · 2026-11-20 (D76).** Build one real recruit as an editable, equipped 3D authoring
-asset and render pixel sprites for the existing campaign. [CY59](../handoff/tasks/CY59.md) owns
+**Current request · 2026-11-20 (D77).** Build one real recruit with full adult proportions and clean
+cel shading, then export 2D sprites from the editable 3D source. [CY59](../handoff/tasks/CY59.md) owns
 the character source, [CY58](../handoff/tasks/CY58.md) equipment and [CY57](../handoff/tasks/CY57.md)
 game integration. [CY63](../handoff/tasks/CY63.md) keeps the actual cast and staging aligned.
 
 ## First character and campaign loadout
 
 Use the recruit identified in the current private first-cohort handoff. Pin her approved helmeted
-combat armor, identity references and palette. Preserve the armor design, chibi proportions,
+combat armor, identity references and palette. Match the full adult proportions and armor design
+of the approved full-body reference. Preserve the
 helmet/ear housings, tail, emblem and anatomical asymmetry. Record any unshown construction that
 needs interpretation. The model is a sprite-authoring source with its own review status.
 
@@ -46,32 +47,49 @@ board rotation. Check the result in campaign before freezing the exporter profil
 The game continues to display 2D sprite frames. Source 3D geometry supplies repeatable views and
 contacts. The game camera's height compensation preserves the rendered image's proportions.
 
-## Pixel rendering profile to prove first
+## Model quality and clean cel rendering
 
-Adapt [Hardline Anime](art-direction.md) into pixel sprites: clear silhouettes, broad cel-shadow
-groups, restrained highlights and the approved colors. Simplify small details for phone readability.
-Use a deliberate low-resolution render and pixel cleanup; retain stable pixel clusters through
-motion. Record cleanup steps so a revised source can regenerate the result.
+Use [Hardline Anime](art-direction.md): confident contours, designed armor planes, broad controlled
+cel shadows, clear local colors and restrained highlights. Model the helmet, visor, chest/abdomen,
+hips, joints and boots to match the approved silhouette. Use appropriate smooth normals on curves
+and deliberate hard edges on plates. Check stance, limb proportions and believable equipment
+contacts. Keep the rifle distinct from the arms and torso in the front view.
 
-| Property | First export profile, subject to the campaign review |
+First review the full-proportion model at a generous inspection size, including a body-only view
+beside the approved reference and an equipped three-quarter view. These are source-quality views;
+the four board facings still come from the same fixed camera. A larger image of the earlier blockout
+does not establish model quality. Preserve prior prototypes as history and reuse rig/exporter work
+where useful, updating bones, contacts and sockets to the new proportions.
+
+Render smooth, antialiased transparent edges and controlled cel-shaded surfaces. Remove the previous
+low-resolution pixel cleanup, global palette snapping, binary-alpha threshold and automatic native
+one-pixel contour from this export path. Contour weight is art-directed at the intended display
+size. Preserve the exact approved palette while simplifying detail for readability.
+
+| Property | Initial review profile; CY57 checks the final runtime choice |
 |---|---|
-| Native frame | 128 × 128 RGBA PNG |
-| Ground anchor | `(64, 120)` from the top-left; the ground root stays fixed through motion |
-| Standing figure | Approximately 96 native pixels from highest helmet/ear point to soles |
-| Runtime-frame candidate | Exact 2× nearest-neighbor export to 256 × 256; anchor `(128, 240)` |
-| Appearance | Crisp pixel edges, controlled alpha and consistent front-left lighting |
+| Master frame | 512 × 512 RGBA PNG, rendered with antialiasing |
+| Ground anchor | `(256, 480)` from top-left; normalized `(0.5, 0.9375)`; fixed through motion |
+| Standing figure | Approximately 416 source pixels, preserving full adult proportions |
+| Runtime candidates | Master-size or clean filtered 256 × 256 derivative; record scale and anchor for each |
+| Appearance | Clean cel shading, smooth alpha coverage and consistent front-left lighting |
 | Clear canvas | Full character, tail and equipped parts with padding; game supplies floor, shadow, ring and FX |
 
-The runtime candidate matches the existing shared cell/foot convention; it is not a claim that the
-new atlas, actions or loadout binding are already implemented. CY57 validates the importer and
-profile at 844 × 390, aiming for roughly 64–72 CSS-pixel figure height on the target phone. Check
-other device ratios too. Extend bounds or revise the common profile if a real silhouette needs
-space; keep facing scale consistent. A readable enlarged review is generated from native pixels.
+Texture resolution and in-game figure size are separate. CY57 reviews the same model around
+80 and 100 CSS pixels tall at 844 × 390 before choosing a common display scale. Check helmet,
+limbs, equipment, cover and adjacent units at both sizes. Preserve one-tile occupancy. Keep facing
+scale consistent and extend the export bounds when necessary. Record the corresponding anchor
+and filtered derivative dimensions; avoid clipping or per-facing body-size changes.
+
+The existing importer and shared actor have pixel-oriented sizing/filter defaults. CY57 must check
+or extend the adapter for source resolution, world scale, alpha and sampling. The proposed master
+and derivative do not claim that those capabilities or the new atlas binding are implemented.
 
 ## Delivery sequence for this one character
 
-1. **Standing source review.** Return the editable model/rig/equipment, repeatable exporter, four
-   equipped standing renders and phone-size/enlarged contact sheets. Development places this
+1. **Model and standing review.** Return the polished full-proportion model/rig/equipment,
+   repeatable exporter, source-quality views and four equipped standing renders. Show the same
+   clean renders at proposed phone sizes and at inspection size. Development places this
    exact rig in the real campaign. Body-only views and object-ID/depth passes are generated QA
    aids when useful, rather than separate character paintings.
 2. **First playable motion.** From the same source, export a short planted walk loop, rifle
@@ -102,12 +120,12 @@ supported pre-rendered variants, with a bounded encounter cache and explicit cov
 the combinations needed for reviewed campaign cohorts.
 
 Store projects, images, named cast, prompts, approvals and screenshots in ignored private content.
-Record design approval, model review, pixel-export review, valid runtime import, Platform publication
+Record design approval, model review, cel-render/export review, valid runtime import, Platform publication
 and campaign integration separately. Preserve older source approvals and pinned handoffs.
 
 ## Production references
 
 The [Dead Cells artist's workflow](https://www.gamedeveloper.com/production/art-design-deep-dive-using-a-3d-pipeline-for-2d-animation-in-i-dead-cells-i-)
-describes rigged 3D sources exported as pixel frames. [Factorio's graphics workflow](https://www.factorio.com/blog/post/fff-146)
+describes reusable rigged 3D sources and sprite export. [Factorio's graphics workflow](https://www.factorio.com/blog/post/fff-146)
 describes reusable Blender render scenes and sprite post-production. These support the authoring
-method; our approved references and campaign board determine the actual character design and view.
+method; D77 selects full proportions and clean cel rendering for our actual character design and view.
