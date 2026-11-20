@@ -26,6 +26,11 @@ Check the frozen battle loadout and legal capacity; art never substitutes anothe
 
 ## Editable source and reproducible render
 
+Use the [reusable mesh and rig foundation](../design/character-base-rig.md) (D78). Test MPFB's supplied human
+mesh/weights with its supported Rigify workflow on this same recruit, fitting the existing armor
+and equipment. Review anatomy, deformation and grips before replacing the current source or
+refitting the full armor. Preserve earlier projects and exact source approvals.
+
 Return the native project, preferably a Blender `.blend`, with its dependencies and an executable
 batch render/export script or equivalent reproducible command. Record the application/version.
 Keep body, helmet, hands, tail and equipment as identifiable objects or collections. Reuse a named

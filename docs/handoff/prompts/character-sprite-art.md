@@ -7,6 +7,12 @@ Read repo instructions and `content/cyberpunk-four-pillars/README.md`, then
 `art-direction.md`. The current private first-cohort record is linked from the handoff README.
 The game checkout is `C:/Users/luism/.codex/worktrees/cyberpunk-campaign-packets/uma-cyberpunk`.
 
+Read `character-base-rig.md` (D78). Begin with its isolated MPFB 2.0.18/Rigify feasibility study,
+using the pinned upstream source, supplied body weights and supported rig generation. Review
+anatomy, static joint bends, one existing armor fitting and both rifle grips before replacing the
+current project or refitting every plate. Record licenses, hashes and adapter mappings. Preserve
+normal Blender preferences and prior deliveries. Reuse the approved armor design over the base.
+
 Start with the same real recruit and existing Training loadout: **two-handed Laser rifle, right
 primary grip and left support grip; left equipment slot empty; Bulwark Back unit**. Pin the latest
 approved full-body helmeted armor and identity references, plus the exact equipment source versions.
