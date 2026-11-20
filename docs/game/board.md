@@ -25,6 +25,13 @@ flowchart LR
 
 ## What it shows
 
+The camera is orthographic, fixed at a 35-degree downward pitch with no horizontal rotation.
+Battle directions map to sprite drawings as South/front, North/back, West/left and East/right.
+The renderer stands each sprite on a vertical flat surface and compensates its height by
+`1 / cos(35°)`, preserving the painted image's on-screen proportions. That transform does not
+create a painted viewpoint. The [current baseline art review](../design/combat-sprites-request.md)
+is planned under CY57/CY59; existing sets and fallbacks remain the implemented path until integration.
+
 | Piece | How it looks |
 |---|---|
 | **Terrain** | The map's tiles at their heights (0–3), risers between levels, walls for solid tiles, from the stand-in biome kit |

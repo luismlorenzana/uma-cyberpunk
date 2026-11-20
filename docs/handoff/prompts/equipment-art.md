@@ -1,5 +1,10 @@
 Continue Uma Cyberpunk equipment art in `C:/Users/luism/workspace/uma-art-authoring`.
 
+For sprite fittings, read `content/cyberpunk-four-pillars/combat-sprites-request.md`. The first
+baseline uses one helmeted recruit and a two-handed Laser rifle in four directions with a
+consistent slightly elevated painted viewpoint. Match the equipment to that drawing perspective.
+Identify approved and draft sources separately; numerical exports follow the CY57 fixture review.
+
 Read the repo instructions, then `content/cyberpunk-four-pillars/CY58.md`, `CY57.md`,
 `CY59.md`, `CY60.md`, `CY63.md`, `delivery-contract.md` and the current handoff README.
 The game checkout is `C:/Users/luism/.codex/worktrees/cyberpunk-campaign-packets/uma-cyberpunk`;

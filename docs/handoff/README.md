@@ -18,6 +18,12 @@ composition fixture and real Training/boarding checkpoint. Its composition deliv
 Initialization prompts: [Equipment Art](prompts/equipment-art.md),
 [Character Sprite Art](prompts/character-sprite-art.md).
 
+**Sprite baseline · D75, 2026-11-20.** Use the [current image requirements](../design/combat-sprites-request.md)
+for one helmeted recruit: four matched clean-body/two-handed rifle fitting pairs, drawn from a
+consistent slightly elevated viewpoint. Review these eight stills in campaign Training and boarding
+before animation and bulk exports. The current sprite guide and packets replace the older production
+instructions; the executable composition fixture remains CY57. Art and Story receive the same brief.
+
 The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).
 
 | Packet | Work | Integrated delivery |
@@ -226,7 +232,7 @@ packet, or says why not.
 | D35 | The foes' first draft, eight factions; superseded by D36's six |
 | **D30** | **Read the casting and the first two worlds' bibles** in the Cyberpunk Story Sandbox's Bibles page (`http://127.0.0.1:4322/#/bibles`), each with a verdict box: who leads which world and why, the heroines by faction, and each world's Chapter 1 outline. Then the Ring's Chapter 1 is scripted |
 | D28 | **Read the world v2:** [its page](../design/previews/world.html), or world by world in the Cyberpunk Story Sandbox (Worlds), where each world has a verdict box |
-| D24 | Hand ChatGPT [the combat sprites request](../design/previews/combat-sprites-request.html) with the private prompts (`content/design/character-looks/combat-sprites-prompts.md`) and reference boards (`sprite-refs/`); it saves the sheets to `content/design/character-looks/combat-masters/`. Then look at each pilot's identity sheet (S1) when it's back, in the Story Sandbox's **Sprites** page (`http://127.0.0.1:4322/#/sprites`), which plays each sheet at the phone's size beside her chibi and flags what's off. The spec is [character-sprites](../design/previews/character-sprites.html) (LK1–LK14) |
+| D75 | Author the [current eight-image sprite baseline](../design/combat-sprites-request.md): one helmeted recruit's four matched body/rifle fitting pairs. Return native sources and the short handoff; development reviews perspective and equipment alignment in the real campaign. |
 | D20 | Read [life aboard](../design/previews/life-aboard.html) (the captain, bonds, cabins, duties, the ship, squads; TC55–TC74) and say what to change; silence keeps it. Then hand the story session its new line (above) to start [part two](../design/previews/story-brief-life-aboard.html): worldbuilding first |
 | Earlier | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | CY3 | The phone check (the OAuth entries are in, 2026-11-13): open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, open it from there, sign in, and see the ship; **Status** in the menu shows the save synced |

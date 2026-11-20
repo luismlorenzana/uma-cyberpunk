@@ -1,180 +1,107 @@
-# Combat sprites: the image request
+# Combat sprites: baseline art requirements
 
-> **Production order superseded by D73 (2026-11-20):** use [CY59](../handoff/tasks/CY59.md) for
-> helmeted armor first, shared family poses and CY57 attachment exports. The helmet-off-first order
-> and fixed sheet/frame totals below are historical references, not current production quotas.
+**Current request · 2026-11-20 (D75).** Author one helmeted armored character for a visual review
+in the real campaign. This is the current image brief for [CY59](../handoff/tasks/CY59.md), shared
+with [CY58 equipment](../handoff/tasks/CY58.md) and [CY57 integration](../handoff/tasks/CY57.md).
+The approved baseline will establish the drawing perspective before animation and roster expansion.
 
-> **Next delivery (D64, 2026-11-18):** [CY59](../handoff/tasks/CY59.md) coordinates new playable
-> sheets with [CY57's composition contract](../handoff/tasks/CY57.md) and
-> [CY58's equipment](../handoff/tasks/CY58.md). Before expanding this earlier empty-hand request,
-> reconcile the actual frame/pose and attachment fixture, including two-handed grips and weapon-family
-> actions. Keep approved existing sheets and the owner's identity/walk review sequence. The next
-> acceptance checkpoint is an equipped squad in its real campaign boarding mission.
+## Character and references
 
-> **For ChatGPT, image generation only (2026-11-13, D24).** This page asks for one thing: **chibi battle sprites of the
-> two pilot Umas in their combat armor**, helmet off and then helmet on, drawn as pose sheets. Cutting the sheets into
-> frames, alignment, the atlas, checks, publishing and how the game plays them come later, and aren't ChatGPT's. It's
-> nameless (Umas are outfit ids); each Uma's identity, her paste-ready prompts and her reference board are private, in
-> `content/design/character-looks/` (`combat-sprites-prompts.md`, `sprite-refs/`). The design behind it is
-> [character-sprites.md](character-sprites.md). Visual page: [previews/combat-sprites-request.html](previews/combat-sprites-request.html).
+Use one real recruit with approved Cyberpunk combat armor and helmet references, preferably the
+first recruit. Record the exact character/outfit ID, look ID and reference versions in the private
+handoff. Keep her approved chibi proportions, approximately 2.6–3 heads tall excluding the ears.
 
-## What to draw
+Preserve her armor silhouette, helmet and ear housings, tail, emblem, palette and anatomical
+asymmetry. Recognizability comes from those features even with the face covered. Every direction
+is drawn independently; one-sided details remain on the same anatomical side.
 
-| | |
-|---|---|
-| **Who** | The two pilot Umas: outfit **106801** and outfit **112901** |
-| **What** | Each Uma's **approved chibi**, re-dressed in her **approved combat armor look** (Modular Frame 01), as battle-board sprites |
-| **Helmet** | First helmet off; then the same sheets with her **Helmet 01** |
-| **Sheets** | Seven per Uma helmet off, seven helmet on: **28 sheets, 146 poses an Uma** |
-| **Not asked** | Sprites of the Street, Quarters or Pilot-suit looks; cut-in keys; portraits; any other Uma |
+Follow [Hardline Anime](art-direction.md): confident dark contours, broad angular cel shadows,
+clear local colors and restrained highlights. Simplify seams and small markings for a figure about
+70 CSS pixels tall. Use consistent top/front-left light and retain readable accents on dark armor.
 
-## Why only combat
+## Viewpoint and four directions
 
-The battle board is the one place an Uma is a small figure that walks and acts. Everywhere else the game shows the
-look ChatGPT already drew, as a full-body image or a bust:
+Draw the baseline **from slightly above**, with visible top planes of the helmet, shoulders and
+boots. Use approximately **35 degrees downward** as the first viewpoint study, matching the fixed
+board camera's elevation. Keep a consistent elevation and proportions across all four directions.
+The final painted angle is established by the in-campaign review, rather than by the number alone.
 
-| Look | Where it shows | Shown as | Sprites? |
-|---|---|---|---|
-| **Combat armor** | The battle board | Small chibi figures walking in four facings | **Yes: this request** |
-| **Helmet on** | Sealed maps (vacuum, smoke, a boarding in space) | The same figures with the helmet | **Yes: this request** |
-| **Street** | A world's node map and its scenes | The approved full-body image and a bust in the text box | No |
-| **Quarters** | Her cabin: she stands over the cabin's diorama, as in a visual novel | The approved full-body image | No |
-| **Pilot suit** | Her post aboard, the Bridge's scenes | The approved image, and a bust on her post's card | No |
+The board has an axis-aligned grid and four logical directions. Draw the whole body facing the
+listed direction; head, torso, hips, feet and weapon agree. The elevated side drawings can show
+top surfaces while their facing remains left or right. A three-quarter identity illustration can
+be supplied as an existing reference; the four gameplay drawings are the required baseline.
 
-## The figure: her chibi, in armor
-
-- **Her head and body are her approved chibi's:** the platform's traveler sprite set of her outfit, revision 5. That
-  means the same face, head size, eyes, hair, ears, accessory sides, tail and proportions (about 2.6 to 3 heads below
-  the ears). The rendering stays the same too: shaped lids and lashes, distinct whites, gradient irises, dark pupils and
-  their highlights, a clear small mouth, coloured outlines, clean antialiased edges, and restrained light from the top
-  front-left.
-- **Only her clothes change,** to her approved combat armor look, simplified to chibi scale:
-  - **Keep:** the chest plate with her emblem, the big shoulder pads, the segmented abdomen, the forearm gauntlets
-    (each forearm as her look draws it), the thigh, knee and shin plates, the armored boots, the fingerless gloves, her
-    one-sided motif, and her three colours (base, accent, trim) where her look puts them.
-  - **Drop:** thin seams, tiny slots, text and any detail under about four pixels at the final size.
-  - **Make the plates chunky,** so her outline is clearly different from her chibi's dress: wider shoulders, heavier
-    boots.
-- **Her tail is always out.** With the helmet off her ears are bare. With the helmet on they sit in the helmet's armored
-  ear housings.
-- **Never mirrored.** Every asymmetric detail stays on the side of her body it belongs to, in every facing. Her identity
-  sheet in the private notes names each detail's side.
-
-## Inspiration: what to take, what not
-
-| Reference | Take | Leave |
+| File facing | Battle direction | Required read |
 |---|---|---|
-| **Triangle Strategy** (HD-2D) | Small deformed figures standing in a lit diorama, read at a glance from a high camera. Its director's "right line": draw deformed figures and add believable light on top, rather than shrinking an illustration | Its rotating camera and diagonal views |
-| **Octopath Traveler** | Sprites redrawn by hand from the illustrations, colours a touch more saturated than the illustration; motion held back to a few stepped frames | Its pixel blocking: these are clean, full-colour anime sprites |
-| **Fire Emblem's map sprites** | A standing read and a moving read at a tiny size: silhouette first, then colour | Its battle animations (this game's cut-in has its own art) |
-| **Front Mission** | Armor that reads as equipment: plates, joints, mechanical weight, boots planted | Mecha scale: she's an Uma in armor, not a robot |
-| **This game's boards** | Night and neon: dark ground, cyan and magenta light, the squad's cyan ring under her. Dark armor keeps its accent colour bright and a slightly lighter edge on the top-left of dark plates, painted into the figure | Any glow, aura or floor in the image (the game adds light) |
+| `front` | South, toward the bottom of the screen | Helmet visor and chest/front armor visible; body and rifle point toward the viewer |
+| `back` | North, toward the top of the screen | Helmet rear, back plate and tail attachment clearly distinguish the rear; rifle points away |
+| `left` | West, image-left | Whole figure and rifle point image-left, seen from the same elevated viewpoint |
+| `right` | East, image-right | Whole figure and rifle point image-right, preserving anatomical equipment sides |
 
-No frame, character or design is copied from any game. These are references for scale, readability and finish only.
+The renderer displays painted pixels on upright flat surfaces. Its height compensation preserves
+their on-screen proportions; it does not add a painted viewpoint. Perspective must therefore be
+consistent in both the character drawing and fitted equipment. Existing eye-level studies can be
+returned as comparison references with their original review status.
 
-## The camera and the facings
+## First delivery: four matched body/fitting pairs
 
-- **Drawn at eye level, straight on,** like her existing chibi. The board's camera looks down from 35°, but the game
-  stands each sprite upright and undoes the tilt, so the sprites must not be drawn from above.
-- **Her back must read as her back at a glance:** a hit from behind does +50% in this game. Her hair, her tail and the
-  armor's back plate make it plain.
-- **Five views.** The profiles are real side views, as the owner asked for her existing chibi sets:
+Return **eight PNGs: four clean body images and four equipped previews**, one pair per direction.
+Use a stable standing **rifle-ready pose** with both hands in believable contact positions. Within
+each pair the body pixels, pose, scale and placement must match; derive the fitting from the same
+body source/layers. Both feet remain planted and the body weight supports the equipment.
 
-| View | Drawn as |
-|---|---|
-| **Key** | Three-quarter, turned to image-left, both eyes visible: the identity reference |
-| **Front** | Straight toward the viewer |
-| **Back** | Straight away from the viewer |
-| **Left** | A true profile facing image-left: nose, chest, hips and shoes all point left; the far eye hidden |
-| **Right** | A true profile facing image-right |
-
-## Every sheet
-
-- **Transparent background** (true alpha 0), and nothing else in the image: no text, labels, grid lines, floor, shadow,
-  glow, effects, weapons or props.
-- **512 × 512 cells,** read row-major (left to right, top to bottom); unused cells stay empty.
-- **The figure about 416 px** from ear tips to soles, feet on y 480 of the cell, centred on x 256, at the same scale in
-  every cell of every sheet. At least 14 px of padding around ears, hair, tail, hands and boots.
-- **One figure a cell,** each drawn on its own, never a flipped copy.
-- **Empty hands:** where a pose needs one, her anatomical right hand is a closed, empty grip (the game adds weapons
-  later).
-
-## The sheets
-
-**Batch 1, helmet off: standing and walking.** This is what the board plays today; it comes first.
-
-| # | Sheet | Canvas, grid | Cells |
-|---|---|---|---|
-| S1 | **Identity** | 1536 × 1024, 3 × 2 | 0 key · 1 front · 2 back · 3 left · 4 right · 5 empty |
-| S2 | **Walk front and back** | 2048 × 1536, 4 × 3 | 0–5 walk toward the viewer · 6–11 walk away |
-| S3 | **Walk left and right** | 2048 × 1536, 4 × 3 | 0–5 walk in left profile · 6–11 walk in right profile |
-
-**Batch 2, helmet off: reactions,** one sheet a facing.
-
-| # | Sheet | Canvas, grid | Cells |
-|---|---|---|---|
-| S4 | **Front** | 2048 × 2048, 4 × 4 | 0–2 act · 3–4 hurt · 5–6 guard · 7–9 kneel · 10–13 victory · 14–15 empty |
-| S5 | **Back** | 2048 × 1536, 4 × 3 | 0–2 act · 3–4 hurt · 5–6 guard · 7–9 kneel · 10–11 empty |
-| S6 | **Left** | 2048 × 1536, 4 × 3 | The same as S5, in left profile |
-| S7 | **Right** | 2048 × 1536, 4 × 3 | The same as S5, in right profile |
-
-**Batch 3, helmet on: S1h–S7h.** Each approved helmet-off sheet is **edited, not redrawn**:
-- **Replace only her head** with her Helmet 01, with the ears in its armored housings, the visor band and the emblem on
-  the forehead, turned to match each pose's head.
-- **Keep everything else identical:** poses, scale, positions, armor and tail.
-- **Hidden under the helmet:** her hair and head accessory.
-
-| Sheet | Frames |
-|---|---|
-| S1 | 5 |
-| S2 | 12 |
-| S3 | 12 |
-| S4 | 14 |
-| S5 | 10 |
-| S6 | 10 |
-| S7 | 10 |
-| **Helmet off** | **73** |
-| **Helmet on** | **73** |
-| **Per Uma** | **146** |
-
-## The poses
-
-| Action | Frames | Each frame |
+| Set | Files | Required content |
 |---|---|---|
-| **Walk** | 6 | Contact, down, passing, contact on the other leg, down, passing. Restrained, with armored weight. The arms swing a little and the head stays level. She walks in place, never travelling across the cell |
-| **Act** | 3 | 0 ready: weight forward, her right hand a closed grip drawn back at the waist. 1 the strike: that arm thrust the way she faces at chest height, the moment a blow or shot lands (no weapon, no flash). 2 recover toward her stance |
-| **Hurt** | 2 | 0 a flinch away from the way she faces, eyes squeezed, a small open mouth (with the helmet, the head snaps back). 1 recover |
-| **Guard** | 2 | 0 her left forearm raised across her chest, knees bent, braced. 1 the brace held. A forearm shield shows as her look draws it, and the game adds its light |
-| **Kneel** (her rig breaks) | 3 | 0 a stagger. 1 down on one knee. 2 kneeling, head bowed, one hand on the ground: worn out, not wounded. This frame is held, and played backwards she gets up |
-| **Victory** | 4, front only | 0 a relaxed stance. 1 she turns to the viewer and smiles. 2 a fist raised. 3 a confident pose, held |
+| Clean body | `body-front`, `body-back`, `body-left`, `body-right` | Helmeted armor, tail and hands in the agreed rifle-ready pose; equipment kept separate |
+| Equipped fitting | `rifle-front`, `rifle-back`, `rifle-left`, `rifle-right` | The matching body with the current two-handed mid-range Laser rifle, correct grips and occlusion |
 
-In the back and profile sheets, the act and guard point the way she faces (away, left, right). In the front sheet they
-come toward the viewer, foreshortened.
+Use CY58's latest approved rifle design where available. Otherwise identify the exact draft used
+as a fitting placeholder. The rifle has an anatomical **right primary grip and left support grip**;
+hands, fingers and forearms overlap it naturally in each direction. Its silhouette is fictional
+energy equipment, consistent with the current equipment brief. Long weapons remain Back-mounted.
 
-## Before saving a sheet
+If the working master contains separate rifle, hand/forearm occlusion or mount layers, include
+those native layers or aligned transparent exports. Record missing separations. The fitting preview
+is sufficient to judge the baseline but reusable runtime attachment acceptance remains CY57/CY58.
+An existing Back-pack fitting may accompany the baseline if available; it has its own review status.
 
-- **Her head** matches her approved chibi: face, head size, every accessory on its side. **Her armor** matches her
-  approved look's colours, emblem and one-sided details.
-- **Scale:** every standing figure is the same height, with the feet on one line.
-- **Facings:** the profiles are true profiles, never a front body with a turned head. Nothing is flipped.
-- **Clean:** a transparent background, with no grey board, halo or floor copied from the references.
-- **Small:** at about 70 px tall she's still recognisable, and her armor's outline differs from her chibi's dress.
+## Image format and alignment
 
-## Order and the owner's gates
+| Property | Baseline requirement |
+|---|---|
+| File | PNG with true transparent alpha; preserve native masters |
+| Review canvas | 512 × 512 pixels for each still |
+| Ground anchor | Center of the stance on the ground at `(256, 480)`, measured from the top-left |
+| Figure height | Approximately 416 pixels from the highest ear/helmet point to the soles |
+| Alignment | Same scale and ground anchor across all four directions and paired fittings |
+| Clearance | Keep the full character, tail and equipment inside the canvas, with a clear border |
+| Presentation | Clean character/equipment only; the game supplies ground, shadows, rings, effects and UI |
 
-1. **S1 for both Umas.** The owner looks before anything else is drawn; this is the identity gate.
-2. **S2 and S3.** The owner looks.
-3. **S4 to S7.**
-4. **S1h to S7h,** from the approved helmet-off sheets.
+If a legitimate silhouette exceeds the canvas, return the native image and describe the needed
+extent instead of clipping the equipment or shrinking only that facing. Keep labels and contact
+markers on a separate review copy. A labeled contact sheet may accompany the eight individual files.
 
-Any change the owner asks for at a gate is redrawn before the next step.
+These are **source-art review dimensions**. CY57 establishes the executable layout, packing,
+runtime scale, numerical attachment metadata, frame counts and timing after the baseline review.
 
-## Deliver
+## Handoff
 
-- **PNG sheets,** named `<outfitId>-combat-<sheet>-v<take>.png`:
-  - the sheets are `identity`, `walk-fb`, `walk-lr`, `front`, `back`, `left` and `right`;
-  - helmet sheets add `-helmet`, for example `106801-combat-walk-fb-helmet-v1.png`.
-- **Saved to** `content/design/character-looks/combat-masters/<outfitId>/` in uma-cyberpunk. That folder is private and
-  git-ignored: never git, never uma-art.
-- **With a `prompts.md`** beside them: each sheet's prompt, the references given, and which take was kept.
-- **Nothing else:** no cutting, no atlas, no checks, no publishing, no code.
+Save the source images in the existing private Combat Sprites collection or return an exact local
+folder path. Include a short `README.md` with the character/outfit and look IDs, source references,
+file-to-facing mapping, intended viewpoint, canvas size and foot anchor. Identify the equipment
+source and version, anatomical grip positions, any supplied layers, and known deviations or gaps.
+Provide exact generation/edit prompts and native masters through the existing authoring workflow.
+Keep draft, owner-approved source and integrated-game status distinct; development can record hashes
+and extract precise anchors during intake. Images, named cast and approvals stay in ignored content.
+
+## Review and next delivery
+
+Development places the four directions in the actual campaign's Training encounter and next real
+boarding review. Check at 844 × 390 landscape, near 70-pixel figure height, on light and dark ground
+and behind cover. Review grounding, front/back recognition, identity, weapon alignment, selection
+and clearance beside another unit. Compare the original and equipped source at the same scale.
+
+Record the selected painted viewpoint and any source corrections. Then CY57/CY58/CY59 establish
+the reusable attachment fixture and the first required movement/action samples. Animation,
+additional loadouts, opponents and roster expansion follow that shared result through the same
+campaign. CY37 retains the physical iPhone check.
