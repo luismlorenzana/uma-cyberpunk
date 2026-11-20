@@ -156,6 +156,12 @@ objective meters readable; results remain comprehensible with cinematics skipped
 
 ## Pillar 4 contracts and decisions to resolve
 
+**D73 direction (2026-11-20).** Use shared fictional energy equipment and helmeted armored bodies
+first. The existing mid-range `hand-rifle` becomes a two-handed Laser rifle; Long weapons stay on
+the Back slot. CY58/CY59 replace the earlier per-item/per-outfit production approach with canonical
+equipment, compatible family poses, reusable masks and an initial actual-campaign cohort. CY60
+applies the same method to enemies; CY63 reconciles grips, terminology and helmet staging.
+
 The current part catalog is the authority for equipment IDs and legal combinations. Publish designs
 and small icons for every entry; coatings may use material swatches. Shared designs carry palette
 masks and character adaptation notes. Attachment positions, facing and depth order belong to the

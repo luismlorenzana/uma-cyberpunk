@@ -1,5 +1,9 @@
 # Combat sprites: the image request
 
+> **Production order superseded by D73 (2026-11-20):** use [CY59](../handoff/tasks/CY59.md) for
+> helmeted armor first, shared family poses and CY57 attachment exports. The helmet-off-first order
+> and fixed sheet/frame totals below are historical references, not current production quotas.
+
 > **Next delivery (D64, 2026-11-18):** [CY59](../handoff/tasks/CY59.md) coordinates new playable
 > sheets with [CY57's composition contract](../handoff/tasks/CY57.md) and
 > [CY58's equipment](../handoff/tasks/CY58.md). Before expanding this earlier empty-hand request,

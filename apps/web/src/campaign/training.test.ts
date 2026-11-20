@@ -8,6 +8,20 @@ import { settleTraining, TRAINING_EXPANSION, TRAINING_MAIN, trainingInput } from
 const loadouts = TRAINING_MAIN.flatMap((main) => TRAINING_EXPANSION.map((expansion) => ({ main: main.id, expansion: expansion.id })))
 
 describe('campaign Training', () => {
+  it('deploys the mid-range Laser rifle with both hands and preserves degraded use on arm loss', () => {
+    const input = trainingInput(9000101, 'Trainee', 'hand-rifle', 'back-med')
+    const unit = input.units.find(({ side }) => side === 'squad')!
+    const { state } = startSession(input).session
+    const trainee = state.units.find(({ id }) => id === unit.id)!
+    expect(unit.loadout.leftHand).toBeNull()
+    expect(unit.loadout.rightHand).toMatchObject({ band: 'short', range: [1, 3], hits: 3, power: 6, accuracy: 75, twoHanded: true })
+    for (const part of ['leftArm', 'rightArm'] as const) {
+      const damaged = { ...trainee, hp: { ...trainee.hp, [part]: 0 } }
+      expect(armed(unit, damaged, 'right')?.halfAccuracy).toBe(true)
+    }
+    expect(armed(unit, { ...trainee, hp: { ...trainee.hp, leftArm: 0, rightArm: 0 } }, 'right')).toBeNull()
+  })
+
   it.each(loadouts)('can win and replay with $main and $expansion', ({ main, expansion }) => {
     const input = trainingInput(9000101, 'Trainee', main, expansion)
     const open = startSession(input).session

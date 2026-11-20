@@ -6,6 +6,11 @@
 
 ## The short answer
 
+The **Laser rifle** uses both hands and fires three pulses at 1–3 tiles. It keeps the `hand-rifle`
+part ID and pierce damage; Long weapons remain Back-mounted. Older worn/preset rifle combinations
+stow incompatible off-hand gear. Inventory and campaign progress remain, and an in-progress battle
+finishes with its original frozen loadout (D73).
+
 - **Eight slots and a Coat:** Core, Left arm, Right arm, Legs, Back unit, Visor, Left hand, Right hand, and the Coat.
 - **Capacity** is 10 + 2 a Power band, plus the Core's and the Back unit's bonus. Over it, she can't deploy, and the
   deploy screen says why. At **70% load or less**, she gets +1 Move.
@@ -95,7 +100,7 @@ Original names, the game's own, so they're in git (`packages/domain/src/crew/par
 | Hand | Pile driver | 3 | Melee P, 16 power × 1, 75% base, range 1 | Melee P, heavy |
 | Hand | Great blade | 4 | Melee P, 18 power × 1, 80% base, range 1, two-handed | Melee P, two-handed |
 | Hand | Machine pistol | 2 | Short P, 4 power × 4, 80% base, range 1–2 | Short P, 4 hits |
-| Hand | Rifle | 3 | Short P, 6 power × 3, 75% base, range 1–3 | Short P, 3 hits, range 3 |
+| Hand | Laser rifle | 3 | Short P, 6 power × 3, 75% base, range 1–3, two-handed | Short P, 3 pulses, range 1–3, two-handed |
 | Hand | Scattergun | 3 | Short I, 5 power × 4, 70% base, range 1–2 | Short I, 4 hits |
 | Hand | Flamer | 3 | Short F, 4 power × 3, 80% base, range 1–2 | Short F; sets oil alight |
 | Hand | Tower shield | 3 | Shield, Guard 40% | Guard 40% |

@@ -48,7 +48,7 @@ export const STARTER_PARTS: readonly Part[] = [
   { id: 'hand-driver', slot: 'hand', name: 'Pile driver', item: melee(16, 75, 'P', 3), note: 'Melee P, heavy' },
   { id: 'hand-greatblade', slot: 'hand', name: 'Great blade', item: melee(18, 80, 'P', 4, { twoHanded: true }), note: 'Melee P, two-handed' },
   { id: 'hand-pistol', slot: 'hand', name: 'Machine pistol', item: short(4, 80, 'P', 2, 4, 2), note: 'Short P, 4 hits' },
-  { id: 'hand-rifle', slot: 'hand', name: 'Rifle', item: short(6, 75, 'P', 3, 3, 3), note: 'Short P, 3 hits, range 3' },
+  { id: 'hand-rifle', slot: 'hand', name: 'Laser rifle', item: { ...short(6, 75, 'P', 3, 3, 3), twoHanded: true }, note: 'Short P, 3 pulses, range 1–3, two-handed' },
   { id: 'hand-scattergun', slot: 'hand', name: 'Scattergun', item: short(5, 70, 'I', 2, 4, 3), note: 'Short I, 4 hits' },
   { id: 'hand-flamer', slot: 'hand', name: 'Flamer', item: short(4, 80, 'F', 2, 3, 3), note: 'Short F; sets oil alight' },
   { id: 'hand-tower', slot: 'hand', name: 'Tower shield', item: { kind: 'shield', guard: 40, load: 3 }, note: 'Guard 40%' },

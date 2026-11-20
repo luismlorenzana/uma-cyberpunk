@@ -399,6 +399,13 @@ function parseRig(value: unknown, path: string): Rig {
     if (!part || part.slot !== SLOT_KIND[slot]) throw new SaveParseError(`${path}.${slot}`, `expected a ${SLOT_KIND[slot]} part`)
     rig[slot] = part.id
   }
+  // D73 changes the catalog rifle's grip, not the save shape. Stow incompatible issued gear;
+  // owned inventory is separate. Frozen mission inputs below never pass through this adapter.
+  if (rig.rightHand === 'hand-rifle') rig.leftHand = null
+  else if (rig.leftHand === 'hand-rifle') {
+    if (rig.rightHand === null) rig.rightHand = 'hand-rifle'
+    rig.leftHand = null
+  }
   return rig as unknown as Rig
 }
 

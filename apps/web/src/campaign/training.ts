@@ -5,7 +5,7 @@ import { finishMission } from '../mission/director'
 
 export const TRAINING_MAIN = [
   { id: 'hand-greatblade', name: 'Great blade', details: 'Two hands · 1 tile' },
-  { id: 'hand-rifle', name: 'Rifle', details: 'Burst · 1–3 tiles' },
+  { id: 'hand-rifle', name: 'Laser rifle', details: 'Two hands · Burst · 1–3 tiles' },
 ] as const
 export const TRAINING_EXPANSION = [
   { id: 'back-bulwark', name: 'Bulwark', details: 'Place a barrier' },
