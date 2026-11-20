@@ -18,12 +18,13 @@ composition fixture and real Training/boarding checkpoint. Its composition deliv
 Initialization prompts: [Equipment Art](prompts/equipment-art.md),
 [Character Sprite Art](prompts/character-sprite-art.md).
 
-**Sprite production · D76, 2026-11-20.** Use the [3D-to-pixel first-character brief](../design/combat-sprites-request.md)
+**Sprite production · D77, 2026-11-20.** Use the [full-proportion cel-shaded brief](../design/combat-sprites-request.md)
 and [new sprite-session prompt](prompts/character-sprite-art.md). Begin with one helmeted recruit,
 the existing two-handed rifle/Bulwark Training rig and an editable rigged 3D source. Render four
-pixel directions with one reproducible camera/exporter. CY57 integrates standing and short motion
-samples in real Training and boarding, then proves another loadout before expanding. The candidate
-native cell is 128 pixels with a 2× runtime export. Source approvals, model/export review and game
+clean cel-shaded directions with one reproducible camera/exporter, matching the full adult proportions
+of approved armor references. Model quality comes first, followed by standing review at campaign size.
+CY57 checks source resolution, sampling, alpha and display scale, integrates the first equipped
+atlas and motion in Training/boarding, then proves another loadout before expanding. Source approvals, model/export review and game
 acceptance retain separate status. Art and Story receive this same revision.
 
 The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).
@@ -234,7 +235,7 @@ packet, or says why not.
 | D35 | The foes' first draft, eight factions; superseded by D36's six |
 | **D30** | **Read the casting and the first two worlds' bibles** in the Cyberpunk Story Sandbox's Bibles page (`http://127.0.0.1:4322/#/bibles`), each with a verdict box: who leads which world and why, the heroines by faction, and each world's Chapter 1 outline. Then the Ring's Chapter 1 is scripted |
 | D28 | **Read the world v2:** [its page](../design/previews/world.html), or world by world in the Cyberpunk Story Sandbox (Worlds), where each world has a verdict box |
-| D76 | Author the [first equipped character](../design/combat-sprites-request.md) as an editable 3D source with a reproducible pixel-sprite exporter. Return standing views first, then short motion/action samples from the same rig; development integrates the actual Training and boarding checkpoint. |
+| D77 | Author the [first equipped character](../design/combat-sprites-request.md) with full adult proportions and clean cel shading. Return a polished editable 3D source and reproducible exporter, then standing views at inspection and campaign sizes before motion. |
 | D20 | Read [life aboard](../design/previews/life-aboard.html) (the captain, bonds, cabins, duties, the ship, squads; TC55–TC74) and say what to change; silence keeps it. Then hand the story session its new line (above) to start [part two](../design/previews/story-brief-life-aboard.html): worldbuilding first |
 | Earlier | Read [the story brief](../design/previews/story-brief.html) and [the build plan](../design/previews/build-plan.html) pages, and the D4 changes in [the concept](../design/previews/concept.html); silence keeps them as written. Then hand the story session its one line (above) |
 | CY3 | The phone check (the OAuth entries are in, 2026-11-13): open [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) in Safari, add it to the Home Screen, open it from there, sign in, and see the ship; **Status** in the menu shows the save synced |

@@ -1,45 +1,44 @@
 Continue Uma Cyberpunk sprite authoring in `C:/Users/luism/workspace/uma-art-authoring` using the
-owner-approved **3D-to-pixel-sprite workflow (D76)**.
+owner-selected **full-proportion characters and clean cel shading (D77)**. Keep editable rigged
+3D sources and export 2D sprite frames for the existing campaign.
 
-Read the repo instructions and current `content/cyberpunk-four-pillars/README.md`, then
+Read repo instructions and `content/cyberpunk-four-pillars/README.md`, then
 `combat-sprites-request.md`, `CY59.md`, `CY58.md`, `CY57.md`, `CY60.md`, `CY63.md` and
-`art-direction.md`. The game checkout is
-`C:/Users/luism/.codex/worktrees/cyberpunk-campaign-packets/uma-cyberpunk`.
+`art-direction.md`. The current private first-cohort record is linked from the handoff README.
+The game checkout is `C:/Users/luism/.codex/worktrees/cyberpunk-campaign-packets/uma-cyberpunk`.
 
-Start with **one equipped real recruit**, identified in the private first-cohort handoff. Use her
-approved helmeted combat armor and character references. Preserve the armor design, chibi
-proportions, colors, emblem, helmet/ear housings, tail and anatomical asymmetry.
+Start with the same real recruit and existing Training loadout: **two-handed Laser rifle, right
+primary grip and left support grip; left equipment slot empty; Bulwark Back unit**. Pin the latest
+approved full-body helmeted armor and identity references, plus the exact equipment source versions.
+Equipment drafts remain labeled. Preserve approved armor design, adult proportions, palette,
+emblem, ear housings, tail and anatomical asymmetry.
 
-Build an editable rigged 3D source, preferably in Blender, with independently replaceable equipment
-and a reproducible batch render/export command. Keep the native project and resources. Produce all
-four views from the same model, rig and pose. Record tool/version, coordinates, camera, materials,
-hand contacts and mount sockets.
+Prioritize the actual model quality. Match helmet/visor curvature, designed armor plates,
+chest/abdomen, hips, limbs, joints and boots to the approved full-body reference. Use appropriate
+smooth normals on curves and controlled hard edges. Establish a natural equipped stance and
+readable rifle/hand separation from the front as well as the sides. Reuse useful skeleton,
+socket and exporter work from the earlier prototype, adapting it to the adult body. Preserve
+that prototype as history.
 
-The first loadout is the game's existing Training rig: **two-handed Laser rifle, right primary
-grip and left support grip; left equipment slot empty; Bulwark Back unit**. Reconcile the current
-equipment sources and identify drafts/placeholders explicitly. CY58 also has exact locally approved
-shield/Edge blade and compact normal-shoulder pod references for later fittings. Their approvals
-do not automatically approve a new 3D model or sprite export.
+The next review is a polished body-only reference comparison and equipped three-quarter model
+view, followed by front/South, back/North, left/West and right/East standing renders from the same
+model/rig. Use one fixed orthographic board camera at 35 degrees downward.
 
-Render crisp pixel sprites with an orthographic camera at the board's fixed 35-degree downward
-elevation. Four directions: front/South, back/North, left/West, right/East. Begin with **128 × 128
-native transparent frames**, ground anchor **(64, 120)** and about **96 pixels** from the highest
-helmet/ear point to the soles. Export a 2× nearest-neighbor runtime candidate at 256 × 256 with
-anchor (128, 240). Review this profile in-game before bulk exports. Keep lighting consistent, use
-broad cel-shadow groups and the approved palette, and keep equipment inside the shared frame bounds.
+Render clean cel shading with controlled shadow shapes, restrained highlights, antialiased alpha
+edges and deliberate contour weight. Replace the prior low-resolution pixel cleanup, automatic
+palette snapping, binary-alpha threshold and native pixel outline in this path. Begin with
+512 × 512 transparent masters, ground anchor (256, 480) and approximately 416-pixel figure height.
+Keep these dimensions independent of in-game size. Return a clean filtered runtime derivative
+with its anchor/scale metadata; CY57 checks final import, sampling and display-scale requirements.
 
-First return the editable source, exporter, four equipped standing frames and a contact sheet at
-phone size plus an enlarged pixel view. Development will place the exact supported rig in the
-real recruit's authored Training and first boarding mission through CY57. A fully equipped atlas
-is acceptable for this first loadout; retain separate source components for subsequent fittings.
+Show the same standing renders at inspection size and approximately 80/100 CSS-pixel figure heights
+on a representative 844 × 390 board composition. Development integrates the exact rig in the real
+Training and boarding encounters, checking cover, selection, alpha edges and readability. Model
+and standing acceptance precede animation or roster expansion.
 
-After the standing checkpoint, use the same rig for a short walk loop, rifle ready/fire/recovery,
-hit/guard reaction and nonlethal Rig Break/reboot. Coordinate frame IDs, durations, anchors and
-action mapping with CY57. Game effects carry the actual pulses, impacts and damage results.
-Return usable frame sequences/proposed atlas, exact rig IDs, source hashes, resources and a short
-regeneration command. Record source design, model, pixel-export, runtime import, publication and
-campaign acceptance separately. Keep images, projects, named cast and approvals private.
-
-The immediate checkpoint is one coherent equipped character working in the existing campaign.
-Expand the proven rig/export profile to additional equipment and identities afterward, preserving
-actual battle rules, approved armor and saved campaign progress.
+Return the editable native project, rig, independent equipment, packed/linked resources,
+reproducible render/export command, source hashes, render settings, anchors/bounds and proposed
+atlas metadata. After standing works, export short walk, rifle action, hit/guard and nonlethal
+Rig Break/reboot samples from the same source. Keep source design, model/render review, runtime
+import, Platform publication and campaign acceptance separate. Preserve exact shield/pod approvals
+and keep images, projects, cast, prompts and approval records private.

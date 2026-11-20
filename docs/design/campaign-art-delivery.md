@@ -162,14 +162,18 @@ the Back slot. CY58/CY59 replace the earlier per-item/per-outfit production appr
 equipment, compatible family poses, reusable masks and an initial actual-campaign cohort. CY60
 applies the same method to enemies; CY63 reconciles grips, terminology and helmet staging.
 
-**D76 source/export method (2026-11-20).** The [first-character brief](combat-sprites-request.md)
+**D77 source/export method (2026-11-20).** The [first-character brief](combat-sprites-request.md)
 starts one helmeted recruit with the existing rifle/Bulwark Training rig. Reusable 3D character,
-rig and equipment sources produce four-direction pixel frames under one fixed orthographic setup.
-Begin with standing renders and the 128-pixel native profile, then short motion/action samples.
+rig and equipment sources now use full adult proportions and clean cel shading. Review model
+quality against approved references, then four standing directions from one fixed orthographic
+setup. Begin with antialiased 512-pixel masters; compare clean runtime derivatives and approximately
+80/100 CSS-pixel board figures, keeping image resolution separate from display scale. Short motion
+and action samples follow the standing checkpoint.
 CY57 integrates an exact equipped atlas in real Training and boarding before generalizing
 supported variants or reusable render passes. Keep body and equipment reusable at source, with
 bounded export/cache coverage. The game keeps its 2D renderer, 35-degree camera and battle rules.
-Model/export approval remains separate from source design, publication and campaign acceptance.
+The clean sampling/alpha/scale adapter remains CY57 work. Model/export approval remains separate
+from source design, publication and campaign acceptance.
 The approved shield and compact normal-shoulder pod keep their exact scopes for later fittings.
 
 The current part catalog is the authority for equipment IDs and legal combinations. Publish designs

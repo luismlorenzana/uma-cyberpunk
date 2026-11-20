@@ -29,9 +29,10 @@ The camera is orthographic, fixed at a 35-degree downward pitch with no horizont
 Battle directions map to sprite drawings as South/front, North/back, West/left and East/right.
 The renderer stands each sprite on a vertical flat surface and compensates its height by
 `1 / cos(35°)`, preserving the painted image's on-screen proportions. That transform does not
-create a painted viewpoint. The [3D-to-pixel source workflow](../design/combat-sprites-request.md)
+create a painted viewpoint. The [full-proportion cel source workflow](../design/combat-sprites-request.md)
 is planned under CY57/CY59: editable rigs export 2D frames for this renderer. Existing sets and
-fallbacks remain the implemented path until the first equipped atlas and action binding integrate.
+fallbacks remain the implemented path until the first equipped atlas, clean sampling/alpha/scale
+adapter and action binding integrate. The new source resolution does not define its on-screen size.
 
 | Piece | How it looks |
 |---|---|
