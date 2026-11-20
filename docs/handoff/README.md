@@ -29,8 +29,8 @@ acceptance retain separate status. Art and Story receive this same revision.
 
 **Reusable body/rig · D78, 2026-11-20.** The [source foundation study](../design/character-base-rig.md)
 tests pinned MPFB mesh/weights and Rigify with the same first recruit's existing armor and rifle.
-Local Rigify generation passes; MPFB compatibility, deformation and fitting require their own
-evidence. Source review precedes full armor refitting. CY57/CY58/CY59/CY60 and the Sprite Art prompt
+Local MPFB weighted-body creation and Rigify generation pass; deformation and fitting require
+their own evidence. Source review precedes full armor refitting. CY57/CY58/CY59/CY60 and the Sprite Art prompt
 carry the adapter/fitting requirements; D77's style and the actual campaign checkpoint remain.
 
 The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).

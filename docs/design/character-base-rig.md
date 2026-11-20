@@ -32,9 +32,11 @@ unrecorded licenses.
 ## First-source checkpoint
 
 The Sprite Art session verified Blender **5.2.0 LTS**, build `fbe6228777e7`, with bundled Rigify
-**0.6.10**. A factory-startup test generated a human control rig successfully. This establishes
-local Rigify generation only. MPFB body creation, supplied weights and its Rigify workflow are a
-separate isolated feasibility study; their completion and visual approval require evidence.
+**0.6.10**. A factory-startup test generated a human control rig successfully. The subsequent
+isolated MPFB 2.0.18 probe also created its supplied weighted body and generated the Rigify rig
+through MPFB's own workflow. Armor fitting, deformation/contact quality, reproducible inspection
+exports and visual approval remain separate study checkpoints. The private handoff records their
+evidence and current status.
 
 1. Load the pinned MPFB source in an isolated Blender profile/session. Preserve prior projects,
    their hashes, source approvals and normal Blender preferences. Save the body preset, native
