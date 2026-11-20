@@ -1,107 +1,113 @@
-# Combat sprites: baseline art requirements
+# Combat sprites: 3D-to-pixel first-character brief
 
-**Current request · 2026-11-20 (D75).** Author one helmeted armored character for a visual review
-in the real campaign. This is the current image brief for [CY59](../handoff/tasks/CY59.md), shared
-with [CY58 equipment](../handoff/tasks/CY58.md) and [CY57 integration](../handoff/tasks/CY57.md).
-The approved baseline will establish the drawing perspective before animation and roster expansion.
+**Current request · 2026-11-20 (D76).** Build one real recruit as an editable, equipped 3D authoring
+asset and render pixel sprites for the existing campaign. [CY59](../handoff/tasks/CY59.md) owns
+the character source, [CY58](../handoff/tasks/CY58.md) equipment and [CY57](../handoff/tasks/CY57.md)
+game integration. [CY63](../handoff/tasks/CY63.md) keeps the actual cast and staging aligned.
 
-## Character and references
+## First character and campaign loadout
 
-Use one real recruit with approved Cyberpunk combat armor and helmet references, preferably the
-first recruit. Record the exact character/outfit ID, look ID and reference versions in the private
-handoff. Keep her approved chibi proportions, approximately 2.6–3 heads tall excluding the ears.
+Use the recruit identified in the current private first-cohort handoff. Pin her approved helmeted
+combat armor, identity references and palette. Preserve the armor design, chibi proportions,
+helmet/ear housings, tail, emblem and anatomical asymmetry. Record any unshown construction that
+needs interpretation. The model is a sprite-authoring source with its own review status.
 
-Preserve her armor silhouette, helmet and ear housings, tail, emblem, palette and anatomical
-asymmetry. Recognizability comes from those features even with the face covered. Every direction
-is drawn independently; one-sided details remain on the same anatomical side.
+Start with the existing issued Training rig: **right-hand `hand-rifle`, empty left equipment slot,
+Back `back-bulwark`**, with the issued core/arms/legs/visor. The rifle uses both anatomical hands:
+right primary grip, left support. Render both the rifle and Bulwark as fitted parts. Pin the current
+equipment sources and identify draft sources or explicit placeholders. Source approval and new
+model/export approval are separate. The shield and compact-pod references in CY58 retain their
+exact approvals and follow after the first loadout works.
 
-Follow [Hardline Anime](art-direction.md): confident dark contours, broad angular cel shadows,
-clear local colors and restrained highlights. Simplify seams and small markings for a figure about
-70 CSS pixels tall. Use consistent top/front-left light and retain readable accents on dark armor.
+CY57 uses this same recruit in the authored Training encounter and a supported fitting in the
+actual first boarding mission. Its private handoff records the outfit, quest, encounter and rig IDs.
+Check the frozen battle loadout and legal capacity; art never substitutes another weapon's rules.
 
-## Viewpoint and four directions
+## Editable source and reproducible render
 
-Draw the baseline **from slightly above**, with visible top planes of the helmet, shoulders and
-boots. Use approximately **35 degrees downward** as the first viewpoint study, matching the fixed
-board camera's elevation. Keep a consistent elevation and proportions across all four directions.
-The final painted angle is established by the in-campaign review, rather than by the number alone.
+Return the native project, preferably a Blender `.blend`, with its dependencies and an executable
+batch render/export script or equivalent reproducible command. Record the application/version.
+Keep body, helmet, hands, tail and equipment as identifiable objects or collections. Reuse a named
+skeleton, family poses and material zones. Equipment stays independently replaceable in the source.
+Name anatomical hand contacts and Back/shoulder sockets; document the coordinate system.
 
-The board has an axis-aligned grid and four logical directions. Draw the whole body facing the
-listed direction; head, torso, hips, feet and weapon agree. The elevated side drawings can show
-top surfaces while their facing remains left or right. A three-quarter identity illustration can
-be supplied as an existing reference; the four gameplay drawings are the required baseline.
+Render every direction from the **same model, rig and pose**. Preserve asymmetric details by rotating
+the source, rather than reflecting its image. Keep the orthographic render camera, light, ground
+root and scale fixed. Begin at the board's **35-degree downward elevation**, with no horizontal
+board rotation. Check the result in campaign before freezing the exporter profile.
 
-| File facing | Battle direction | Required read |
+| Export facing | Battle direction | Required orientation |
 |---|---|---|
-| `front` | South, toward the bottom of the screen | Helmet visor and chest/front armor visible; body and rifle point toward the viewer |
-| `back` | North, toward the top of the screen | Helmet rear, back plate and tail attachment clearly distinguish the rear; rifle points away |
-| `left` | West, image-left | Whole figure and rifle point image-left, seen from the same elevated viewpoint |
-| `right` | East, image-right | Whole figure and rifle point image-right, preserving anatomical equipment sides |
+| `front` | South | Whole body and equipped action point toward the viewer |
+| `back` | North | Whole body and action point away; rear armor and tail read clearly |
+| `left` | West | Whole body and action point image-left |
+| `right` | East | Whole body and action point image-right |
 
-The renderer displays painted pixels on upright flat surfaces. Its height compensation preserves
-their on-screen proportions; it does not add a painted viewpoint. Perspective must therefore be
-consistent in both the character drawing and fitted equipment. Existing eye-level studies can be
-returned as comparison references with their original review status.
+The game continues to display 2D sprite frames. Source 3D geometry supplies repeatable views and
+contacts. The game camera's height compensation preserves the rendered image's proportions.
 
-## First delivery: four matched body/fitting pairs
+## Pixel rendering profile to prove first
 
-Return **eight PNGs: four clean body images and four equipped previews**, one pair per direction.
-Use a stable standing **rifle-ready pose** with both hands in believable contact positions. Within
-each pair the body pixels, pose, scale and placement must match; derive the fitting from the same
-body source/layers. Both feet remain planted and the body weight supports the equipment.
+Adapt [Hardline Anime](art-direction.md) into pixel sprites: clear silhouettes, broad cel-shadow
+groups, restrained highlights and the approved colors. Simplify small details for phone readability.
+Use a deliberate low-resolution render and pixel cleanup; retain stable pixel clusters through
+motion. Record cleanup steps so a revised source can regenerate the result.
 
-| Set | Files | Required content |
-|---|---|---|
-| Clean body | `body-front`, `body-back`, `body-left`, `body-right` | Helmeted armor, tail and hands in the agreed rifle-ready pose; equipment kept separate |
-| Equipped fitting | `rifle-front`, `rifle-back`, `rifle-left`, `rifle-right` | The matching body with the current two-handed mid-range Laser rifle, correct grips and occlusion |
-
-Use CY58's latest approved rifle design where available. Otherwise identify the exact draft used
-as a fitting placeholder. The rifle has an anatomical **right primary grip and left support grip**;
-hands, fingers and forearms overlap it naturally in each direction. Its silhouette is fictional
-energy equipment, consistent with the current equipment brief. Long weapons remain Back-mounted.
-
-If the working master contains separate rifle, hand/forearm occlusion or mount layers, include
-those native layers or aligned transparent exports. Record missing separations. The fitting preview
-is sufficient to judge the baseline but reusable runtime attachment acceptance remains CY57/CY58.
-An existing Back-pack fitting may accompany the baseline if available; it has its own review status.
-
-## Image format and alignment
-
-| Property | Baseline requirement |
+| Property | First export profile, subject to the campaign review |
 |---|---|
-| File | PNG with true transparent alpha; preserve native masters |
-| Review canvas | 512 × 512 pixels for each still |
-| Ground anchor | Center of the stance on the ground at `(256, 480)`, measured from the top-left |
-| Figure height | Approximately 416 pixels from the highest ear/helmet point to the soles |
-| Alignment | Same scale and ground anchor across all four directions and paired fittings |
-| Clearance | Keep the full character, tail and equipment inside the canvas, with a clear border |
-| Presentation | Clean character/equipment only; the game supplies ground, shadows, rings, effects and UI |
+| Native frame | 128 × 128 RGBA PNG |
+| Ground anchor | `(64, 120)` from the top-left; the ground root stays fixed through motion |
+| Standing figure | Approximately 96 native pixels from highest helmet/ear point to soles |
+| Runtime-frame candidate | Exact 2× nearest-neighbor export to 256 × 256; anchor `(128, 240)` |
+| Appearance | Crisp pixel edges, controlled alpha and consistent front-left lighting |
+| Clear canvas | Full character, tail and equipped parts with padding; game supplies floor, shadow, ring and FX |
 
-If a legitimate silhouette exceeds the canvas, return the native image and describe the needed
-extent instead of clipping the equipment or shrinking only that facing. Keep labels and contact
-markers on a separate review copy. A labeled contact sheet may accompany the eight individual files.
+The runtime candidate matches the existing shared cell/foot convention; it is not a claim that the
+new atlas, actions or loadout binding are already implemented. CY57 validates the importer and
+profile at 844 × 390, aiming for roughly 64–72 CSS-pixel figure height on the target phone. Check
+other device ratios too. Extend bounds or revise the common profile if a real silhouette needs
+space; keep facing scale consistent. A readable enlarged review is generated from native pixels.
 
-These are **source-art review dimensions**. CY57 establishes the executable layout, packing,
-runtime scale, numerical attachment metadata, frame counts and timing after the baseline review.
+## Delivery sequence for this one character
 
-## Handoff
+1. **Standing source review.** Return the editable model/rig/equipment, repeatable exporter, four
+   equipped standing renders and phone-size/enlarged contact sheets. Development places this
+   exact rig in the real campaign. Body-only views and object-ID/depth passes are generated QA
+   aids when useful, rather than separate character paintings.
+2. **First playable motion.** From the same source, export a short planted walk loop, rifle
+   ready/fire/recovery, a readable hit/guard reaction and Rig Break/reboot. Use a small set of
+   clear key poses. Art supplies frame IDs, durations and holds; CY57 records the checked action
+   mapping before animation expands. The game drives the actual pulses, hits and results.
+3. **Integrated acceptance.** Exercise Training, funded preparation and the next real boarding
+   encounter. Check all directions, cover, selection, saved facing, interrupted playback, missing
+   art and disabled-part behavior. Then prove a second loadout from the same reusable source.
 
-Save the source images in the existing private Combat Sprites collection or return an exact local
-folder path. Include a short `README.md` with the character/outfit and look IDs, source references,
-file-to-facing mapping, intended viewpoint, canvas size and foot anchor. Identify the equipment
-source and version, anatomical grip positions, any supplied layers, and known deviations or gaps.
-Provide exact generation/edit prompts and native masters through the existing authoring workflow.
-Keep draft, owner-approved source and integrated-game status distinct; development can record hashes
-and extract precise anchors during intake. Images, named cast and approvals stay in ignored content.
+Keep ordinary attack effects, warnings and numbers in game presentation. Character-specific
+signature rules and splashes remain CY61/CY62. Further identities and opponents follow the first
+equipped checkpoint and shared export profile.
 
-## Review and next delivery
+## Export and integration handoff
 
-Development places the four directions in the actual campaign's Training encounter and next real
-boarding review. Check at 844 × 390 landscape, near 70-pixel figure height, on light and dark ground
-and behind cover. Review grounding, front/back recognition, identity, weapon alignment, selection
-and clearance beside another unit. Compare the original and equipped source at the same scale.
+Return the native project, scripts, packed/linked resources, source and equipment versions/hashes,
+render settings, material/palette zones, frame sequences and a proposed atlas. A private manifest
+maps body/look, exact rig IDs, facing, action, frame index, timing, ground anchor, bounds and
+attachment/occlusion passes to source hashes and approval scope. CY57 supplies the executable
+schema; proposed fields remain labeled until implemented. Include a short regeneration command.
 
-Record the selected painted viewpoint and any source corrections. Then CY57/CY58/CY59 establish
-the reusable attachment fixture and the first required movement/action samples. Animation,
-additional loadouts, opponents and roster expansion follow that shared result through the same
-campaign. CY37 retains the physical iPhone check.
+The first supported rig may use a fully equipped atlas rendered offline. This proves the real
+character with correct visibility before general modular composition is finished. Other rigs
+retain accurate existing fallbacks; that atlas must never silently represent a different loadout.
+Keep reusable 3D components. CY57 then selects and measures reusable render passes/composition or
+supported pre-rendered variants, with a bounded encounter cache and explicit coverage. Export only
+the combinations needed for reviewed campaign cohorts.
+
+Store projects, images, named cast, prompts, approvals and screenshots in ignored private content.
+Record design approval, model review, pixel-export review, valid runtime import, Platform publication
+and campaign integration separately. Preserve older source approvals and pinned handoffs.
+
+## Production references
+
+The [Dead Cells artist's workflow](https://www.gamedeveloper.com/production/art-design-deep-dive-using-a-3d-pipeline-for-2d-animation-in-i-dead-cells-i-)
+describes rigged 3D sources exported as pixel frames. [Factorio's graphics workflow](https://www.factorio.com/blog/post/fff-146)
+describes reusable Blender render scenes and sprite post-production. These support the authoring
+method; our approved references and campaign board determine the actual character design and view.
