@@ -21,6 +21,7 @@ export function dateProgress(save: Save, book: CampaignBook, date: CampaignDate)
   const bond = save.crew.find(({ outfit }) => outfit === date.companion)!.bond
   const milestone = date.milestones.find(({ scene }) => !save.story.seen.includes(scene))
   const ready = milestone && bond.rank >= milestone.rank && (!milestone.after || cleared(save, book, milestone.after))
+    && (!milestone.port || milestone.port === (save.campaignSupply?.port ?? book.supply?.start))
   return { bond, milestone, visit: ready ? milestone : date.regular }
 }
 

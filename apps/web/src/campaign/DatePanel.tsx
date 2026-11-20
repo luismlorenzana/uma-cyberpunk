@@ -16,7 +16,7 @@ export function DatePanel({ save, book, dates }: { save: Save; book: CampaignBoo
           {threshold && <progress className="block h-1.5 w-full accent-cyan-300" aria-label={`Rapport with ${label}`}
             value={Math.min(bond.rapport, threshold)} max={threshold} />}
           {milestone && <p className="text-white/75">{milestone === visit ? `${milestone.title} this evening`
-            : `${milestone.title} · Rank ${milestone.rank}${milestone.after ? ' · ' + book.quests.find(({ id }) => id === milestone.after)?.title : ''}`}</p>}
+            : `${milestone.title} · Rank ${milestone.rank}${milestone.port ? ' · ' + book.supply?.ports.find(({ id }) => id === milestone.port)?.name : ''}${milestone.after ? ' · ' + book.quests.find(({ id }) => id === milestone.after)?.title : ''}`}</p>}
         </li>
       })}
     </ul>

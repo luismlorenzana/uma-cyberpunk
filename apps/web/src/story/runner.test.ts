@@ -21,6 +21,22 @@ function fake(picks: number[] = []) {
 }
 
 describe('the runner', () => {
+  it.each([false, true])('dispatches presentation cues only for the selected branch (skip=%s)', async skip => {
+    const scene: { steps: Step[] } = { steps: [{ kind: 'choice', options: [
+      { text: 'Ride', then: [{ kind: 'narrate', text: 'On the ferry.' }, { kind: 'flag', flag: 'rode', set: true }] },
+      { text: 'Wait', then: [{ kind: 'narrate', text: 'Back on the ship.' }, { kind: 'flag', flag: 'waited', set: true }] },
+    ] }] }
+    for (const branch of [0, 1]) {
+      const { ui, log } = fake([branch]), visited: Step[] = []
+      ui.beforeStep = step => visited.push(step)
+      let skipping = skip
+      await playScene(scene, ui, { pack, squad: [], skipping: () => skipping, stopSkipping: () => { skipping = false } })
+      const choice = scene.steps[0]!
+      if (choice.kind !== 'choice') throw Error('Fixture')
+      expect(visited).toEqual([choice, ...choice.options[branch]!.then])
+      expect(log.filter(line => line.startsWith('effect:'))).toEqual(['effect:flag'])
+    }
+  })
   it('plays the stand-in chapter’s scenes in order, every step kind', async () => {
     const { ui, log } = fake([0])
     let skipping = false

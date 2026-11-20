@@ -11,6 +11,21 @@ const config = (value?: unknown) => ({ schemaVersion: 1, opening: 'opening', dra
 const parse = (value?: unknown) => parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': config(value) })
 
 describe('campaign scene composition', () => {
+  it('validates backdrop cues against actual script steps and declared images', () => {
+    const files = structuredClone(STAND_IN_FILES)
+    const value = config()
+    const base = parseCampaignBook({ ...files, 'campaign.json': value })
+    const first = base.scenes.get('sw1-ch1-s1')!.steps[0]!
+    expect(first).toBeDefined()
+    const parseCues = (backdropCues: unknown) => parseCampaignBook({ ...files, 'campaign.json': {
+      ...value, art: [{ ...value.art[0], backdropCues }],
+    } })
+    expect(parseCues([{ at: 'steps[0]', asset: 'pose' }]).art[0]?.backdropCues).toEqual([{ at: 'steps[0]', asset: 'pose' }])
+    for (const invalid of [
+      [{ at: 'steps[999]', asset: 'pose' }], [{ at: 'steps[0]', asset: 'missing' }],
+      [{ at: 'steps[0]', asset: 'pose' }, { at: 'steps[0]', asset: 'plate' }],
+    ]) expect(() => parseCues(invalid)).toThrow()
+  })
   it('holds the roster art and reused face placements beyond the earlier generic 500-entry limit', () => {
     const value = config()
     const assets = [...value.assets, ...Array.from({ length: 600 }, (_, i) => ({ id: `face-${i}`, file: `face-${i}.png` }))]

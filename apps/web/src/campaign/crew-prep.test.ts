@@ -54,6 +54,16 @@ function recruited(): Save {
 const restored = (save: Save) => parseSave(JSON.parse(JSON.stringify(save)))
 
 describe('Captain evenings in the campaign', () => {
+  it('holds only a shore milestone while retaining aboard chats and earlier reserved visits', () => {
+    const visit = { ...date.milestones[0]!, port: 'home' }
+    const shore = { ...date, milestones: [visit, ...date.milestones.slice(1)] }
+    const save = recruited()
+    expect(dateAvailable(save, book, shore)).toBe(true)
+    expect(dateProgress(save, book, shore).visit).toBe(shore.regular)
+    expect(dateProgress({ ...save, campaignSupply: { ...save.campaignSupply!, port: 'home' } }, book, shore).visit).toBe(visit)
+    expect(recordDateScene(save, book, shore, visit.scene, [], []).story.seen).toContain(visit.scene)
+    expect(dateProgress(save, book, date).visit.scene).toBe('first-date')
+  })
   it.each(['trust', 'heart'] as const)('earns the %s path with one award per milestone and one upkeep per night', (path) => {
     let save = recruited()
     expect(dateAvailable(save, book, date)).toBe(true)

@@ -14,6 +14,8 @@ export interface DateMilestone extends DateVisit {
   rapport: number
   after?: string
   legacyFlag?: string
+  /** A shore milestone is offered at this port; ordinary ship evenings stay available. */
+  port?: string
 }
 
 export interface CampaignDate {
@@ -25,7 +27,7 @@ export interface CampaignDate {
 }
 
 export function parseCampaignDates(value: unknown, story: StoryPack, scenes: ReadonlyMap<string, Scene>,
-  quests: ReadonlySet<string>, reserved: ReadonlySet<string>, companions: ReadonlySet<number>): CampaignDate[] {
+  quests: ReadonlySet<string>, reserved: ReadonlySet<string>, companions: ReadonlySet<number>, ports: ReadonlySet<string> = new Set()): CampaignDate[] {
   const p = new P('campaign.json')
   const cast = new Set([...story.casting.crewOrder, ...story.casting.leads.map(({ outfit }) => outfit)])
   const usedScenes = new Set(reserved), usedCompanions = new Set(companions)
@@ -57,7 +59,7 @@ export function parseCampaignDates(value: unknown, story: StoryPack, scenes: Rea
     let priorRank = 0, paths = 0
     const milestones = p.list(d.milestones, `${path}.milestones`, (value, field): DateMilestone => {
       const fields = ['scene', 'title', 'rank', 'rapport']
-      const m = p.object(value, field, [...fields, 'morning', 'after', 'legacyFlag'], fields)
+      const m = p.object(value, field, [...fields, 'morning', 'after', 'legacyFlag', 'port'], fields)
       const rank = p.int(m.rank, `${field}.rank`, 1, 10)
       if (rank <= priorRank) p.fail(`${field}.rank`, 'milestone ranks must increase')
       priorRank = rank
@@ -72,7 +74,10 @@ export function parseCampaignDates(value: unknown, story: StoryPack, scenes: Rea
         paths++
       }
       if (m.legacyFlag !== undefined && (rank !== 1 || pathSteps.length)) p.fail(field, 'only the first milestone can credit a legacy flag')
+      const port = m.port === undefined ? undefined : p.slug(m.port, `${field}.port`)
+      if (port !== undefined && !ports.has(port)) p.fail(`${field}.port`, 'unknown shore port')
       return { ...entry, rank, rapport: p.int(m.rapport, `${field}.rapport`, 0, 1000),
+        ...(port === undefined ? {} : { port }),
         ...(m.after === undefined ? {} : { after: quest(m.after, `${field}.after`) }),
         ...(m.legacyFlag === undefined ? {} : { legacyFlag: p.slug(m.legacyFlag, `${field}.legacyFlag`) }) }
     }, 10)

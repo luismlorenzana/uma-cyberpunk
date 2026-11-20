@@ -40,6 +40,7 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
     }
     const illustrated = new Set([...walkSteps(scene.steps, '')].flatMap(({ step }) =>
       step.kind === 'illustration' && step.asset ? [step.asset] : []))
+    const sceneSteps = new Map([...walkSteps(scene.steps, 'steps')].map(row => [row.path, row.step]))
     void Promise.all([
       art?.backdrop ? read(art.backdrop) : undefined,
       loadScenePortraits(art?.portraits ?? [], loaded.book.portraitFaces ?? [], read, (speaker, asset) => {
@@ -51,8 +52,13 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
       art?.composition ? Promise.all(art.composition.layers.map(async (layer) => {
         try { return { ...layer, url: await read(layer.asset) } } catch { return null }
       })) : undefined,
-    ]).then(([backdrop, portraits, illustrations, layers]) => {
+      art?.backdropCues ? Promise.all(art.backdropCues.map(async cue => {
+        const step = sceneSteps.get(cue.at)!
+        try { return { step, url: await read(cue.asset), location: cue.location } } catch { return { step, location: cue.location } }
+      })) : undefined,
+    ]).then(([backdrop, portraits, illustrations, layers, backdropCues]) => {
       if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations),
+        ...(backdropCues ? { backdropCues } : {}),
         ...(art?.composition && layers ? { composition: { ...art.composition, layers: layers.filter((layer) => layer !== null) } } : {}) })
     }, (err: unknown) => { if (live) fail(err instanceof Error ? err.message : String(err)) })
     return () => { live = false; urls.forEach((url) => URL.revokeObjectURL(url)) }

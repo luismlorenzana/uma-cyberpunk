@@ -40,6 +40,8 @@ export interface CampaignQuest {
 export interface CampaignSceneArt {
   scene: string
   backdrop?: string
+  /** Presentation-only cuts at existing script paths, including selected choice branches. */
+  backdropCues?: { at: string; asset: string; location?: string }[]
   portraits: { speaker: Speaker; asset: string; emote?: string; profile?: string }[]
   composition?: CampaignComposition
 }
@@ -278,7 +280,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })
   }
   const art = p.list(o.art, 'art', (v, path) => {
-    const a = p.object(v, path, ['scene', 'backdrop', 'portraits', 'composition'], ['scene', 'portraits'])
+    const a = p.object(v, path, ['scene', 'backdrop', 'portraits', 'composition', 'backdropCues'], ['scene', 'portraits'])
     const scene = p.slug(a.scene, `${path}.scene`)
     const declared = scenes.get(scene)
     if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
@@ -293,7 +295,15 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     })
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
     const composition = a.composition === undefined ? undefined : parseComposition(p, a.composition, path + '.composition', asset)
-    return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}) }
+    const backdropCues = a.backdropCues === undefined ? undefined : p.list(a.backdropCues, path + '.backdropCues', (value, field) => {
+      const cue = p.object(value, field, ['at', 'asset', 'location'], ['at', 'asset'])
+      const at = p.text(cue.at, field + '.at', 256)
+      if (![...walkSteps(declared.steps, 'steps')].some(step => step.path === at)) p.fail(field + '.at', 'unknown scene step')
+      return { at, asset: asset(cue.asset, field + '.asset'), ...(cue.location === undefined ? {} : { location: p.text(cue.location, field + '.location', 80) }) }
+    }, 32)
+    if (backdropCues) unique(p, path + '.backdropCues', backdropCues, cue => cue.at)
+    return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}),
+      ...(backdropCues ? { backdropCues } : {}) }
   }, 4096)
   unique(p, 'art', art, (a) => a.scene)
   const wardrobe = o.wardrobe === undefined ? undefined : parseCampaignWardrobe(o.wardrobe, { assets, scenes, story })
@@ -403,7 +413,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     for (const id of [...pair.recovery, pair.release, pair.bond.scene, pair.residency.scene, ...rooms, ...shared, ...home]) if (id) reserved.add(id)
   }
   const dates = o.dates === undefined ? undefined : parseCampaignDates(o.dates, story, scenes, new Set(byQuest.keys()), reserved,
-    new Set(evening?.visits.map(({ companion }) => companion)))
+    new Set(evening?.visits.map(({ companion }) => companion)), new Set(supply?.ports.map(port => port.id)))
   if (dates?.length && !evening) p.fail('dates', 'relationships need an evening schedule')
   const workshop = o.workshop === undefined ? undefined : (() => {
     const w = p.object(o.workshop, 'workshop', ['after', 'missions', 'recipes'])

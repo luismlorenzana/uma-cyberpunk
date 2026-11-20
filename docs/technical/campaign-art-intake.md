@@ -1,5 +1,9 @@
 # Approved strike and first environment cohort (CY68 / CY69)
 
+The first-cohort figures below are historical. The [complete CY69 delivery](campaign-environments.md)
+replaces all remaining review backdrops, integrates 64 approved sources and resolves seven setting
+holds through four precise milestone ports and two script-driven background cue lists (D74).
+
 This presentation delivery builds from the selected six-look Tier 1–5 campaign. It adds four approved
 native PNGs, binds the existing fighter-strike effect slot and verifies nine scene backgrounds.
 Four of those backgrounds were already current after CY67; five change in this delivery. The full
