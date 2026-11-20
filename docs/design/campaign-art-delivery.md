@@ -162,6 +162,14 @@ the Back slot. CY58/CY59 replace the earlier per-item/per-outfit production appr
 equipment, compatible family poses, reusable masks and an initial actual-campaign cohort. CY60
 applies the same method to enemies; CY63 reconciles grips, terminology and helmet staging.
 
+**D75 baseline review (2026-11-20).** The [current image brief](combat-sprites-request.md) asks for
+one helmeted recruit in four directions: matched clean-body and two-handed rifle fittings from
+a consistent slightly elevated viewpoint. Review those eight stills in the actual campaign before
+selecting the final painted angle, defining animation exports and expanding the roster. The board
+keeps its fixed 35-degree camera and four logical directions. Its height compensation preserves
+painted proportions; it does not impose an eye-level drawing perspective. CY57 remains open for
+the executable composition fixture and integrated acceptance.
+
 The current part catalog is the authority for equipment IDs and legal combinations. Publish designs
 and small icons for every entry; coatings may use material swatches. Shared designs carry palette
 masks and character adaptation notes. Attachment positions, facing and depth order belong to the

@@ -5,11 +5,19 @@ Read the repo instructions, then `content/cyberpunk-four-pillars/CY59.md`, `CY60
 The game checkout is `C:/Users/luism/.codex/worktrees/cyberpunk-campaign-packets/uma-cyberpunk`;
 reconcile current executable format revisions there with the equipment session.
 
-The task is revised CY59 character sprites, using CY60 for enemy/boss coverage. Start with helmeted
+Read `combat-sprites-request.md` in the handoff for the current baseline requirements. Return one
+helmeted real recruit in four directions, drawn from a consistent slightly elevated viewpoint,
+starting around 35 degrees downward: four clean rifle-ready body stills and four matching
+two-handed Laser rifle fitting previews. Use 512 × 512 review canvases, stance anchor (256, 480),
+and approximately 416-pixel figure height. Identify the current approved or draft rifle source.
+Include existing native equipment and hand-occlusion layers where available. The game-side review
+in campaign Training and boarding establishes the final painted angle before animation and bulk
+exports. These source review dimensions are not a final executable export fixture.
+
+The full task is CY59 character sprites, using CY60 for enemy/boss coverage. Start with helmeted
 approved combat armor. Keep character identity, silhouette, palette, ears/housings, tail and
 asymmetric details recognizable across four genuinely drawn facings. Use shared body movement,
-compatible weapon-family arm poses and separate equipment. The earlier helmet-off-first order and
-fixed complete-sheet totals are historical references, not current production requirements.
+compatible weapon-family arm poses and separate equipment.
 
 The mid-range Laser rifle uses both hands, right primary and left support. Long weapons remain
 Back-mounted. Cover heavy melee, mixed one-hand equipment, shields, mounted offense and support,
