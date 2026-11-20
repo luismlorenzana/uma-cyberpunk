@@ -9,6 +9,15 @@ CY36–CY37 collect its integrated review and device/release results.
 Art work follows the [approved art and visual world direction](../design/art-direction.md) (D66).
 The private shared register records the approved general-art source hashes and campaign integration.
 
+**Pillar 4 update · D73, 2026-11-20.** [CY58](tasks/CY58.md) now specifies shared fictional
+energy equipment and the two-handed mid-range Laser rifle; Long weapons remain Back-mounted.
+[CY59](tasks/CY59.md) starts helmeted character sprites with compatible family poses and separate
+attachments. CY60 uses the same method for actual opponents, and CY63 reconciles current scripts.
+[CY57](tasks/CY57.md) starts with rifle legality/save compatibility, followed by the executable
+composition fixture and real Training/boarding checkpoint. Its composition delivery remains open.
+Initialization prompts: [Equipment Art](prompts/equipment-art.md),
+[Character Sprite Art](prompts/character-sprite-art.md).
+
 The campaign keeps its own save, the landscape app and the tactics engine. Open recruitment and roster-launched stories shipped in PR #17. The [campaign rework brief](../design/campaign-rework.md) reflects the Tier 1 structure: ten officers, two independent operations per system, five required cases and a final fleet operation (D54).
 
 | Packet | Work | Integrated delivery |
@@ -231,6 +240,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY57 · rifle foundation | Two-handed mid-range Laser rifle with the existing part ID/profile; Training, old worn/preset reconciliation and frozen battle compatibility (D73). Shared energy-equipment and helmeted-sprite packets/prompts align CY58–CY60/CY63. Composition, sprite intake and device acceptance remain open in CY57/CY37. | _this commit_ |
 | CY68 | Approved fighter-strike effect on the real campaign (D72). Native transparent source and one-layer composition follow committed damage only; actual pilot/profile, partial/disabled emitter, fast/skip, reload, missing art and old/new content swaps pass. No rules or save changes; shared-atlas export and CY37 physical-device acceptance remain separate. | _this commit_ |
 | CY69 · first approved cohort | Nine approved scene backgrounds verified (D72): four already current, five changed; three new environment sources and five approved reuses. All 559 prior Story files, 1,417 prior images, 300 wardrobe bindings and 600 crops remain exact. The packet stays open for 868 remaining review-backdrop bindings. | _this commit_ |
 | CY65 | Six-role wardrobe and reviewed scene routing (D71). Both Platform-index and explicit campaign consumers support Ship Casual, safe fallbacks and read-only outfit selection. Public ship, cabin, station and equipped staging remain distinct. | _this commit_ |

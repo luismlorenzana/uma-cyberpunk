@@ -1,5 +1,10 @@
 # Character looks and sprites: the authoring spec
 
+> **D73 production update (2026-11-20):** [CY59](../handoff/tasks/CY59.md) now starts with helmeted
+> armor and reusable weapon-family poses/attachments. Helmet-off sets follow authored needs; the
+> earlier order and fixed sheet totals below no longer define production. Dialogue/wardrobe images
+> and their separate expression standard retain their existing consumers.
+
 > **Next delivery (D64, 2026-11-18):** [CY57–CY60](../handoff/README.md#four-pillar-art-and-story-queue)
 > add loadout-aware composition, equipment designs and armored crew/enemy figures in the real
 > campaign. Use the [shared delivery contract](campaign-art-delivery.md#pillar-4-contracts-and-decisions-to-resolve)

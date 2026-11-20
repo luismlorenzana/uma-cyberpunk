@@ -57,11 +57,12 @@ describe('Capacity and the light rig, through @cyber/battle (TC18)', () => {
     expect(rigStats({ ...rig, rightHand: 'hand-greatblade', leftHand: 'hand-buckler' }, b).problem).toMatch(/two-handed/)
   })
   it('shows a weapon\'s hit and damage before a swap', () => {
-    const s = rigStats({ ...rig, leftHand: 'hand-rifle' }, { speed: 3, stamina: 3, power: 2, guts: 3, wit: 4 })
+    const s = rigStats({ ...rig, rightHand: 'hand-rifle' }, { speed: 3, stamina: 3, power: 3, guts: 3, wit: 4 })
     expect(s.weapons).toEqual([
-      { mount: 'Left hand', name: 'Rifle', band: 'short', hit: 87, damage: 6, hits: 3 },
-      { mount: 'Right hand', name: 'Edge blade', band: 'melee', hit: 95, damage: 16, hits: 1 },
+      { mount: 'Right hand', name: 'Laser rifle', band: 'short', hit: 87, damage: 6, hits: 3 },
     ])
+    expect(s.problem).toBeNull()
+    expect(rigStats({ ...rig, rightHand: 'hand-rifle', leftHand: 'hand-buckler' }, { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 }).problem).toMatch(/two-handed/)
   })
 })
 
