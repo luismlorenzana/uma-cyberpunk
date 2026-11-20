@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**CY65–CY68 and CY69's first approved cohort are integrated: six-look wardrobe, all 300 bindings, general art, confirmed fighter strikes and the first scene-setting batch. Next development is CY57–CY63 (Pillar 4). CY69 retains its remaining setting/reuse audit; CY49/CY50, CY52/CY53 and CY55/CY56 retain scoped Art/Story acceptance.**
+**CY65–CY69 are integrated: six-look wardrobe, all 300 bindings, general art, confirmed fighter strikes and the full approved environment matrix. CY69 replaces the remaining 868 review backdrops, with precise shore-milestone admission and script-driven background cuts (D74). Next development is CY57–CY63 (Pillar 4). CY49/CY50, CY52/CY53 and CY55/CY56 retain scoped Character/Story acceptance; physical iPhone review remains CY37.**
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -76,11 +76,11 @@ receipt records reader deployment, Platform-first publication and the conditiona
 | CY66 complete | Development and Character Art publisher | All 300 native bindings and 600 crops; Platform-first publication; guarded expression/crop replacements and repeat no-op |
 | CY67 complete | Development with General Art | All 46 approved sources, including 25 newly integrated; independent resource props; nineteen locations and forty-six visual slots |
 | CY68 complete | General Art with Development | Approved fighter-strike source bound to confirmed target damage; normal/fast/skip, reload and missing-art checks |
-| [CY69](tasks/CY69.md) | General Art with Story | First approved nine-scene cohort integrated; 868 current review-backdrop bindings remain for setting/reuse review |
+| [CY69 complete](../technical/campaign-environments.md) | General Art with Development/Story | All 889 reviewed mappings, 64 approved sources, zero remaining review backdrops; seven setting holds resolved through precise staging |
 
 CY52's completion/social sources and CY68/CY69's first approved batch are integrated. Ten reusable
 cutouts, including the new strike, retain an exact shared Platform-family extension request; they
-are already usable in the game. CY69 retains the wider environment brief. Character expressions, poses,
+are already usable in the game. CY69's [full environment integration](../technical/campaign-environments.md) is complete. Character expressions, poses,
 boss/lieutenant portraits and splashes remain in `uma-art-authoring` under CY49/CY55; the completed
 six-look neutral wardrobe does not complete those scene poses. Canonical reusable equipment remains
 CY58's shared/character-art responsibility, with CY57 fixing sprite export mechanics before bulk work.
@@ -240,6 +240,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY69 | Full approved environments (D74): 64 sources, 47 added image refs, 889 reviewed mappings and 880 changed backdrops; zero remaining review plates. Four shore-milestone ports and two script-driven cue lists resolve seven setting holds. Preserve all 559 Story files, 1,421 prior image refs, wardrobe/crops, progress and saves. Character/Story acceptance and CY37 remain separate. | _this commit_ |
 | CY57 · rifle foundation | Two-handed mid-range Laser rifle with the existing part ID/profile; Training, old worn/preset reconciliation and frozen battle compatibility (D73). Shared energy-equipment and helmeted-sprite packets/prompts align CY58–CY60/CY63. Composition, sprite intake and device acceptance remain open in CY57/CY37. | _this commit_ |
 | CY68 | Approved fighter-strike effect on the real campaign (D72). Native transparent source and one-layer composition follow committed damage only; actual pilot/profile, partial/disabled emitter, fast/skip, reload, missing art and old/new content swaps pass. No rules or save changes; shared-atlas export and CY37 physical-device acceptance remain separate. | _this commit_ |
 | CY69 · first approved cohort | Nine approved scene backgrounds verified (D72): four already current, five changed; three new environment sources and five approved reuses. All 559 prior Story files, 1,417 prior images, 300 wardrobe bindings and 600 crops remain exact. The packet stays open for 868 remaining review-backdrop bindings. | _this commit_ |

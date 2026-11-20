@@ -17,8 +17,8 @@ bindings, with 600 dialogue/profile crops and reviewed scene routing. CY67 integ
 approved general sources, including the 25 absent from CY54, and independent Fuel/Provisions props.
 The compatible reader must deploy before selecting this reviewed content migration. Subsequent
 approved replacements use the art-only path below. [CY68 and CY69's first approved cohort](campaign-art-intake.md)
-add the supported strike composition and first environment bindings. [CY69](../handoff/tasks/CY69.md)
-retains the remaining setting/reuse audit. New first consumers require a reviewed content migration;
+add the supported strike composition and first environment bindings. [The full CY69 delivery](campaign-environments.md)
+integrates the remaining approved environments and scoped setting fixes. New first consumers require a reviewed content migration;
 subsequent registered-image replacements follow the same general-art publisher.
 
 | Delivery | Destination | What it changes |

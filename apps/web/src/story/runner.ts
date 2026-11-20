@@ -6,6 +6,8 @@
 import type { BondPath, Call, CaptainOption, ChoiceOption, EffectStep, Romance, Scene, Speaker, Step, StoryPack } from '@cyber/domain'
 
 export interface SceneUi {
+  /** Presentation follows only steps actually visited, also when fast-forwarding. */
+  beforeStep?(step: Step): void
   /** Shows a line (by its speaker, or narration) and resolves when the player taps on. */
   line(speaker: Speaker | null, text: string, kind: 'line' | 'thought' | 'narrate'): Promise<void>
   emote(actor: Speaker, emote: string): Promise<void>
@@ -49,6 +51,7 @@ export function slotLine(step: Extract<Step, { kind: 'slot' }>, squad: readonly 
 
 export async function playSteps(steps: readonly Step[], ui: SceneUi, o: RunOptions): Promise<void> {
   for (const step of steps) {
+    ui.beforeStep?.(step)
     const skip = o.skipping()
     switch (step.kind) {
       case 'line': case 'thought': if (!skip) await ui.line(step.speaker, step.text, step.kind); break
