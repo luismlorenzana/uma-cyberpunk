@@ -26,10 +26,12 @@ Check the frozen battle loadout and legal capacity; art never substitutes anothe
 
 ## Editable source and reproducible render
 
-Use the [reusable mesh and rig foundation](../design/character-base-rig.md) (D78). Test MPFB's supplied human
-mesh/weights with its supported Rigify workflow on this same recruit, fitting the existing armor
-and equipment. Review anatomy, deformation and grips before replacing the current source or
-refitting the full armor. Preserve earlier projects and exact source approvals.
+Use the [reusable mesh and rig foundation](../design/character-base-rig.md) (D78). Its bounded
+MPFB/Rigify study passes technical feasibility. The owner now requests the
+[full armor and visual-quality pass](../handoff/tasks/CY59.md#current-checkpoint--complete-armor-and-visual-quality-d79)
+(D79) on this same source, recruit and equipment. Review the complete helmet, torso, limbs, gloves,
+boots, materials and contacts against the approved reference. Preserve earlier projects and exact
+source approvals; the new model/render has its own review status.
 
 Return the native project, preferably a Blender `.blend`, with its dependencies and an executable
 batch render/export script or equivalent reproducible command. Record the application/version.

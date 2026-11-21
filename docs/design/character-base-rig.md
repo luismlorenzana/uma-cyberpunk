@@ -32,11 +32,12 @@ unrecorded licenses.
 ## First-source checkpoint
 
 The Sprite Art session verified Blender **5.2.0 LTS**, build `fbe6228777e7`, with bundled Rigify
-**0.6.10**. A factory-startup test generated a human control rig successfully. The subsequent
-isolated MPFB 2.0.18 probe also created its supplied weighted body and generated the Rigify rig
-through MPFB's own workflow. Armor fitting, deformation/contact quality, reproducible inspection
-exports and visual approval remain separate study checkpoints. The private handoff records their
-evidence and current status.
+**0.6.10**. The private v009 study passes MPFB weighted-body creation, supported Rigify generation,
+supplied weight integrity, static bend/contact checks and saved-project render reproduction.
+The implementation intake verifies the delivery hashes and records visual findings. Final body,
+armor and render approval remain pending. The owner now authorizes the
+[complete single-character armor pass](../handoff/tasks/CY59.md#current-checkpoint--complete-armor-and-visual-quality-d79)
+(D79), carrying source proportions and appearance review into that pass.
 
 1. Load the pinned MPFB source in an isolated Blender profile/session. Preserve prior projects,
    their hashes, source approvals and normal Blender preferences. Save the body preset, native
@@ -49,8 +50,9 @@ evidence and current status.
    intrusion and grip closure. Record bone/socket mappings and compare with the previous source.
    Keep limitations explicit; successful rig generation does not approve anatomy or armor fitting.
 4. Save/reload and reproduce the inspection renders. Return project/script paths, hashes,
-   licenses, body/rig IDs, deformation/contact findings and a concise recommendation. Accept the
-   source foundation before refitting all armor, authoring motion or expanding the roster.
+   licenses, body/rig IDs, deformation/contact findings and a concise recommendation. This bounded
+   study is technically complete. Continue with the owner-authorized full armor review; motion
+   and roster expansion follow the accepted standing source and campaign checkpoint.
 
 ## Armor construction and adapters
 

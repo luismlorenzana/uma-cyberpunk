@@ -7,11 +7,13 @@ Read repo instructions and `content/cyberpunk-four-pillars/README.md`, then
 `art-direction.md`. The current private first-cohort record is linked from the handoff README.
 The game checkout is `C:/Users/luism/.codex/worktrees/cyberpunk-campaign-packets/uma-cyberpunk`.
 
-Read `character-base-rig.md` (D78). Begin with its isolated MPFB 2.0.18/Rigify feasibility study,
-using the pinned upstream source, supplied body weights and supported rig generation. Review
-anatomy, static joint bends, one existing armor fitting and both rifle grips before replacing the
-current project or refitting every plate. Record licenses, hashes and adapter mappings. Preserve
-normal Blender preferences and prior deliveries. Reuse the approved armor design over the base.
+Read `character-base-rig.md` (D78) and CY59's current D79 checkpoint. The isolated MPFB 2.0.18/Rigify
+v009 study passes technical feasibility; the owner now requests one complete armor/model/render
+pass on that source. Continue in a new private version. Build the full approved helmet, collar,
+torso/back, limbs, gloves, pelvis and boots; refine material/light/normal/contour treatment and
+physical rifle contacts. Source proportions and visual approval remain in this review. Record
+licenses, hashes and adapter mappings; preserve normal preferences, prior deliveries and exact
+approved designs. The Art handoff contains the study, implementation intake and visual findings.
 
 Start with the same real recruit and existing Training loadout: **two-handed Laser rifle, right
 primary grip and left support grip; left equipment slot empty; Bulwark Back unit**. Pin the latest
@@ -26,9 +28,10 @@ readable rifle/hand separation from the front as well as the sides. Reuse useful
 socket and exporter work from the earlier prototype, adapting it to the adult body. Preserve
 that prototype as history.
 
-The next review is a polished body-only reference comparison and equipped three-quarter model
-view, followed by front/South, back/North, left/West and right/East standing renders from the same
-model/rig. Use one fixed orthographic board camera at 35 degrees downward.
+The next review is the complete armored model beside its approved reference, neutral turnarounds,
+equipped three-quarter, close-ups and static grip/joint-clearance checks. Return front/South,
+back/North, left/West and right/East board renders from the same model/rig. Use one fixed
+orthographic board camera at 35 degrees downward and allow padding for the complete boots/gear.
 
 Render clean cel shading with controlled shadow shapes, restrained highlights, antialiased alpha
 edges and deliberate contour weight. Replace the prior low-resolution pixel cleanup, automatic
