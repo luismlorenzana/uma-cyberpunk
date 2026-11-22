@@ -13,6 +13,8 @@ const orderNames = { evade: 'Evade', brace: 'Brace shields', fire: 'Fire guns', 
 function Shot({ loaded, actor, station, emote }: { loaded: LoadedCampaign; actor?: CommandActorArt; station: ResolvedCommand['station']; emote: string }) {
   const [shot, setShot] = useState<{ plate?: string; pose?: string; portraits: ScenePortraitImage[]; layers?: (CampaignComposition['layers'][number] & { url: string })[] }>({ portraits: [] })
   const plate = loaded.book.commandCinematics?.stations.find(row => row.station === station)?.backdrop
+  const member = actor && loaded.book.wardrobe?.members.find(row => row.speaker === actor.speaker)
+  const expressionBase = actor && member && Object.values(member.looks).find(row => row.asset === actor.base || row.dialogue === actor.base)?.portrait
   useEffect(() => {
     let live = true
     const urls: string[] = [], reads = new Map<string, Promise<string>>()
@@ -25,8 +27,8 @@ function Shot({ loaded, actor, station, emote }: { loaded: LoadedCampaign; actor
       reads.set(id, pending)
       return pending
     }
-    const placements = actor ? loaded.book.portraitFaces?.filter(row => row.speaker === actor.speaker && row.base === actor.base && row.emote === emote) ?? [] : []
-    const portrait = actor && (placements.length ? actor.base : actor.profile ?? actor.base)
+    const placements = actor ? loaded.book.portraitFaces?.filter(row => row.speaker === actor.speaker && row.base === (expressionBase ?? actor.base) && row.emote === emote) ?? [] : []
+    const portrait = actor && (expressionBase ?? (placements.length ? actor.base : actor.profile ?? actor.base))
     void Promise.all([plate ? read(plate).catch(() => undefined) : undefined,
       actor ? read(actor.pose ?? actor.poseFallback ?? actor.base).catch(() => undefined) : undefined,
       portrait ? read(portrait).catch(() => undefined) : undefined,
@@ -34,14 +36,14 @@ function Shot({ loaded, actor, station, emote }: { loaded: LoadedCampaign; actor
       Promise.all(placements.map(async face => { try { return { emote: face.emote, at: face.at, url: await read(face.asset) } } catch { return null } })),
     ]).then(([plate, pose, profile, layers, faces]) => { if (live) setShot({ plate, pose, layers: layers.filter(layer => layer !== null), portraits: actor && profile ? [{ speaker: actor.speaker, url: profile, faces: faces.filter(face => face !== null) }] : [] }) })
     return () => { live = false; urls.forEach(url => URL.revokeObjectURL(url)) }
-  }, [loaded, actor, plate, emote])
+  }, [loaded, actor, plate, emote, expressionBase])
   const portrait = actor && selectScenePortrait(shot.portraits, actor.speaker, emote)
   return <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
     {shot.plate && <img src={shot.plate} alt="" className="absolute inset-0 size-full object-cover opacity-50" />}
     {actor?.composition && <svg className="absolute inset-0 size-full" viewBox={`0 0 ${actor.composition.width} ${actor.composition.height}`} preserveAspectRatio="xMidYMid meet" data-scene-composition>{shot.layers?.map(layer => <CompositionLayer key={layer.asset} layer={layer} />)}</svg>}
     {!actor?.composition && shot.pose && <img src={shot.pose} alt="" className="absolute bottom-0 right-0 h-[88%] w-[64%] object-contain object-bottom opacity-80" data-command-pose />}
-    {portrait && actor?.composition?.portraits !== 'hide' && <div className={`absolute left-2 top-14 h-[92px] w-[90px] overflow-hidden rounded-lg bg-[#080d19]/85 [&_img[data-scene-portrait]]:max-h-none ${actor.profile && !portrait.face ? '[&_img[data-scene-portrait]]:w-[90px] [&_img[data-scene-portrait]]:max-w-[90px]' : '[&>div]:w-[180px] [&>div]:-translate-x-[45px] [&_img[data-scene-portrait]]:w-[180px] [&_img[data-scene-portrait]]:max-w-[180px]'}`}>
-      <ScenePortrait image={portrait.image} face={portrait.face} />
+    {portrait && actor?.composition?.portraits !== 'hide' && <div className={`absolute left-2 top-14 h-[92px] w-[90px] overflow-hidden rounded-lg bg-[#080d19]/85 [&_img[data-scene-portrait]]:max-h-none ${actor.profile && !expressionBase && !portrait.face ? '[&_img[data-scene-portrait]]:w-[90px] [&_img[data-scene-portrait]]:max-w-[90px]' : '[&>div]:w-[180px] [&>div]:-translate-x-[45px] [&_img[data-scene-portrait]]:w-[180px] [&_img[data-scene-portrait]]:max-w-[180px]'}`}>
+      <ScenePortrait key={portrait.image.url} image={portrait.image} face={portrait.face} />
     </div>}
   </div>
 }

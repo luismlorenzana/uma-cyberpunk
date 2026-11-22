@@ -478,6 +478,7 @@ function parsePortraitFaces(p: P, value: unknown, art: CampaignSceneArt[], asset
   for (const member of wardrobe?.members ?? []) for (const look of Object.values(member.looks)) {
     bases.add(baseKey(member.speaker, look.asset))
     if (look.dialogue) bases.add(baseKey(member.speaker, look.dialogue))
+    if (look.portrait) bases.add(baseKey(member.speaker, look.portrait))
   }
   const faces = p.list(value, 'portraitFaces', (v, path) => {
     const entry = p.object(v, path, ['speaker', 'base', 'emote', 'asset', 'at'])

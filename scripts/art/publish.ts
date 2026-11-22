@@ -3,6 +3,7 @@ import { CAMPAIGN_PREVIEW_INDEX, campaignReleasePath, parseCampaignBook, parseCa
 import { sha, type ImageReplacement, type ResolvedArt } from './model'
 import { CAMPAIGN_PREFIX, GenerationConflict, type ArtStorage } from './storage'
 import { refreshWardrobeImages } from './derivations'
+import { concurrent } from './concurrent'
 
 const json = (bytes: Buffer): unknown => JSON.parse(bytes.toString('utf8'))
 const bytesOf = (value: unknown) => Buffer.from(JSON.stringify(value))
@@ -13,7 +14,7 @@ function canonical(value: unknown): unknown {
 }
 export function gameplayFingerprint(files: Record<string, unknown>): string {
   const config = { ...files['campaign.json'] as Record<string, unknown> }
-  delete config.assets; delete config.art; delete config.portraitFaces
+  delete config.assets; delete config.art; delete config.portraitFaces; delete config.wardrobe
   return sha(bytesOf(canonical({ ...files, 'campaign.json': config })))
 }
 export function verify(ref: CampaignReleaseFile, bytes: Buffer): void {
@@ -54,6 +55,7 @@ export interface ArtCandidate {
 /** The selected story/rules are immutable inputs. Only asset bytes and declared presentation fields can change. */
 export function buildArtCandidate(selected: SelectedCampaign, resolved: ResolvedArt): ArtCandidate {
   const config = structuredClone(selected.files['campaign.json']) as Record<string, unknown>
+  if (resolved.wardrobe) config.wardrobe = resolved.wardrobe
   const assets = (config.assets as { id: string; file: string }[])
   const art = config.art as { scene: string; portraits: { speaker: string | number; asset: string; emote?: string; profile?: string }[] }[]
   const byAsset = new Map(selected.release.assets.map(asset => [asset.id, asset]))
@@ -88,14 +90,14 @@ export function buildArtCandidate(selected: SelectedCampaign, resolved: Resolved
     if (existingFaces && byAsset.get(image.asset)?.sha256 !== sha(image.bytes) && !resolved.portraits.some(p => p.base === image.asset)) {
       throw new Error(`${image.asset}: replace its base and expression recipe together`)
     }
-    install(image, profiles.has(image.asset))
+    install(image, profiles.has(image.asset) || resolved.newAssets?.includes(image.asset))
   }
   type Face = { speaker: string | number; base: string; emote: string; asset: string; at: { x: number; y: number } }
-  let faces = (config.portraitFaces ?? []) as Face[]
+  let faces = ((config.portraitFaces ?? []) as Face[]).filter(face => !resolved.retiredPortraits?.includes(face.base))
   for (const portrait of resolved.portraits) {
     if (!definitions.has(portrait.base)) { skipped.push(`${portrait.base}: portrait not bound`); continue }
     if (!art.some(scene => scene.portraits.some(p => p.asset === portrait.base && p.speaker === portrait.speaker && p.emote === undefined))
-      && !selected.book.wardrobe?.members.some(member => member.speaker === portrait.speaker && Object.values(member.looks).some(look => look.asset === portrait.base || look.dialogue === portrait.base))) throw new Error(`${portrait.base}: not this speaker's neutral base`)
+      && !(resolved.wardrobe ?? selected.book.wardrobe)?.members.some(member => member.speaker === portrait.speaker && Object.values(member.looks).some(look => look.asset === portrait.base || look.dialogue === portrait.base || look.portrait === portrait.base))) throw new Error(`${portrait.base}: not this speaker's neutral base`)
     const old = faces.filter(face => face.base === portrait.base && face.speaker === portrait.speaker)
     const next = portrait.faces.map(face => ({ speaker: portrait.speaker, base: portrait.base, emote: face.emote, asset: face.image.asset, at: face.at }))
     faces = faces.filter(face => !(face.base === portrait.base && face.speaker === portrait.speaker)).concat(next)
@@ -108,10 +110,12 @@ export function buildArtCandidate(selected: SelectedCampaign, resolved: Resolved
       }
     }
   }
-  if (resolved.portraits.length) config.portraitFaces = faces
+  if (resolved.portraits.length || resolved.retiredPortraits?.length) config.portraitFaces = faces
+  if (JSON.stringify(canonical(selected.files['campaign.json'])) !== JSON.stringify(canonical(config))) changed.add('campaign:presentation')
   const files = { ...selected.files, 'campaign.json': config }
   parseCampaignBook(files)
   if (gameplayFingerprint(files) !== gameplayFingerprint(selected.files)) throw new Error('Art candidate changed campaign gameplay or story')
+  if (!changed.size) return { release: selected.release, payloads: new Map(), changes: [], skipped }
   const storyBytes = bytesOf(config)
   const bookRef = { source: 'campaign.json', path: `campaign/files/pack.${sha(storyBytes)}.json`, sha256: sha(storyBytes), bytes: storyBytes.length }
   const presentationChanged = sha(bytesOf(selected.files['campaign.json'])) !== bookRef.sha256
@@ -139,7 +143,7 @@ export async function publishArtCandidate(storage: ArtStorage, selected: Selecte
   const candidate = buildArtCandidate(selected, await refreshWardrobeImages(selected, resolved))
   if (options.dryRun || !candidate.changes.length) return { ...candidate, promoted: false }
   for (const check of resolved.sourceChecks) await check()
-  for (const [path, bytes] of candidate.payloads) await immutable(storage, path, bytes)
+  await concurrent([...candidate.payloads], async ([path, bytes]) => { await immutable(storage, path, bytes) })
   const manifest = bytesOf(candidate.release)
   await immutable(storage, campaignReleasePath(candidate.release.release), manifest)
   // A new candidate retains the exact unchanged story and assets from its verified base.

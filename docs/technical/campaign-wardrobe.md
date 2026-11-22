@@ -30,7 +30,7 @@ default to Ship Casual. Older five-role indexes fall back from Ship Casual to Qu
 existing master-data bust. The index refreshes on entry after thirty seconds; immutable image paths
 remain cacheable. Each mounted image owns and releases its blob URL.
 
-The campaign uses exact numeric identities and asset IDs rather than character-name matching.
+The campaign uses exact numeric crew identities, board IDs and asset IDs rather than character-name matching.
 Recruitment's Crew Stories cards expose a read-only Wardrobe only for recruited members. Scene
 portraits and command actor base/profile/fallback bindings use the reviewed campaign mapping.
 Missing derived portraits try their native master, then the scene's previous neutral, then the
@@ -62,7 +62,7 @@ ordinary bust. A fallback never receives another base's face placements.
 }
 ```
 
-Each member declares all six roles. The parser checks playable identities, assets, scenes, contexts,
+Each numeric crew member declares all six roles. The parser checks cast identities, assets, scenes, contexts,
 uniqueness, crop bounds and matching consumer IDs. Crop outputs cannot recursively source another
 crop. Profiles export at 192 × 192 WebP; dialogue retains the cropped native pixels as lossless WebP.
 Native approved images remain unchanged. Recipes describe framing, not a newly approved pose.
@@ -72,6 +72,26 @@ layer follows the wardrobe only when it is a declared neutral-master placeholder
 bed, operating and attack poses remain separate. Whole-image emotes from a different outfit are
 withheld; matching expression crops retain their speaker/base association. Neutral and derived
 wardrobe bases are valid expression targets only for their declared speaker.
+
+## Approved expression wardrobes (CY70)
+
+Each look may additionally declare `portrait` (the approved expression-library neutral crop) and
+`label` (its display name). The native master and its mechanical crops keep their original bindings.
+Dialogue prefers `portrait`, then `dialogue`, then `asset`. Face placements belong to that exact base;
+missing tags use neutral and a fallback image receives no faces measured against the failed base.
+Matching ship-command talking portraits use the same recipe while retaining their authored pose.
+
+Members may be registered heroines with custom outfit keys, a required `default` and an optional
+`after` scene and `requiresFlag` outcome for wardrobe access. Crew members still require all six roles. A scene's wardrobe entry
+may add `outfits: [{ "speaker": "synthetic-commander", "look": "quarters-front" }]` for explicit
+individual staging; it wins over the crew context. Unspecified ally scenes retain their declared
+default. Registered default portraits fill missing talking-portrait entries only when the actor is
+already in the authored scene cast. Bespoke composition layers stay independent.
+
+Crew Stories offers a released ally's wardrobe after the configured scene has been seen. Its outfit
+buttons show approved names and only the expressions actually published for the selected outfit.
+Viewing these changes no save, relationship or unlock. Source registration, updates, pending states
+and recovery follow the [publishing runbook](campaign-art-publishing.md#automatic-cast-wardrobes-cy70).
 
 ## Publication and replacement
 

@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto'
 import { P, type Speaker } from '../../packages/domain/src/story/index'
+import type { CampaignWardrobe } from '../../packages/domain/src/campaign-wardrobe'
 
 export const sha = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
 export const EVENTS = ['all', 'looks', 'portraits', 'enemies', 'weapons', 'combat-sprites', 'general'] as const
@@ -16,11 +17,15 @@ export interface PortraitBinding {
   base: string; speaker: Speaker; character: string; outfit: string
   profile?: { asset: string; baseSha256: string; crop: { left: number; top: number; size: number } }
 }
-export interface PublishConfig { schemaVersion: 1; bindings: AssetBinding[]; portraits: PortraitBinding[] }
+export interface WardrobeImport {
+  speaker: Speaker; character: string; from: { collection: 'looks' | 'enemies'; character?: string; unitId?: string }
+  default?: string; after?: string; requiresFlag?: string; labels?: Record<string, string>; routes?: { scene: string; outfit: string }[]
+}
+export interface PublishConfig { schemaVersion: 1; bindings: AssetBinding[]; portraits: PortraitBinding[]; wardrobes?: WardrobeImport[]; authoringRoot?: string }
 
 export function parsePublishConfig(value: unknown): PublishConfig {
   const p = new P('art-publish.json')
-  const root = p.object(value, 'publish', ['schemaVersion', 'bindings', 'portraits'], ['schemaVersion', 'bindings'])
+  const root = p.object(value, 'publish', ['schemaVersion', 'bindings', 'portraits', 'wardrobes', 'authoringRoot'], ['schemaVersion', 'bindings'])
   p.version(root)
   const ids = new Set<string>()
   const bindings = p.list(root.bindings, 'bindings', (value, field): AssetBinding => {
@@ -58,8 +63,26 @@ export function parsePublishConfig(value: unknown): PublishConfig {
     })()
     return { base, speaker: p.speaker(b.speaker, `${field}.speaker`), character: p.text(b.character, `${field}.character`, 120),
       outfit: p.slug(b.outfit, `${field}.outfit`), ...(profile ? { profile } : {}) }
-  }, 512)
-  return { schemaVersion: 1, bindings, portraits }
+  }, 1024)
+  const wardrobes = root.wardrobes === undefined ? undefined : p.list(root.wardrobes, 'wardrobes', (v, field): WardrobeImport => {
+    const row = p.object(v, field, ['speaker', 'character', 'from', 'default', 'after', 'requiresFlag', 'labels', 'routes'], ['speaker', 'character', 'from'])
+    const from = p.object(row.from, field + '.from', ['collection', 'character', 'unitId'], ['collection'])
+    if (from.collection !== 'looks' && from.collection !== 'enemies') p.fail(field, 'expected Cyberpunk looks or enemies')
+    const key = from.collection === 'looks' ? 'character' : 'unitId'
+    if (Object.keys(from).some(k => k !== 'collection' && k !== key)) p.fail(field, 'wrong source identity key')
+    const labels = row.labels === undefined ? undefined : p.object(row.labels, field + '.labels', Object.keys((row.labels ?? {}) as object), [])
+    return { speaker: p.speaker(row.speaker, field), character: p.slug(row.character, field), from: { collection: from.collection as 'looks' | 'enemies', [key]: p.text(from[key], field, 120) },
+      ...(row.default === undefined ? {} : { default: p.slug(row.default, field) }),
+      ...(row.after === undefined ? {} : { after: p.slug(row.after, field) }),
+      ...(row.requiresFlag === undefined ? {} : { requiresFlag: p.slug(row.requiresFlag, field) }),
+      ...(labels ? { labels: Object.fromEntries(Object.entries(labels).map(([k, v]) => [p.slug(k, field), p.text(v, field, 64)])) } : {}),
+      ...(row.routes === undefined ? {} : { routes: p.list(row.routes, field + '.routes', (v, f) => {
+        const route = p.object(v, f, ['scene', 'outfit'])
+        return { scene: p.slug(route.scene, f), outfit: p.slug(route.outfit, f) }
+      }, 4096) }) }
+  }, 200)
+  if (wardrobes && (new Set(wardrobes.map(row => row.speaker)).size !== wardrobes.length || new Set(wardrobes.map(row => row.character)).size !== wardrobes.length)) p.fail('wardrobes', 'duplicate cast identity')
+  return { schemaVersion: 1, bindings, portraits, ...(wardrobes ? { wardrobes } : {}), ...(root.authoringRoot === undefined ? {} : { authoringRoot: p.text(root.authoringRoot, 'authoringRoot', 300) }) }
 }
 
 export interface ImageReplacement { asset: string; bytes: Buffer; extension: '.png' | '.webp'; width: number; height: number }
@@ -67,4 +90,7 @@ export interface PortraitReplacement { base: string; speaker: Speaker; faces: { 
 export interface ResolvedArt {
   images: ImageReplacement[]; portraits: PortraitReplacement[]; skipped: string[]; sourceChecks: (() => Promise<void>)[]
   sources?: { path: string; sha256: string; generation: string }[]
+  wardrobe?: CampaignWardrobe
+  newAssets?: string[]
+  retiredPortraits?: string[]
 }
