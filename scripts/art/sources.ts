@@ -184,7 +184,7 @@ export async function resolveArt(storage: ArtStorage, config: PublishConfig, opt
       return
     }
     const found = rows(catalog.looks, 'looks').filter(row => matches(row, from) && (from.category || from.id ? true : !row.category && row.kind !== 'splash'))
-    if (options.only.length && !found.some(row => selected(row, options.only)) && !selected(from as unknown as Row, options.only)) return
+    if (options.only.length && !wardrobeAssets.has(binding.asset) && !found.some(row => selected(row, options.only)) && !selected(from as unknown as Row, options.only)) return
     if (!found.length && options.allowMissing) { result.skipped.push(`${binding.asset}: not yet published to Platform`); return }
     if (found.length !== 1) throw new Error(`${binding.asset}: expected exactly one published source, found ${found.length}`)
     const row = found[0]!

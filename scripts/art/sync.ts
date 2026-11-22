@@ -8,7 +8,7 @@ import { parsePublishConfig, type PublishConfig } from './model'
 const normalized = (value: unknown) => String(value ?? '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 /** One wardrobe cohort: all Platform stages succeed before the game selection can move. */
-export async function syncWardrobes(config: PublishConfig, options: { root: string; only: string[]; dryRun: boolean },
+export async function syncWardrobes(config: PublishConfig, options: { root: string; only: string[]; dryRun: boolean; portraitCharacters: ReadonlySet<string> },
   run: (args: string[]) => Promise<void>, publish: (selectors: string[]) => Promise<void>): Promise<void> {
   const actors = (config.wardrobes ?? []).filter(actor => !options.only.length || options.only.some(key =>
     [actor.speaker, actor.character, actor.from.character, actor.from.unitId].some(value => normalized(value) === normalized(key))))
@@ -18,9 +18,14 @@ export async function syncWardrobes(config: PublishConfig, options: { root: stri
   const script = resolve(options.root, 'src/push.ts')
   if (!existsSync(script)) throw new Error('Art authoring checkout needs src/push.ts; set UMA_ART_AUTHORING_ROOT or authoringRoot in the private registry')
   // Translate game speaker IDs to the authoring character keys for all three collections.
-  const selectors = actors.map(actor => actor.character).join(',')
-  for (const flags of [[], ['--enemies'], ['--portraits']]) {
-    await run(['--import', 'tsx', script, 'cyberpunk', ...flags, '--only', selectors, '--no-release', ...(options.dryRun ? ['--dry-run'] : [])])
+  const groups = [
+    { flags: [], actors: actors.filter(actor => actor.from.collection === 'looks'), selector: (actor: typeof actors[number]) => actor.character },
+    { flags: ['--enemies'], actors: actors.filter(actor => actor.from.collection === 'enemies'), selector: (actor: typeof actors[number]) => actor.from.unitId! },
+    { flags: ['--portraits'], actors: actors.filter(actor => options.portraitCharacters.has(actor.character)), selector: (actor: typeof actors[number]) => actor.character },
+  ]
+  for (const group of groups) {
+    if (!group.actors.length) continue
+    await run(['--import', 'tsx', script, 'cyberpunk', ...group.flags, '--only', group.actors.map(group.selector).join(','), '--no-release', ...(options.dryRun ? ['--dry-run'] : [])])
   }
   await publish(actors.map(actor => actor.character))
 }
@@ -39,7 +44,17 @@ export async function main(args = process.argv.slice(2)) {
   const root = values.get('--authoring-root') ?? process.env.UMA_ART_AUTHORING_ROOT ?? config.authoringRoot
   if (!root) throw new Error('Set UMA_ART_AUTHORING_ROOT or authoringRoot in the private registry')
   const only = (values.get('--only') ?? '').split(',').map(value => value.trim()).filter(Boolean)
-  await syncWardrobes(config, { root: resolve(root), only, dryRun: args.includes('--dry-run') }, async producerArgs => {
+  // The accepted sparse workflow promotes character studies into this shared library. This only
+  // discovers available identities; the producer still validates all approvals, pieces and states.
+  const universes = resolve(process.env.UNIVERSES_DIR ?? resolve(process.env.UMA_ART_CONTENT ?? resolve(root, 'content'), 'authoring/character-universes'))
+  let portraitCharacters = new Set<string>()
+  try {
+    const manifest = JSON.parse(await readFile(resolve(universes, 'cyberpunk/dialogue-portraits/manifest.json'), 'utf8')) as { characterNames?: unknown }
+    if (!manifest.characterNames || typeof manifest.characterNames !== 'object' || Array.isArray(manifest.characterNames)) throw new Error('Portrait library needs its characterNames registry')
+    portraitCharacters = new Set(Object.keys(manifest.characterNames))
+  } catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error }
+  console.log(`Wardrobe sync: ${portraitCharacters.size} identities available in the promoted portrait library; unauthored sets remain pending`)
+  await syncWardrobes(config, { root: resolve(root), only, dryRun: args.includes('--dry-run'), portraitCharacters }, async producerArgs => {
     const result = spawnSync(process.execPath, producerArgs, { cwd: resolve(root), stdio: 'inherit', windowsHide: true })
     if (result.error || result.status !== 0) throw new Error('Art source publication stopped; game selection was not changed. Inspect Platform/source status before retrying.')
   }, async selectors => { await publishGame(['--config', configPath, '--event', 'all', '--only', selectors.join(','),

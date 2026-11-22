@@ -142,7 +142,7 @@ test('portrait bases, approved expression placements and reviewed 192px profiles
 test('registered ally wardrobes discover approved outfits and sparse faces, preserve native framing, and refresh without a rebuild', async () => {
   const f = await fixture()
   const portrait = await sharp(f.newer).resize(20, 30).png().toBuffer()
-  const nativeRow = { id: 'commander-watch', unitId: 'stand-in-1', character: 'Commander', look: 'watch-suit',
+  const nativeRow = { id: 'commander-watch', unitId: 'stand-in-1', character: 'Previous Name', look: 'watch-suit',
     path: `images/commander.${sha(f.newer).slice(0, 16)}.png`, sha256: sha(f.newer), bytes: f.newer.length, approvedOn: '2026-11-21' }
   f.storage.add('enemy-art/cyberpunk/index.json', encode({ universe: 'cyberpunk', looks: [nativeRow] }))
   f.storage.add('enemy-art/cyberpunk/' + nativeRow.path, f.newer)
@@ -159,7 +159,7 @@ test('registered ally wardrobes discover approved outfits and sparse faces, pres
   const config = parsePublishConfig({ schemaVersion: 1, bindings: [], wardrobes: [{ speaker: 'stand-in-1', character: 'commander',
     from: { collection: 'enemies', unitId: 'stand-in-1' }, default: 'watch-suit', labels: { 'watch-suit': 'Watch Suit' },
     routes: [{ scene: 'sw1-ch1-s1', outfit: 'watch-suit' }] }] })
-  const options = selected => ({ event: 'enemies', only: ['stand-in-1'], contentRoot: '/unused', wardrobe: selected.book.wardrobe,
+  const options = selected => ({ event: 'enemies', only: ['commander'], contentRoot: '/unused', wardrobe: selected.book.wardrobe,
     currentImages: new Map(selected.release.assets.map(row => [row.id, row.sha256])) })
   const resolved = await resolveArt(f.storage, config, options(f.selected))
   await publishArtCandidate(f.storage, f.selected, resolved)
@@ -213,20 +213,28 @@ test('wardrobe sync scopes all three producer stages and moves game selection on
     { speaker: 'stand-in-1', character: 'commander', from: { collection: 'enemies', unitId: 'stand-in-1' }, default: 'watch-suit' },
   ] })
   const calls = []
-  await syncWardrobes(config, { root, only: ['stand-in-1'], dryRun: true }, async args => { calls.push(args) }, async keys => { calls.push(keys) })
-  assert.equal(calls.length, 4)
-  assert.deepEqual(calls[3], ['commander'])
-  for (const args of calls.slice(0, 3)) {
+  const portraitCharacters = new Set(['officer', 'commander'])
+  await syncWardrobes(config, { root, only: ['stand-in-1'], dryRun: true, portraitCharacters }, async args => { calls.push(args) }, async keys => { calls.push(keys) })
+  assert.equal(calls.length, 3)
+  assert.deepEqual(calls[2], ['commander'])
+  assert(calls[0].includes('--enemies')); assert(calls[1].includes('--portraits'))
+  for (const args of calls.slice(0, 2)) {
     assert(args.includes('cyberpunk')); assert(args.includes('--no-release')); assert(args.includes('--dry-run'))
-    assert.equal(args[args.indexOf('--only') + 1], 'commander')
+    assert.equal(args[args.indexOf('--only') + 1], args.includes('--enemies') ? 'stand-in-1' : 'commander')
     assert(!args.includes('farm-life'))
   }
   let promoted = false, stages = 0
-  await assert.rejects(syncWardrobes(config, { root, only: ['9000001'], dryRun: false }, async () => {
+  await assert.rejects(syncWardrobes(config, { root, only: ['9000001'], dryRun: false, portraitCharacters }, async () => {
     if (++stages === 2) throw Error('source failed')
   }, async () => { promoted = true }), /source failed/)
   assert.equal(promoted, false)
-  await assert.rejects(syncWardrobes(config, { root, only: ['unknown'], dryRun: true }, async () => {}, async () => {}), /Unregistered/)
+  await assert.rejects(syncWardrobes(config, { root, only: ['unknown'], dryRun: true, portraitCharacters }, async () => {}, async () => {}), /Unregistered/)
+  const pending = []
+  await syncWardrobes(config, { root, only: [], dryRun: true, portraitCharacters: new Set(['officer']) }, async args => { pending.push(args) }, async () => {})
+  assert.equal(pending.length, 3)
+  assert.equal(pending[0][pending[0].indexOf('--only') + 1], 'officer')
+  assert.equal(pending[1][pending[1].indexOf('--only') + 1], 'stand-in-1')
+  assert.equal(pending[2][pending[2].indexOf('--only') + 1], 'officer')
 })
 
 test('cloud adapter rejects non-Cyberpunk paths before obtaining credentials or making a request', async () => {
