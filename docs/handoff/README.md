@@ -2,6 +2,13 @@
 
 ## Current packets
 
+**Campaign restructure and current art intake (D84).** The [implementation queue](2026-11-22-campaign-implementation.md)
+adds CY72–CY79 for the separate Story pilot, Boss Ally lifecycle, Collar and Talk combat, tier fronts,
+approved sprite publication, base/role art, scene splashes and boss figures. Start CY72 and CY76
+in parallel. CY77 and CY78 can preflight the existing hosted campaign while the pilot is built.
+Exact private source pins, approval scopes and the hosted comparison are in
+`content/implementation-intake-2026-11-22/`.
+
 **CY57 · first crew sprite composition (D83).** All 39 equipment IDs have a shared visual
 treatment. The real campaign reads pinned combat bundles from its release and chooses pose and
 gear from the frozen rig. Track the first recruit's board checks in the private sprite review.
