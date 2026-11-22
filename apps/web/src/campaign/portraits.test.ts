@@ -1,6 +1,6 @@
 import type { CampaignPortraitFace, Speaker } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
-import { faceBox, selectScenePortrait } from '../story/ScenePortrait'
+import { faceBox, profileFrame, selectScenePortrait } from '../story/ScenePortrait'
 import { loadScenePortraits } from './portraits'
 
 describe('campaign dialogue portraits', () => {
@@ -53,4 +53,11 @@ it('falls back from a missing derived portrait to its native image without pasti
     async id => { if (id === 'dialogue') throw Error('offline'); return 'url:' + id }, () => ['native'])
   expect(result).toEqual([{ speaker: 9000001, url: 'url:native' }])
   expect(await loadScenePortraits([{ speaker: 9000001, asset: 'missing' }], [], async () => { throw Error('offline') })).toEqual([])
+})
+
+
+it('frames command profiles from approved face coordinates on both native and normalized bases', () => {
+  expect(profileFrame({ width: 525, height: 700 }, { width: 224, height: 224 }, { x: 150, y: 140 })).toEqual({ left: 122, top: 112, width: 280, height: 280 })
+  expect(profileFrame({ width: 40, height: 60 }, { width: 8, height: 10 }, { x: 0, y: 0 })).toEqual({ left: 0, top: 0, width: 10, height: 12.5 })
+  expect(profileFrame({ width: 525, height: 700 }, { width: 224, height: 224 }, { x: 400, y: 140 })).toBeUndefined()
 })
