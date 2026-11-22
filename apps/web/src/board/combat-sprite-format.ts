@@ -6,14 +6,14 @@ export const RIG_SLOTS = {
 } as const
 
 type Facing = typeof FACINGS[number]
-type Slot = keyof typeof RIG_SLOTS
-type Rig = Record<Slot, string | null>
-type Point = [number, number]
+export type Slot = keyof typeof RIG_SLOTS
+export type Rig = Record<Slot, string | null>
+export type Point = [number, number]
 type Rect = [number, number, number, number]
 type Row = Record<string, unknown>
 type Page = { file: string; sha256: string; bytes: number; width: number; height: number }
-export type Layer = { page: string; rect: Rect; at: Point; when?: { slot: Slot; part: string } }
-type Frame = { layers: Layer[]; anchors: Record<string, Point> }
+export type Layer = { page: string; rect: Rect; at: Point; when?: { slot: Slot; part: string }; limb?: 'leftArm' | 'rightArm' | 'legs'; effect?: true }
+export type Frame = { layers: Layer[]; anchors: Record<string, Point> }
 export type Clip = { frames: { frame: string; ms: number }[]; loop: boolean; events: { frame: number; cue: string }[] }
 export type Track = { frames: Record<string, Frame>; clips: Record<string, Clip> }
 type Fitting = { id: string; label: string; motion: string; rig: Rig; note?: string }
@@ -35,6 +35,7 @@ export interface SpriteBundle {
   pages: Record<string, Page>
   motions: Record<string, Record<Facing, Track>>
   fittings: Fitting[]
+  composition?: { body: string; rifle: string; blade: string }
 }
 
 export interface EffectTrack { frames: Layer[]; ms: (number | null)[] }
@@ -146,7 +147,7 @@ export function parseCombatEffects(value: unknown, bundle: SpriteBundle): Combat
 /** The checked wire format shared by the gallery, bundle check command, and future release reader. */
 export function parseSpriteBundle(value: unknown): SpriteBundle {
   const root = object(value, 'bundle', ['schemaVersion', 'kind', 'universe', 'character', 'outfit', 'look', 'version', 'status',
-    'cell', 'foot', 'figureHeight', 'reviewHeight', 'sources', 'pages', 'motions', 'fittings'])
+    'cell', 'foot', 'figureHeight', 'reviewHeight', 'sources', 'pages', 'motions', 'fittings', 'composition'])
   if (root.schemaVersion !== 1 || root.kind !== 'combat-sprite-bundle' || root.universe !== 'cyberpunk' || root.look !== 'armor-helmet') invalid('bundle identity')
   if (root.status !== 'draft' && root.status !== 'approved') invalid('status')
   const cell = point(root.cell, 'cell', 1024, 1024)
@@ -170,13 +171,17 @@ export function parseSpriteBundle(value: unknown): SpriteBundle {
   if (new Set(Object.values(pages).map(page => page.file)).size !== Object.keys(pages).length) invalid('pages: duplicate files')
 
   function readLayer(value: unknown, field: string): Layer {
-    const row = object(value, field, ['page', 'rect', 'at', 'when'])
+    const row = object(value, field, ['page', 'rect', 'at', 'when', 'limb', 'effect'])
     const key = string(row.page, field + '.page', slug), page = pages[key]
     if (!page || !Object.hasOwn(pages, key)) invalid(field + '.page')
     const [x, y, w, h] = list(row.rect, field + '.rect', 4, 4, v => number(v, field + '.rect', 0, 2048))
     if (x === undefined || y === undefined || !w || !h || x + w > page.width || y + h > page.height || w > width || h > height) invalid(field + '.rect')
     const at = point(row.at, field + '.at', width - w, height - h)
-    return { page: key, rect: [x, y, w, h], at, ...(row.when === undefined ? {} : { when: whenOf(row.when, field + '.when') }) }
+    const limb = row.limb
+    if (limb !== undefined && limb !== 'leftArm' && limb !== 'rightArm' && limb !== 'legs') invalid(field + '.limb')
+    if (row.effect !== undefined && (row.effect !== true || row.when === undefined)) invalid(field + '.effect')
+    return { page: key, rect: [x, y, w, h], at, ...(row.when === undefined ? {} : { when: whenOf(row.when, field + '.when') }),
+      ...(limb ? { limb } : {}), ...(row.effect ? { effect: true } : {}) }
   }
 
   function readTrack(value: unknown, field: string): Track {
@@ -237,9 +242,26 @@ export function parseSpriteBundle(value: unknown): SpriteBundle {
   }
   if (usedPages.size !== Object.keys(pages).length) invalid('pages: unreferenced texture')
   const outfit = typeof root.outfit === 'string' ? string(root.outfit, 'outfit', slug) : number(root.outfit, 'outfit', 1, Number.MAX_SAFE_INTEGER)
+  const composition = root.composition === undefined ? undefined : (() => {
+    const row = object(root.composition, 'composition', ['body', 'rifle', 'blade'])
+    const motion = (key: string) => {
+      const id = string(row[key], 'composition.' + key, slug)
+      if (!Object.hasOwn(motions, id)) invalid('composition.' + key)
+      return id
+    }
+    const body = motion('body')
+    for (const facing of FACINGS) {
+      const track = motions[body]![facing]
+      for (const name of ['attack-left', 'attack-right', 'attack-back']) if (!track.clips[name]) invalid('composition.' + name)
+      for (const frame of Object.values(track.frames)) {
+        if (!frame.anchors['left-grip'] || !frame.anchors['right-grip'] || !frame.anchors['back-mount']) invalid('composition: grip and mount anchors')
+      }
+    }
+    return { body, rifle: motion('rifle'), blade: motion('blade') }
+  })()
   return {
     schemaVersion: 1, kind: root.kind, universe: root.universe, look: root.look, status: root.status,
     character: string(root.character, 'character', slug), outfit, version: string(root.version, 'version', version),
-    cell, foot, figureHeight, reviewHeight, sources, pages, motions, fittings,
+    cell, foot, figureHeight, reviewHeight, sources, pages, motions, fittings, ...(composition ? { composition } : {}),
   }
 }

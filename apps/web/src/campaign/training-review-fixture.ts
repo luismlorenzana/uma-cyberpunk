@@ -7,6 +7,7 @@ export const TRAINING_REVIEWS = [
   'shield-front', 'shield-side', 'shield-rear', 'shield-disabled', 'shield-miss', 'shield-cover', 'shield-attack',
   'bulwark', 'bench', 'barrier-break', 'mend', 'patch', 'break', 'break-intact', 'med-reboot', 'order-reboot', 'med-reboot-intact', 'expiry',
   'mixed-left', 'mixed-right', 'mixed-back',
+  'mixed-dash', 'mixed-stun', 'mixed-jam', 'mixed-hack', 'mixed-legs', 'mixed-reboot', 'blade-survive-left', 'blade-survive-right',
 ] as const
 export type TrainingReview = typeof TRAINING_REVIEWS[number]
 const dirs = ['N', 'E', 'S', 'W'] as const
@@ -66,12 +67,15 @@ function mixedReview(outfit: number, mount: Mount, face: Dir): TrainingReplay {
 /** Local-only fixtures. Each prefix is legal reducer play on the unchanged Training Deck terrain. */
 function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number): TrainingReplay | null {
   const med = issuedCampaignRig('hand-rifle', 'back-med')
-  const main = review === 'issued-blade' ? 'hand-greatblade' : review.startsWith('shield') ? 'hand-blade' : 'hand-rifle'
-  const back = ['issued-med', 'mend', 'patch'].includes(review) ? 'back-med' : 'back-bulwark'
-  const rig = { ...issuedCampaignRig(main, back), leftHand: review.startsWith('shield') ? 'hand-tower' : null }
+  const mixed = review.startsWith('mixed-')
+  const twoHandMelee = review.startsWith('blade-survive')
+  const main = review === 'issued-blade' || twoHandMelee ? 'hand-greatblade' : review.startsWith('shield') || mixed ? 'hand-blade' : 'hand-rifle'
+  const back = review === 'mixed-dash' ? 'back-thruster' : ['mixed-stun', 'mixed-jam', 'mixed-hack'].includes(review) ? 'back-deck'
+    : ['issued-med', 'mend', 'patch'].includes(review) ? 'back-med' : 'back-bulwark'
+  const rig = { ...issuedCampaignRig(main, back), leftHand: review.startsWith('shield') ? 'hand-tower' : mixed ? 'hand-pistol' : null }
   const base = groundInput('training', outfit, 'Trainee', main, back, undefined, [], rig)
   const issued = review.startsWith('issued')
-  const slowTrainee = ['break', 'break-intact', 'med-reboot', 'order-reboot', 'med-reboot-intact', 'expiry'].includes(review)
+  const slowTrainee = ['break', 'break-intact', 'med-reboot', 'order-reboot', 'med-reboot-intact', 'expiry', 'mixed-reboot'].includes(review)
   const a = base.units.find(u => u.id === trainee)!, e = base.units.find(u => u.id === drone)!
   // Leave the west-facing rifle's eastward move in front of the deck wall for the grip review.
   const westRifle = face === 'W' && (review === 'rifle-right' || review === 'rifle-left')
@@ -80,7 +84,7 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
   const sides = [rotate(incoming, 1), rotate(incoming, 3)].map(dir => add(center, step[dir]))
   const canStand = ([x, y]: Tile) => base.map.tiles[y]?.[x] === '.' || base.map.tiles[y]?.[x] === 'c'
   const stepAhead = (tile: Tile) => add(tile, step[incoming])
-  const range = review === 'shield-attack' || westRifle ? stepAhead : (tile: Tile) => stepAhead(stepAhead(tile))
+  const range = review === 'shield-attack' || westRifle || twoHandMelee ? stepAhead : (tile: Tile) => stepAhead(stepAhead(tile))
   const partnerOptions = slowTrainee || review === 'mend' || review === 'patch'
     ? [add(center, step.W), add(center, step.E), ...sides] : sides
   const partnerTile = partnerOptions.find(tile => review !== 'shield-cover'
@@ -91,7 +95,8 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
     bands: { ...a.bands, speed: 5 as const }, loadout: loadoutOf(med), frozenRig: med, link: false }
   const input: BattleInput = issued ? base : {
     ...base, seed: `cy57-${review}-${face}-${seed}`, rulesVersion: 4,
-    map: { ...base.map, spawns: { ...base.map.spawns, squad: [center, partnerTile, ...base.map.spawns.squad.slice(2)], enemy: [enemyTile] } },
+    map: { ...base.map, spawns: { ...base.map.spawns, squad: [center, partnerTile, ...base.map.spawns.squad.slice(2)], enemy: [enemyTile] },
+      ...(review === 'mixed-hack' ? { props: [{ id: 'practice-console', kind: 'terminal', tile: stepAhead(center), does: { lights: true } }] } : {}) },
     units: [
       { ...a, facing: face, link: review === 'shield-cover', ...(slowTrainee ? { bands: { ...a.bands, speed: 1 } } : {}) },
       support,
@@ -130,6 +135,26 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
   if (issued) {
     if (!align(trainee)) return null
     return finish(turn(trainee, { kind: 'none' }), (_, error) => !error)
+  }
+  if (review === 'mixed-dash' || review === 'mixed-stun' || review === 'mixed-jam' || review === 'mixed-hack') {
+    if (!align(trainee) || !addAction(turn(trainee, { kind: 'wait' })) || !align(trainee)) return null
+    if (review === 'mixed-dash') {
+      const move = turn(trainee, { kind: 'none' }, stepAhead(center))
+      if (move.kind !== 'turn') return null
+      return finish({ ...move, dash: true }, (cues, error) => !error && cues.some(c => c.kind === 'dash'))
+    }
+    if (review === 'mixed-hack') return finish(turn(trainee, { kind: 'hack', terminal: 'practice-console' }),
+      (cues, error) => !error && cues.some(c => c.kind === 'hacked') && cues.some(c => c.kind === 'lights'))
+    const tech = review === 'mixed-jam' ? 'jam' : 'stun'
+    return finish(turn(trainee, { kind: 'tech', tech, target: drone }), (cues, error) => !error && cues.some(c => c.kind === 'tech' && c.landed))
+  }
+  if (review === 'mixed-legs') {
+    if (!hurt(trainee, 'legs') || !align(trainee)) return null
+    return finish(turn(trainee, { kind: 'none' }, stepAhead(center)), (cues, error) => !error && cues.some(c => c.kind === 'moved'))
+  }
+  if (twoHandMelee) {
+    if (!hurt(trainee, review === 'blade-survive-left' ? 'rightArm' : 'leftArm') || !align(trainee)) return null
+    return finish(turn(trainee, { kind: 'attack', with: 'right', target: drone }), (cues, error) => !error && cues.some(c => c.kind === 'attack'))
   }
   if (review.startsWith('rifle')) {
     if (review !== 'rifle-left' && !hurt(trainee, 'leftArm')) return null

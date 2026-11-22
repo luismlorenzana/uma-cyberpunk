@@ -33,6 +33,7 @@ bundles. Older still-image studies continue to appear as image cards.
 | Motion | `motions[motion][S|W|N|E]` provides `frames` and `clips`. S is front, N rear, W left and E right. Preserve asymmetric art on its intended side |
 | Frames | Each frame declares ordered `layers[]` drawn back to front with `page`, source `rect: [x,y,width,height]` and cell-space `at: [x,y]`. A `when: {slot,part}` layer draws only when its exact part is equipped. `anchors` maps names to cell-space coordinates for grip, muzzle/tip, or mount review |
 | Clips | Each direction requires `idle`, `walk`, `settle` and `attack`. A clip has ordered `frames: [{frame,ms}]`, a `loop` flag and optional `events: [{frame,cue}]`, with zero-based indexes into the clip. Extra clips can represent supported guard, damage and support actions |
+| Composition | The campaign export can name a layered `body` motion and the `rifle` and `blade` two-grip donors in `composition`. Its body cels carry `left-grip`, `right-grip` and `back-mount`. Tag arm, glove and leg plates with `limb`, and conditional flashes with `effect: true`. |
 
 Palette masks and individual editable pieces belong in private source. The current player draws
 registered PNG fragments. A part's tint or cropped texture may be baked ahead into a small overlay,
@@ -95,3 +96,28 @@ The `mixed-left`, `mixed-right` and `mixed-back` cases share a frozen fitting. T
 two tiles for the Machine pistol, closes to one for the Edge blade, and withdraws to three for the
 Missile pod. Capture the selected clip and the reducer's outcome sequence, including the launcher's
 single ammo spend. The comparison fixture retains the exact Training Deck terrain.
+
+### Campaign release
+
+The active campaign release can carry `combatSprites` entries keyed by canonical outfit. Each
+entry pins its manifest, effect placements and PNG pages by SHA-256. The game loads matching
+entries on Training and ground deployments. Exact-fit bundles still work. Composed bundles draw
+only the frozen equipped pieces for each unit and use the reducer's mount and action cues for
+animation. Core, arms, legs, visors and coat values share the base armor silhouette. Long and
+short Back launchers share a housing, with distinct gameplay profiles and ammo in the forecast.
+Thruster, Deck and Mounted blade have their own treatments. The source album uses exact fitted
+previews. The campaign export adds the shared motion and damage bindings.
+
+Use the verified private receipt for a local preview.
+
+```powershell
+pnpm exec tsx scripts/art/combat-sprites.ts <receipt> --local <campaign-release-dir> --dry-run
+pnpm exec tsx scripts/art/combat-sprites.ts <receipt> --local <campaign-release-dir> --select
+```
+
+For an approved manifest, `--cloud` stages hash-addressed payloads in Platform's private
+Cyberpunk combat-sprite folder and in the game's campaign namespace. Add `--select` to update
+both pointers with generation checks. The command verifies the manifest binding and all pages,
+and carries the selected campaign's existing story, wardrobe and image references into the new
+release. The regular art publisher and local campaign selection preserve or verify sprite pins.
+The private Training receipt records exact files, cels, effects and gameplay outcomes.

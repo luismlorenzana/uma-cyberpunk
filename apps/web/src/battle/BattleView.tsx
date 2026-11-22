@@ -10,7 +10,8 @@ import { AlbumArtProvider } from '@luismlorenzana/uma-kit/album'
 import { initialSaver, toStage, type StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { looksFor, type UnitLook } from '../board/looks'
-import { localCombatLooks, type CombatLook } from '../board/local-combat-sprites'
+import { campaignCombatLooks, type CombatLook } from '../board/local-combat-sprites'
+import type { CampaignRelease } from '@cyber/domain'
 import { BoardScene, type BoardFigure, type StateKind } from '../board/scene'
 import { albumArt } from '../crew/art'
 import { useMaster } from '../master/master'
@@ -84,7 +85,7 @@ export interface BattleViewProps {
   objectiveLabel?: string
   portrait?: { unit: string; url: string }
   standInKit?: 'biome' | 'town'
-  combatSprites?: boolean
+  combatSprites?: CampaignRelease['combatSprites']
   onCommit: (s: Session) => void
   onEnd: (s: Session) => void
   onQuit: () => void
@@ -105,7 +106,7 @@ export function BattleView(props: BattleViewProps) {
     void Promise.all([
       looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }),
       face ? face.decode().then(() => face, () => null) : undefined,
-      props.combatSprites ? localCombatLooks(props.session.input) : undefined,
+      props.combatSprites ? campaignCombatLooks(props.session.input, props.combatSprites) : undefined,
     ]).then(([units, decoded, combat]) => {
       const all = new Map<string, UnitLook | CombatLook>(units)
       if (portrait && decoded) all.set(portrait.unit, { kind: 'face', face: decoded })

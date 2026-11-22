@@ -2,6 +2,8 @@ import type { Dir, PartHp, UnitStatus } from '@cyber/battle'
 import { CanvasTexture, CircleGeometry, Group, Mesh, MeshBasicMaterial, NearestFilter, Sprite, SpriteMaterial, SRGBColorSpace } from 'three'
 import type { Clip, EffectTrack, Layer } from './combat-sprite-format'
 import type { CombatLook, LoadedCombatArt } from './local-combat-sprites'
+import { composedClip } from './combat-sprite-composition'
+import { paintComposition } from './combat-sprite-gear'
 
 type Cel = { layers: Layer[]; ms: number }
 
@@ -32,10 +34,7 @@ class CombatCell {
 
   protected paint(layers: readonly Layer[], badges: readonly string[] = []): void {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
-    for (const { page, rect: [x, y, w, h], at: [left, top] } of layers) {
-      const image = this.art.pages.get(page)
-      if (image) this.context.drawImage(image, x, y, w, h, left, top, w, h)
-    }
+    for (const layer of layers) this.drawLayer(layer)
     if (badges.length) {
       const x = this.art.bundle.foot[0]
       this.context.font = 'bold 13px sans-serif'
@@ -45,6 +44,17 @@ class CombatCell {
       this.context.fillStyle = '#ffc66e'
       this.context.fillText(badges.join(' '), x, 27)
     }
+    this.texture.needsUpdate = true
+  }
+
+  protected drawLayer({ page, rect: [x, y, w, h], at: [left, top] }: Layer): void {
+    const image = this.art.pages.get(page)
+    if (image) this.context.drawImage(image, x, y, w, h, left, top, w, h)
+  }
+
+  protected redraw(draw: () => void): void {
+    this.context.clearRect(0, 0, this.canvas.width, this.canvas.height)
+    draw()
     this.texture.needsUpdate = true
   }
 
@@ -64,6 +74,36 @@ export interface CombatPose { hp: PartHp; status: UnitStatus }
 const intact: CombatPose = { hp: { core: 1, leftArm: 1, rightArm: 1, legs: 1 }, status: 'active' }
 
 export function limbPose(look: CombatLook, facing: Dir, pose: CombatPose, action: string): string | undefined {
+  if (look.composed) {
+    const { leftArm, rightArm } = pose.hp
+    const one = leftArm <= 0 ? 'right' : 'left'
+    const { composition, motions } = look.art.bundle
+    const donor = look.composed.twoHand && look.composed[look.composed.twoHand] === 'rifle'
+    const blade = composition && motions[composition.blade]?.[facing].clips
+    const attack = action === 'attack-left' || action === 'attack-right' || action === 'attack-back'
+    if (attack && leftArm <= 0 && rightArm <= 0) return
+    if (action === 'guard' || action === 'cover') {
+      const { guards } = look.composed
+      const left = leftArm > 0 ? guards.left : 0, right = rightArm > 0 ? guards.right : 0
+      return right > left ? action + '-right' : left ? action : undefined
+    }
+    if (action === 'attack-left' || action === 'attack-right') {
+      const hand = action === 'attack-left' ? 'left' : 'right'
+      if (!look.composed[hand] || (!look.composed.twoHand && pose.hp[hand === 'left' ? 'leftArm' : 'rightArm'] <= 0)) return
+      if (look.composed.twoHand && (leftArm <= 0 || rightArm <= 0)) {
+        const key = `attack-one-${one}`
+        return donor || blade?.[key] ? key : `attack-${one}-degraded`
+      }
+    }
+    if (donor && ['idle', 'walk', 'settle'].includes(action) && (leftArm <= 0 || rightArm <= 0)) {
+      return leftArm <= 0 && rightArm <= 0 ? 'idle-both-arms-broken' : `${action}-one-${one}`
+    }
+    if (look.composed.twoHand && !donor && ['idle', 'walk', 'settle'].includes(action) && (leftArm <= 0 || rightArm <= 0)) {
+      const key = leftArm <= 0 && rightArm <= 0 ? 'idle-both-arms-broken' : `${action}-one-${one}`
+      return blade?.[key] ? key : action + '-degraded'
+    }
+    return composedClip(look.art.bundle, look.composed, facing, action) ? action : undefined
+  }
   const clips = look.art.bundle.motions[look.fitting.motion]?.[facing].clips
   if (!clips) return undefined
   const { leftArm, rightArm, legs } = pose.hp
@@ -112,7 +152,10 @@ export class CombatSpriteActor extends CombatCell {
 
   setPose(pose: CombatPose): void { this.pose = pose; this.motion = null }
 
-  clip(facing: Dir, name: string): Clip | undefined { return this.look.art.bundle.motions[this.look.fitting.motion]?.[facing].clips[name] }
+  clip(facing: Dir, name: string): Clip | undefined {
+    return this.look.composed ? composedClip(this.art.bundle, this.look.composed, facing, name)?.clip
+      : this.art.bundle.motions[this.look.fitting.motion]?.[facing].clips[name]
+  }
 
   play(facing: Dir, name: string, pose: CombatPose, speed: number, frames?: readonly number[]): number {
     const clip = this.clip(facing, name)
@@ -128,11 +171,13 @@ export class CombatSpriteActor extends CombatCell {
     if (moving !== this.walking) { this.walking = moving; this.fallbackTime = 0 }
     const motion = moving ? null : this.motion
     const direction = motion?.facing ?? facing
-    const track = art.bundle.motions[fitting.motion]![direction]
-    const action = this.pose.status === 'down' ? 'down' : moving ? 'walk' : 'idle'
+    const action = this.pose.status === 'down' ? 'down' : moving ? this.motion?.name === 'back-dash' ? 'dash-walk' : 'walk' : 'idle'
     const name = motion?.name ?? limbPose(this.look, direction, this.pose, action) ?? 'idle'
     const pose = motion?.pose ?? this.pose
-    const clip = motion?.clip ?? track.clips[name]!
+    const rig = this.look.composed
+    const composition = rig ? composedClip(art.bundle, rig, direction, name) : undefined
+    const track = composition?.track ?? art.bundle.motions[fitting.motion]![direction]
+    const clip = motion?.clip ?? composition?.clip ?? track.clips[name]!
     const frames = motion?.frames ?? clip.frames.map((_, index) => index)
     const total = frames.reduce((sum, index) => sum + clip.frames[index]!.ms, 0)
     if (motion) this.elapsed = Math.min(total, this.elapsed + dt * motion.speed)
@@ -144,12 +189,20 @@ export class CombatSpriteActor extends CombatCell {
       time -= clip.frames[i]!.ms
     }
     const row = track.frames[clip.frames[index]!.frame]!
-    this.anchors = row.anchors
     const badges = missingLimbArt(name, pose.hp)
-    const key = `${direction}:${clip.frames[index]!.frame}:${badges.join(',')}`
+    const key = composition ? `${direction}:${name}:${index}:${Number(pose.hp.leftArm <= 0)}${Number(pose.hp.rightArm <= 0)}${Number(pose.hp.legs <= 0)}`
+      : `${direction}:${clip.frames[index]!.frame}:${badges.join(',')}`
     if (key !== this.last) {
       this.last = key
-      this.paint(row.layers.filter(layer => !layer.when || fitting.rig[layer.when.slot] === layer.when.part), badges)
+      if (rig && composition) {
+        this.redraw(() => {
+          this.anchors = paintComposition(this.context, row, composition, { rig, facing: direction, hp: pose.hp,
+            action: name, index, foot: art.bundle.foot }, layer => this.drawLayer(layer))
+        })
+      } else {
+        this.anchors = row.anchors
+        this.paint(row.layers.filter(layer => !layer.when || fitting.rig[layer.when.slot] === layer.when.part), badges)
+      }
     }
     this.shown = { clip: name, frame: index, facing: direction }
     return !!motion && !still && this.elapsed < total

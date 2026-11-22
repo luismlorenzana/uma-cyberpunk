@@ -54,6 +54,7 @@ export function singleOffensiveMount(loadout: BattleState['input']['units'][numb
 
 export class CombatVisualPlayback {
   private readonly units: UnitState[]
+  private readonly guarding = new Set<string>()
   private attack: { ends: number; pulses: Map<number, number>; firstContact?: number; covered: boolean; miss: boolean } | null = null
 
   constructor(private readonly scene: BoardScene, private readonly action: BattleAction, private readonly cues: readonly Cue[],
@@ -86,12 +87,20 @@ export class CombatVisualPlayback {
   async finishAttack(): Promise<void> {
     if (this.attack && !this.skipped()) await wait(this.attack.ends - performance.now())
     this.attack = null
+    this.guarding.clear()
   }
 
   async afterCue(cue: Cue, index: number): Promise<void> {
     if (this.skipped()) return
     const actor = 'unit' in cue ? this.unit(cue.unit) : undefined
-    if (cue.kind === 'moved' && actor) {
+    if (cue.kind === 'dash' && actor) {
+      const nextMove = this.cues.slice(index + 1).find(c => c.kind === 'moved' && c.unit === actor.id)
+      if (nextMove?.kind === 'moved' && nextMove.path[0] && nextMove.path[1]) actor.facing = dirTo(nextMove.path[0], nextMove.path[1])
+      await wait(this.play(actor, 'back-dash', cue.kind, 'emitter').anchor)
+    } else if ((cue.kind === 'tech' || cue.kind === 'hacked') && actor) {
+      await wait(this.play(actor, 'back-tech', cue.kind, 'emitter').ends)
+      this.scene.setCombatPose(actor.id, actor)
+    } else if (cue.kind === 'moved' && actor) {
       const end = cue.path.at(-1), previous = cue.path.at(-2)
       if (end && previous) {
         ;[actor.x, actor.y] = end
@@ -124,6 +133,7 @@ export class CombatVisualPlayback {
       if (cue.kind === 'cover' && this.attack) this.attack.covered = true
       const selection = this.scene.combatClip(actor.id, cue.kind, actor, actor.facing)
       if (!selection) return
+      this.guarding.add(actor.id)
       const contact = selection.clip.events.find(event => event.cue === 'shield-contact')?.frame
       const misses = this.attack?.miss ?? false
       const frames = range(0, selection.clip.frames.length).filter(i => !misses || i !== contact)
@@ -138,6 +148,9 @@ export class CombatVisualPlayback {
       }
       const duration = this.scene.playCombat(actor.id, selection.name, actor.facing, actor, reactionSpeed, frames)
       if (this.attack) this.attack.ends = Math.max(this.attack.ends, now + duration)
+    } else if (cue.kind === 'hit' || cue.kind === 'burn') {
+      const recipient = cue.kind === 'hit' ? this.unit(cue.target) : actor
+      if (recipient && !this.guarding.has(recipient.id)) this.play(recipient, 'hurt', cue.kind)
     } else if (cue.kind === 'partBroke' && actor) {
       actor.hp[cue.part] = 0
       if (cue.part !== 'core') this.scene.setCombatPose(actor.id, actor)

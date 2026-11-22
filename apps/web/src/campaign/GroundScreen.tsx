@@ -1,5 +1,5 @@
 import type { BattleAction, BattleInput } from '@cyber/battle'
-import { awayMembers, PARTS_BY_ID, resting, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
+import { awayMembers, PARTS_BY_ID, resting, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { BattleView } from '../battle/BattleView'
@@ -19,9 +19,10 @@ const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
 const panel = 'absolute inset-0 overflow-auto bg-[#0b0d17] p-4 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, acceptsFitted, ashore, editableSquad }: {
+export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad }: {
   save: Save; mission: Mission; layout: StageLayout; trainee: number; label: string; close: () => void
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
+  combatSprites?: CampaignRelease['combatSprites']
   acceptsFitted?: boolean
   ashore?: ReadonlySet<number>
   editableSquad?: boolean
@@ -60,6 +61,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   if (state.step === 'battle' && state.battle) {
     if (bossArt && portrait === undefined) return <div className={panel} style={insets} role="status">Preparing the battle…</div>
     return <GroundBattle layout={layout} input={state.battle.input as BattleInput} actions={state.battle.actions as BattleAction[]} close={close}
+      combatSprites={combatSprites}
       mission={mission.id} interior={!!ground} title={ground?.title} portrait={portrait && ground?.boss ? { url: portrait, unit: ground.boss.unit } : undefined} />
   }
   if (!scenario || !Object.hasOwn(SCENARIOS, scenario)) return <main className={panel} style={insets}>
@@ -164,8 +166,9 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   )
 }
 
-function GroundBattle({ layout, input, actions, close, mission, portrait, interior, title }: {
+function GroundBattle({ layout, input, actions, close, mission, portrait, interior, title, combatSprites }: {
   layout: StageLayout; input: BattleInput; actions: BattleAction[]; close: () => void; mission: string; portrait?: { url: string; unit: string }; interior: boolean; title?: string
+  combatSprites?: CampaignRelease['combatSprites']
 }) {
   const [session] = useState(() => resume(input, actions))
   if ('error' in session) return <div className={panel} style={insets}>
@@ -174,7 +177,7 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
   </div>
   const objectiveLabel = title ? `Objective · ${title}` : input.objective.kind === 'hack' ? input.objective.count > 1 ? 'Objective · Disconnect both consoles' : 'Objective · Secure manifest console'
     : input.objective.kind === 'defeatLeader' ? 'Objective · Subdue the commander' : undefined
-  return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training combatSprites portrait={portrait} objectiveLabel={objectiveLabel}
+  return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training combatSprites={combatSprites ?? []} portrait={portrait} objectiveLabel={objectiveLabel}
     standInKit={interior ? 'town' : undefined}
     onCommit={(next) => {
       const action = next.actions.at(-1)

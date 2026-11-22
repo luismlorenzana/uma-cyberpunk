@@ -34,7 +34,7 @@ async function main(): Promise<void> {
     if ('error' in session) throw new Error(session.error)
     window.__trainingReview = replay
     root.render(<TurnedStage>{layout => <><BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'player' }}
-      debug training combatSprites objectiveLabel="Training Deck"
+      debug training combatSprites={[]} objectiveLabel="Training Deck"
       onCommit={() => {}} onEnd={() => {}} onQuit={() => { location.assign('/campaign') }} /><ReviewTurn replay={replay} /></>}</TurnedStage>)
   } catch (error) {
     root.render(<p role="alert">{String(error)}</p>)

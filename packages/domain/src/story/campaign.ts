@@ -109,6 +109,8 @@ export interface CampaignRelease {
   release: string
   files: (CampaignReleaseFile & { source: string })[]
   assets: (CampaignReleaseFile & { id: string })[]
+  combatSprites?: { outfit: number; manifest: CampaignReleaseFile; placements: CampaignReleaseFile;
+    pages: (CampaignReleaseFile & { file: string })[] }[]
 }
 
 export const CAMPAIGN_PREVIEW_INDEX = 'campaign/preview.json'
@@ -181,7 +183,8 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
 
 export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_INDEX): CampaignRelease {
   const p = new P(file)
-  const index = p.object(value, 'release', ['schemaVersion', 'release', 'files', 'assets'])
+  const fields = ['schemaVersion', 'release', 'files', 'assets']
+  const index = p.object(value, 'release', [...fields, 'combatSprites'], fields)
   p.version(index)
   function entry(o: Record<string, unknown>, path: string, art: boolean): CampaignReleaseFile {
     const sha256 = p.text(o.sha256, `${path}.sha256`, 64)
@@ -204,7 +207,24 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
   }, 4096)
   if (!unique(p, 'files', files, (f) => f.source).has('campaign.json')) p.fail('files', 'campaign.json is missing')
   unique(p, 'assets', assets, (a) => a.id)
-  return { schemaVersion: 1, release: p.slug(index.release, 'release'), files, assets }
+  const combatSprites = index.combatSprites === undefined ? undefined : p.list(index.combatSprites, 'combatSprites', (value, path) => {
+    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages'])
+    const reference = (key: 'manifest' | 'placements') => entry(p.object(row[key], path + '.' + key, ['path', 'sha256', 'bytes']), path + '.' + key, false)
+    const pages = p.list(row.pages, path + '.pages', (value, field) => {
+      const page = p.object(value, field, ['file', 'path', 'sha256', 'bytes'])
+      const file = p.text(page.file, field + '.file', 100)
+      if (!/^[a-z0-9-]+(?:\/[a-z0-9-]+)*\.png$/.test(file)) p.fail(field + '.file', 'expected a sprite page file')
+      const ref = entry(page, field, true)
+      if (!ref.path.endsWith('.png')) p.fail(field + '.path', 'expected a PNG payload')
+      return { file, ...ref }
+    }, 96)
+    if (!pages.length) p.fail(path + '.pages', 'expected at least one page')
+    unique(p, path + '.pages', pages, page => page.file)
+    return { outfit: p.int(row.outfit, path + '.outfit', 1, Number.MAX_SAFE_INTEGER),
+      manifest: reference('manifest'), placements: reference('placements'), pages }
+  }, 100)
+  if (combatSprites) unique(p, 'combatSprites', combatSprites, sprite => String(sprite.outfit))
+  return { schemaVersion: 1, release: p.slug(index.release, 'release'), files, assets, ...(combatSprites ? { combatSprites } : {}) }
 }
 
 export function parseCampaignBook(files: Record<string, unknown>): CampaignBook {
