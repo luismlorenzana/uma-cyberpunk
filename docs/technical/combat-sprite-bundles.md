@@ -44,16 +44,20 @@ Run `node --import tsx src/check-combat-sprites.ts <version-folder>` from Uma Ar
 uses the same parser and checks texture sizes, dimensions and hashes before playing a bundle. Use the
 [coverage matrix](../handoff/combat-sprite-coverage.json) as the authoritative work list. Its
 `pilot` and `partial` rows describe the first local delivery. Art approval is recorded separately.
+Use the [ground combat visual matrix](ground-combat-visual-matrix.md) to define each clip's trigger,
+recipient, persistent state and fallback. Damage and live equipment operation are separate from
+the fitted part conditions in bundle v1.
 
 ## Work order
 
 1. Review the Laser rifle with Bulwark, Great blade with Bulwark, and Laser rifle with Med unit in the
    local album. The pair of rifle fittings shares its clips and changes the Back layer. Close the
-   first crew member's remaining pose and equipment coverage against the matrix before roster rollout.
+   one-arm rifle, shield guard, fitted Back activation and Rig Break/Reboot acceptance cases before
+   publishing. Use both matrices to scope remaining poses and equipment before roster rollout.
 2. Extend the existing Cyberpunk Art publisher with a bundle index under
    `art/universes/cyberpunk/combat-sprites/` in the private Platform bucket. Publish approved versioned
    manifests and their hash-addressed pages, then update the index. Platform's existing Combat Sprites
-   gallery can link a rendered preview. This is the next delivery after the local milestone.
+   gallery can link a rendered preview. Advance this delivery after the local acceptance cases.
 3. CY57 imports the approved bundle into a campaign art release. Capture exact part IDs with the
    battle fitting, resolve its draw layers when entering the battle, and drive clips from actual cues.
    Check Training, boarding, replay, texture footprint and the physical iPhone. CY60 follows with
