@@ -1,4 +1,4 @@
-import { applyBattleAction, dirTo, startBattle, type BattleAction, type BattleInput, type Cue, type Dir, type PartId, type Tile } from '@cyber/battle'
+import { applyBattleAction, dirTo, startBattle, type BattleAction, type BattleInput, type Cue, type Dir, type Mount, type PartId, type Tile } from '@cyber/battle'
 import { issuedCampaignRig, loadoutOf } from '@cyber/domain'
 import { groundInput } from './training'
 
@@ -6,6 +6,7 @@ export const TRAINING_REVIEWS = [
   'issued-rifle', 'issued-blade', 'issued-med', 'rifle-right', 'rifle-left', 'rifle-both', 'rifle-mend',
   'shield-front', 'shield-side', 'shield-rear', 'shield-disabled', 'shield-miss', 'shield-cover', 'shield-attack',
   'bulwark', 'bench', 'barrier-break', 'mend', 'patch', 'break', 'break-intact', 'med-reboot', 'order-reboot', 'med-reboot-intact', 'expiry',
+  'mixed-left', 'mixed-right', 'mixed-back',
 ] as const
 export type TrainingReview = typeof TRAINING_REVIEWS[number]
 const dirs = ['N', 'E', 'S', 'W'] as const
@@ -20,6 +21,46 @@ export interface TrainingReplay {
   action: BattleAction
   cues: Cue[]
   error: string | null
+}
+
+const mixedStarts: Record<Dir, Tile> = { N: [2, 5], S: [2, 1], W: [3, 4], E: [1, 4] }
+
+/** Replay each prior attack on the same frozen fitting, using the deck's actual terrain and ranges. */
+function mixedReview(outfit: number, mount: Mount, face: Dir): TrainingReplay {
+  const main = 'hand-blade', expansion = 'back-missiles'
+  const rig = { ...issuedCampaignRig(main, expansion), leftHand: 'hand-pistol' }
+  const base = groundInput('training', outfit, 'Trainee', main, expansion, undefined, [], rig)
+  const start = mixedStarts[face]
+  const middle = add(start, step[face]), near = add(middle, step[face]), target = add(near, step[face])
+  const input: BattleInput = {
+    ...base,
+    seed: `training-mixed-${face}`,
+    map: { ...base.map, spawns: {
+      squad: [start, ...base.map.spawns.squad.filter(tile => tile[0] !== start[0] || tile[1] !== start[1]).slice(0, 4)],
+      enemy: [target],
+    } },
+    units: base.units.map(unit => unit.side === 'squad' ? { ...unit, facing: face } : {
+      ...unit, facing: rotate(face, 2), loadout: { ...unit.loadout, core: { ...unit.loadout.core, hp: 80 }, rightHand: null },
+    }),
+  }
+  let state = startBattle(input).state
+  const prefix: BattleAction[] = []
+  for (const [withMount, to] of [['left', middle], ['right', near], ['back', start]] as const) {
+    if (state.active === drone) {
+      const wait: BattleAction = { kind: 'turn', unit: drone, act: { kind: 'none' }, face: rotate(face, 2) }
+      const turn = applyBattleAction(state, wait)
+      if (turn.error) throw new Error(turn.error)
+      state = turn.state
+      prefix.push(wait)
+    }
+    const action: BattleAction = { kind: 'turn', unit: trainee, to, act: { kind: 'attack', with: withMount, target: drone }, face }
+    const result = applyBattleAction(state, action)
+    if (result.error) throw new Error(`${withMount} ${face}: ${result.error}`)
+    if (withMount === mount) return { input, prefix, action, cues: result.cues, error: null }
+    state = result.state
+    prefix.push(action)
+  }
+  throw new Error('Unknown mixed fitting mount')
 }
 
 /** Local-only fixtures. Each prefix is legal reducer play on the unchanged Training Deck terrain. */
@@ -159,6 +200,9 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
 }
 
 export function trainingReview(outfit: number, review: TrainingReview, facing: Dir): TrainingReplay {
+  if (review === 'mixed-left' || review === 'mixed-right' || review === 'mixed-back') {
+    return mixedReview(outfit, review === 'mixed-left' ? 'left' : review === 'mixed-right' ? 'right' : 'back', facing)
+  }
   for (let seed = 1; seed <= 100; seed++) {
     const fixture = attempt(outfit, review, facing, seed)
     if (fixture) return fixture

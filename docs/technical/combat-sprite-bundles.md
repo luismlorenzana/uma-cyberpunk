@@ -40,6 +40,12 @@ leaving motion, footprint and common frames shared. For new shapes, give every p
 layer with front and rear occlusion as needed. Create distinct compatible arm and prop poses when grips
 or the action differ. Preview precomposed layers are useful when importing a locked source study.
 
+Mixed offensive fittings provide `attack-left`, `attack-right` and `attack-back` for each mounted
+weapon. Select these from the resolved `attack.with` cue. The legacy `attack` clip is the fallback
+only when the fitting has one offensive mount. Keep the required v1 `attack` entry as a preview alias
+and record the separate anchors and pulse markers for the fitted weapons. Keep non-firing equipment
+visible in the carry and attack frames.
+
 Run `node --import tsx src/check-combat-sprites.ts <version-folder>` from Uma Art Authoring. The album
 uses the same parser and checks texture sizes, dimensions and hashes before playing a bundle. Use the
 [coverage matrix](../handoff/combat-sprite-coverage.json) as the authoritative work list. Its
@@ -84,3 +90,8 @@ Other case keys are in `apps/web/src/campaign/training-review-fixture.ts`. Each 
 saved prefix on the Training Deck and exposes one checked turn for playback. It uses a separate
 local page and independent input, so the stock Training scenario, rewards and save flow keep their
 normal rules. Use the verified identity in the private receipt for both routes.
+
+The `mixed-left`, `mixed-right` and `mixed-back` cases share a frozen fitting. The prefix walks to
+two tiles for the Machine pistol, closes to one for the Edge blade, and withdraws to three for the
+Missile pod. Capture the selected clip and the reducer's outcome sequence, including the launcher's
+single ammo spend. The comparison fixture retains the exact Training Deck terrain.

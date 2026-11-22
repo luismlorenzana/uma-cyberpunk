@@ -1,4 +1,4 @@
-import { dirTo, targetTile, type BattleAction, type BattleState, type Cue, type Dir, type UnitState } from '@cyber/battle'
+import { dirTo, targetTile, type BattleAction, type BattleState, type Cue, type Dir, type Mount, type UnitState } from '@cyber/battle'
 import type { Clip } from '../board/combat-sprite-format'
 import type { BoardScene } from '../board/scene'
 
@@ -41,7 +41,16 @@ function outcomes(cues: readonly Cue[], at: number, attack: Attack): number[] {
   return out
 }
 
-export type CombatTrace = { cue: Cue['kind']; unit?: string; clip?: string; facing?: Dir; tile?: readonly [number, number]; pulses?: number; source?: string; anchor?: string }
+export type CombatTrace = { cue: Cue['kind']; unit?: string; clip?: string; facing?: Dir; tile?: readonly [number, number]; mount?: Mount; pulses?: number; source?: string; anchor?: string }
+
+/** Only a single offensive mount can use the old fitting-wide attack clip. */
+export function singleOffensiveMount(loadout: BattleState['input']['units'][number]['loadout']): Mount | undefined {
+  const mounts: Mount[] = []
+  if (loadout.leftHand?.kind === 'weapon') mounts.push('left')
+  if (loadout.rightHand?.kind === 'weapon') mounts.push('right')
+  if (loadout.back.kind === 'launcher' && loadout.back.weapon) mounts.push('back')
+  return mounts.length === 1 ? mounts[0] : undefined
+}
 
 export class CombatVisualPlayback {
   private readonly units: UnitState[]
@@ -100,12 +109,14 @@ export class CombatVisualPlayback {
       const target = targetTile({ ...this.before, units: this.units }, cue.target)
       if (!target) return
       const direction = dirTo([actor.x, actor.y], target)
-      const selection = this.scene.combatClip(actor.id, 'attack', actor, direction)
+      const loadout = this.before.input.units.find(unit => unit.id === actor.id)?.loadout
+      const selection = this.scene.combatClip(actor.id, `attack-${cue.with}`, actor, direction)
+        ?? (loadout && singleOffensiveMount(loadout) === cue.with ? this.scene.combatClip(actor.id, 'attack', actor, direction) : null)
       if (!selection) return
       const { frames, pulses } = attackFrames(selection.clip, hitIndices.length)
       const now = performance.now()
       const duration = this.scene.playCombat(actor.id, selection.name, direction, actor, this.speed, frames)
-      this.trace({ cue: 'attack', unit: actor.id, clip: selection.name, facing: direction, tile: [actor.x, actor.y], pulses: hitIndices.length })
+      this.trace({ cue: 'attack', unit: actor.id, clip: selection.name, facing: direction, tile: [actor.x, actor.y], mount: cue.with, pulses: hitIndices.length })
       this.attack.ends = now + duration
       this.attack.pulses = new Map(hitIndices.map((hit, i) => [hit, now + (this.scene.stillCombat ? 0 : pulses[i]! / this.speed)]))
     } else if ((cue.kind === 'guard' || cue.kind === 'cover') && actor) {
