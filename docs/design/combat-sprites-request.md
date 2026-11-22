@@ -1,6 +1,7 @@
 # Combat sprites: full-proportion cel-shaded first character
 
-**Current request · 2026-11-20 (D77).** Build one real recruit with full adult proportions and clean
+**Earlier 3D source study · 2026-11-20 (D77).** Use the [current compact 2D bundle contract](../technical/combat-sprite-bundles.md)
+for active sprite authoring. This archived source trial built one real recruit with full adult proportions and clean
 cel shading, then export 2D sprites from the editable 3D source. [CY59](../handoff/tasks/CY59.md) owns
 the character source, [CY58](../handoff/tasks/CY58.md) equipment and [CY57](../handoff/tasks/CY57.md)
 game integration. [CY63](../handoff/tasks/CY63.md) keeps the actual cast and staging aligned.
