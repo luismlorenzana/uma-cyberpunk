@@ -25,6 +25,8 @@ class CombatCell {
     this.texture.generateMipmaps = false
     this.sprite = new Sprite(new SpriteMaterial({ map: this.texture, alphaTest: 0.18, depthWrite: false }))
     this.sprite.center.set(origin[0] / w, 1 - origin[1] / h)
+    // Match the base ring's group order. The sprite's tile order then sorts its art above the ring.
+    this.group.renderOrder = 1
     this.group.add(this.sprite)
   }
 
