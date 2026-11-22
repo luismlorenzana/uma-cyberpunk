@@ -2,6 +2,10 @@
 
 ## Current packets
 
+**CY57 · ground combat visual matrix (D82).** Review the [55 ground combat cues and shared states](../technical/ground-combat-visual-matrix.md)
+against the first local bundle. CY58/CY59 close the one-arm rifle, hand shield, Back activation and
+Rig Break/Reboot art gaps before Platform bundle publishing and normal campaign playback.
+
 **CY71 · local combat sprite bundles (D81).** The [bundle format and album workflow](../technical/combat-sprite-bundles.md)
 and [39-part coverage matrix](combat-sprite-coverage.json) establish compact helmeted 2D sprites.
 The local Combat Sprites player reviews three fitted sets. Platform bundle publishing and campaign
@@ -274,6 +278,7 @@ Packets finished go here, newest first.
 | Id | Task | Commit |
 |---|---|---|
 | CY71 | Local compact sprite bundle format, complete equipment coverage matrix, and Combat Sprites album playback for three initial draft fittings (D81). The private handoff records exact version, sources, review scope and remaining actions. | _this commit_ |
+| CY57 · visual matrix | Ground combat cue-to-visual and persistent-state contract, reducer checks and private first-bundle audit (D82). | _this commit_ |
 | CY70 | Approved cast outfit/expression pipeline (D80): automatic registered-actor intake, separate native/crop/expression bases, ally outfit names and exact scene routes, progress-gated wardrobe/expression viewing, and matching ship-command portraits. Preserve the six-role crew bindings, crop recipes, all Story/gameplay and saves. Art/Story receive the private route register and publish evidence; outstanding poses/expressions and CY37 remain separate. | _this commit_ |
 | CY69 | Full approved environments (D74): 64 sources, 47 added image refs, 889 reviewed mappings and 880 changed backdrops; zero remaining review plates. Four shore-milestone ports and two script-driven cue lists resolve seven setting holds. Preserve all 559 Story files, 1,421 prior image refs, wardrobe/crops, progress and saves. Character/Story acceptance and CY37 remain separate. | _this commit_ |
 | CY57 · rifle foundation | Two-handed mid-range Laser rifle with the existing part ID/profile; Training, old worn/preset reconciliation and frozen battle compatibility (D73). Shared energy-equipment and helmeted-sprite packets/prompts align CY58–CY60/CY63. Composition, sprite intake and device acceptance remain open in CY57/CY37. | _this commit_ |
