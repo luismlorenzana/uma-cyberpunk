@@ -213,20 +213,28 @@ test('wardrobe sync scopes all three producer stages and moves game selection on
     { speaker: 'stand-in-1', character: 'commander', from: { collection: 'enemies', unitId: 'stand-in-1' }, default: 'watch-suit' },
   ] })
   const calls = []
-  await syncWardrobes(config, { root, only: ['stand-in-1'], dryRun: true }, async args => { calls.push(args) }, async keys => { calls.push(keys) })
-  assert.equal(calls.length, 4)
-  assert.deepEqual(calls[3], ['commander'])
-  for (const args of calls.slice(0, 3)) {
+  const portraitCharacters = new Set(['officer', 'commander'])
+  await syncWardrobes(config, { root, only: ['stand-in-1'], dryRun: true, portraitCharacters }, async args => { calls.push(args) }, async keys => { calls.push(keys) })
+  assert.equal(calls.length, 3)
+  assert.deepEqual(calls[2], ['commander'])
+  assert(calls[0].includes('--enemies')); assert(calls[1].includes('--portraits'))
+  for (const args of calls.slice(0, 2)) {
     assert(args.includes('cyberpunk')); assert(args.includes('--no-release')); assert(args.includes('--dry-run'))
     assert.equal(args[args.indexOf('--only') + 1], 'commander')
     assert(!args.includes('farm-life'))
   }
   let promoted = false, stages = 0
-  await assert.rejects(syncWardrobes(config, { root, only: ['9000001'], dryRun: false }, async () => {
+  await assert.rejects(syncWardrobes(config, { root, only: ['9000001'], dryRun: false, portraitCharacters }, async () => {
     if (++stages === 2) throw Error('source failed')
   }, async () => { promoted = true }), /source failed/)
   assert.equal(promoted, false)
-  await assert.rejects(syncWardrobes(config, { root, only: ['unknown'], dryRun: true }, async () => {}, async () => {}), /Unregistered/)
+  await assert.rejects(syncWardrobes(config, { root, only: ['unknown'], dryRun: true, portraitCharacters }, async () => {}, async () => {}), /Unregistered/)
+  const pending = []
+  await syncWardrobes(config, { root, only: [], dryRun: true, portraitCharacters: new Set(['officer']) }, async args => { pending.push(args) }, async () => {})
+  assert.equal(pending.length, 3)
+  assert.equal(pending[0][pending[0].indexOf('--only') + 1], 'officer')
+  assert.equal(pending[1][pending[1].indexOf('--only') + 1], 'commander')
+  assert.equal(pending[2][pending[2].indexOf('--only') + 1], 'officer')
 })
 
 test('cloud adapter rejects non-Cyberpunk paths before obtaining credentials or making a request', async () => {

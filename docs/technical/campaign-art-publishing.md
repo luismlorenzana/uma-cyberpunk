@@ -188,7 +188,7 @@ pnpm art:publish --rollback previous-reviewed-release
 ```
 
 `art:sync` is the complete wardrobe delivery: it runs the existing authoring publisher for looks,
-enemy/ally looks and portrait pieces, scoped to registered actor keys with `--no-release`, then runs
+enemy/ally looks and portrait pieces, scoped to each relevant collection's registered actor keys with `--no-release`, then runs
 one game import. Set `UMA_ART_AUTHORING_ROOT`, `--authoring-root`, or private registry `authoringRoot`
 to the real authoring code checkout. Game numeric IDs/board IDs are translated through the explicit
 registry to source character keys. An unknown actor or failed source stage stops before game selection.
@@ -196,6 +196,11 @@ The producer still validates every owner approval and hash. `--dry-run` sends no
 game preflight reads currently published sources; `--stage-only` publishes sources but only stages the
 game candidate. Both retain the existing failed-publication recovery rules below. Art sessions may
 also continue using their scoped individual source commands.
+
+The accepted sparse workflow promotes expression studies into the shared portrait library. Sync reads
+only that library's character-name keys to discover available portrait identities; the producer remains
+responsible for all approval/hash checks. Registered allies absent from the library are pending, and
+their native wardrobes can still ship. Promoting their approved study makes the next sync include it.
 
 `--stage-only` uploads and reads back a candidate without selecting it. Selection/rollback verifies
 the immutable files and refuses a different gameplay/story release. Normal publishing selects after
