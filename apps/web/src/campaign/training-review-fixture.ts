@@ -32,12 +32,14 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
   const issued = review.startsWith('issued')
   const slowTrainee = ['break', 'break-intact', 'med-reboot', 'order-reboot', 'med-reboot-intact', 'expiry'].includes(review)
   const a = base.units.find(u => u.id === trainee)!, e = base.units.find(u => u.id === drone)!
-  const center: Tile = [2, 2]
+  // Leave the west-facing rifle's eastward move in front of the deck wall for the grip review.
+  const westRifle = face === 'W' && (review === 'rifle-right' || review === 'rifle-left')
+  const center: Tile = westRifle ? [1, 2] : [2, 2]
   const incoming = review === 'shield-side' ? rotate(face, 1) : review === 'shield-rear' ? rotate(face, 2) : face
   const sides = [rotate(incoming, 1), rotate(incoming, 3)].map(dir => add(center, step[dir]))
   const canStand = ([x, y]: Tile) => base.map.tiles[y]?.[x] === '.' || base.map.tiles[y]?.[x] === 'c'
   const stepAhead = (tile: Tile) => add(tile, step[incoming])
-  const range = review === 'shield-attack' ? stepAhead : (tile: Tile) => stepAhead(stepAhead(tile))
+  const range = review === 'shield-attack' || westRifle ? stepAhead : (tile: Tile) => stepAhead(stepAhead(tile))
   const partnerOptions = slowTrainee || review === 'mend' || review === 'patch'
     ? [add(center, step.W), add(center, step.E), ...sides] : sides
   const partnerTile = partnerOptions.find(tile => review !== 'shield-cover'
