@@ -174,7 +174,7 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
   </div>
   const objectiveLabel = title ? `Objective · ${title}` : input.objective.kind === 'hack' ? input.objective.count > 1 ? 'Objective · Disconnect both consoles' : 'Objective · Secure manifest console'
     : input.objective.kind === 'defeatLeader' ? 'Objective · Subdue the commander' : undefined
-  return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training portrait={portrait} objectiveLabel={objectiveLabel}
+  return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training combatSprites portrait={portrait} objectiveLabel={objectiveLabel}
     standInKit={interior ? 'town' : undefined}
     onCommit={(next) => {
       const action = next.actions.at(-1)

@@ -1,6 +1,6 @@
 import { capacityOf, loadOf, type BattleInput } from '@cyber/battle'
 import { issuedCampaignRig, loadoutOf, rigProblem, type Rig, type Save } from '@cyber/domain'
-import { missionInput, SCENARIOS } from '../mission/battleInput'
+import { missionInput, SCENARIOS, type SquadUnit } from '../mission/battleInput'
 import { finishMission } from '../mission/director'
 
 export const TRAINING_MAIN = [
@@ -22,13 +22,14 @@ export function groundInput(scenario: string, outfit: number, label: string, mai
   companions: readonly { outfit: number; label: string; rig: Rig | null }[] = [], fitted?: Rig): BattleInput {
   const rig = fitted ?? issuedCampaignRig(main, expansion)
   const [trainee, ...slots] = SCENARIOS[scenario]!.input.units.filter((unit) => unit.side === 'squad')
-  const squad = [{ outfit, label, bands: trainee!.bands, loadout: loadoutOf(rig), stride: null },
+  const squad: SquadUnit[] = [{ outfit, label, bands: trainee!.bands, loadout: loadoutOf(rig), stride: null, frozenRig: rig },
     ...slots.flatMap((slot, index) => {
       const member = companions[index]
       if (!member) return []
-      const equipped = member.rig && !rigProblem(member.rig) ? loadoutOf(member.rig) : slot.loadout
-      const loadout = loadOf(equipped) <= capacityOf({ loadout: equipped, bands: slot.bands }) ? equipped : slot.loadout
-      return [{ outfit: member.outfit, label: member.label, bands: slot.bands, loadout, stride: null }]
+      const equipped = member.rig && !rigProblem(member.rig) ? loadoutOf(member.rig) : null
+      const fits = equipped && loadOf(equipped) <= capacityOf({ loadout: equipped, bands: slot.bands })
+      return [{ outfit: member.outfit, label: member.label, bands: slot.bands, loadout: fits ? equipped : slot.loadout,
+        stride: null, ...(fits && member.rig ? { frozenRig: member.rig } : {}) }]
     })]
   const input = missionInput(scenario, squad, [], scenario)
   const mounted = input.units.some(({ loadout }) => loadout.back.kind === 'launcher' && loadout.back.weapon

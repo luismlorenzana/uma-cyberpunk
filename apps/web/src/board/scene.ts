@@ -16,6 +16,9 @@ import {
   WebGLRenderer,
 } from 'three'
 import { levelOf, toRoomDesign } from './design'
+import { CombatSpriteActor, CombatTileEffect, limbPose, type CombatPose } from './combat-sprite-actor'
+import type { CombatEffects } from './combat-sprite-format'
+import type { CombatLook, LoadedCombatArt } from './local-combat-sprites'
 
 export type Tile = readonly [x: number, z: number]
 
@@ -48,7 +51,7 @@ export interface BoardFigure {
   id: string
   /** A sprite (an Uma): her own set from master data (`source`), or a stand-in set; else a standee card, with her face
    * (an Uma without a set) or a plain one (an enemy, a guest, a stand-in). */
-  look: { kind: 'sprite'; set: number } | { kind: 'sprite'; source: ActorSource } | { kind: 'standee'; face: CanvasImageSource | null }
+  look: { kind: 'sprite'; set: number } | { kind: 'sprite'; source: ActorSource } | { kind: 'standee'; face: CanvasImageSource | null } | CombatLook
   /** The base ring's colour: the side's hue. */
   hue: string
   tile: Tile
@@ -90,7 +93,7 @@ interface Live {
   path: { x: number; z: number }[]
   speed: number
   done: (() => void) | null
-  body: Standee | SpriteActor
+  body: Standee | SpriteActor | CombatSpriteActor
   base: Group
   wedge: Mesh
   down: boolean
@@ -129,6 +132,10 @@ export class BoardScene {
   private map: BattleMap | null = null
   private world: { shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
   private readonly figures = new Map<string, Live>()
+  private combatArt: LoadedCombatArt | null = null
+  private readonly combatEffects = new Map<string, { tile: Tile; sprite: CombatTileEffect }>()
+  private nextEffect = 0
+  private disposed = false
   private overlay: Mesh | null = null
   private states: Mesh | null = null
   private cursor: LineLoop | null = null
@@ -286,7 +293,7 @@ export class BoardScene {
   /** Where a figure's head is on the stage, or null. */
   headOf(id: string): { x: number; y: number } | null {
     const f = this.figures.get(id)
-    return f ? this.project({ x: f.x, y: this.groundAt(f.x, f.z) + (f.body instanceof SpriteActor ? FIGURE_HEAD : STANDEE_HEAD), z: f.z }) : null
+    return f ? this.project({ x: f.x, y: this.groundAt(f.x, f.z) + (f.body instanceof Standee ? STANDEE_HEAD : FIGURE_HEAD), z: f.z }) : null
   }
 
   private groundAt(x: number, z: number): number { return this.map ? levelOf(this.map, Math.floor(x), Math.floor(z)) : 0 }
@@ -295,7 +302,9 @@ export class BoardScene {
 
   addFigure(spec: BoardFigure): void {
     this.removeFigure(spec.id)
-    const body = spec.look.kind === 'sprite' ? new SpriteActor('source' in spec.look ? spec.look.source : standInSet(spec.look.set)) : new Standee(spec.look.face)
+    const body = spec.look.kind === 'combat' ? new CombatSpriteActor(spec.look) : spec.look.kind === 'sprite'
+      ? new SpriteActor('source' in spec.look ? spec.look.source : standInSet(spec.look.set)) : new Standee(spec.look.face)
+    if (spec.look.kind === 'combat') this.combatArt = spec.look.art
     const { group, wedge } = baseRing(spec.hue)
     this.scene.add(body.group, body.shadowMesh, group)
     const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], speed: 1, done: null, body, base: group, wedge, down: false }
@@ -356,6 +365,71 @@ export class BoardScene {
     f.down = down
     this.paintRing(f, down ? '#6b7280' : f.spec.hue)
     this.wake()
+  }
+
+  setCombatPose(id: string, pose: CombatPose): void {
+    const f = this.figures.get(id)
+    if (f?.body instanceof CombatSpriteActor) { f.body.setPose(pose); this.wake() }
+  }
+
+  get stillCombat(): boolean { return this.reducedMotion?.matches ?? false }
+  get hasCombatArt(): boolean { return this.combatArt !== null }
+
+  combatClip(id: string, action: string, pose: CombatPose, facing?: Dir) {
+    const f = this.figures.get(id)
+    if (!(f?.body instanceof CombatSpriteActor)) return null
+    const direction = facing ?? f.facing
+    const name = limbPose(f.body.look, direction, pose, action)
+    const clip = name ? f.body.clip(direction, name) : undefined
+    return name && clip ? { name, clip, direction } : null
+  }
+
+  playCombat(id: string, name: string, direction: Dir, pose: CombatPose, speed: number, frames?: readonly number[]): number {
+    const f = this.figures.get(id)
+    if (!(f?.body instanceof CombatSpriteActor)) return 0
+    const duration = f.body.play(direction, name, pose, speed, frames)
+    this.wake()
+    return this.stillCombat ? 0 : duration
+  }
+
+  placeBarrier(id: string, tile: Tile, speed?: number): void {
+    if (!this.combatArt || this.combatEffects.has(id)) return
+    // The battle records position and HP. The same canonical prop faces the camera after resume.
+    this.addCombatEffect(id, tile, new CombatTileEffect(this.combatArt, this.combatArt.effects.barrier.S, true, speed ?? 1, speed === undefined || this.stillCombat))
+  }
+
+  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number): void {
+    if (!this.combatArt) return
+    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(this.combatArt, this.combatArt.effects.recipient[effect], false, speed, this.stillCombat))
+  }
+
+  private addCombatEffect(id: string, tile: Tile, sprite: CombatTileEffect): void {
+    this.combatEffects.set(id, { tile, sprite })
+    this.scene.add(sprite.group)
+    this.wake()
+  }
+
+  removeCombatEffect(id: string): void {
+    const effect = this.combatEffects.get(id)
+    if (!effect) return
+    this.combatEffects.delete(id)
+    this.scene.remove(effect.sprite.group)
+    effect.sprite.dispose()
+    this.wake()
+  }
+
+  syncCombatBarriers(barriers: readonly { id: string; x: number; y: number }[]): void {
+    const ids = new Set(barriers.map(wall => wall.id))
+    for (const [id, { sprite }] of this.combatEffects) if (!sprite.held || !ids.has(id)) this.removeCombatEffect(id)
+    for (const { id, x, y } of barriers) this.placeBarrier(id, [x, y])
+  }
+
+  get combatDebug() {
+    return {
+      figures: [...this.figures].flatMap(([id, f]) => f.body instanceof CombatSpriteActor ? [{ id,
+        fitting: f.body.look.fitting.id, tile: [f.x - 0.5, f.z - 0.5], ...f.body.shown, anchors: f.body.anchors }] : []),
+      effects: [...this.combatEffects].map(([id, { tile }]) => ({ id, tile })),
+    }
   }
 
   /** A new side's colour (a turret turned). */
@@ -482,6 +556,7 @@ export class BoardScene {
 
   /** Something changed: draw until things settle. */
   wake(): void {
+    if (this.disposed) return
     this.idle = 0
     if (this.raf || typeof requestAnimationFrame !== 'function') return
     this.last = performance.now()
@@ -516,7 +591,13 @@ export class BoardScene {
         if (!f.path.length) { const done = f.done; f.done = null; done?.() }
         this.stand(f)
       }
-      f.body.update(dt * 1000, FACING[f.facing], moving, false)
+      if (f.body instanceof CombatSpriteActor) busy = f.body.update(dt * 1000, f.facing, moving, this.stillCombat) || busy
+      else f.body.update(dt * 1000, FACING[f.facing], moving, false)
+    }
+    for (const [id, { sprite }] of this.combatEffects) {
+      const effect = sprite.update(dt * 1000)
+      if (effect === 'finished') this.removeCombatEffect(id)
+      else if (effect === 'playing') busy = true
     }
     return this.stepFades(dt) || busy
   }
@@ -565,12 +646,18 @@ export class BoardScene {
     const f = frustum(this.device.width, this.device.height)
     const base: [number, number, number] = [new Color(this.grade.tint).r, new Color(this.grade.tint).g, new Color(this.grade.tint).b]
     const lights = this.lamps.filter((l) => l.intensity > 0).map((l) => ({ x: l.position.x, y: l.position.y, z: l.position.z, color: [l.color.r, l.color.g, l.color.b] as [number, number, number], radius: l.distance, strength: l.intensity / 9 }))
+    const worldPerCss = (f.top - f.bottom) / this.css.height
     for (const fig of this.figures.values()) {
       const ground = new Vector3(fig.x, this.groundAt(fig.x, fig.z), fig.z), rel = ground.clone().sub(snapped)
       const placed = snapped.clone().add(RIGHT.clone().multiplyScalar(snapToGrid(rel.dot(RIGHT), f.left, per)))
         .add(UP.clone().multiplyScalar(snapToGrid(rel.dot(UP), f.bottom, per))).add(FORWARD.clone().multiplyScalar(rel.dot(FORWARD)))
       const tint = tintAt(ground, base, lights)
-      fig.body.stand(placed.x, placed.y, placed.z, Math.round(fig.z * 100), fig.down ? [tint[0] * 0.4, tint[1] * 0.4, tint[2] * 0.45] : tint)
+      const order = Math.round(fig.z * 100)
+      if (fig.body instanceof CombatSpriteActor) fig.body.stand(placed.x, placed.y, placed.z, order, worldPerCss)
+      else fig.body.stand(placed.x, placed.y, placed.z, order, fig.down ? [tint[0] * 0.4, tint[1] * 0.4, tint[2] * 0.45] : tint)
+    }
+    for (const { tile: [x, z], sprite } of this.combatEffects.values()) {
+      sprite.stand(x + 0.5, this.groundAt(x + 0.5, z + 0.5) + 0.025, z + 0.5, Math.round((z + 0.5) * 100) + 1, worldPerCss)
     }
     this.renderer.info.reset()
     const effects = this.effectsOn()
@@ -606,10 +693,13 @@ export class BoardScene {
   }
 
   dispose(): void {
+    this.disposed = true
     if (this.raf) cancelAnimationFrame(this.raf)
     this.raf = 0
     this.effects?.dispose()
     for (const id of [...this.figures.keys()]) this.removeFigure(id)
+    for (const id of this.combatEffects.keys()) this.removeCombatEffect(id)
+    this.combatArt = null
     this.setOverlay([])
     this.setStates([])
     this.setCursor(null)

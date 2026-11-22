@@ -54,11 +54,33 @@ the fitted part conditions in bundle v1.
    local album. The pair of rifle fittings shares its clips and changes the Back layer. Close the
    one-arm rifle, shield guard, fitted Back activation and Rig Break/Reboot acceptance cases before
    publishing. Use both matrices to scope remaining poses and equipment before roster rollout.
-2. Extend the existing Cyberpunk Art publisher with a bundle index under
+2. Verify the locked copy on the real Training Deck before publication. The opt-in local review
+   source takes the verified intake receipt path in `CYBER_COMBAT_SPRITE_REVIEW`. It serves the
+   pinned manifest, placement sidecar and PNGs over loopback. The receipt binds the authoring
+   identity and outfit to a verified campaign outfit. Keep the original lock and proposed
+   publication metadata for review. The normal Training deploy captures exact rig IDs in the
+   battle input. Matches load their own sprites and the other units use the existing figure paths.
+3. Extend the existing Cyberpunk Art publisher with a bundle index under
    `art/universes/cyberpunk/combat-sprites/` in the private Platform bucket. Publish approved versioned
    manifests and their hash-addressed pages, then update the index. Platform's existing Combat Sprites
    gallery can link a rendered preview. Advance this delivery after the local acceptance cases.
-3. CY57 imports the approved bundle into a campaign art release. Capture exact part IDs with the
-   battle fitting, resolve its draw layers when entering the battle, and drive clips from actual cues.
-   Check Training, boarding, replay, texture footprint and the physical iPhone. CY60 follows with
-   the matching enemy bodies and their distinct equipment coverage.
+4. CY57 imports the approved bundle into a campaign art release. The board resolves draw layers
+   from the frozen battle fitting and drives clips from actual cues. Check release intake, replay,
+   the normal boarding route and the physical iPhone. CY60 follows with matching enemy bodies and
+   their distinct equipment coverage.
+
+### Local Training review
+
+In PowerShell, point the review server at the verified private intake receipt and pick a local port.
+
+```powershell
+$env:CYBER_COMBAT_SPRITE_REVIEW=(Resolve-Path 'content/cy57-training-review/intake-v011.json').Path
+pnpm --filter @cyber/web exec vite --host 127.0.0.1 --port 5231
+```
+
+The normal `/campaign` Training route uses the issued fitting from the Hangar. Open
+`/__cy57-training?case=shield-cover&facing=E` to review Cover with a second legal squad unit.
+Other case keys are in `apps/web/src/campaign/training-review-fixture.ts`. Each fixture replays a
+saved prefix on the Training Deck and exposes one checked turn for playback. It uses a separate
+local page and independent input, so the stock Training scenario, rewards and save flow keep their
+normal rules. Use the verified identity in the private receipt for both routes.

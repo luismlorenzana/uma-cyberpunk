@@ -125,6 +125,9 @@ export interface UnitRef {
 }
 
 export interface UnitInput {
+  /** Optional frozen equipment identities for presentation. The reducer uses loadout. */
+  frozenRig?: Record<'core' | 'leftArm' | 'rightArm' | 'legs' | 'visor', string>
+    & Record<'leftHand' | 'rightHand' | 'back' | 'coat', string | null>
   id: string
   side: Side
   bands: Bands
