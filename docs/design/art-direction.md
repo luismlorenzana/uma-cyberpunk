@@ -10,14 +10,11 @@ ownership and integration requirements.
 The shared standard is **Hardline Anime**. Characters and their surroundings should read as part of
 one illustrated world.
 
-**Battle figures (D77).** Use full adult proportions and clean cel shading, rendered from editable
-rigged 3D sources into 2D sprites. Match the approved full-body armor and identity references.
-Prioritize modeled silhouette, designed armor planes, controlled shadows, restrained highlights,
-antialiased alpha edges and deliberate contour weight. The [first-character brief](combat-sprites-request.md)
-defines model-quality review, source resolution, display-scale candidates and the campaign checkpoint.
-Illustrations, portraits, splashes and environment
-plates retain their approved rendering. Reconstructing armor as a sprite source has its own model
-and export review; it preserves the approved character design.
+**Battle figures (D81).** Use compact helmeted 2D art with clear armor planes, stable foot anchors
+and readable equipped poses at the 100 CSS px review height. The [combat sprite bundle contract](../technical/combat-sprite-bundles.md)
+specifies four facings, shared body motion, equipment layers and album playback. Use the approved
+full-body art to guide the armor and palette. Illustrations, portraits, splashes and environment
+plates follow the Hardline Anime standards below.
 
 - Confident dark contours with controlled line weight.
 - Clear local colors and broad, angular cel-shadow shapes.
