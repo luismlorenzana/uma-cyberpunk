@@ -10,6 +10,7 @@ export interface ArtStorage {
 export class GenerationConflict extends Error {}
 export const ART_BUCKET = 'uma-platform-content'
 export const CAMPAIGN_PREFIX = 'campaign/cyberpunk/'
+export const COMBAT_SPRITE_PREFIX = 'art/universes/cyberpunk/combat-sprites/'
 export const SOURCE_PREFIXES = ['art/universes/cyberpunk/', 'enemy-art/cyberpunk/'] as const
 
 export function safeObject(path: string): string {
@@ -19,7 +20,7 @@ export function safeObject(path: string): string {
   return path
 }
 
-/** This adapter has no master-data/Farm write path. All mutations stay in Cyberpunk's campaign prefix. */
+/** Cyberpunk write scopes are selected explicitly for campaign or Platform combat sprites. */
 export class GcsArtStorage implements ArtStorage {
   private token: Promise<string> | undefined
   constructor(private readonly request: typeof fetch = fetch, private readonly accessToken = async () => {
@@ -31,7 +32,7 @@ export class GcsArtStorage implements ArtStorage {
     const token = result.stdout.trim()
     if (!token || /\s/.test(token)) throw new Error('No Google Cloud access token')
     return token
-  }) {}
+  }, private readonly writePrefix: typeof CAMPAIGN_PREFIX | typeof COMBAT_SPRITE_PREFIX = CAMPAIGN_PREFIX) {}
 
   private async headers() {
     this.token ??= this.accessToken()
@@ -51,7 +52,7 @@ export class GcsArtStorage implements ArtStorage {
   }
   async put(path: string, bytes: Buffer, generation: string, immutable = false): Promise<void> {
     safeObject(path)
-    if (!path.startsWith(CAMPAIGN_PREFIX) || !/^\d+$/.test(generation)) throw new Error('Write outside Cyberpunk campaign or missing precondition')
+    if (!path.startsWith(this.writePrefix) || !/^\d+$/.test(generation)) throw new Error('Write outside Cyberpunk scope or missing precondition')
     const boundary = `cyber-${randomUUID()}`
     const metadata = { name: path, cacheControl: immutable ? 'private,max-age=31536000,immutable' : 'private,no-store' }
     const mime = path.endsWith('.png') ? 'image/png' : path.endsWith('.webp') ? 'image/webp' : 'application/json'

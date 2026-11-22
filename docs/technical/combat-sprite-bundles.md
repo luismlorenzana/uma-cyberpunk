@@ -33,12 +33,19 @@ bundles. Older still-image studies continue to appear as image cards.
 | Motion | `motions[motion][S|W|N|E]` provides `frames` and `clips`. S is front, N rear, W left and E right. Preserve asymmetric art on its intended side |
 | Frames | Each frame declares ordered `layers[]` drawn back to front with `page`, source `rect: [x,y,width,height]` and cell-space `at: [x,y]`. A `when: {slot,part}` layer draws only when its exact part is equipped. `anchors` maps names to cell-space coordinates for grip, muzzle/tip, or mount review |
 | Clips | Each direction requires `idle`, `walk`, `settle` and `attack`. A clip has ordered `frames: [{frame,ms}]`, a `loop` flag and optional `events: [{frame,cue}]`, with zero-based indexes into the clip. Extra clips can represent supported guard, damage and support actions |
+| Composition | The campaign export can name a layered `body` motion and the `rifle` and `blade` two-grip donors in `composition`. Its body cels carry `left-grip`, `right-grip` and `back-mount`. Tag arm, glove and leg plates with `limb`, and conditional flashes with `effect: true`. |
 
 Palette masks and individual editable pieces belong in private source. The current player draws
 registered PNG fragments. A part's tint or cropped texture may be baked ahead into a small overlay,
 leaving motion, footprint and common frames shared. For new shapes, give every part its own registered
 layer with front and rear occlusion as needed. Create distinct compatible arm and prop poses when grips
 or the action differ. Preview precomposed layers are useful when importing a locked source study.
+
+Mixed offensive fittings provide `attack-left`, `attack-right` and `attack-back` for each mounted
+weapon. Select these from the resolved `attack.with` cue. The legacy `attack` clip is the fallback
+only when the fitting has one offensive mount. Keep the required v1 `attack` entry as a preview alias
+and record the separate anchors and pulse markers for the fitted weapons. Keep non-firing equipment
+visible in the carry and attack frames.
 
 Run `node --import tsx src/check-combat-sprites.ts <version-folder>` from Uma Art Authoring. The album
 uses the same parser and checks texture sizes, dimensions and hashes before playing a bundle. Use the
@@ -54,11 +61,63 @@ the fitted part conditions in bundle v1.
    local album. The pair of rifle fittings shares its clips and changes the Back layer. Close the
    one-arm rifle, shield guard, fitted Back activation and Rig Break/Reboot acceptance cases before
    publishing. Use both matrices to scope remaining poses and equipment before roster rollout.
-2. Extend the existing Cyberpunk Art publisher with a bundle index under
+2. Verify the locked copy on the real Training Deck before publication. The opt-in local review
+   source takes the verified intake receipt path in `CYBER_COMBAT_SPRITE_REVIEW`. It serves the
+   pinned manifest, placement sidecar and PNGs over loopback. The receipt binds the authoring
+   identity and outfit to a verified campaign outfit. Keep the original lock and proposed
+   publication metadata for review. The normal Training deploy captures exact rig IDs in the
+   battle input. Matches load their own sprites and the other units use the existing figure paths.
+3. Extend the existing Cyberpunk Art publisher with a bundle index under
    `art/universes/cyberpunk/combat-sprites/` in the private Platform bucket. Publish approved versioned
    manifests and their hash-addressed pages, then update the index. Platform's existing Combat Sprites
    gallery can link a rendered preview. Advance this delivery after the local acceptance cases.
-3. CY57 imports the approved bundle into a campaign art release. Capture exact part IDs with the
-   battle fitting, resolve its draw layers when entering the battle, and drive clips from actual cues.
-   Check Training, boarding, replay, texture footprint and the physical iPhone. CY60 follows with
-   the matching enemy bodies and their distinct equipment coverage.
+4. CY57 imports the approved bundle into a campaign art release. The board resolves draw layers
+   from the frozen battle fitting and drives clips from actual cues. Check release intake, replay,
+   the normal boarding route and the physical iPhone. CY60 follows with matching enemy bodies and
+   their distinct equipment coverage.
+
+### Local Training review
+
+In PowerShell, point the review server at the verified private intake receipt and pick a local port.
+
+```powershell
+$env:CYBER_COMBAT_SPRITE_REVIEW=(Resolve-Path 'content/cy57-training-review/intake-v011.json').Path
+pnpm --filter @cyber/web exec vite --host 127.0.0.1 --port 5231
+```
+
+The normal `/campaign` Training route uses the issued fitting from the Hangar. Open
+`/__cy57-training?case=shield-cover&facing=E` to review Cover with a second legal squad unit.
+Other case keys are in `apps/web/src/campaign/training-review-fixture.ts`. Each fixture replays a
+saved prefix on the Training Deck and exposes one checked turn for playback. It uses a separate
+local page and independent input, so the stock Training scenario, rewards and save flow keep their
+normal rules. Use the verified identity in the private receipt for both routes.
+
+The `mixed-left`, `mixed-right` and `mixed-back` cases share a frozen fitting. The prefix walks to
+two tiles for the Machine pistol, closes to one for the Edge blade, and withdraws to three for the
+Missile pod. Capture the selected clip and the reducer's outcome sequence, including the launcher's
+single ammo spend. The comparison fixture retains the exact Training Deck terrain.
+
+### Campaign release
+
+The active campaign release can carry `combatSprites` entries keyed by canonical outfit. Each
+entry pins its manifest, effect placements and PNG pages by SHA-256. The game loads matching
+entries on Training and ground deployments. Exact-fit bundles still work. Composed bundles draw
+only the frozen equipped pieces for each unit and use the reducer's mount and action cues for
+animation. Core, arms, legs, visors and coat values share the base armor silhouette. Long and
+short Back launchers share a housing, with distinct gameplay profiles and ammo in the forecast.
+Thruster, Deck and Mounted blade have their own treatments. The source album uses exact fitted
+previews. The campaign export adds the shared motion and damage bindings.
+
+Use the verified private receipt for a local preview.
+
+```powershell
+pnpm exec tsx scripts/art/combat-sprites.ts <receipt> --local <campaign-release-dir> --dry-run
+pnpm exec tsx scripts/art/combat-sprites.ts <receipt> --local <campaign-release-dir> --select
+```
+
+For an approved manifest, `--cloud` stages hash-addressed payloads in Platform's private
+Cyberpunk combat-sprite folder and in the game's campaign namespace. Add `--select` to update
+both pointers with generation checks. The command verifies the manifest binding and all pages,
+and carries the selected campaign's existing story, wardrobe and image references into the new
+release. The regular art publisher and local campaign selection preserve or verify sprite pins.
+The private Training receipt records exact files, cels, effects and gameplay outcomes.

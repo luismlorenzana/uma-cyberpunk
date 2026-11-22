@@ -121,20 +121,18 @@ export function buildArtCandidate(selected: SelectedCampaign, resolved: Resolved
   const presentationChanged = sha(bytesOf(selected.files['campaign.json'])) !== bookRef.sha256
   const fileRefs = selected.release.files.map(file => file.source === 'campaign.json' && presentationChanged ? bookRef : file)
   if (presentationChanged) payloads.set(bookRef.path, storyBytes)
-  const fingerprint = sha(bytesOf({ files: fileRefs, assets: [...byAsset.values()] })).slice(0, 20)
-  const release = parseCampaignRelease({ schemaVersion: 1, release: changed.size ? `art-${fingerprint}` : selected.release.release,
+  const fingerprint = sha(bytesOf({ files: fileRefs, assets: [...byAsset.values()], combatSprites: selected.release.combatSprites })).slice(0, 20)
+  const release = parseCampaignRelease({ ...selected.release, release: changed.size ? `art-${fingerprint}` : selected.release.release,
     files: fileRefs, assets: [...byAsset.values()] })
   return { release, payloads, changes: [...changed], skipped }
 }
 
-async function immutable(storage: ArtStorage, path: string, bytes: Buffer) {
-  try { await storage.put(CAMPAIGN_PREFIX + path, bytes, '0', true) }
+export async function immutable(storage: ArtStorage, path: string, bytes: Buffer) {
+  try { await storage.put(path, bytes, '0', true) }
   catch (error) {
     if (!(error instanceof GenerationConflict)) throw error
-    const previous = await storage.read(CAMPAIGN_PREFIX + path)
-    if (!previous || !previous.bytes.equals(bytes)) throw new Error(`Immutable collision: ${path}`)
   }
-  const remote = await storage.read(CAMPAIGN_PREFIX + path)
+  const remote = await storage.read(path)
   if (!remote || !remote.bytes.equals(bytes)) throw new Error(`Readback failed: ${path}`)
 }
 
@@ -143,9 +141,9 @@ export async function publishArtCandidate(storage: ArtStorage, selected: Selecte
   const candidate = buildArtCandidate(selected, await refreshWardrobeImages(selected, resolved))
   if (options.dryRun || !candidate.changes.length) return { ...candidate, promoted: false }
   for (const check of resolved.sourceChecks) await check()
-  await concurrent([...candidate.payloads], async ([path, bytes]) => { await immutable(storage, path, bytes) })
+  await concurrent([...candidate.payloads], async ([path, bytes]) => { await immutable(storage, CAMPAIGN_PREFIX + path, bytes) })
   const manifest = bytesOf(candidate.release)
-  await immutable(storage, campaignReleasePath(candidate.release.release), manifest)
+  await immutable(storage, CAMPAIGN_PREFIX + campaignReleasePath(candidate.release.release), manifest)
   // A new candidate retains the exact unchanged story and assets from its verified base.
   for (const file of candidate.release.files) {
     if (candidate.payloads.has(file.path)) continue
@@ -172,7 +170,8 @@ export async function rollbackArt(storage: ArtStorage, release: string, dryRun =
   const parsed = parseCampaignRelease(json(prior.bytes))
   if (parsed.release !== release) throw new Error('Rollback release identity mismatch')
   const files: Record<string, unknown> = {}
-  for (const ref of [...parsed.files, ...parsed.assets]) {
+  const combat = (parsed.combatSprites ?? []).flatMap(row => [row.manifest, row.placements, ...row.pages])
+  for (const ref of [...parsed.files, ...parsed.assets, ...combat]) {
     const object = await storage.read(CAMPAIGN_PREFIX + ref.path)
     if (!object) throw new Error(`Rollback file missing: ${ref.path}`)
     verify(ref, object.bytes)

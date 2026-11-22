@@ -9,7 +9,7 @@ const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import
 export const SCENARIOS: Record<string, Scenario> = Object.fromEntries(Object.values(import.meta.glob<{ default: unknown }>(['../../../../scenarios/*.json', '../../../../scenarios/campaign/*.json'], { eager: true }))
   .map((m) => { const s = parseScenario(m.default, MAPS); return [s.id, s] }))
 
-export interface SquadUnit { outfit: number; label: string; bands: Bands; loadout: Loadout; stride: Stride | null }
+export interface SquadUnit { outfit: number; label: string; bands: Bands; loadout: Loadout; stride: Stride | null; frozenRig?: UnitInput['frozenRig'] }
 
 /** A battle's units with Umas in its squad slots, in order (a null keeps that slot's stand-in): each Uma brings her bands,
  * her rig as a loadout and her Stride; the slot keeps its id, spawn, facing, Charge cap and Link. */
@@ -21,7 +21,8 @@ export function fillSquad(units: readonly UnitInput[], squad: readonly (SquadUni
     if (!m) return u
     return {
       id: u.id, side: u.side, spawn: u.spawn, facing: u.facing, chargeCap: u.chargeCap, link: u.link, bands: m.bands, loadout: m.loadout,
-      ...(m.stride ? { stride: m.stride } : {}), ref: { kind: 'uma' as const, id: String(m.outfit) }, label: m.label,
+      ...(m.stride ? { stride: m.stride } : {}), ...(m.frozenRig ? { frozenRig: { ...m.frozenRig } } : {}),
+      ref: { kind: 'uma' as const, id: String(m.outfit) }, label: m.label,
     }
   })
 }

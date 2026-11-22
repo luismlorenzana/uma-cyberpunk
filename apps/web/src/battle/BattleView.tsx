@@ -10,6 +10,8 @@ import { AlbumArtProvider } from '@luismlorenzana/uma-kit/album'
 import { initialSaver, toStage, type StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { looksFor, type UnitLook } from '../board/looks'
+import { campaignCombatLooks, type CombatLook } from '../board/local-combat-sprites'
+import type { CampaignRelease } from '@cyber/domain'
 import { BoardScene, type BoardFigure, type StateKind } from '../board/scene'
 import { albumArt } from '../crew/art'
 import { useMaster } from '../master/master'
@@ -17,6 +19,7 @@ import { CutIn, ForecastCard, labelOf, PaperDoll, SIDE_HUE, TerrainPanel, Timeli
 import { CUT_IN_MS, cutInSpeed, speedOf, stepMs, type CutInSetting } from './playback'
 import { targetsFrom, threatTiles, tileKey, turnReach } from './reach'
 import { act as applyAct, type Session } from './session'
+import { CombatVisualPlayback, type CombatTrace } from './combat-visual-playback'
 
 export type Control = { squad: 'player' | 'ai'; enemy: 'player' | 'ai' }
 
@@ -44,6 +47,10 @@ export interface SandboxHandle {
   auto: () => Promise<BattleState['result']>
   /** The board's readout (figures, sprites, live sets, draw calls). */
   readonly board: BoardScene['debug'] | null
+  readonly combat: BoardScene['combatDebug'] | null
+  readonly combatTrace: readonly CombatTrace[]
+  play: (action: BattleAction) => Promise<string | null>
+  skipPlayback: () => void
 }
 declare global { interface Window { __sandbox?: SandboxHandle } }
 
@@ -78,6 +85,7 @@ export interface BattleViewProps {
   objectiveLabel?: string
   portrait?: { unit: string; url: string }
   standInKit?: 'biome' | 'town'
+  combatSprites?: CampaignRelease['combatSprites']
   onCommit: (s: Session) => void
   onEnd: (s: Session) => void
   onQuit: () => void
@@ -88,7 +96,7 @@ export interface BattleViewProps {
 export function BattleView(props: BattleViewProps) {
   const master = useMaster()
   const art = master.status === 'ready' ? master.view.art : null
-  const [looks, setLooks] = useState<Map<string, UnitLook> | null>(null)
+  const [looks, setLooks] = useState<Map<string, UnitLook | CombatLook> | null>(null)
   const [loaded, setLoaded] = useState<[number, number]>([0, 0])
   useEffect(() => {
     let live = true
@@ -98,9 +106,12 @@ export function BattleView(props: BattleViewProps) {
     void Promise.all([
       looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }),
       face ? face.decode().then(() => face, () => null) : undefined,
-    ]).then(([units, decoded]) => {
-      if (portrait && decoded) units.set(portrait.unit, { kind: 'face', face: decoded })
-      if (live) setLooks(units)
+      props.combatSprites ? campaignCombatLooks(props.session.input, props.combatSprites) : undefined,
+    ]).then(([units, decoded, combat]) => {
+      const all = new Map<string, UnitLook | CombatLook>(units)
+      if (portrait && decoded) all.set(portrait.unit, { kind: 'face', face: decoded })
+      for (const [id, look] of combat ?? []) all.set(id, look)
+      if (live) setLooks(all)
     })
     return () => { live = false }
   }, [])
@@ -109,13 +120,14 @@ export function BattleView(props: BattleViewProps) {
   return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
   const controlRef = useRef(control)
   const busy = useRef(false)
   const skipping = useRef(false)
+  const playingSide = useRef<'squad' | 'enemy' | null>(null)
   const seen = useRef(new Set<string>())
   const lastTarget = useRef<Tile | null>(null)
   const terrainKey = useRef('')
@@ -134,14 +146,14 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   const settingRef = useRef(cutInSetting)
   settingRef.current = cutInSetting
   const tapRef = useRef<(t: Tile) => void>(() => {})
+  const combatTrace = useRef<CombatTrace[]>([])
 
   const sideOf = (id: string | null) => session.current.state.units.find((u) => u.id === id)?.side ?? 'squad'
   const isPlayer = (s: BattleState) => !!s.active && controlRef.current[sideOf(s.active)] === 'player'
 
   // --- The board follows the state -----------------------------------------------------------------------------------
 
-  /** Places every figure as the state has her, rebuilds the terrain if lifts, doors or props changed, paints the states. */
-  const sync = (s: BattleState) => {
+  const syncTerrain = (s: BattleState) => {
     const sc = scene.current
     if (!sc) return
     const field = s.field
@@ -153,16 +165,25 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       const shut = (s.input.map.props ?? []).filter((p) => p.kind === 'door' && field && !field.doors[p.id]).map((p) => p.id)
       sc.setMap({ ...s.input.map, heights }, { shut, burst: field?.burst ?? [] })
     }
-    for (const u of s.units) {
-      if (u.status === 'out' || u.status === 'freed') { sc.removeFigure(u.id); continue }
-      sc.place(u.id, [u.x, u.y], u.facing)
-      sc.setDown(u.id, u.status === 'down')
-      sc.setHue(u.id, SIDE_HUE[u.side])
-    }
     const states: { tile: Tile; kind: StateKind }[] = []
     for (const [k, st] of Object.entries(field?.states ?? {})) { const [x, z] = k.split(',').map(Number) as [number, number]; states.push({ tile: [x, z], kind: st.kind }) }
     for (const k of liveTiles(s)) { const [x, z] = k.split(',').map(Number) as [number, number]; states.push({ tile: [x, z], kind: 'live' }) }
     sc.setStates(states)
+  }
+
+  /** Snap to authoritative state on resume, skip and at the end of playback. */
+  const sync = (s: BattleState) => {
+    const sc = scene.current
+    if (!sc) return
+    syncTerrain(s)
+    for (const u of s.units) {
+      if (u.status === 'out' || u.status === 'freed') { sc.removeFigure(u.id); continue }
+      sc.place(u.id, [u.x, u.y], u.facing)
+      sc.setDown(u.id, u.status === 'down')
+      sc.setCombatPose(u.id, u)
+      sc.setHue(u.id, SIDE_HUE[u.side])
+    }
+    sc.syncCombatBarriers(s.field?.barriers ?? [])
   }
 
   /** The overlays for the phase (TC29). */
@@ -201,12 +222,18 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   }
 
   /** Plays an action's cues on the board, then shows the state as it ended. */
-  const play = async (cues: readonly Cue[], before: BattleState, after: BattleState, side: 'squad' | 'enemy') => {
+  const play = async (action: BattleAction, cues: readonly Cue[], before: BattleState, after: BattleState, side: 'squad' | 'enemy') => {
     const sc = scene.current
     if (!sc || skipping.current) return
     const speed = speedOf(side)
+    const interrupted = () => skipping.current || scene.current !== sc
+    const visual = sc.hasCombatArt ? new CombatVisualPlayback(sc, action, cues, before, speed, interrupted,
+      entry => { if (debug) combatTrace.current.push(entry) }) : null
     let current: CutInView | null = null
-    for (const c of cues) {
+    for (const [i, c] of cues.entries()) {
+      if (interrupted()) break
+      const timed = await visual?.beforeCue(c, i)
+      if (interrupted()) break
       // A walk also ends on a timer, so a page that draws no frames (hidden, throttled) never stalls the battle.
       if (c.kind === 'moved') await Promise.race([sc.walk(c.unit, c.path, speed), wait((c.path.length * 350) / speed + 400)])
       else if (c.kind === 'attack') {
@@ -224,21 +251,25 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       } else if (c.kind === 'rigBreak') sc.setDown(c.unit, true)
       else if (c.kind === 'extracted' || c.kind === 'freed') sc.removeFigure(c.unit)
       else if (c.kind === 'faced') sc.face(c.unit, c.facing)
-      else if (c.kind === 'terrain' || c.kind === 'door' || c.kind === 'heights' || c.kind === 'burst') sync(after)
+      else if (c.kind === 'terrain' || c.kind === 'door' || c.kind === 'heights' || c.kind === 'burst') {
+        if (visual) syncTerrain(after)
+        else sync(after)
+      }
       else if (c.kind === 'turned') sc.setHue(c.unit, SIDE_HUE[c.side])
       else if (c.kind === 'resonance') { setResonance({ unit: c.unit, path: c.path, key: Math.random() }); window.setTimeout(() => setResonance(null), 2200) }
-      else if (c.kind === 'strikeMarked' || c.kind === 'duo' || c.kind === 'order') sync(after)
-      const ms = stepMs(c) / speed
+      else if (!visual && (c.kind === 'strikeMarked' || c.kind === 'duo' || c.kind === 'order')) sync(after)
+      await visual?.afterCue(c, i)
+      const ms = timed || (visual && c.kind === 'rigBreak') ? 0 : stepMs(c) / speed
       if (ms) await wait(ms)
     }
     if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
-    void before
+    await visual?.finishAttack()
   }
 
   // --- The loop ------------------------------------------------------------------------------------------------------
 
   const commit = async (action: BattleAction): Promise<string | null> => {
-    if (busy.current && !skipping.current) return 'busy'
+    if (busy.current) return 'busy'
     const before = session.current.state
     const r = applyAct(session.current, action)
     if ('error' in r) { setToast(r.error); return r.error }
@@ -246,12 +277,15 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
     session.current = r.session
     onCommit(r.session)
     busy.current = true
+    playingSide.current = side
+    combatTrace.current = []
     setUi({ phase: 'watch' })
     scene.current?.setOverlay([])
-    await play(r.cues, before, r.session.state, side)
+    await play(action, r.cues, before, r.session.state, side)
     if (!skipping.current) sync(r.session.state)
     setState(r.session.state)
     busy.current = false
+    playingSide.current = null
     next()
     return null
   }
@@ -274,7 +308,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   }
 
   const skip = () => {
-    if (isPlayer(session.current.state)) return
+    if (playingSide.current !== 'enemy' && isPlayer(session.current.state)) return
     skipping.current = true
   }
 
@@ -294,7 +328,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       const own = looks.get(u.id)
       // Her own look (an Uma's set or face), else a stand-in set for the first four squad units, else a plain card.
       const standIn = u.side === 'squad' && ref?.ref?.kind !== 'uma' && sprite < 4 && !/guest/i.test(ref?.label ?? '')
-      const look: BoardFigure['look'] = own?.kind === 'set' ? { kind: 'sprite', source: own.source } : own?.kind === 'face' ? { kind: 'standee', face: own.face }
+      const look: BoardFigure['look'] = own?.kind === 'combat' ? own : own?.kind === 'set' ? { kind: 'sprite', source: own.source } : own?.kind === 'face' ? { kind: 'standee', face: own.face }
         : standIn || (ref?.ref?.kind === 'uma' && sprite < 4) ? { kind: 'sprite', set: sprite++ } : { kind: 'standee', face: null }
       sc.addFigure({ id: u.id, tile: [u.x, u.y], facing: u.facing, hue: SIDE_HUE[u.side], look })
     }
@@ -321,6 +355,10 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
     window.__sandbox = {
       get state() { return session.current.state },
       get board() { return scene.current?.debug ?? null },
+      get combat() { return scene.current?.combatDebug ?? null },
+      get combatTrace() { return combatTrace.current },
+      play: commit,
+      skipPlayback: skip,
       act: (a) => { const r = applyAct(session.current, a); if ('error' in r) return r.error; session.current = r.session; onCommit(r.session); sync(r.session.state); setState(r.session.state); return null },
       step: (ms) => scene.current?.step(ms),
       tap: (x, z) => tapRef.current([x, z]),

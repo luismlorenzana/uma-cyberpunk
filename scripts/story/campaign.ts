@@ -105,7 +105,9 @@ export async function packCampaign(dir: string, out: string, release: string): P
     return { bytes, ref: { source: name, ...packed(bytes, '.json') } }
   })
   const assets = input.assets.map(({ id, bytes, extension }) => ({ bytes, ref: { id, ...packed(bytes, extension) } }))
-  const index = parseCampaignRelease({ schemaVersion: 1, release, files: files.map((f) => f.ref), assets: assets.map((a) => a.ref) })
+  const selected = join(out, CAMPAIGN_PREVIEW_INDEX)
+  const combatSprites = existsSync(selected) ? parseCampaignRelease(readJson(selected)).combatSprites : undefined
+  const index = parseCampaignRelease({ schemaVersion: 1, release, files: files.map((f) => f.ref), assets: assets.map((a) => a.ref), combatSprites })
   for (const { ref, bytes } of [...files, ...assets]) writeAtomic(join(out, ref.path), bytes)
   writeRelease(join(out, path), Buffer.from(`${JSON.stringify(index, null, 2)}\n`))
   return index
@@ -117,7 +119,8 @@ export function selectCampaign(out: string, release: string): CampaignRelease {
   if (!CAMPAIGN_RELEASE_PATH.test(path)) throw new Error('Release must be a lowercase slug')
   const index = parseCampaignRelease(readJson(join(out, path)), path)
   if (index.release !== release) throw new Error(`${path}: release ID does not match the filename`)
-  for (const file of [...index.files, ...index.assets]) {
+  const combat = (index.combatSprites ?? []).flatMap(row => [row.manifest, row.placements, ...row.pages])
+  for (const file of [...index.files, ...index.assets, ...combat]) {
     const bytes = readFileSync(join(out, file.path))
     if (bytes.length !== file.bytes || sha(bytes) !== file.sha256) throw new Error(`${file.path}: failed integrity check`)
   }

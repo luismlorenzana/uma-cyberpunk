@@ -2,6 +2,11 @@
 
 ## Current packets
 
+**CY57 · first crew sprite composition (D83).** All 39 equipment IDs have a shared visual
+treatment. The real campaign reads pinned combat bundles from its release and chooses pose and
+gear from the frozen rig. Track the first recruit's board checks in the private sprite review.
+Release approval, device acceptance and the broader CY57 crew and enemy work remain open.
+
 **CY57 · ground combat visual matrix (D82).** Review the [55 ground combat cues and shared states](../technical/ground-combat-visual-matrix.md)
 against the first local bundle. CY58/CY59 close the one-arm rifle, hand shield, Back activation and
 Rig Break/Reboot art gaps before Platform bundle publishing and normal campaign playback.

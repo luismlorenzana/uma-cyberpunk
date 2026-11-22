@@ -6,6 +6,7 @@ import { loadEnv, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { defineConfig } from 'vitest/config'
 import { CAMPAIGN_ENTRY } from './src/app/campaign'
+import { localCombatSpriteReview } from './local-combat-sprite-review'
 
 const buildId = (process.env.VITE_APP_BUILD_ID ?? process.env.GITHUB_SHA ?? 'local').slice(0, 12)
 
@@ -32,6 +33,7 @@ function chunkModules(): Plugin {
 }
 
 export default defineConfig(({ mode }) => {
+  const combatReview = mode === 'development' ? process.env.CYBER_COMBAT_SPRITE_REVIEW : undefined
   // A production build without the Firebase web config would run signed out and every API call would get a 401
   // (uma-rpg D42). Fail the build instead: apps/web/.env.production is committed.
   if (mode === 'production') {
@@ -40,11 +42,12 @@ export default defineConfig(({ mode }) => {
     if (missing.length > 0) throw new Error(`Production build is missing ${missing.join(', ')} (apps/web/.env.production)`)
   }
   return {
-    define: { __APP_BUILD_ID__: JSON.stringify(buildId) },
+    define: { __APP_BUILD_ID__: JSON.stringify(buildId), 'import.meta.env.CYBER_COMBAT_SPRITE_REVIEW': JSON.stringify(!!combatReview) },
     plugins: [
       react(),
       tailwindcss(),
       chunkModules(),
+      ...(combatReview ? [localCombatSpriteReview(combatReview)] : []),
       VitePWA({
         // The kit's "Update ready · Restart" prompt instead of a silent reload (watchAppUpdates in main.tsx).
         registerType: 'prompt',
@@ -98,7 +101,7 @@ export default defineConfig(({ mode }) => {
       dedupe: ['react', 'react-dom', 'react-router', 'motion'],
     },
     build: { target: 'es2022', manifest: true },
-    server: { port: 5214, strictPort: true, host: true, proxy: { '/api': 'http://localhost:8121' } },
+    server: { port: 5214, strictPort: true, host: combatReview ? '127.0.0.1' : true, proxy: { '/api': 'http://localhost:8121' } },
     preview: { port: 5214 },
     // uma-kit goes through Vite in tests, so it shares this app's react-router instance (and its context).
     test: { environment: 'node', server: { deps: { inline: ['@luismlorenzana/uma-kit'] } } },

@@ -56,6 +56,7 @@ describe('campaign Training', () => {
     const action = chooseAction(startSession(input).session.state)
     const reloaded = parseSave(JSON.parse(JSON.stringify(recordAction(battle, action))))
     expect(reloaded.mission?.battle?.actions).toEqual([action])
+    expect((reloaded.mission?.battle?.input as typeof input).units[0]?.frozenRig).toMatchObject({ rightHand: 'hand-rifle', leftHand: null, back: 'back-med' })
     const loss = finishBattle(reloaded, false)
     expect(settleTraining(loss)).toBe(loss)
     expect(retry(loss).mission?.battle).toEqual({ input, actions: [] })
