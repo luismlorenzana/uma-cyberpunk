@@ -43,7 +43,7 @@ export async function main(args = process.argv.slice(2)) {
   let sources
   try {
     const art = await resolveArt(storage, scoped, { event: event as ArtEvent, allowMissing: dryRun,
-      only, contentRoot: resolve('content'), currentImages: new Map(selected.release.assets.map(asset => [asset.id, asset.sha256])) })
+      only, contentRoot: resolve('content'), wardrobe: selected.book.wardrobe, currentImages: new Map(selected.release.assets.map(asset => [asset.id, asset.sha256])) })
     art.skipped.push(...skipped)
     sources = art.sources
     result = await publishArtCandidate(storage, selected, art, { dryRun, stageOnly: args.includes('--stage-only') })

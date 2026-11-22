@@ -21,6 +21,7 @@
     "story:pack": "tsx scripts/story/pack.ts",
     "campaign": "tsx scripts/story/campaign.ts",
     "art:publish": "tsx scripts/art/cli.ts",
+    "art:sync": "tsx scripts/art/sync.ts",
     "stories:import-cast": "node scripts/story/import-cast.mjs"
   },
   "devDependencies": {

@@ -250,7 +250,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }) : []
   const pairPanels = loaded && save && !night && !pendingPair && !missionState && !eveningOpen ? pairs.filter((pair) =>
     !pair.members.some(({ outfit }) => support?.ashore.has(outfit))).map((pair) => (
-    <PairPanel key={pair.id} pair={pair} story={save.story} pack={loaded.book.story}
+    <PairPanel key={pair.id} pair={pair} story={save.story} pack={loaded.book.story} book={loaded.book} assets={loaded.assets}
       open={(scene) => commitScene((s) => openPairScene(s, loaded.book, pair, scene))} />
   )) : []
   const datePanel = loaded && save && dates.length > 0 && !night && !pendingPair && !missionState && !eveningOpen

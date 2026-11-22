@@ -60,7 +60,17 @@ not in git. The following names and numeric speaker are synthetic examples.
       "from": { "collection": "looks", "id": "officer-one-rifle", "category": "weapons" }
     }
   ],
-  "portraits": []
+  "portraits": [],
+  "wardrobes": [
+    { "speaker": 9000001, "character": "officer-one", "from": { "collection": "looks", "character": "Officer One" } },
+    {
+      "speaker": "synthetic-commander", "character": "commander-one",
+      "from": { "collection": "enemies", "unitId": "synthetic-commander" },
+      "default": "combat-station", "after": "commander-release", "requiresFlag": "commander-released",
+      "labels": { "combat-station": "Command Suit", "quarters-front": "Quiet Hours" },
+      "routes": [{ "scene": "commander-evening", "outfit": "quarters-front" }]
+    }
+  ]
 }
 ```
 
@@ -69,6 +79,41 @@ IDs/character keys/names or enemy selectors passed by the authoring publisher. C
 distinct. Multiple source matches fail. Future-tier game assets absent from the selected campaign
 are reported as unbound and do not pull their story drafts into a live release. A new scene or action
 must first have an implemented, selected campaign binding before its image can appear.
+
+### Automatic cast wardrobes (CY70)
+
+`wardrobes` registers exact story speakers, portrait-library character keys and native collection
+identities. These mappings are authored privately once; runtime does not infer a speaker from a name.
+The publisher discovers each registered actor's approved native outfits and available portrait recipes.
+Existing native asset IDs and mechanical crop recipes remain intact. New outfits receive deterministic
+asset IDs. Optional `labels` supply approved display names without renaming source keys.
+
+All six crew roles remain required. Ally wardrobes may use their actual published outfit keys and a
+declared `default`. `after` names the existing release/hearing scene that unlocks their wardrobe in
+Crew Stories; optional `requiresFlag` also requires its existing release outcome, so merely reviewing
+a release choice cannot expose the wardrobe while custody continues. Neither awards progress.
+`routes` explicitly assigns an outfit to an existing scene. No
+choice, line, relationship, release gate or quest changes through these fields. A route whose outfit
+has not landed waits for that source; it does not block an actor's approved subset.
+
+Looks, enemies and portraits events reconcile both native art and available expression recipes for
+their scoped actors. Missing future recipes are reported as pending. Future approved outfits and sparse
+states on registered actors need no new game code, registry entry per expression, or web build. Existing
+explicit `bindings` continue to control non-wardrobe illustrations and equipment. New cast identities,
+new scenes and changes to gameplay still require their own implemented campaign content.
+
+The native full-body master, its mechanical dialogue/profile crops and the approved expression-library
+base are separate assets. `WardrobeLook.portrait` selects that library base for talking portraits.
+Face coordinates remain in its literal pixels; a normalized bust never replaces a full-body master or
+borrows its crop coordinates. Native revisions refresh their existing mechanical crops. Portrait-base
+revisions replace their sparse recipes together. Withdrawn states disappear from that recipe, and a
+withdrawn portrait base falls back to the native/derived neutral. No flattened expression matrix or
+additional mask layer is required. Missing expression tags use neutral.
+
+Campaign dialogue, matching ship-command portraits and the read-only wardrobe expression preview
+consume the same speaker/base-specific placements. Bespoke scene poses, backgrounds, combat models
+and equipment composition retain their own contracts. Approved source publication does not approve
+unmade character poses or complete CY49/CY50/CY55/CY56/CY59.
 
 An approved local campaign asset uses `collection: "local"`, its stable `id`, a `file` relative to this
 game's `content/`, and `approval: { "by": "owner", "sha256": "<approved-64-hex-hash>" }`.
@@ -106,8 +151,11 @@ The optional campaign wardrobe declares native-master crop recipes and their dia
 consumers. A compatible replacement regenerates both mechanical crops from new native bytes.
 Changed dimensions require a reviewed recipe; native or derived face placements require their new
 recipe in the same push. Coordinates are translated into the dialogue crop and checked against its
-bounds. The existing gameplay fingerprint includes wardrobe routing and framing. Neither changes
-through an art-only push. Identical published native hashes avoid downloading the full image again.
+bounds. The gameplay fingerprint excludes image declarations, scene art, face placements and wardrobe
+presentation. All story files and the remaining campaign rules remain fingerprinted. The complete
+candidate is parsed before upload, and selection still requires the original pointer generation.
+Identical published native hashes avoid downloading the full image again. Cloud reads/uploads use
+bounded workers and settle started work before reporting a failure.
 
 ## Commands
 
@@ -129,6 +177,8 @@ uploaded are reported as pending, so it does not claim to verify future bytes.
 From this game checkout:
 
 ```powershell
+pnpm art:sync --only officer-one --dry-run
+pnpm art:sync --only officer-one
 pnpm art:publish --event looks --only officer-one --dry-run
 pnpm art:publish --event enemies --only synthetic-commander --stage-only
 pnpm art:publish --event portraits --only officer-one
@@ -136,6 +186,16 @@ pnpm art:publish --event general
 pnpm art:publish --select art-0123456789abcdef0123
 pnpm art:publish --rollback previous-reviewed-release
 ```
+
+`art:sync` is the complete wardrobe delivery: it runs the existing authoring publisher for looks,
+enemy/ally looks and portrait pieces, scoped to registered actor keys with `--no-release`, then runs
+one game import. Set `UMA_ART_AUTHORING_ROOT`, `--authoring-root`, or private registry `authoringRoot`
+to the real authoring code checkout. Game numeric IDs/board IDs are translated through the explicit
+registry to source character keys. An unknown actor or failed source stage stops before game selection.
+The producer still validates every owner approval and hash. `--dry-run` sends nothing and the final
+game preflight reads currently published sources; `--stage-only` publishes sources but only stages the
+game candidate. Both retain the existing failed-publication recovery rules below. Art sessions may
+also continue using their scoped individual source commands.
 
 `--stage-only` uploads and reads back a candidate without selecting it. Selection/rollback verifies
 the immutable files and refuses a different gameplay/story release. Normal publishing selects after

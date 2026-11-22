@@ -53,4 +53,23 @@ describe('six-role wardrobe and reviewed campaign routing', () => {
     const legacy = raw() as Record<string, unknown>; delete legacy.wardrobe
     expect(wardrobeSceneArt(parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': legacy }), 'sw1-ch1-s1')!.portraits[0]!.asset).toBe('pilot')
   })
+  it('routes an ally outfit and its sparse expressions without changing the native master or bespoke pose', () => {
+    const config = raw() as unknown as Record<string, any>
+    config.wardrobe.members.push({ speaker: 'stand-in-1', default: 'watch-suit', looks: {
+      'watch-suit': { asset: 'pilot', dialogue: 'dialogue', profile: 'profile', portrait: 'dialogue', label: 'Watch Suit' },
+      'quiet-hours': { asset: 'quarters', portrait: 'profile', label: 'Quiet Hours' },
+    } })
+    config.art.push({ scene: 'sw1-ch1-s2', portraits: [{ speaker: 'stand-in-1', asset: 'pilot' }] })
+    config.wardrobe.scenes[0].scene = 'sw1-ch1-s2'
+    config.wardrobe.scenes[0].outfits = [{ speaker: 'stand-in-1', look: 'quiet-hours' }]
+    config.portraitFaces = [{ speaker: 'stand-in-1', base: 'profile', emote: 'relieved', asset: 'pose', at: { x: 0, y: 0 } }]
+    const book = parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': config })
+    expect(wardrobeSceneArt(book, 'sw1-ch1-s2')!.portraits[0]!.asset).toBe('profile')
+    expect(book.wardrobe!.members[1]!.looks['quiet-hours']!.asset).toBe('quarters')
+    config.wardrobe.scenes[0].outfits[0].look = 'unknown'
+    expect(() => parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': config })).toThrow(/unknown actor outfit/)
+    config.wardrobe.scenes[0].outfits[0].look = 'quiet-hours'
+    config.wardrobe.members[1].speaker = 'not-cast'
+    expect(() => parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': config })).toThrow(/unknown cast identity/)
+  })
 })

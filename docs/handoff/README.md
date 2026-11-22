@@ -3,6 +3,12 @@
 ## Current packets
 
 **CY65–CY69 are integrated: six-look wardrobe, all 300 bindings, general art, confirmed fighter strikes and the full approved environment matrix. CY69 replaces the remaining 868 review backdrops, with precise shore-milestone admission and script-driven background cuts (D74). Next development is CY57–CY63 (Pillar 4). CY49/CY50, CY52/CY53 and CY55/CY56 retain scoped Character/Story acceptance; physical iPhone review remains CY37.**
+
+**CY70 · approved outfit/expression pipeline.** [Registered cast wardrobes](../technical/campaign-art-publishing.md#automatic-cast-wardrobes-cy70)
+now reconcile approved native looks and sparse portrait recipes into the same real campaign. Crew
+bindings/crops remain; allies support custom outfit keys, names, exact scene routes and progress-gated
+wardrobe access. Art and Story share the private source/route register and publication receipt. This
+does not complete outstanding poses, sprite composition, expression authoring or physical device review.
 The new queue separates development, Art and Story and carries the work through all four pillars.
 CY36–CY37 collect its integrated review and device/release results.
 
@@ -262,6 +268,7 @@ Packets finished go here, newest first.
 
 | Id | Task | Commit |
 |---|---|---|
+| CY70 | Approved cast outfit/expression pipeline (D80): automatic registered-actor intake, separate native/crop/expression bases, ally outfit names and exact scene routes, progress-gated wardrobe/expression viewing, and matching ship-command portraits. Preserve the six-role crew bindings, crop recipes, all Story/gameplay and saves. Art/Story receive the private route register and publish evidence; outstanding poses/expressions and CY37 remain separate. | _this commit_ |
 | CY69 | Full approved environments (D74): 64 sources, 47 added image refs, 889 reviewed mappings and 880 changed backdrops; zero remaining review plates. Four shore-milestone ports and two script-driven cue lists resolve seven setting holds. Preserve all 559 Story files, 1,421 prior image refs, wardrobe/crops, progress and saves. Character/Story acceptance and CY37 remain separate. | _this commit_ |
 | CY57 · rifle foundation | Two-handed mid-range Laser rifle with the existing part ID/profile; Training, old worn/preset reconciliation and frozen battle compatibility (D73). Shared energy-equipment and helmeted-sprite packets/prompts align CY58–CY60/CY63. Composition, sprite intake and device acceptance remain open in CY57/CY37. | _this commit_ |
 | CY68 | Approved fighter-strike effect on the real campaign (D72). Native transparent source and one-layer composition follow committed damage only; actual pilot/profile, partial/disabled emitter, fast/skip, reload, missing art and old/new content swaps pass. No rules or save changes; shared-atlas export and CY37 physical-device acceptance remain separate. | _this commit_ |

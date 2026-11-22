@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import sharp from 'sharp'
+import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { require as loadTs } from 'tsx/cjs/api'
 
 const { sha, parsePublishConfig } = loadTs('./model.ts', import.meta.url)
 const { loadSelected, publishArtCandidate, rollbackArt } = loadTs('./publish.ts', import.meta.url)
 const { resolveArt } = loadTs('./sources.ts', import.meta.url)
+const { syncWardrobes } = loadTs('./sync.ts', import.meta.url)
 const { CAMPAIGN_PREFIX: PREFIX, GenerationConflict, GcsArtStorage } = loadTs('./storage.ts', import.meta.url)
 const { STAND_IN_FILES } = loadTs('../../packages/domain/src/story/stand-in.ts', import.meta.url)
 const encode = value => Buffer.from(JSON.stringify(value))
@@ -93,7 +97,7 @@ test('published Cyberpunk selectors are scoped, verified and isolated from Farm'
   const path = `images/officer-pilot.${sha(f.newer).slice(0, 16)}.png`
   const row = { id: 'officer-pilot-v2', character: 'Officer One', outfit: 'pilot', path,
     sha256: sha(f.newer), bytes: f.newer.length, width: 40, height: 60, approvedOn: '2026-11-18' }
-  f.storage.add('art/universes/cyberpunk/index.json', encode({ universe: 'cyberpunk', looks: [row] }))
+  f.storage.add('art/universes/cyberpunk/index.json', encode({ universe: 'cyberpunk', looks: [row, { ...row, id: 'officer-scene', kind: 'splash' }] }))
   f.storage.add('art/universes/cyberpunk/' + path, f.newer)
   const config = parsePublishConfig({ schemaVersion: 1, bindings: [
     { asset: 'pilot', from: { collection: 'looks', character: 'Officer One', outfit: 'pilot' } },
@@ -133,6 +137,96 @@ test('portrait bases, approved expression placements and reviewed 192px profiles
   recipe.states[1].at.x = 39
   f.storage.add(root + 'index.json', encode(recipe))
   await assert.rejects(resolveArt(f.storage, config, { event: 'portraits', only: [], contentRoot: '/unused' }), /exceeds/)
+})
+
+test('registered ally wardrobes discover approved outfits and sparse faces, preserve native framing, and refresh without a rebuild', async () => {
+  const f = await fixture()
+  const portrait = await sharp(f.newer).resize(20, 30).png().toBuffer()
+  const nativeRow = { id: 'commander-watch', unitId: 'stand-in-1', character: 'Commander', look: 'watch-suit',
+    path: `images/commander.${sha(f.newer).slice(0, 16)}.png`, sha256: sha(f.newer), bytes: f.newer.length, approvedOn: '2026-11-21' }
+  f.storage.add('enemy-art/cyberpunk/index.json', encode({ universe: 'cyberpunk', looks: [nativeRow] }))
+  f.storage.add('enemy-art/cyberpunk/' + nativeRow.path, f.newer)
+  const base = { id: 'commander-watch-suit', character: 'commander', outfit: 'watch-suit',
+    path: `bases/commander.${sha(portrait).slice(0, 16)}.png`, sha256: sha(portrait), bytes: portrait.length, width: 20, height: 30 }
+  const face = { id: 'commander-relieved', character: 'commander', expression: 'relieved',
+    path: `faces/commander.${sha(f.face).slice(0, 16)}.png`, sha256: sha(f.face), bytes: f.face.length, width: 8, height: 10 }
+  const index = { universe: 'cyberpunk', approvedOn: '2026-11-21', characters: [{ id: 'commander', name: 'Commander' }], bases: [base], faces: [face], states: [
+    { character: 'commander', outfit: 'watch-suit', expression: 'neutral', base: base.id, face: null, at: null },
+    { character: 'commander', outfit: 'watch-suit', expression: 'relieved', base: base.id, face: face.id, at: { x: 4, y: 5 }, approvedSha256: sha(f.face) },
+  ] }
+  const root = 'art/universes/cyberpunk/portraits/'
+  f.storage.add(root + 'index.json', encode(index)); f.storage.add(root + base.path, portrait); f.storage.add(root + face.path, f.face)
+  const config = parsePublishConfig({ schemaVersion: 1, bindings: [], wardrobes: [{ speaker: 'stand-in-1', character: 'commander',
+    from: { collection: 'enemies', unitId: 'stand-in-1' }, default: 'watch-suit', labels: { 'watch-suit': 'Watch Suit' },
+    routes: [{ scene: 'sw1-ch1-s1', outfit: 'watch-suit' }] }] })
+  const options = selected => ({ event: 'enemies', only: ['stand-in-1'], contentRoot: '/unused', wardrobe: selected.book.wardrobe,
+    currentImages: new Map(selected.release.assets.map(row => [row.id, row.sha256])) })
+  const resolved = await resolveArt(f.storage, config, options(f.selected))
+  await publishArtCandidate(f.storage, f.selected, resolved)
+  const selected = await loadSelected(f.storage), look = selected.book.wardrobe.members[0].looks['watch-suit']
+  assert.notEqual(look.asset, look.portrait)
+  assert.equal(look.label, 'Watch Suit')
+  assert.equal(selected.release.assets.find(row => row.id === look.asset).sha256, sha(f.newer))
+  assert.equal(selected.release.assets.find(row => row.id === look.portrait).sha256, sha(portrait))
+  assert.deepEqual(selected.book.portraitFaces.map(row => row.emote), ['relieved'])
+  assert.deepEqual(selected.files['casting.json'], f.selected.files['casting.json'])
+  assert.deepEqual(selected.files['chapters/sw1-ch1.json'], f.selected.files['chapters/sw1-ch1.json'])
+  assert.equal((await publishArtCandidate(f.storage, selected, await resolveArt(f.storage, config, options(selected)))).changes.length, 0)
+  index.states.pop() // Withdrawing a state removes its placement; no unapproved missing expression is fabricated.
+  f.storage.add(root + 'index.json', encode(index))
+  await publishArtCandidate(f.storage, selected, await resolveArt(f.storage, config, options(selected)))
+  assert.equal((await loadSelected(f.storage)).book.portraitFaces.length, 0)
+  const wrong = structuredClone(config); wrong.wardrobes[0].speaker = 'not-cast'
+  await assert.rejects(publishArtCandidate(f.storage, selected, await resolveArt(f.storage, wrong, options(selected))), /unknown cast identity/)
+  index.states[0].at = { x: 0, y: 0 }
+  f.storage.add(root + 'index.json', encode(index))
+  await assert.rejects(resolveArt(f.storage, config, options(selected)), /invalid neutral/)
+  index.bases = []; index.faces = []; index.states = []
+  f.storage.add(root + 'index.json', encode(index))
+  const current = await loadSelected(f.storage)
+  await publishArtCandidate(f.storage, current, await resolveArt(f.storage, config, options(current)))
+  const withdrawn = await loadSelected(f.storage)
+  assert.equal(withdrawn.book.wardrobe.members[0].looks['watch-suit'].portrait, undefined)
+  assert.equal(withdrawn.book.portraitFaces.length, 0)
+  assert.equal(withdrawn.release.assets.find(row => row.id === look.asset).sha256, sha(f.newer))
+})
+
+test('a wardrobe can arrive before its expressions; malformed registries never infer a different cast identity', async () => {
+  assert.throws(() => parsePublishConfig({ schemaVersion: 1, bindings: [], wardrobes: [
+    { speaker: 'stand-in-1', character: 'commander', from: { collection: 'enemies', character: 'Commander' } },
+  ] }), /wrong source identity key/)
+  const f = await fixture()
+  f.storage.add('enemy-art/cyberpunk/index.json', encode({ universe: 'cyberpunk', looks: [] }))
+  const config = parsePublishConfig({ schemaVersion: 1, bindings: [], wardrobes: [{ speaker: 'stand-in-1', character: 'commander',
+    from: { collection: 'enemies', unitId: 'stand-in-1' }, default: 'watch-suit' }] })
+  const art = await resolveArt(f.storage, config, { event: 'enemies', only: [], contentRoot: '/unused' })
+  assert.equal(art.wardrobe.members.length, 0)
+  assert(art.skipped.some(row => row.includes('not yet published')))
+})
+
+test('wardrobe sync scopes all three producer stages and moves game selection only after they succeed', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'wardrobe sync '))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  await mkdir(join(root, 'src')); await writeFile(join(root, 'src/push.ts'), '// synthetic producer')
+  const config = parsePublishConfig({ schemaVersion: 1, bindings: [], wardrobes: [
+    { speaker: 9000001, character: 'officer', from: { collection: 'looks', character: 'Officer' } },
+    { speaker: 'stand-in-1', character: 'commander', from: { collection: 'enemies', unitId: 'stand-in-1' }, default: 'watch-suit' },
+  ] })
+  const calls = []
+  await syncWardrobes(config, { root, only: ['stand-in-1'], dryRun: true }, async args => { calls.push(args) }, async keys => { calls.push(keys) })
+  assert.equal(calls.length, 4)
+  assert.deepEqual(calls[3], ['commander'])
+  for (const args of calls.slice(0, 3)) {
+    assert(args.includes('cyberpunk')); assert(args.includes('--no-release')); assert(args.includes('--dry-run'))
+    assert.equal(args[args.indexOf('--only') + 1], 'commander')
+    assert(!args.includes('farm-life'))
+  }
+  let promoted = false, stages = 0
+  await assert.rejects(syncWardrobes(config, { root, only: ['9000001'], dryRun: false }, async () => {
+    if (++stages === 2) throw Error('source failed')
+  }, async () => { promoted = true }), /source failed/)
+  assert.equal(promoted, false)
+  await assert.rejects(syncWardrobes(config, { root, only: ['unknown'], dryRun: true }, async () => {}, async () => {}), /Unregistered/)
 })
 
 test('cloud adapter rejects non-Cyberpunk paths before obtaining credentials or making a request', async () => {
