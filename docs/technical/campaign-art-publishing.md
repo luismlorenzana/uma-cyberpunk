@@ -190,8 +190,9 @@ pnpm art:publish --rollback previous-reviewed-release
 `art:sync` is the complete wardrobe delivery: it runs the existing authoring publisher for looks,
 enemy/ally looks and portrait pieces, scoped to each relevant collection's registered actor keys with `--no-release`, then runs
 one game import. Set `UMA_ART_AUTHORING_ROOT`, `--authoring-root`, or private registry `authoringRoot`
-to the real authoring code checkout. Game numeric IDs/board IDs are translated through the explicit
-registry to source character keys. An unknown actor or failed source stage stops before game selection.
+to the real authoring code checkout. The explicit registry resolves crew IDs and ally keys. Native
+ally publication uses stable unit IDs across renamed records; portrait publication uses library keys.
+An unknown actor or failed source stage stops before game selection.
 The producer still validates every owner approval and hash. `--dry-run` sends nothing and the final
 game preflight reads currently published sources; `--stage-only` publishes sources but only stages the
 game candidate. Both retain the existing failed-publication recovery rules below. Art sessions may

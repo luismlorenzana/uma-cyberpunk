@@ -19,13 +19,13 @@ export async function syncWardrobes(config: PublishConfig, options: { root: stri
   if (!existsSync(script)) throw new Error('Art authoring checkout needs src/push.ts; set UMA_ART_AUTHORING_ROOT or authoringRoot in the private registry')
   // Translate game speaker IDs to the authoring character keys for all three collections.
   const groups = [
-    { flags: [], actors: actors.filter(actor => actor.from.collection === 'looks') },
-    { flags: ['--enemies'], actors: actors.filter(actor => actor.from.collection === 'enemies') },
-    { flags: ['--portraits'], actors: actors.filter(actor => options.portraitCharacters.has(actor.character)) },
+    { flags: [], actors: actors.filter(actor => actor.from.collection === 'looks'), selector: (actor: typeof actors[number]) => actor.character },
+    { flags: ['--enemies'], actors: actors.filter(actor => actor.from.collection === 'enemies'), selector: (actor: typeof actors[number]) => actor.from.unitId! },
+    { flags: ['--portraits'], actors: actors.filter(actor => options.portraitCharacters.has(actor.character)), selector: (actor: typeof actors[number]) => actor.character },
   ]
   for (const group of groups) {
     if (!group.actors.length) continue
-    await run(['--import', 'tsx', script, 'cyberpunk', ...group.flags, '--only', group.actors.map(actor => actor.character).join(','), '--no-release', ...(options.dryRun ? ['--dry-run'] : [])])
+    await run(['--import', 'tsx', script, 'cyberpunk', ...group.flags, '--only', group.actors.map(group.selector).join(','), '--no-release', ...(options.dryRun ? ['--dry-run'] : [])])
   }
   await publish(actors.map(actor => actor.character))
 }
