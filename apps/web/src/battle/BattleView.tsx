@@ -100,18 +100,23 @@ export function BattleView(props: BattleViewProps) {
   const [loaded, setLoaded] = useState<[number, number]>([0, 0])
   useEffect(() => {
     let live = true
-    const portrait = props.portrait
-    const face = portrait && new Image()
-    if (face && portrait) face.src = portrait.url
-    void Promise.all([
-      looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }),
-      face ? face.decode().then(() => face, () => null) : undefined,
-      props.combatSprites ? campaignCombatLooks(props.session.input, props.combatSprites) : undefined,
-    ]).then(([units, decoded, combat]) => {
-      const all = new Map<string, UnitLook | CombatLook>(units)
-      if (portrait && decoded) all.set(portrait.unit, { kind: 'face', face: decoded })
-      for (const [id, look] of combat ?? []) all.set(id, look)
-      if (live) setLooks(all)
+    // Strict Mode tears down its first effect before this microtask, so the mount that stays owns the asset reads.
+    queueMicrotask(() => {
+      if (!live) return
+      const portrait = props.portrait
+      const face = portrait && new Image()
+      if (face && portrait) face.src = portrait.url
+      void Promise.all([
+        looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }),
+        face ? face.decode().then(() => face, () => null) : undefined,
+        props.combatSprites ? campaignCombatLooks(props.session.input, props.combatSprites) : undefined,
+      ]).then(([units, decoded, combat]) => {
+        if (!live) return
+        const all = new Map<string, UnitLook | CombatLook>(units)
+        if (portrait && decoded) all.set(portrait.unit, { kind: 'face', face: decoded })
+        for (const [id, look] of combat ?? []) all.set(id, look)
+        setLooks(all)
+      })
     })
     return () => { live = false }
   }, [])

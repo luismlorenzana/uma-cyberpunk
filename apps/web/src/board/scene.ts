@@ -130,7 +130,7 @@ export class BoardScene {
   private device = { width: 1, height: 1, ratio: 1 }
   private css = { width: 1, height: 1 }
   private map: BattleMap | null = null
-  private world: { shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
+  private world: { page: CanvasTexture; shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
   private readonly figures = new Map<string, Live>()
   private combatArt: LoadedCombatArt | null = null
   private readonly combatEffects = new Map<string, { tile: Tile; sprite: CombatTileEffect }>()
@@ -205,7 +205,7 @@ export class BoardScene {
       occluders.push({ id, z: z + 0.5, box: boxOf([{ x, y, z }, { x: x + 1, y, z }, { x, y: 0, z: z + 1 }, { x: x + 1, y: 0, z: z + 1 }]) })
       parts.set(id, { group, alpha: 1, order: Math.round((z + 1) * 100) })
     }
-    this.world = { shared: split.shared, parts, occluders, lights: geo.lights.map((l) => ({ x: l.at.x, y: l.at.y, z: l.at.z, color: l.color, radius: l.radius })) }
+    this.world = { page, shared: split.shared, parts, occluders, lights: geo.lights.map((l) => ({ x: l.at.x, y: l.at.y, z: l.at.z, color: l.color, radius: l.radius })) }
     if (!same) this.look = { x: map.width / 2, z: map.depth / 2 }
     for (const f of this.figures.values()) this.stand(f)
     this.wake()
@@ -217,6 +217,7 @@ export class BoardScene {
       this.scene.remove(g)
       g.traverse((o) => { const m = o as Mesh; m.geometry?.dispose(); (m.material as MeshBasicMaterial | undefined)?.dispose?.() })
     }
+    this.world.page.dispose()
     this.world = null
   }
 
@@ -304,7 +305,7 @@ export class BoardScene {
     this.removeFigure(spec.id)
     const body = spec.look.kind === 'combat' ? new CombatSpriteActor(spec.look) : spec.look.kind === 'sprite'
       ? new SpriteActor('source' in spec.look ? spec.look.source : standInSet(spec.look.set)) : new Standee(spec.look.face)
-    if (spec.look.kind === 'combat') this.combatArt = spec.look.art
+    if (spec.look.kind === 'combat') this.combatArt ??= spec.look.art
     const { group, wedge } = baseRing(spec.hue)
     this.scene.add(body.group, body.shadowMesh, group)
     const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], speed: 1, done: null, body, base: group, wedge, down: false }
@@ -392,15 +393,22 @@ export class BoardScene {
     return this.stillCombat ? 0 : duration
   }
 
-  placeBarrier(id: string, tile: Tile, speed?: number): void {
-    if (!this.combatArt || this.combatEffects.has(id)) return
-    // The battle records position and HP. The same canonical prop faces the camera after resume.
-    this.addCombatEffect(id, tile, new CombatTileEffect(this.combatArt, this.combatArt.effects.barrier.S, true, speed ?? 1, speed === undefined || this.stillCombat))
+  private effectArt(actor?: string): LoadedCombatArt | null {
+    const body = actor ? this.figures.get(actor)?.body : undefined
+    return body instanceof CombatSpriteActor ? body.look.art : this.combatArt
   }
 
-  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number): void {
-    if (!this.combatArt) return
-    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(this.combatArt, this.combatArt.effects.recipient[effect], false, speed, this.stillCombat))
+  placeBarrier(id: string, tile: Tile, speed?: number, actor?: string): void {
+    const art = this.effectArt(actor)
+    if (!art || this.combatEffects.has(id)) return
+    // The battle records position and HP. The same canonical prop faces the camera after resume.
+    this.addCombatEffect(id, tile, new CombatTileEffect(art, art.effects.barrier.S, true, speed ?? 1, speed === undefined || this.stillCombat))
+  }
+
+  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number, recipient: string): void {
+    const art = this.effectArt(recipient)
+    if (!art) return
+    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(art, art.effects.recipient[effect], false, speed, this.stillCombat))
   }
 
   private addCombatEffect(id: string, tile: Tile, sprite: CombatTileEffect): void {
@@ -705,5 +713,9 @@ export class BoardScene {
     this.setCursor(null)
     this.dropWorld()
     this.renderer.dispose()
+    // The renderer can share a connected canvas with a new mount. A removed canvas has no remaining board owner.
+    queueMicrotask(() => {
+      if (!this.renderer.domElement.isConnected) this.renderer.forceContextLoss()
+    })
   }
 }
