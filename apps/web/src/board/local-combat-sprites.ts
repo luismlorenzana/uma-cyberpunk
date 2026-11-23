@@ -1,7 +1,7 @@
 import type { BattleInput, UnitInput } from '@cyber/battle'
 import type { CampaignRelease } from '@cyber/domain'
 import { FACINGS, RIG_SLOTS, parseCombatEffects, parseSpriteBundle, type CombatEffects, type SpriteBundle } from './combat-sprite-format'
-import { compositionFor, type ComposedRig } from './combat-sprite-composition'
+import { compositionFor, hasNativeHands, type ComposedRig } from './combat-sprite-composition'
 import { CONTENT } from '../content/client'
 
 const url = '/__cyber-combat-sprites/'
@@ -21,6 +21,7 @@ export interface CombatLook {
 }
 
 const slots = Object.keys(RIG_SLOTS) as (keyof typeof RIG_SLOTS)[]
+type DecodedPages = Map<string, Promise<{ image: HTMLImageElement; bytes: number }>>
 
 export function matchCombatFitting(bundle: Pick<SpriteBundle, 'outfit' | 'fittings'>, unit: Pick<UnitInput, 'ref' | 'frozenRig'>): SpriteFitting | undefined {
   const rig = unit.frozenRig
@@ -30,7 +31,7 @@ export function matchCombatFitting(bundle: Pick<SpriteBundle, 'outfit' | 'fittin
 
 async function bundleLooks(input: BattleInput, bundle: SpriteBundle, read: {
   effects: () => Promise<unknown>; page: (file: string) => Promise<Blob>; outfit?: number
-}): Promise<Map<string, CombatLook>> {
+}, decoded: DecodedPages = new Map()): Promise<Map<string, CombatLook>> {
   const outfit = read.outfit ?? bundle.outfit
   const selected = input.units.flatMap<{ id: string; fitting: SpriteFitting; composed?: ComposedRig }>(unit => {
     const fitting = matchCombatFitting({ outfit, fittings: bundle.fittings }, unit)
@@ -45,6 +46,10 @@ async function bundleLooks(input: BattleInput, bundle: SpriteBundle, read: {
   for (const { fitting, composed } of selected) {
     const sources = [fitting.motion]
     if (composed?.twoHand) sources.push(composed[composed.twoHand] === 'greatblade' ? bundle.composition!.blade : bundle.composition!.rifle)
+    if (composed && hasNativeHands(bundle)) {
+      sources.push('mixed-reverse')
+      if (composed.left === 'shield' && bundle.motions.shield) sources.push('shield')
+    }
     for (const motion of sources) for (const facing of FACINGS) {
       for (const { layers } of Object.values(bundle.motions[motion]![facing].frames)) {
         for (const layer of layers) {
@@ -61,16 +66,24 @@ async function bundleLooks(input: BattleInput, bundle: SpriteBundle, read: {
   await Promise.all(Array.from({ length: Math.min(4, queue.length) }, async () => {
     for (let key = queue.shift(); key; key = queue.shift()) {
       const page = bundle.pages[key]!
-      const blob = await read.page(page.file)
-      if (blob.size !== page.bytes) throw new Error('Combat sprite page size mismatch')
-      const src = URL.createObjectURL(blob)
-      try {
-        const img = new Image()
-        img.src = src
-        await img.decode()
-        if (img.naturalWidth !== page.width || img.naturalHeight !== page.height) throw new Error('Combat sprite page dimensions mismatch')
-        pages.set(key, img)
-      } finally { URL.revokeObjectURL(src) }
+      let shared = decoded.get(page.sha256)
+      if (!shared) {
+        shared = read.page(page.file).then(async blob => {
+          if (blob.size !== page.bytes) throw new Error('Combat sprite page size mismatch')
+          const src = URL.createObjectURL(blob)
+          try {
+            const img = new Image()
+            img.src = src
+            await img.decode()
+            return { image: img, bytes: blob.size }
+          } finally { URL.revokeObjectURL(src) }
+        })
+        decoded.set(page.sha256, shared)
+      }
+      const { image, bytes } = await shared
+      if (bytes !== page.bytes) throw new Error('Combat sprite page size mismatch')
+      if (image.naturalWidth !== page.width || image.naturalHeight !== page.height) throw new Error('Combat sprite page dimensions mismatch')
+      pages.set(key, image)
     }
   }))
   const art = { bundle, effects, pages }
@@ -99,6 +112,7 @@ export async function campaignCombatLooks(input: BattleInput, published: Publish
       console.warn('Local combat sprite fallback', error)
     }
   }
+  const decoded: DecodedPages = new Map()
   const results = await Promise.all(published.filter(({ outfit }) => input.units.some(unit => unit.frozenRig && unit.ref?.kind === 'uma'
     && unit.ref.id === String(outfit))).map(async ({ outfit, manifest, placements, pages }) => {
     try {
@@ -115,7 +129,7 @@ export async function campaignCombatLooks(input: BattleInput, published: Publish
           const ref = byFile.get(file)!
           return new Blob([Uint8Array.from(await CONTENT.pack(ref.path, ref))], { type: 'image/png' })
         },
-      })
+      }, decoded)
     } catch (error) {
       console.warn('Campaign combat sprite fallback', error)
       return new Map<string, CombatLook>()
