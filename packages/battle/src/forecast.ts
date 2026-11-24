@@ -8,6 +8,7 @@ import { dirTo, facingOf } from './sight'
 import { TECH_CHARGE, techChance } from './tech'
 import { upcomingAfter } from './timeline'
 import { TUNING } from './tuning'
+import { modeCost, suppressionTargets } from './specialists'
 import type { BattleState, ChanceSkill, Facing, Mount, PartId, TechKind, Tile, TurnAction, UnitState } from './types'
 import { PARTS } from './types'
 
@@ -52,6 +53,7 @@ export interface Forecast {
   /** Rules version 2: the Steel Muster's marked tiles, and when they're hit. */
   volley: { tiles: Tile[]; at: number } | null
   splash?: { targets: string[]; damage: number }
+  suppression?: { targets: string[]; interrupts: string[] }
   /** Charge spent by each unit this turn (a gain shows negative). */
   charge: Record<string, number>
   /** The turns after this one. */
@@ -111,15 +113,19 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   if (act.kind === 'reboot') add(turn.unit, TUNING.back.reboot)
   if (act.kind === 'item' && act.item === 'cell') add(act.target ?? turn.unit, -TUNING.items.cell)
   if (act.kind !== 'attack') return { ...empty, charge, timeline: upcomingAfter(state, 0) }
+  if (act.mode) add(turn.unit, modeCost(act.mode))
   if (!state.units.some((u) => u.id === act.target)) {
-    const s = objectStrikeOf(placed, turn.unit, act.with, act.target, to)!
+    const s = objectStrikeOf(placed, turn.unit, act.with, act.target, to, act.mode)!
     return { ...empty, attack: view(s, null), charge, timeline: upcomingAfter(state, 0) }
   }
   const target = unitById(placed, act.target)
   const landed = facingOf(tileOf(target), target.facing, to)
-  const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim })!
+  const windup = unitById(state, turn.unit).windup
+  const prepared = windup?.target === act.target && windup.with === act.with
+  const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim, mode: act.mode, prepared })!
   const cover = coverFor(placed, act.target, landed)
-  const actual = cover ? strikeOf(placed, turn.unit, act.with, cover, to, { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front' })! : main
+  const actual = cover ? strikeOf(placed, turn.unit, act.with, cover, to,
+    { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front', mode: act.mode, prepared })! : main
   const recipient = cover ? unitById(placed, cover) : target
   const attack = view(actual, recipient)
   const targets = blastTargets(placed, actual, recipient).map(({ id }) => id)
@@ -132,7 +138,7 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   })
   let counter: StrikeForecast | null = null
   const skills: Partial<Record<ChanceSkill, number>> = {}
-  if (v2(state)) {
+  if (v2(state) && !act.mode && !prepared) {
     for (const k of ['burst', 'double', 'switch', 'stun'] as const) {
       const c = skillChance(state, turn.unit, k)
       if (c > 0 && (k !== 'burst' || main.weapon.band === 'short') && (k !== 'double' || main.weapon.band === 'melee')) skills[k] = c
@@ -149,6 +155,8 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
       if (first > 0) skills.first = first
     }
   }
+  const suppressed = act.mode === 'suppress' ? suppressionTargets(placed, recipient) : []
   return { attack, cover, crossfire, counter, skills, tech: null, volley, charge, timeline: upcomingAfter(state, 0),
+    ...(suppressed.length ? { suppression: { targets: suppressed.map((u) => u.id), interrupts: suppressed.filter((u) => u.windup).map((u) => u.id) } } : {}),
     ...(targets.length ? { splash: { targets, damage: Math.max(1, Math.floor(actual.damage / 2)) } } : {}) }
 }

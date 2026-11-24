@@ -19,7 +19,15 @@ const BOND = { rank: 1, rapport: 0, path: null, seen: [] }
 const CABIN = { slots: { bed: null, desk: null, wall: null, floor: null, light: null, keepsake: null }, revealed: [], request: null }
 
 describe('the save', () => {
-  it('is version 19', () => expect(SAVE_VERSION).toBe(19))
+  it('is version 20', () => expect(SAVE_VERSION).toBe(20))
+
+  it('preserves a v19 save and round-trips specialist training after deployment', () => {
+    const current = newSave('u1', T0)
+    expect(parseSave({ ...current, version: 19 })).toEqual(current)
+    const trained = { ...current, combatTraining: { 9000001: { rank: 5, subclass: 'heal' } } }
+    expect(parseSave(JSON.parse(JSON.stringify(trained)))).toEqual(trained)
+    expect(() => parseSave({ ...trained, combatTraining: { 9000001: { rank: 11, subclass: 'heal' } } })).toThrow(/rank/)
+  })
 
   it('migrates assigned drills without losing the earlier campaign clock or rig inventory', () => {
     const { commandCinema: _cinema1, management: _management1, cabinVisits: _cabinVisits, campaignProjects: _projects, commandTraining: _training, ...older } = newSave('u1', T1)
@@ -33,24 +41,24 @@ describe('the save', () => {
   })
 
   it('starts an account with both dates at now, an empty story, no crew and the rooms open from the start', () => {
-    expect(newSave('u1', T0)).toEqual({ version: 19, account: { uid: 'u1', createdAt: T0, updatedAt: T0 }, story: EMPTY, ...CURRENT_REST })
+    expect(newSave('u1', T0)).toEqual({ version: SAVE_VERSION, account: { uid: 'u1', createdAt: T0, updatedAt: T0 }, story: EMPTY, ...CURRENT_REST })
   })
 
   it('moves only updatedAt on a change', () => {
     const save = newSave('u1', T0)
-    expect(touched(save, T1)).toEqual({ version: 19, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...CURRENT_REST })
+    expect(touched(save, T1)).toEqual({ version: SAVE_VERSION, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...CURRENT_REST })
     expect(save.account.updatedAt).toBe(T0)
   })
 
   it('opens a v1 save as v3 with account.updatedAt unchanged (CY9, CY10)', () => {
     const v1 = { version: 1, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
-    expect(parseSave(v1)).toEqual({ version: 19, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...CURRENT_REST })
+    expect(parseSave(v1)).toEqual({ version: SAVE_VERSION, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story: EMPTY, ...CURRENT_REST })
   })
 
   it('opens a v2 save as v3: the same account and story, the new fields empty (the migration, CY10)', () => {
     const story = { flags: ['a'], leads: [], files: {}, anomalies: {}, seen: ['s1'] }
     const v2 = { version: 2, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, story }
-    expect(parseSave(v2)).toEqual({ version: 19, account: v2.account, story, ...CURRENT_REST })
+    expect(parseSave(v2)).toEqual({ version: SAVE_VERSION, account: v2.account, story, ...CURRENT_REST })
   })
 
   it('opens a v3 save as v4: each outfit id aboard becomes her record, the rest and updatedAt as they were (CY11)', () => {
@@ -61,7 +69,7 @@ describe('the save', () => {
       mission: { id: 'm2', chapter: 'c1', step: 'battle', squad: [9000001], battle: { input: { seed: 'x' }, actions: [] }, won: null },
     }
     const v5 = parseSave(JSON.parse(JSON.stringify(v3)))
-    expect(v5.version).toBe(19)
+    expect(v5.version).toBe(SAVE_VERSION)
     expect(v5.account.updatedAt).toBe(T1)
     expect(v5.crew).toEqual([
       { outfit: 9000003, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: BOND, cabin: CABIN, post: null },
@@ -76,7 +84,7 @@ describe('the save', () => {
     const { commandCinema: _cinema4, management: _management4, cabinVisits: _cabinVisits, captain: _c, watch: _w, inbox: _i, items: _it, visits: _v, wallet: _wa, dutyPresets: _dp, meal: _me, camaraderie: _ca, log: _lo, event: _ev, partners: _pa, squads: _sq, operations: _op, operationsWon: _ow, standing: _st, campaignDay: _day, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...base } = newSave('u1', T0)
     const v4 = { ...base, ship: { rooms: ['bridge', 'hangar', 'quarters', 'log'] }, version: 4, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, crew: [{ outfit: 9000001, xp: 120, role: 'striker', rig: null, presets: [], strain: 2 }] }
     const v5 = parseSave(JSON.parse(JSON.stringify(v4)))
-    expect(v5).toMatchObject({ version: 19, account: { updatedAt: T1 }, captain: V5_REST.captain, watch: 0, inbox: [] })
+    expect(v5).toMatchObject({ version: SAVE_VERSION, account: { updatedAt: T1 }, captain: V5_REST.captain, watch: 0, inbox: [] })
     expect(v5.crew[0]).toEqual({ ...v4.crew[0], bond: BOND, cabin: CABIN, post: null })
   })
 
@@ -84,7 +92,7 @@ describe('the save', () => {
     const { commandCinema: _cinema5, management: _management5, cabinVisits: _cabinVisits, items: _it, visits: _v, wallet: _wa, dutyPresets: _dp, meal: _me, camaraderie: _ca, log: _lo, event: _ev, partners: _pa, squads: _sq, operations: _op, operationsWon: _ow, standing: _st, campaignDay: _day, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...base } = newSave('u1', T0)
     const v5 = { ...base, ship: { rooms: ['bridge', 'hangar', 'quarters', 'log'] }, version: 5, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, watch: 4, crew: [{ outfit: 9000001, xp: 120, role: 'striker', rig: null, presets: [], strain: 2, bond: { rank: 3, rapport: 10, path: null, seen: [2] } }] }
     const v6 = parseSave(JSON.parse(JSON.stringify(v5)))
-    expect(v6).toMatchObject({ version: 19, account: { updatedAt: T1 }, watch: 4, items: STARTER_STOCK, visits: { watch: 4, used: 0 } })
+    expect(v6).toMatchObject({ version: SAVE_VERSION, account: { updatedAt: T1 }, watch: 4, items: STARTER_STOCK, visits: { watch: 4, used: 0 } })
     expect(v6.crew[0]).toEqual({ ...v5.crew[0], cabin: CABIN, post: null })
   })
 
@@ -92,7 +100,7 @@ describe('the save', () => {
     const { commandCinema: _cinema6, management: _management6, cabinVisits: _cabinVisits, wallet: _wa, dutyPresets: _dp, meal: _me, camaraderie: _ca, log: _lo, event: _ev, partners: _pa, squads: _sq, operations: _op, operationsWon: _ow, standing: _st, campaignDay: _day, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...base } = newSave('u1', T0)
     const v6 = { ...base, crew: [], version: 6, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, ship: { rooms: ['bridge', 'hangar', 'quarters', 'log', 'store', 'comms', 'simpod'] } }
     const v7 = parseSave(JSON.parse(JSON.stringify(v6)))
-    expect(v7).toMatchObject({ version: 19, account: { updatedAt: T1 }, wallet: HULL_TUNING.starterWallet })
+    expect(v7).toMatchObject({ version: SAVE_VERSION, account: { updatedAt: T1 }, wallet: HULL_TUNING.starterWallet })
     expect(v7.ship.decks).toBe(2)
     expect(v7.ship.modules).toHaveLength(8)
     expect(v7.ship.modules.every((m) => m.level === 1 && m.building === null)).toBe(true)
@@ -103,14 +111,14 @@ describe('the save', () => {
     const { commandCinema: _cinema7, management: _management7, cabinVisits: _cabinVisits, dutyPresets: _dp, meal: _me, camaraderie: _ca, log: _lo, event: _ev, partners: _pa, squads: _sq, operations: _op, operationsWon: _ow, standing: _st, campaignDay: _day, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...base } = newSave('u1', T0)
     const v7 = { ...base, version: 7, account: { uid: 'u1', createdAt: T0, updatedAt: T1 }, crew: [{ outfit: 9000001, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: BOND, cabin: CABIN }] }
     const v8 = parseSave(JSON.parse(JSON.stringify(v7)))
-    expect(v8).toMatchObject({ version: 19, account: { updatedAt: T1 }, dutyPresets: [], meal: null, camaraderie: {}, log: null, event: null })
+    expect(v8).toMatchObject({ version: SAVE_VERSION, account: { updatedAt: T1 }, dutyPresets: [], meal: null, camaraderie: {}, log: null, event: null })
     expect(v8.crew[0]!.post).toBeNull()
   })
 
   it('opens a v8 save as v9: no partners, updatedAt as it was (CY17)', () => {
     const { commandCinema: _cinema8, management: _management8, cabinVisits: _cabinVisits, partners: _p, squads: _s, operations: _o, operationsWon: _w, standing: _st, campaignDay: _day, campaignSupply: _supply, commandCrew: _command, pairScene: _pair, campaignGear: _gear, campaignProjects: _projects, commandTraining: _training, ...base } = newSave('u1', T0)
     const v8 = { ...base, version: 8, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
-    expect(parseSave(JSON.parse(JSON.stringify(v8)))).toMatchObject({ version: 19, account: { updatedAt: T1 }, partners: [] })
+    expect(parseSave(JSON.parse(JSON.stringify(v8)))).toMatchObject({ version: SAVE_VERSION, account: { updatedAt: T1 }, partners: [] })
   })
 
   it('opens a v9 save as v10: the crew aboard in one squad, no operations, no standing moved (CY18)', () => {
@@ -118,7 +126,7 @@ describe('the save', () => {
     const crew = [9000001, 9000002, 9000003, 9000004, 9000005].map((outfit) => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: BOND, cabin: CABIN, post: null }))
     const v9 = { ...base, crew, version: 9, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
     expect(parseSave(JSON.parse(JSON.stringify(v9)))).toMatchObject({
-      version: 19, account: { updatedAt: T1 }, operations: [], operationsWon: [], standing: {},
+      version: SAVE_VERSION, account: { updatedAt: T1 }, operations: [], operationsWon: [], standing: {},
       squads: [{ id: 'squad-1', name: 'First Squad', leader: 9000001, members: [9000001, 9000002, 9000003, 9000004], cohesion: 0 }],
     })
   })

@@ -8,5 +8,6 @@
 // - **3** (CY17): life aboard in battle: the bond perks and Resonance, the captain's Orders and the ship's support, the
 //   powered systems' passives, the meals, partners and their duo technique. A version-2 battle plays exactly as before.
 // - **4** (CY35): close-range Back units and marked splash weapons. Older inputs keep their original rules.
-export const RULES_VERSION = 4
-export const SUPPORTED_VERSIONS: readonly number[] = [1, 2, 3, 4]
+// - **5**: specialist loadouts, selectable firing modes and expanded formations.
+export const RULES_VERSION = 5
+export const SUPPORTED_VERSIONS: readonly number[] = [1, 2, 3, 4, 5]

@@ -90,7 +90,8 @@ function Sandbox({ layout }: { layout: StageLayout }) {
   const begin = (s: Scenario, seedValue: number, ctrl: Control) => {
     const map = MAPS[s.map]
     if (!map) { setNote(`No map ${s.map}`); return }
-    const input = applyPicks(scenarioInput(s, map, seedValue), picks, infoOf, nameOf)
+    const frozen = scenarioInput(s, map, seedValue)
+    const input = frozen.rulesVersion >= 5 ? frozen : applyPicks(frozen, picks, infoOf, nameOf)
     const startedAt = new Date().toISOString()
     const session = startSession(input).session
     latest.current = { id: 'current', scenario: s, input, actions: [], rulesVersion: input.rulesVersion, updatedAt: startedAt, startedAt }
@@ -219,7 +220,11 @@ function Sandbox({ layout }: { layout: StageLayout }) {
             <h2 className="font-display font-bold">Squad</h2>
             {button('Tier 1 squad', () => { setSaved(null); writePicks(defaultPicks(art)) })}
           </div>
-          <p className="text-[#a3abc2]">Tier 1's Umas, from master data: each fights with her own bands, Stride and the best rig for her role. {TIER_1.filter((o) => hasSet(art, o)).length} of {TIER_1.length} walk the board as their chibis; the rest stand as cards with their faces.</p>
+          {scenario.input.rulesVersion >= 5 ? <div className="space-y-1 text-[#a3abc2]" aria-label="Issued squad">
+            {squadSlots.map((unit) => <div key={unit.id}>{unit.label ?? unit.id}
+              {unit.specialty?.kind === 'laser' && ` · Rank ${unit.specialty.rank}${unit.specialty.subclass ? ` · ${unit.specialty.subclass}` : ''}`}
+            </div>)}
+          </div> : <><p className="text-[#a3abc2]">Tier 1's Umas, from master data: each fights with her own bands, Stride and the best rig for her role. {TIER_1.filter((o) => hasSet(art, o)).length} of {TIER_1.length} walk the board as their chibis; the rest stand as cards with their faces.</p>
           <AlbumArtProvider art={albums}>
             {squadSlots.map((u, i) => {
               const p = picks[i] ?? null
@@ -252,7 +257,7 @@ function Sandbox({ layout }: { layout: StageLayout }) {
                 </div>
               )
             })}
-          </AlbumArtProvider>
+          </AlbumArtProvider></>}
           <h2 className="pt-2 font-display font-bold">Enemies</h2>
           <div className="text-[#a3abc2]">{enemies.map((u) => u.label ?? u.id).join(', ')}: stand-ins until the heroines arrive (Phase 4).</div>
         </div>

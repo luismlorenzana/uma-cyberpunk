@@ -47,7 +47,7 @@ function tiles(value: unknown, path: string, map: { width: number; depth: number
 }
 
 /** Parses a map, checking every rule. */
-export function parseMap(value: unknown, path = 'map'): BattleMap {
+export function parseMap(value: unknown, path = 'map', rulesVersion = 4): BattleMap {
   const o = object(value, path)
   if (o.schemaVersion !== 1) throw new BattleInputError(`${path}.schemaVersion`, 'expected 1')
   if (typeof o.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(o.id)) throw new BattleInputError(`${path}.id`, 'expected a lowercase id')
@@ -58,7 +58,7 @@ export function parseMap(value: unknown, path = 'map'): BattleMap {
   const tileRows = rows(o.tiles, `${path}.tiles`, width, depth, (c) => TILE_CHARS.has(c), 'one of . # = c')
   const s = object(o.spawns, `${path}.spawns`)
   const shape = { width, depth, tiles: tileRows }
-  const squadTiles = tiles(s.squad, `${path}.spawns.squad`, shape, squad, squad)
+  const squadTiles = tiles(s.squad, `${path}.spawns.squad`, shape, rulesVersion >= 5 ? 10 : squad, rulesVersion >= 5 ? undefined : squad)
   const enemyTiles = tiles(s.enemy, `${path}.spawns.enemy`, shape, maxEnemies)
   const seen = new Set<string>()
   for (const [i, t] of [...squadTiles, ...enemyTiles].entries()) {

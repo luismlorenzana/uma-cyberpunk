@@ -2,6 +2,11 @@
 
 ## Current packets
 
+**Campaign combat specialists (D85).** [Rules, playable fixtures and Story bindings](../technical/campaign-combat-specialists.md).
+Version 5 defines the early Uma and combined formations. CY74/CY75 can bind the new ground
+encounters to the authored shift and Ally availability. CY79 owns approved role art and CY37
+owns installed-device pacing review.
+
 **Campaign restructure and current art intake (D84).** The [implementation queue](2026-11-22-campaign-implementation.md)
 adds CY72–CY79 for the separate Story pilot, Boss Ally lifecycle, Collar and Talk combat, tier fronts,
 approved sprite publication, base/role art, scene splashes and boss figures. Start CY72 and CY76

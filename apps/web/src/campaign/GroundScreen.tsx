@@ -1,5 +1,6 @@
 import type { BattleAction, BattleInput } from '@cyber/battle'
-import { awayMembers, PARTS_BY_ID, resting, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
+import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, PARTS_BY_ID, resting, SUBCLASS_NAME, trainingOf,
+  type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useState } from 'react'
 import { BattleView } from '../battle/BattleView'
@@ -13,19 +14,21 @@ import { campaignImage } from './load'
 import { nameOf } from '../story/runner'
 import { groundInput, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
 import { fittedGroundRig, fittedSummary } from './workshop'
+import { formationReady, specialistInput } from './specialist-input'
 
 const action = 'min-h-11 rounded-lg bg-white/10 px-4 text-sm font-bold text-white'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
 const panel = 'absolute inset-0 overflow-auto bg-[#0b0d17] p-4 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad }: {
+export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, combatShift }: {
   save: Save; mission: Mission; layout: StageLayout; trainee: number; label: string; close: () => void
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
   combatSprites?: CampaignRelease['combatSprites']
   acceptsFitted?: boolean
   ashore?: ReadonlySet<number>
   editableSquad?: boolean
+  combatShift?: string
 }) {
   const state = save.mission
   const parts = (ids: readonly string[]) => ids.map((id) => ({ id, name: PARTS_BY_ID.get(id)!.name, details: PARTS_BY_ID.get(id)!.note }))
@@ -35,6 +38,9 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const [expansion, setExpansion] = useState<string>(expansions[0]!.id)
   const [useFitted, setUseFitted] = useState(true)
   const [launching, setLaunching] = useState(false)
+  const [specialistTraining, setSpecialistTraining] = useState(false)
+  const [alternateFit, setAlternateFit] = useState<Record<number, boolean>>({})
+  const [deploymentError, setDeploymentError] = useState<string | null>(null)
   const [portrait, setPortrait] = useState<string | null>()
   useEffect(() => {
     if (!bossArt) return
@@ -51,10 +57,12 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const title = ground?.title ?? 'Training'
   const alternate = ground?.alternate && save.story.flags.includes(ground.alternate.flag) ? ground.alternate : undefined
   const scenario = alternate?.scenario ?? mission.scenario
+  const combat = ground?.combat ?? (specialistTraining && scenario === 'training' ? { kind: 'uma' as const } : undefined)
+  const shifted = !!combatShift && save.story.flags.includes(combatShift)
   const fitted = acceptsFitted && scenario
     ? fittedGroundRig(save.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario, ground?.expansion) : null
   const approach = ground?.alternate ? alternate?.label ?? ground.alternate.closedLabel ?? 'Cargo airlock' : undefined
-  const capacity = Math.min(4, (scenario && SCENARIOS[scenario]?.input.units.filter(({ side }) => side === 'squad').length) || 1)
+  const capacity = Math.min(combat?.kind === 'uma' ? 5 : 4, (scenario && SCENARIOS[scenario]?.input.units.filter(({ side }) => side === 'squad').length) || 1)
   const eligible = (s: Save, outfit: number) => !ashore?.has(outfit) && !awayMembers(s.operations, s.squads).includes(outfit)
     && s.crew.some((member) => member.outfit === outfit && !resting(member))
   if (launching) return <div className={panel} style={insets} role="status">Saving deployment…</div>
@@ -82,7 +90,14 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
         </>}
         {state.step === 'deploy' && <>
           <p className="font-semibold">{label}</p>
-          {editableSquad && <details className="rounded-lg bg-white/5 p-2">
+          {scenario === 'training' && <button type="button" className={action} aria-pressed={specialistTraining}
+            onClick={() => setSpecialistTraining(!specialistTraining)}>Laser specialist practice</button>}
+          {combat?.kind === 'combined' && <div className="grid grid-cols-2 gap-2" aria-label="Combined formation">
+            {combat.members.map(({ role, outfit, heroine }) => <p key={outfit ?? heroine} className="rounded bg-white/5 p-2 text-sm">
+              <b>{FORMATION_NAME[role]}</b> · {nameOf(pack, outfit ?? heroine ?? null)}
+            </p>)}
+          </div>}
+          {(editableSquad || combat?.kind === 'uma') && combat?.kind !== 'combined' && <details className="rounded-lg bg-white/5 p-2">
             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Squad · {state.squad.length}/{capacity}</summary>
             <div className="flex flex-wrap gap-2">
               {save.crew.map((member) => {
@@ -115,11 +130,33 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               })}>Save as squad</button>}
             </div>
           </details>}
-          {fitted && <div className="flex flex-wrap gap-2" aria-label="Rig for this sortie">
+          {combat?.kind === 'uma' && <div className="space-y-2" aria-label="Laser training">
+            {state.squad.filter((outfit) => eligible(save, outfit)).map((outfit) => {
+              const progress = trainingOf(save, outfit, shifted)
+              return <div className="flex flex-wrap items-center gap-2" key={outfit}>
+                <span className="text-sm font-semibold">{nameOf(pack, outfit)} · Laser {progress.rank}</span>
+                {!shifted && <select className={action} aria-label={`Subclass for ${nameOf(pack, outfit)}`} value={progress.subclass ?? ''}
+                  onChange={(event) => {
+                    const choice = COMBAT_SUBCLASSES.find((key) => key === event.currentTarget.value) ?? null
+                    void updateSave((current) => current.mission?.id === mission.id && current.mission.step === 'deploy'
+                      ? chooseSubclass(current, outfit, choice) : current)
+                  }}>
+                  <option value="">No subclass</option>
+                  {COMBAT_SUBCLASSES.map((key) => <option key={key} value={key}>{SUBCLASS_NAME[key]}</option>)}
+                </select>}
+                {!shifted && (progress.subclass === 'melee' || progress.subclass === 'shield') && <button type="button" className={action}
+                  aria-pressed={!!alternateFit[outfit]} onClick={() => setAlternateFit({ ...alternateFit, [outfit]: !alternateFit[outfit] })}>
+                  {alternateFit[outfit] ? progress.subclass === 'shield' ? 'Blade and shield' : 'Great blade' : 'Laser rifle'}
+                </button>}
+              </div>
+            })}
+            {ground?.expansion && <p className="text-sm">Mission gear · {PARTS_BY_ID.get(ground.expansion)?.name}</p>}
+          </div>}
+          {!combat && fitted && <div className="flex flex-wrap gap-2" aria-label="Rig for this sortie">
             <button type="button" className={action} aria-pressed={useFitted} onClick={() => setUseFitted(true)}>Use fitted rig</button>
             <button type="button" className={action} aria-pressed={!useFitted} onClick={() => setUseFitted(false)}>Use issued kit</button>
           </div>}
-          {fitted && useFitted ? <p className="text-sm text-cyan-200">{fittedSummary(fitted)}</p> : <div className="grid gap-3 sm:grid-cols-2">
+          {!combat && (fitted && useFitted ? <p className="text-sm text-cyan-200">{fittedSummary(fitted)}</p> : <div className="grid gap-3 sm:grid-cols-2">
             <fieldset className="space-y-2"><legend className="text-sm text-white/70">Main weapon</legend>
               {weapons.map((option) => <button key={option.id} type="button" aria-pressed={main === option.id}
                 className={`${action} block w-full text-left aria-pressed:ring-2 aria-pressed:ring-cyan-300`} onClick={() => setMain(option.id)}>
@@ -135,12 +172,23 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                 {option.name} <span className="font-normal text-white/70">· {option.details}</span>
               </button>)}
             </fieldset>}
-          </div>}
+          </div>)}
+          {deploymentError && <p role="alert" className="text-sm text-red-300">{deploymentError}</p>}
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => {
               setLaunching(true)
+              setDeploymentError(null)
               void updateSave((s) => {
                 if (s.mission?.step !== 'deploy' || s.mission.id !== mission.id) return s
+                if (combat) {
+                  const ready = !!combatShift && s.story.flags.includes(combatShift)
+                  if (combat.kind === 'combined' && !formationReady(s, combat, ready, ashore)) throw new Error('The assigned formation is unavailable.')
+                  const outfits = s.mission.squad.filter((outfit) => eligible(s, outfit))
+                  const input = specialistInput({ scenario, combat, save: s, story: pack, outfits, shifted: ready,
+                    alternate: alternateFit, expansion: ground?.expansion, boss: ground?.boss })
+                  const squad = input.units.flatMap((unit) => unit.side === 'squad' && unit.ref?.kind === 'uma' ? [Number(unit.ref.id)] : [])
+                  return deploy(setSquad(s, squad), editableSquad ? lifeAboardInput(input, s, () => null) : input)
+                }
                 const companions = s.mission.squad.slice(1).filter((outfit) => eligible(s, outfit)).flatMap((outfit) => {
                   const member = s.crew.find((candidate) => candidate.outfit === outfit)
                   return member ? [{ outfit, label: nameOf(pack, outfit), rig: member.rig }] : []
@@ -151,7 +199,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                 const input = groundInput(scenario, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions, rig ?? undefined)
                 const squad = input.units.flatMap((unit) => unit.side === 'squad' && unit.ref?.kind === 'uma' ? [Number(unit.ref.id)] : [])
                 return deploy(setSquad(s, squad), editableSquad ? lifeAboardInput(input, s, () => null) : input)
-              }).finally(() => setLaunching(false))
+              }).catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : 'Deployment unavailable.'))
+                .finally(() => setLaunching(false))
             }}>Deploy</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
           </div>

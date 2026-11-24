@@ -1,6 +1,7 @@
 # Ground combat mechanic-to-visual matrix
 
-Use this contract for campaign Training, boarding and ground missions on battle rules versions 1–4.
+Use this contract for campaign Training, boarding and ground missions on battle rules versions 1–5.
+The [specialist contract](campaign-combat-specialists.md) specifies selectable Laser modes and prepared attacks.
 The [39-part equipment matrix](../handoff/combat-sprite-coverage.json) specifies which shapes are needed.
 This matrix specifies when those shapes move or change. A single pose or effect can cover several rows.
 [Battle rules](../game/battle.md), [terrain](../game/terrain.md), and the reducer's [cue types](../../packages/battle/src/types.ts) are the gameplay references.
@@ -47,6 +48,8 @@ dedicated pose or effect is unavailable. Some are already on the battle screen a
 | `waited` | Settle into idle and show Charge/clock changes. Surge applies later where eligible. | Wait label and timeline |
 | `linked` | Toggle link badge/inspection state. | Link on/off label |
 | `attack` | Use exact hand or Back mount, legal grip and weapon family. Address actor or board target and play main/counter/Crossfire in cue order. | Target cue and existing cut-in when enabled |
+| `prepared` | Mark the source and the exact unit targeted by the next prepared shot. | Preparing label and target tile |
+| `suppressed` | Mark each affected unit. Clear its prepared warning when the shot interrupted it. | Suppressed or Interrupted label |
 | `cover` | Defender's ally braces with its equipped shield and receives the strike. Its short lean/step stays on its tile. | Mark protected unit and actual recipient |
 | `crossfire` | Indicate pincer or link helper and reuse the attack clip on the helper's resolved mount. | Crossfire label |
 | `counter` | Indicate defender's reaction and play the ensuing attack at the emitted point, including First. | Counter label |
