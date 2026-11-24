@@ -124,7 +124,16 @@ export interface UnitRef {
   id: string
 }
 
+export const COMBAT_SUBCLASSES = ['melee', 'heal', 'shield', 'long', 'support'] as const
+export type CombatSubclass = typeof COMBAT_SUBCLASSES[number]
+export type FireMode = 'thermal' | 'impact' | 'area' | 'suppress'
+export type Specialty =
+  | { kind: 'laser'; rank: number; subclass?: CombatSubclass }
+  | { kind: 'wing' | 'shield' | 'sniper' | 'medic' | 'windup' }
+
 export interface UnitInput {
+  /** Version 5, resolved at deployment from campaign progression and the authored formation. */
+  specialty?: Specialty
   /** Optional frozen equipment identities for presentation. The reducer uses loadout. */
   frozenRig?: Record<'core' | 'leftArm' | 'rightArm' | 'legs' | 'visor', string>
     & Record<'leftHand' | 'rightHand' | 'back' | 'coat', string | null>
@@ -216,6 +225,10 @@ export interface PartHp {
 }
 
 export interface UnitState {
+  patched?: true
+  suppressed?: true
+  windupUsed?: true
+  windup?: { target: string; with: Mount }
   id: string
   side: Side
   x: number
@@ -328,7 +341,8 @@ export type AimAt = PartId | 'hold'
 export type TechKind = 'stun' | 'jam' | 'jackout'
 
 export type Act =
-  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt }
+  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt; mode?: FireMode }
+  | { kind: 'prepare'; with: Mount; target: string }
   | { kind: 'wait' }
   | { kind: 'none' }
   // Rules version 2 (CY5):
@@ -385,10 +399,11 @@ export interface DuoAction {
 }
 
 export type BattleAction = TurnAction | LinkAction | BenchAction | OrderAction | DuoAction
+  | { kind: 'quickPatch'; unit: string; target: string }
 
 // --- Cues: what the board and the cut-in play; the scene decides nothing ----------------------------------------------
 
-export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo'
+export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo' | 'mode' | 'patch'
 export type AttackRole = 'main' | 'crossfire' | 'counter'
 
 export type Cue =
@@ -398,7 +413,9 @@ export type Cue =
   | { kind: 'faced'; unit: string; facing: Dir }
   | { kind: 'waited'; unit: string }
   | { kind: 'linked'; unit: string; on: boolean }
-  | { kind: 'attack'; unit: string; target: string; with: Mount; band: Exclude<WeaponBand, 'tech'>; role: AttackRole; facing: Facing; aim?: PartId }
+  | { kind: 'attack'; unit: string; target: string; with: Mount; band: Exclude<WeaponBand, 'tech'>; role: AttackRole; facing: Facing; aim?: PartId; mode?: FireMode }
+  | { kind: 'prepared'; unit: string; target: string }
+  | { kind: 'suppressed'; unit: string; target: string; interrupted: boolean }
   | { kind: 'cover'; unit: string; for: string; attacker: string }
   | { kind: 'crossfire'; unit: string; target: string; how: 'pincer' | 'link' }
   | { kind: 'counter'; unit: string; target: string }

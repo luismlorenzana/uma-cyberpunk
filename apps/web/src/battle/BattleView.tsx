@@ -4,6 +4,7 @@
 // committed action is handed to `onCommit` (the sandbox's autosave); the board follows the cues, then the state.
 import {
   boardOf, canAim, chooseAction, dirTo, orderError, partnerOf, type OrderKind, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
+  FIRE_MODE_LABEL, fireModes, modeCost, quickPatchTargets,
   type Cue, type Dir, type Forecast, type Reach, type Role, type TerrainCard, type Tile, type TurnAction,
 } from '@cyber/battle'
 import { AlbumArtProvider } from '@luismlorenzana/uma-kit/album'
@@ -37,6 +38,7 @@ type Ui =
   | { phase: 'order-target'; order: OrderKind }
   | { phase: 'order-tile'; order: OrderKind }
   | { phase: 'duo' }
+  | { phase: 'patch' }
 
 export interface SandboxHandle {
   readonly state: BattleState
@@ -144,7 +146,9 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   const [dolls, setDolls] = useState<Doll[]>([])
   const [cutIn, setCutIn] = useState<CutInView | null>(null)
   const [resonance, setResonance] = useState<{ unit: string; path: 'trust' | 'heart' | null; key: number } | null>(null)
-  const [cutInSetting, setCutInSetting] = useState<CutInSetting>('auto')
+  const expanded = first.input.units.filter(({ side }) => side === 'squad').length > 5
+  const [cutInSetting, setCutInSetting] = useState<CutInSetting>(expanded ? 'off' : 'auto')
+  const [quickTurns, setQuickTurns] = useState(expanded)
   const [reachAll, setReachAll] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [saver, setSaver] = useState(initialSaver)
@@ -209,6 +213,15 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
     }
     // Rules version 3: the orbital strike's marked tiles until it lands.
     for (const t of s.v3?.strike?.tiles ?? []) over.push({ tile: t, kind: 'danger' })
+    for (const unit of s.units) {
+      if (!unit.windup || unit.status !== 'active') continue
+      const tile = targetTile(s, unit.windup.target)
+      if (tile) over.push({ tile, kind: 'danger' })
+    }
+    if (u.phase === 'forecast') for (const id of u.f.suppression?.targets ?? u.f.splash?.targets ?? []) {
+      const tile = targetTile(s, id)
+      if (tile) over.push({ tile, kind: 'area' })
+    }
     sc.setOverlay(over)
     sc.setFocus(s.active ? [s.active, ...(u.phase === 'forecast' && u.act.kind === 'attack' ? [u.act.target] : [])] : [])
   }
@@ -242,6 +255,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       // A walk also ends on a timer, so a page that draws no frames (hidden, throttled) never stalls the battle.
       if (c.kind === 'moved') await Promise.race([sc.walk(c.unit, c.path, speed), wait((c.path.length * 350) / speed + 400)])
       else if (c.kind === 'attack') {
+        if (c.mode) popDoll(before, c.unit, FIRE_MODE_LABEL[c.mode])
         const sp = cutInSpeed(settingRef.current, seen.current, c, after)
         seen.current.add(`${c.unit}:${c.with}`)
         if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
@@ -253,7 +267,10 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
         if (current) { const shown: CutInView = { ...(current as CutInView), numbers: [...(current as CutInView).numbers, text] }; current = shown; setCutIn(shown) }
         const target = c.kind === 'burn' ? c.unit : c.kind === 'barrierHit' ? null : c.target
         if (target) popDoll(after, target, text)
-      } else if (c.kind === 'rigBreak') sc.setDown(c.unit, true)
+      } else if (c.kind === 'prepared') popDoll(after, c.unit, `Preparing · ${labelOf(after, c.target)}`)
+      else if (c.kind === 'suppressed') popDoll(after, c.target, c.interrupted ? 'Interrupted' : 'Suppressed')
+      else if (c.kind === 'mended' && action.kind === 'quickPatch') popDoll(after, c.target, 'Emergency patch')
+      else if (c.kind === 'rigBreak') sc.setDown(c.unit, true)
       else if (c.kind === 'extracted' || c.kind === 'freed') sc.removeFigure(c.unit)
       else if (c.kind === 'faced') sc.face(c.unit, c.facing)
       else if (c.kind === 'terrain' || c.kind === 'door' || c.kind === 'heights' || c.kind === 'burst') {
@@ -461,6 +478,11 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       .sort((x, y) => Math.abs(x.x - reach.to[0]) + Math.abs(x.y - reach.to[1]) - (Math.abs(y.x - reach.to[0]) + Math.abs(y.y - reach.to[1])))[0]
     const toward = lastTarget.current ?? (foe ? [foe.x, foe.y] as Tile : null)
     const face: Dir = toward ? dirTo(reach.to, toward) : s.units.find((u) => u.id === s.active)!.facing
+    if (quickTurns) {
+      lastTarget.current = null
+      void commit({ kind: 'turn', unit: s.active!, to: reach.to, ...(dash ? { dash: true } : {}), act: a, face })
+      return
+    }
     show({ phase: 'face', reach, dash, act: a, face })
     scene.current?.face(s.active!, face)
   }
@@ -517,10 +539,16 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   if (playerTurn && me) {
     if (ui.phase === 'move') {
       arc.push(btn('Act here', () => { const r = ui.moves.find((m) => m.to[0] === me.x && m.to[1] === me.y)!; show({ phase: 'act', reach: r, dash: false }) }))
+      if (expanded) arc.push(btn('Auto turn', () => {
+        const current = session.current.state
+        const next = chooseAction(current)
+        void commit(next)
+      }))
       arc.push(btn('Wait', () => { const r = ui.moves.find((m) => m.to[0] === me.x && m.to[1] === me.y)!; toFace(r, false, { kind: 'wait' }) }))
       const thruster = state.input.units.find((i) => i.id === me.id)?.loadout.back.kind === 'thruster'
       if (thruster && me.charge >= 1 && state.input.rulesVersion >= 2) arc.push(btn(ui.dash ? 'Dash on' : 'Dash', () => { const r = turnReach(state, me.id, !ui.dash); show({ phase: 'move', dash: !ui.dash, moves: r.moves, danger: r.danger, ghost: null }) }))
       arc.push(btn(me.link ? 'Link on' : 'Link off', () => void commit({ kind: 'link', unit: me.id, on: !me.link })))
+      if (quickPatchTargets(state, me.id).length) arc.push(btn('Emergency patch', () => show({ phase: 'patch' })))
       if (me.side === 'squad' && state.field && !state.field.benchUsed && (state.input.bench ?? []).length > 0) {
         for (const role of state.input.bench ?? []) arc.push(btn(`Call ${role}`, () => { show({ phase: 'bench', role }); setToast(`Tap a tile for the ${role}`) }, false, `bench-${role}`))
       }
@@ -553,8 +581,10 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       arc.push(btn('Undo', undo))
     } else if (ui.phase === 'more') {
       const placed = { ...state, units: state.units.map((u) => (u.id === me.id ? { ...u, x: ui.reach.to[0], y: ui.reach.to[1] } : u)) }
-      supportFrom(placed, me.id, ui.reach.to).slice(0, 8).forEach((a, i) => arc.push(btn(actWords(state, a),
-        () => previewAction(ui.reach, ui.dash, a), false, `more-${i}`)))
+      const choices = supportFrom(placed, me.id, ui.reach.to)
+      arc.push(<div className="pointer-events-auto flex max-h-[37dvh] flex-wrap gap-2 overflow-y-auto" key="support-actions">
+        {choices.map((a, i) => btn(actWords(state, a), () => previewAction(ui.reach, ui.dash, a), false, `more-${i}`))}
+      </div>)
       arc.push(btn('Back', () => show({ phase: 'act', reach: ui.reach, dash: ui.dash })))
     } else if (ui.phase === 'face') {
       arc.push(
@@ -567,6 +597,11 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       )
       arc.push(btn('Confirm', send, true))
       arc.push(btn('Undo', undo))
+    } else if (ui.phase === 'patch') {
+      for (const target of quickPatchTargets(state, me.id)) {
+        arc.push(btn(`Patch ${labelOf(state, target.id)}`, () => void commit({ kind: 'quickPatch', unit: me.id, target: target.id }), true, target.id))
+      }
+      arc.push(btn('Back', undo))
     } else if (ui.phase === 'bench') arc.push(btn('Cancel call', undo))
     else if (ui.phase === 'orders') {
       for (const kind of state.input.orders?.kinds ?? []) {
@@ -587,7 +622,10 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   const ghost = ui.phase === 'forecast' ? ui.f.timeline : null
   const inspected = inspect ? state.units.find((u) => u.id === inspect) : null
   const shot = ui.phase === 'forecast' && ui.act.kind === 'attack' ? ui.act : null
-  const aimTarget = training && shot && me && canAim(state, me.id) ? state.units.find((unit) => unit.id === shot.target) : null
+  const shooter = state.input.units.find(({ id }) => id === me?.id)
+  const modes = shot && shooter ? fireModes(shooter, shot.with, state.input.rulesVersion) : []
+  const aimTarget = (training || state.input.rulesVersion >= 5) && shot && me && canAim(state, me.id) && shot.mode !== 'area' && shot.mode !== 'suppress'
+    ? state.units.find((unit) => unit.id === shot.target) : null
   return (
     <div className="absolute inset-0 select-none overflow-hidden">
       <canvas ref={canvas} className="block h-full w-full" style={{ touchAction: 'none' }} onPointerDown={down} onPointerMove={move} onPointerUp={up}
@@ -611,6 +649,8 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
         <button type="button" onClick={() => setReachAll((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Reach {reachAll ? 'on' : 'off'}</button>
         <button type="button" onClick={() => setCutInSetting((v) => (v === 'auto' ? 'quick' : v === 'quick' ? 'off' : 'auto'))} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Cut-in {cutInSetting}</button>
         <button type="button" onClick={() => setSaver((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Saver {saver ? 'on' : 'off'}</button>
+        {expanded && <button type="button" onClick={() => setQuickTurns(!quickTurns)} aria-pressed={quickTurns}
+          className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Auto face {quickTurns ? 'on' : 'off'}</button>}
         {inspected && <UnitCard state={state} unit={inspected} onClose={() => setInspect(null)} />}
         {terrain && <TerrainPanel card={terrain} onClose={() => setTerrain(null)} />}
       </div>
@@ -619,12 +659,25 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       )}
       <div className="pointer-events-none absolute flex max-w-[46%] flex-wrap items-end justify-end gap-2" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
         {ui.phase === 'forecast' && <ForecastCard state={state} f={ui.f} onCancel={() => show({ phase: 'act', reach: ui.reach, dash: ui.dash })} onConfirm={() => toFace(ui.reach, ui.dash, ui.act)}>
-          {shot && aimTarget && <div className="mt-2 flex gap-2" aria-label="Aim">
-            {(['leftArm', 'rightArm'] as const).filter((part) => aimTarget.hp[part] > 0).map((part) => (
+          {shot && me && modes.length > 0 && <div className="mt-2 grid grid-cols-2 gap-1" aria-label="Firing mode">
+            {([undefined, ...modes] as const).map((mode) => {
+              const act = { ...shot, mode, aim: mode === 'area' || mode === 'suppress' ? undefined : shot.aim }
+              const result = forecast(state, { kind: 'turn', unit: me.id, to: ui.reach.to, dash: ui.dash, act, face: me.facing })
+              return <button type="button" key={mode ?? 'base'} aria-pressed={shot.mode === mode} disabled={'error' in result}
+                className="min-h-11 rounded-md bg-white/10 aria-pressed:ring-2 aria-pressed:ring-cyan-300 disabled:opacity-40"
+                onClick={() => previewAction(ui.reach, ui.dash, act)}>
+                {mode ? `${FIRE_MODE_LABEL[mode]} · ${modeCost(mode)}` : 'Standard'}
+              </button>
+            })}
+          </div>}
+          {shot?.mode === 'impact' && <p className="mt-1 text-[#ffb84d]">On hit · Drain 1 Charge</p>}
+          {shot?.mode === 'thermal' && <p className="mt-1 text-[#ffb84d]">On hit · Ignite tile</p>}
+          {shot && aimTarget && <div className="mt-2 grid grid-cols-2 gap-1" aria-label="Aim">
+            {(['core', 'leftArm', 'rightArm', 'legs'] as const).filter((part) => aimTarget.hp[part] > 0).map((part) => (
               <button key={part} type="button" aria-pressed={shot.aim === part}
                 className="min-h-11 flex-1 rounded-md bg-white/10 aria-pressed:ring-2 aria-pressed:ring-cyan-300"
                 onClick={() => previewAction(ui.reach, ui.dash, { ...shot, aim: shot.aim === part ? undefined : part })}>
-                Aim {part === 'leftArm' ? 'left arm' : 'right arm'}
+                Aim {{ core: 'Core', leftArm: 'left arm', rightArm: 'right arm', legs: 'Legs' }[part]}
               </button>
             ))}
           </div>}

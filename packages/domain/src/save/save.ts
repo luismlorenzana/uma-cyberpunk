@@ -5,7 +5,8 @@ import type { CommandCinemaState } from '../ship/command-cinema'
 // takes any version this game ever wrote and returns the current one, and never moves `account.updatedAt`.
 
 import { MANAGEMENT_EVENTS, type CampaignManagementState, type ManagementReceipt } from '../campaign-management'
-import type { Role } from '@cyber/battle'
+import { COMBAT_SUBCLASSES, type CombatTraining } from '../combat-training'
+import type { CombatSubclass, Role } from '@cyber/battle'
 import { CAPTAIN_NAME_MAX, DEFAULT_CAPTAIN, PRONOUNS, ROMANCE, type Captain, type Pronouns, type Romance } from '../captain'
 import { BOND_MAX, BOND_PATHS, BOND_TUNING, newBond, type Bond, type BondPath } from '../crew/bonds'
 import { emptyCabin, ITEMS_BY_ID, LINE_SLOTS, placeable, SLOTS, STARTER_STOCK, TOPICS, type Cabin, type Reveal, type Slot } from '../cabins/items'
@@ -36,7 +37,7 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } 
  * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
  * 18 management receipts and independent first-use/report acknowledgements (CY51);
  * 19 saved command cinematic position and fast-playback preference (CY54). */
-export const SAVE_VERSION = 19
+export const SAVE_VERSION = 20
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -207,7 +208,12 @@ export interface SaveV19 extends Omit<SaveV18, 'version'> {
   commandCinema: CommandCinemaState
 }
 
-export type Save = SaveV19
+export interface SaveV20 extends Omit<SaveV19, 'version'> {
+  version: 20
+  combatTraining?: Record<string, CombatTraining>
+}
+
+export type Save = SaveV20
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -236,8 +242,10 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10)))))))))
+  return migrateV19(migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))))
 }
+
+export const migrateV19 = (save: SaveV19): SaveV20 => ({ ...save, version: 20 })
 
 export const migrateV18 = (save: SaveV18): SaveV19 => ({ ...save, version: 19, commandCinema: { fast: false, retries: 0, pending: null } })
 
@@ -694,6 +702,29 @@ export function versionOf(value: unknown): number {
 /** Parses a save of any version this game has written and returns the current one, migrating as it goes. A version from
  * a newer app is refused, so an old client never half-reads a newer save. Never moves `account.updatedAt`. */
 export function parseSave(value: unknown, path = 'save'): Save {
+  const version = versionOf(value)
+  if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
+  if (version < 20) return migrateV19(parseSaveV19(value, path))
+  const { combatTraining, ...older } = object(value, path, Object.keys(value as Obj))
+  const base = migrateV19(parseSaveV19({ ...older, version: 19 }, path))
+  if (combatTraining === undefined) return base
+  const field = `${path}.combatTraining`
+  const rows = object(combatTraining, field, Object.keys((combatTraining ?? {}) as Obj))
+  if (Object.keys(rows).length > 1000) throw new SaveParseError(field, 'too many training records')
+  return { ...base, combatTraining: Object.fromEntries(Object.entries(rows).map(([key, value]) => {
+    const here = `${field}.${key}`
+    if (!/^[1-9][0-9]*$/.test(key) || !Number.isSafeInteger(Number(key))) throw new SaveParseError(here, 'expected an outfit id')
+    const row = object(value, here, ['rank', 'subclass'])
+    const rank = bounded(row.rank, here + '.rank', 10)
+    const subclass = row.subclass as CombatSubclass | null
+    if (!rank || (subclass !== null && !COMBAT_SUBCLASSES.includes(subclass))) {
+      throw new SaveParseError(here, 'expected a valid rank and subclass choice')
+    }
+    return [key, { rank, subclass }]
+  })) }
+}
+
+function parseSaveV19(value: unknown, path: string): SaveV19 {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version < 19) {

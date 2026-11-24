@@ -8,7 +8,7 @@ describe('management save migration and receipts', () => {
     const { commandCinema: _cinema1, management: _, ...prior } = newSave('captain', NOW)
     const old = { ...prior, version: 17, campaignProjects: { depot: 1 }, cabinVisits: { officer: 3 } }
     const save = parseSave(old)
-    expect(save.version).toBe(19)
+    expect(save.version).toBe(20)
     expect(save.account.updatedAt).toBe(NOW)
     expect(save.campaignProjects).toEqual(old.campaignProjects)
     expect(save.cabinVisits).toEqual(old.cabinVisits)

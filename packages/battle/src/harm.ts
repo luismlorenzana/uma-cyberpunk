@@ -33,6 +33,7 @@ export function harm(state: BattleState, target: UnitState, part: PartId, amount
     if (part === 'core') {
       target.status = 'down'
       delete target.stunned
+      delete target.windup
       cues.push({ kind: 'rigBreak', unit: target.id })
       if (state.v3) answer(state, target, cues)
     }

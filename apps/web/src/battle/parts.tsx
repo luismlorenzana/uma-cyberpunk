@@ -60,6 +60,8 @@ export function UnitCard({ state, unit, onClose }: { state: BattleState; unit: U
         <div key={p} className="flex items-center justify-between gap-2"><span>{PART_NAME[p]}</span><span>{unit.hp[p]}/{unit.maxHp[p]} <Bar hp={unit.hp[p]} max={unit.maxHp[p]} hue={hue} /></span></div>
       ))}
       <div className="mt-1 text-[#a3abc2]">Charge {unit.charge} · Link {unit.link ? 'on' : 'off'} · {unit.status === 'active' ? `facing ${unit.facing}` : unit.status}{unit.stunned ? ' · stunned' : ''}{unit.reloading ? ' · reloading' : ''}</div>
+      {unit.windup && <p className="text-[#ffb84d]">Preparing a shot at {labelOf(state, unit.windup.target)}</p>}
+      {unit.suppressed && <p className="text-[#ffb84d]">Suppressed · reactions blocked</p>}
     </Panel>
   )
 }
@@ -81,10 +83,14 @@ function StrikeLine({ state, s, title }: { state: BattleState; s: StrikeForecast
 export function ForecastCard({ state, f, onConfirm, onCancel, children }: { state: BattleState; f: Forecast; onConfirm: () => void; onCancel: () => void; children?: ReactNode }) {
   const charge = Object.entries(f.charge).filter(([, v]) => v !== 0)
   return (
-    <Panel className="pointer-events-auto w-64">
+    <Panel className="pointer-events-auto max-h-[72dvh] w-64 overflow-y-auto">
       <div data-forecast className="space-y-1">
         {f.attack && <StrikeLine state={state} s={f.attack} title={f.cover ? `Covered by ${labelOf(state, f.cover)}` : 'Attack'} />}
         {f.splash && <div className="text-[#ffb84d]">On hit · {f.splash.damage} splash to {f.splash.targets.map((id) => labelOf(state, id)).join(', ')}</div>}
+        {f.suppression && <div className="text-[#ffb84d]">
+          On hit · Suppress {f.suppression.targets.map((id) => labelOf(state, id)).join(', ')}
+          {!!f.suppression.interrupts.length && <div>Interrupt {f.suppression.interrupts.map((id) => labelOf(state, id)).join(', ')}</div>}
+        </div>}
         {f.crossfire.map((c) => <StrikeLine key={c.unit} state={state} s={c} title={`Crossfire (${c.how})`} />)}
         {f.counter && <StrikeLine state={state} s={f.counter} title="Counter" />}
         {f.tech && <div>{f.tech.tech}: {f.tech.chance}%</div>}

@@ -1,6 +1,7 @@
 import { briefingReady, campaignSupport, fleetMobilized, seeScene, type CampaignBook, type CampaignQuest, type CampaignRecruit, type EffectStep, type Save } from '@cyber/domain'
 import { applyStep } from '../mission/director'
 import { clearCampaignPosts, homeQuestReady } from './pair'
+import { formationReady } from './specialist-input'
 
 export function questComplete(save: Save, quest: CampaignQuest, book?: CampaignBook): boolean {
   const recruit = book?.recruits?.find(({ signOn }) => signOn === quest.id)
@@ -18,6 +19,8 @@ export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQu
   }
   if (optionalCampaignTraining(book, quest) && !save.crew.some(({ outfit }) => !campaignSupport(book, save).ashore.has(outfit))) return false
   if (quest.flags?.some((flag) => !save.story.flags.includes(flag))) return false
+  const combat = quest.encounter ? book.ground.get(quest.encounter)?.combat : undefined
+  if (combat?.kind === 'combined' && !formationReady(save, combat, shiftedCombat(save, book), campaignSupport(book, save).ashore)) return false
   if (quest.requires?.some((id) => {
     const required = book.quests.find((entry) => entry.id === id)
     return !required || !questComplete(save, required, book)
@@ -26,6 +29,9 @@ export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQu
   const prior = book.quests.find(({ id }) => id === quest.after)
   return !!prior && questComplete(save, prior, book)
 }
+
+export const shiftedCombat = (save: Save, book: Pick<CampaignBook, 'combatShift'>): boolean =>
+  !!book.combatShift && save.story.flags.includes(book.combatShift)
 
 export function optionalCampaignTraining(book: CampaignBook, quest: CampaignQuest): boolean {
   return !!quest.encounter && !!book.recruits?.length && !book.recruits.some(({ story }) => story.includes(quest.id))

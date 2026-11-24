@@ -11,6 +11,8 @@ import { dirTo, distance, facingOf, inReach, pincerTile, sameTile } from './sigh
 import { boardOf, cross, lightsOut, setState, type Board } from './terrain'
 import { inputOf, rateOf, ticksToTurn } from './timeline'
 import { TUNING } from './tuning'
+import { applyModeEffect, modeWeapon } from './specialists'
+import type { FireMode } from './types'
 import { cohesionReach, freeCover, freeJoin, mealOf, rankOf, useFreeCover } from './v3'
 import type { V3State, AimAt, AttackRole, BattleState, ChanceSkill, Cue, Facing, Mount, PartId, Prop, Tile, UnitState, Weapon } from './types'
 import { PARTS } from './types'
@@ -87,12 +89,14 @@ function rangedPenalty(state: Pick<BattleState, 'input' | 'field' | 'time' | 'un
  * A strike's numbers: `attacker` firing `mount` from `from` at `target` where she stands. `facing` overrides where it
  * lands (Cover steps in to take it from the front). Null when the mount can't fire.
  */
-export function strikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 'time'>, attackerId: string, mount: Mount, targetId: string, from: Tile, opts: { aim?: AimAt; facing?: Facing } = {}): Strike | null {
+export function strikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 'time'>, attackerId: string, mount: Mount, targetId: string, from: Tile, opts: { aim?: AimAt; facing?: Facing; mode?: FireMode; prepared?: boolean } = {}): Strike | null {
   const attacker = unitById(state, attackerId), target = unitById(state, targetId)
   const aIn = inputOf(state, attackerId), tIn = inputOf(state, targetId)
   const arm = armed(aIn, attacker, mount)
   if (!arm) return null
-  const { weapon } = arm
+  const profile = modeWeapon(state, attackerId, mount, arm.weapon, opts.mode)
+  if (!profile) return null
+  const weapon = opts.prepared ? { ...profile, power: Math.floor(profile.power * 1.5) } : profile
   const board = boardOf(state)
   const to = tileOf(target)
   const facing = opts.facing ?? facingOf(to, target.facing, from)
@@ -135,12 +139,13 @@ export function mapTargets(state: Pick<BattleState, 'input' | 'field'>): MapTarg
 export const mapTarget = (state: Pick<BattleState, 'input' | 'field'>, id: string): MapTarget | undefined => mapTargets(state).find((t) => t.id === id)
 
 /** A strike on a thing: no evasion, Guard or Coat; facing is the front. */
-export function objectStrikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 'time'>, attackerId: string, mount: Mount, targetId: string, from: Tile): Strike | null {
+export function objectStrikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 'time'>, attackerId: string, mount: Mount, targetId: string, from: Tile, mode?: FireMode): Strike | null {
   const attacker = unitById(state, attackerId), aIn = inputOf(state, attackerId)
   const target = mapTarget(state, targetId)
   const arm = armed(aIn, attacker, mount)
   if (!arm || !target) return null
-  const { weapon } = arm
+  const weapon = modeWeapon(state, attackerId, mount, arm.weapon, mode)
+  if (!weapon) return null
   const board = boardOf(state)
   const accuracy = arm.halfAccuracy ? Math.floor((weapon.accuracy * TUNING.oneArmTwoHandedPct) / 100) : weapon.accuracy
   const hit = clamp(accuracy + TUNING.witAccuracy * aIn.bands.wit - rangedPenalty(state, board, attacker, weapon.band, from, target.tile, null), TUNING.hitClamp[0], TUNING.hitClamp[1])
@@ -205,7 +210,7 @@ export function coverFor(state: Pick<BattleState, 'input' | 'units' | 'turn'> & 
   const target = unitById(state, targetId)
   if (facing !== 'back' && guardOf(inputOf(state, targetId), target) > 0) return null
   // Rules version 3: Steadfast (bond rank 9) and a level-2 partner cover once a battle with no Charge.
-  const ids = state.units.filter((u) => u.side === target.side && u.id !== targetId && u.status === 'active' && u.link
+  const ids = state.units.filter((u) => u.side === target.side && u.id !== targetId && u.status === 'active' && u.link && !u.suppressed
     && (u.charge >= TUNING.charge.cover || freeCover(state, u.id, targetId)) && distance(tileOf(u), tileOf(target)) === 1 && guardOf(inputOf(state, u.id), u) > 0).map((u) => u.id)
   return timelineOrder(state, ids)[0] ?? null
 }
@@ -223,7 +228,7 @@ export function crossfireFor(state: Pick<BattleState, 'input' | 'units' | 'turn'
   for (const u of state.units) {
     // Rules version 3: during Resonance every Linked ally in reach joins free; a partner joins once free, link or not.
     const free = freeJoin(state, attackerId, u.id)
-    if (u.side !== attacker.side || u.id === attackerId || u.status !== 'active') continue
+    if (u.side !== attacker.side || u.id === attackerId || u.status !== 'active' || u.suppressed) continue
     if (free !== 'partner' && (!u.link || (u.charge < TUNING.charge.crossfire && !free))) continue
     const at = tileOf(u)
     const pincer = sameTile(at, far) ? mountFor(state, u.id, at, targetId, ['melee', 'short']) : null
@@ -240,7 +245,7 @@ export function crossfireFor(state: Pick<BattleState, 'input' | 'units' | 'turn'
  * front or side and wasn't Long, and she has a Melee or Short weapon in reach of the attacker. */
 export function counterFor(state: Pick<BattleState, 'input' | 'units' | 'field'>, defenderId: string, attackerId: string, attackerAt: Tile, landed: Facing, band: Weapon['band']): Mount | null {
   const d = unitById(state, defenderId)
-  if (d.status !== 'active' || d.charge < TUNING.charge.counter || d.reloading || landed === 'back' || band === 'long') return null
+  if (d.status !== 'active' || d.charge < TUNING.charge.counter || d.reloading || d.suppressed || landed === 'back' || band === 'long') return null
   const t = unitById(state, attackerId)
   if (t.status !== 'active') return null
   const units = state.units.map((u) => (u.id === attackerId ? { ...u, x: attackerAt[0], y: attackerAt[1] } : u))
@@ -358,7 +363,10 @@ function resolveObjectStrike(state: BattleState, s: Strike, cues: Cue[]): void {
 }
 
 /** The attack cue for a strike. */
-const attackCue = (s: Strike, role: AttackRole, target: string): Cue => ({ kind: 'attack', unit: s.attacker, target, with: s.mount, band: s.weapon.band, role, facing: s.facing, ...(s.aim ? { aim: s.aim as PartId } : {}) })
+const attackCue = (s: Strike, role: AttackRole, target: string, mode?: FireMode): Cue => ({
+  kind: 'attack', unit: s.attacker, target, with: s.mount, band: s.weapon.band, role, facing: s.facing,
+  ...(s.aim ? { aim: s.aim as PartId } : {}), ...(mode ? { mode } : {}),
+})
 
 /** The counter, resolved. */
 function counterStrike(state: BattleState, defenderId: string, mount: Mount, attackerId: string, cues: Cue[]): void {
@@ -374,13 +382,14 @@ function counterStrike(state: BattleState, defenderId: string, mount: Mount, att
 /** The whole exchange of an attack on the live state: the attacker turns to her target, Cover may step in, a defender's
  * First may counter before it, the strike rolls (Burst adds rounds; then Double, Switch or Stun, one chain at most),
  * allies join (Crossfire), and the defender counters. A thing on the map just takes the strike. */
-export function resolveAttack(state: BattleState, attackerId: string, mount: Mount, targetId: string, aim: AimAt | undefined, cues: Cue[]): void {
+export function resolveAttack(state: BattleState, attackerId: string, mount: Mount, targetId: string, aim: AimAt | undefined, cues: Cue[], mode?: FireMode): void {
   const attacker = unitById(state, attackerId)
   const from = tileOf(attacker)
+  const prepared = attacker.windup?.target === targetId && attacker.windup.with === mount
   if (!state.units.some((u) => u.id === targetId)) {
-    const s = objectStrikeOf(state, attackerId, mount, targetId, from)!
+    const s = objectStrikeOf(state, attackerId, mount, targetId, from, mode)!
     attacker.facing = dirTo(from, mapTarget(state, targetId)!.tile)
-    cues.push(attackCue(s, 'main', targetId))
+    cues.push(attackCue(s, 'main', targetId, mode))
     resolveObjectStrike(state, s, cues)
     afterMusterAttack(state, attackerId, s.weapon.band, cues)
     return
@@ -388,7 +397,7 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
   const target = unitById(state, targetId)
   const landed = facingOf(tileOf(target), target.facing, from)
   attacker.facing = dirTo(from, tileOf(target))
-  const main = strikeOf(state, attackerId, mount, targetId, from, { aim })!
+  const main = strikeOf(state, attackerId, mount, targetId, from, { aim, mode, prepared })!
   const coverer = coverFor(state, targetId, landed)
   let countered = false
   if (!coverer && v2(state)) {
@@ -400,14 +409,14 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
       if (attacker.status !== 'active') return
     }
   }
-  const burst = v2(state) && main.weapon.band === 'short' && fires(state, attackerId, 'burst')
+  const burst = v2(state) && !mode && !prepared && main.weapon.band === 'short' && fires(state, attackerId, 'burst')
   // Cover takes the strike on her own rig: an aim at the target's Hold has nothing to land on, so it comes in unaimed.
-  const strike = coverer ? strikeOf(state, attackerId, mount, coverer, from, { aim: aim === 'hold' ? undefined : aim, facing: 'front' })! : main
+  const strike = coverer ? strikeOf(state, attackerId, mount, coverer, from, { aim: aim === 'hold' ? undefined : aim, facing: 'front', mode, prepared })! : main
   if (burst) {
     cues.push({ kind: 'skill', unit: attackerId, skill: 'burst' })
     strike.hits += TUNING.skills.burstRounds
   }
-  cues.push(attackCue(strike, 'main', coverer ?? targetId))
+  cues.push(attackCue(strike, 'main', coverer ?? targetId, mode))
   if (coverer) {
     const free = unitById(state, coverer).charge < TUNING.charge.cover || rankOf(state, coverer) >= TUNING.bond.steadfast ? freeCover(state, coverer, targetId) : null
     if (free) useFreeCover(state, coverer, free, cues)
@@ -415,10 +424,11 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
     cues.push({ kind: 'cover', unit: coverer, for: targetId, attacker: attackerId })
   }
   const hits = resolveStrike(state, strike, 'main', cues)
+  applyModeEffect(state, attackerId, strike.target, mode, hits, cues)
   // The sure shot is spent on this attack.
   if (state.v3?.sure === attackerId) state.v3.sure = null
   afterMusterAttack(state, attackerId, strike.weapon.band, cues)
-  if (v2(state) && !coverer && !burst && target.status === 'active') chain(state, attackerId, mount, targetId, from, aim, hits, cues)
+  if (v2(state) && !mode && !prepared && !coverer && !burst && target.status === 'active') chain(state, attackerId, mount, targetId, from, aim, hits, cues)
   if (target.status === 'active') {
     for (const j of crossfireFor(state, attackerId, from, targetId)) {
       if (target.status !== 'active') break

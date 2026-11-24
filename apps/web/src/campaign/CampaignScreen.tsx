@@ -106,6 +106,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       <GroundScreen key={mission.id} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
         ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
         combatSprites={loaded.release.combatSprites}
+        combatShift={loaded.book.combatShift}
         acceptsFitted={loaded.book.workshop?.missions.includes(mission.id)}
         ashore={support?.ashore} editableSquad={!!ground && !!loaded.book.sectors?.length}
         close={() => setGroundPaused(true)} />

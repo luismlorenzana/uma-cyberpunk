@@ -78,6 +78,7 @@ export function startOwnTurn(state: BattleState, unitId: string): void {
   const u = unitById(state, unitId)
   delete u.reloading
   delete u.pinned
+  delete u.suppressed
 }
 
 export { unitById }

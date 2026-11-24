@@ -18,6 +18,7 @@ import { TUNING } from './tuning'
 import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, DuoAction, FieldState, Objective, Role, UnitState } from './types'
 import { cloneV3, DUO_TECHS, duoError, duoKey, giveOrder, landStrike, orderError, partnerOf, startV3, v3 } from './v3'
 import { SUPPORTED_VERSIONS } from './version'
+import { modeCost, quickPatch, quickPatchTargets, validSpecialty } from './specialists'
 
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,63}$/
 const isBand = (v: unknown) => v === 1 || v === 2 || v === 3 || v === 4 || v === 5
@@ -26,7 +27,7 @@ const ROLES: readonly Role[] = ['vanguard', 'striker', 'gunner', 'netrunner', 'm
 function checkInput(input: BattleInput): void {
   if (!SUPPORTED_VERSIONS.includes(input.rulesVersion)) throw new BattleInputError('rulesVersion', `unknown rules version ${String(input.rulesVersion)}`)
   if (typeof input.seed !== 'string' || input.seed.length === 0 || input.seed.length > 64) throw new BattleInputError('seed', 'expected a string of 1–64 characters')
-  const map = parseMap(input.map)
+  const map = parseMap(input.map, 'map', input.rulesVersion)
   const later = input.rulesVersion >= 2
   const needs2 = (path: string, present: unknown) => { if (present !== undefined && !later) throw new BattleInputError(path, 'needs rules version 2') }
   needs2('map.props', input.map.props)
@@ -54,9 +55,13 @@ function checkInput(input: BattleInput): void {
     if (u.holdHp !== undefined && !(Number.isSafeInteger(u.holdHp) && u.holdHp >= 1 && (u.hold === 'anchor' || u.hold === 'collar'))) throw new BattleInputError(`${path}.holdHp`, 'expected a positive integer on an Anchor or a Collar')
     if (u.faction !== undefined && u.faction !== 'steel-muster') throw new BattleInputError(`${path}.faction`, 'unknown faction')
     checkLoadout(u, path, input.rulesVersion)
+    if (u.specialty !== undefined && (input.rulesVersion < 5 || !validSpecialty(u.specialty, u))) {
+      throw new BattleInputError(`${path}.specialty`, 'expected a version 5 specialist with a compatible fitting')
+    }
   })
   const squad = input.units.filter((u) => u.side === 'squad').length, enemies = input.units.length - squad
-  if (squad < 1 || squad > TUNING.map.squad) throw new BattleInputError('units', `expected 1–${TUNING.map.squad} squad units`)
+  const squadLimit = input.rulesVersion >= 5 ? 10 : TUNING.map.squad
+  if (squad < 1 || squad > squadLimit) throw new BattleInputError('units', `expected 1–${squadLimit} squad units`)
   if (enemies < 1 || enemies > TUNING.map.maxEnemies) throw new BattleInputError('units', `expected 1–${TUNING.map.maxEnemies} enemies`)
   if (input.items) {
     let total = 0
@@ -200,6 +205,7 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
       cues.push({ kind: 'skipped', unit: u.id, why: spent ? 'duo' : u.stunned ? 'stunned' : 'idle' })
       if (spent) state.v3!.spent = state.v3!.spent.filter((x) => x !== u.id)
       delete u.stunned
+      delete u.windup
       startOwnTurn(state, u.id)
       u.clock = 0
       state.turn += 1
@@ -272,6 +278,14 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     unitById(next, action.unit).link = action.on
     return { state: next, cues: [{ kind: 'linked', unit: action.unit, on: action.on }], error: null }
   }
+  if (action.kind === 'quickPatch') {
+    if (!quickPatchTargets(state, action.unit).some((unit) => unit.id === action.target)) {
+      return { state, cues: [], error: 'Emergency patch is unavailable' }
+    }
+    const next = clone(state), cues: Cue[] = []
+    quickPatch(next, action.unit, action.target, cues)
+    return { state: next, cues, error: null }
+  }
   if (action.kind === 'order') {
     const error = orderError(state, action)
     if (error) return { state, cues: [], error }
@@ -322,7 +336,14 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
   const reached = (o === 'reach' || o === 'escort') && objectiveProgress(next).value === 1
   if (!reached && u.status === 'active') {
     const act = action.act
-    if (act.kind === 'attack') resolveAttack(next, u.id, act.with, act.target, act.aim, cues)
+    if (act.kind === 'attack') {
+      if (act.mode) spendCharge(u, modeCost(act.mode), 'mode', cues)
+      resolveAttack(next, u.id, act.with, act.target, act.aim, cues, act.mode)
+    } else if (act.kind === 'prepare') {
+      u.windupUsed = true
+      u.windup = { target: act.target, with: act.with }
+      cues.push({ kind: 'prepared', unit: u.id, target: act.target })
+    }
     else if (act.kind === 'wait') {
       const from = u.charge
       u.charge = Math.min(next.input.units.find((i) => i.id === u.id)!.chargeCap, u.charge + TUNING.charge.wait)
@@ -351,6 +372,7 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     else delete u.waited
   }
   u.clock = restart
+  if (action.act.kind !== 'prepare') delete u.windup
   u.turns += 1
   if (next.v3) {
     if (next.v3.sure === u.id) next.v3.sure = null

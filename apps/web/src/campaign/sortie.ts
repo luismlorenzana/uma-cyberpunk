@@ -7,6 +7,11 @@ export function beginCampaignEncounter(save: Save, book: CampaignBook, quest: Ca
   if (save.mission || save.pairScene || save.campaignDay.pending || quest.encounter !== mission.id || !questAvailable(save, book, quest, port)) return save
   const next = effects.reduce((state, step) => applyStep(state, book.story, step), save)
   const started = startMission({ ...next, story: seeScene(next.story, quest.scene) }, chapter, mission)
+  const combat = book.ground.get(mission.id)?.combat
+  if (combat?.kind === 'combined') {
+    const roster = [...combat.members.filter(({ role }) => role === 'laser'), ...combat.members.filter(({ role }) => role !== 'laser')]
+    return setSquad(started, roster.flatMap(({ outfit }) => outfit === undefined ? [] : [outfit]))
+  }
   const { ashore } = campaignSupport(book, next)
   const away = awayMembers(save.operations, save.squads)
   const available = next.crew.filter((member) => !ashore.has(member.outfit) && !away.includes(member.outfit) && !resting(member)).map(({ outfit }) => outfit)

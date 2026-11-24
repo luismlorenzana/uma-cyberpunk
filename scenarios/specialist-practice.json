@@ -1,0 +1,369 @@
+{
+  "schemaVersion": 1,
+  "id": "specialist-practice",
+  "title": "Specialist Practice",
+  "map": "specialist-practice",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "input": {
+    "rulesVersion": 5,
+    "objective": { "kind": "defeatAll" },
+    "units": [
+      {
+        "id": "laser-1",
+        "label": "Laser One",
+        "side": "squad",
+        "spawn": 0,
+        "facing": "N",
+        "bands": { "speed": 3, "power": 3, "stamina": 3, "guts": 3, "wit": 3 },
+        "link": true,
+        "chargeCap": 3,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "none", "load": 0 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 75,
+            "range": [1, 3],
+            "hits": 3,
+            "load": 3,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "frozenRig": {
+          "core": "core-light",
+          "leftArm": "arm-light",
+          "rightArm": "arm-light",
+          "legs": "legs-standard",
+          "visor": "visor-aim",
+          "leftHand": null,
+          "rightHand": "hand-rifle",
+          "back": null,
+          "coat": null
+        },
+        "specialty": { "kind": "laser", "rank": 1, "subclass": "heal" }
+      },
+      {
+        "id": "laser-2",
+        "label": "Laser Two",
+        "side": "squad",
+        "spawn": 1,
+        "facing": "N",
+        "bands": { "speed": 3, "power": 3, "stamina": 3, "guts": 3, "wit": 3 },
+        "link": true,
+        "chargeCap": 3,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "bulwark", "load": 3, "capacity": 4 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 78,
+            "range": [1, 3],
+            "hits": 3,
+            "load": 3,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "frozenRig": {
+          "core": "core-light",
+          "leftArm": "arm-light",
+          "rightArm": "arm-light",
+          "legs": "legs-standard",
+          "visor": "visor-aim",
+          "leftHand": null,
+          "rightHand": "hand-rifle",
+          "back": "back-bulwark",
+          "coat": null
+        },
+        "specialty": { "kind": "laser", "rank": 3, "subclass": "shield" }
+      },
+      {
+        "id": "laser-3",
+        "label": "Laser Three",
+        "side": "squad",
+        "spawn": 2,
+        "facing": "N",
+        "bands": { "speed": 3, "power": 3, "stamina": 3, "guts": 3, "wit": 3 },
+        "link": true,
+        "chargeCap": 3,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "deck", "load": 2 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 7,
+            "accuracy": 78,
+            "range": [1, 3],
+            "hits": 3,
+            "load": 3,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "frozenRig": {
+          "core": "core-light",
+          "leftArm": "arm-light",
+          "rightArm": "arm-light",
+          "legs": "legs-standard",
+          "visor": "visor-aim",
+          "leftHand": null,
+          "rightHand": "hand-rifle",
+          "back": "back-deck",
+          "coat": null
+        },
+        "specialty": { "kind": "laser", "rank": 5, "subclass": "support" }
+      },
+      {
+        "id": "laser-4",
+        "label": "Laser Four",
+        "side": "squad",
+        "spawn": 3,
+        "facing": "N",
+        "bands": { "speed": 3, "power": 3, "stamina": 3, "guts": 3, "wit": 3 },
+        "link": true,
+        "chargeCap": 3,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 1 },
+          "back": {
+            "kind": "launcher",
+            "load": 3,
+            "weapon": {
+              "kind": "weapon",
+              "band": "long",
+              "type": "P",
+              "power": 13,
+              "accuracy": 86,
+              "range": [4, 6],
+              "hits": 1,
+              "load": 0
+            },
+            "ammo": 2
+          },
+          "visor": { "load": 1 },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 7,
+            "accuracy": 78,
+            "range": [1, 3],
+            "hits": 3,
+            "load": 3,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "frozenRig": {
+          "core": "core-light",
+          "leftArm": "arm-light",
+          "rightArm": "arm-light",
+          "legs": "legs-light",
+          "visor": "visor-basic",
+          "leftHand": null,
+          "rightHand": "hand-rifle",
+          "back": "back-sniper",
+          "coat": null
+        },
+        "specialty": { "kind": "laser", "rank": 5, "subclass": "long" }
+      },
+      {
+        "id": "laser-5",
+        "label": "Laser Five",
+        "side": "squad",
+        "spawn": 4,
+        "facing": "N",
+        "bands": { "speed": 3, "power": 3, "stamina": 3, "guts": 3, "wit": 3 },
+        "link": true,
+        "chargeCap": 3,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "none", "load": 0 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 7,
+            "accuracy": 78,
+            "range": [1, 3],
+            "hits": 3,
+            "load": 3,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "frozenRig": {
+          "core": "core-light",
+          "leftArm": "arm-light",
+          "rightArm": "arm-light",
+          "legs": "legs-standard",
+          "visor": "visor-aim",
+          "leftHand": null,
+          "rightHand": "hand-rifle",
+          "back": null,
+          "coat": null
+        },
+        "specialty": { "kind": "laser", "rank": 5, "subclass": "melee" }
+      },
+      {
+        "id": "drone-1",
+        "label": "Practice Marksman",
+        "side": "enemy",
+        "spawn": 0,
+        "facing": "S",
+        "bands": { "speed": 3, "power": 3, "stamina": 2, "guts": 3, "wit": 3 },
+        "chargeCap": 3,
+        "link": true,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "none", "load": 0 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 4,
+            "accuracy": 80,
+            "range": [1, 2],
+            "hits": 4,
+            "load": 2
+          },
+          "coat": null
+        }
+      },
+      {
+        "id": "drone-2",
+        "label": "Practice Striker",
+        "side": "enemy",
+        "spawn": 1,
+        "facing": "S",
+        "bands": { "speed": 2, "power": 3, "stamina": 2, "guts": 3, "wit": 3 },
+        "chargeCap": 3,
+        "link": true,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "none", "load": 0 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 12,
+            "accuracy": 85,
+            "range": [1, 1],
+            "hits": 1,
+            "load": 2
+          },
+          "coat": null
+        }
+      },
+      {
+        "id": "drone-3",
+        "label": "Practice Guard",
+        "side": "enemy",
+        "spawn": 2,
+        "facing": "S",
+        "bands": { "speed": 2, "power": 3, "stamina": 2, "guts": 3, "wit": 3 },
+        "chargeCap": 3,
+        "link": true,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "none", "load": 0 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 75,
+            "range": [1, 3],
+            "hits": 3,
+            "load": 3,
+            "twoHanded": true
+          },
+          "coat": null
+        }
+      },
+      {
+        "id": "drone-4",
+        "label": "Practice Scout",
+        "side": "enemy",
+        "spawn": 3,
+        "facing": "S",
+        "bands": { "speed": 3, "power": 3, "stamina": 2, "guts": 3, "wit": 3 },
+        "chargeCap": 3,
+        "link": true,
+        "loadout": {
+          "core": { "load": 2 },
+          "leftArm": { "load": 1 },
+          "rightArm": { "load": 1 },
+          "legs": { "load": 2 },
+          "back": { "kind": "none", "load": 0 },
+          "visor": { "load": 2, "aim": true },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "I",
+            "power": 10,
+            "accuracy": 90,
+            "range": [1, 1],
+            "hits": 1,
+            "load": 2
+          },
+          "coat": null
+        }
+      }
+    ]
+  }
+}
