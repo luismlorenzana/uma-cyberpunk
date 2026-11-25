@@ -1,10 +1,6 @@
 # Playing the four-act campaign
 
-**Acts I–III are playable in the current private candidate.** The [four-act design](../design/campaign-rework.md) and [roadmap](../handoff/four-act-roadmap.md) define this release. The rest of this manual covers mechanics as they exist in the game.
-
-## Current private review
-
-The four-act route opens with a shared premise. The private review offers 50 sign-ons across the five home systems. A recruited Uma receives her quarters, and her Crew Stories card opens her origin and personal missions through ship combat, ground capture and custody. Training is optional. Captain visits use the existing evening flow.
+Open **Campaign** and play **First Watch** to reach the 50 sign-ons across the five home systems. A recruited Uma receives her quarters, and her Crew Stories card opens her origin and personal missions through ship combat, ground capture and custody. Training is optional. Captain visits use the existing evening flow.
 
 Five capital operations are playable on one save. Open Expedition Readiness to see your capital tally, each duo’s lieutenant returns and both General clearances. A duo can depart once its own six lieutenants have returned and all five capitals are liberated. Then muster its crew at the launch berth with the listed supplies.
 
@@ -20,6 +16,14 @@ Each of the 25 expeditions takes two Umas, two Generals and six lieutenants. Any
 | Local bases and capitals | See which same-system Uma is her fixed partner, investigate together, see who the lieutenants are and what remains for their return. Restore services and liberate five capitals. |
 | Locating the next operation | A readiness view shows the five capital outcomes and each duo's six individual lieutenant statuses. A ready duo can embark while other duo stories remain open. |
 | Expedition ship | Allocate supplies and take two Umas, two cleared Boss Allies and six lieutenants on their own small ship. Play its actual bridge missions. All ten deploy together in Act III battles against the Seraine. See the target's liberation, outcome report and return. |
-| Finale and return | Use the recorded expedition outcomes in the Queen and final battle sequence. The soft ending follows the relationships and places involved. Exact finale readiness and epilogues will follow the [Act IV workshop](../handoff/tasks/CY90.md). |
+| Finale and return | Free a witness from each Seraine court and return to the main ship. Follow the readiness list to prepare the finale. After reaching Lark, reopen travel for civic visits, relationship scenes and repairs. |
 
-Training is an optional authored activity after signing on. The new four-act release starts a fresh campaign profile. Existing result, gear and replay mechanisms are described in the [current manual](README.md).
+## The finale and return to play
+
+The five liberated capitals and five recorded witness releases open the finale. At Halcyon, choose an eligible ten-person formation. Secure the civilian nodes, commit the common cut, and hear your recorded witnesses. The outer Queen operations can be played in any order. Follow the objective and keep the named Seraine alive.
+
+The last approach uses the Homestretch's bridge assignments. Choose who will speak at the berth before deploying the formation. The ground battle requires separating the witness channels before breaking the Collar. Both named Seraine must survive. The briefing and objective list track which actions are available. Withdraw and retry from the crew report if the attempt fails.
+
+Both approaches to Lark lead to the shared berth. Supper and the folded request reopen travel. The ordinary ending is available there. Recorded mutual relationship choices can open the True Ending. A private reunion or shared visit has its own choices and can be revisited if deferred. Civic events appear where the relevant officers are available. At a repair site, survey first, then complete the two work stages. The project remembers its stage if you leave and return.
+
+Training is optional after signing on. Gear, replays, and other established game systems are described in the [manual](README.md).

@@ -13,18 +13,18 @@
 - [Packet disposition and archive](archive/four-act-disposition.md)
 - [As-built game manual](../game/README.md)
 
-CY97 owns the remaining engineering sequence through the existing game link. CY83–CY89 supply the opening, all three earlier acts, and regression coverage. CY90 owns the finale details. CY91 and CY96 supply the installed app checks and publication workflow. CY92–CY95 continue as the Story and Art source lanes.
+CY97 delivered CY83–CY90 through the existing game link. CY91 records the hosted mobile checks and the remaining physical-device check. CY92–CY95 keep the Story and Art source records and their remaining visual work. CY96 owns intake and verification for later content releases.
 
-**Acts I–III are live at the installed campaign entry.** One campaign save covers all five capitals, 50 personal captures and rehabilitation paths, 150 returns and 25 expeditions. The first duo to depart opens the shared Gate. Keep the route and publication receipts in the private content folders. Act IV is implemented in the private candidate. CY97 tracks delivering and verifying the combined release.
+**Acts I–IV are live at the [campaign entry](https://uma-cyberpunk.web.app/campaign).** One campaign save covers the 50 personal arcs, five capitals, 150 returns, 25 expeditions, the finale and both Lark endings. See CY97 for the selected release, play evidence and remaining Art destinations.
 
-## Four-pillar implementation queue
+## Four-pillar implementation record
 
-| Pillar | Current engineering scope |
+| Pillar | Delivered engineering packets |
 | --- | --- |
 | Relationships | [CY84 Act I](tasks/CY84.md), [CY85 Act II](tasks/CY85.md), [CY90 ending](tasks/CY90.md) |
 | Ship and planet management | [CY84 roster and resources](tasks/CY84.md), [CY86 local bases and capitals](tasks/CY86.md), [CY87 expedition ship](tasks/CY87.md) |
 | Ship combat | [CY84 personal routes](tasks/CY84.md), [CY87 both ship contexts](tasks/CY87.md), [CY89 expedition battles](tasks/CY89.md), [CY90 finale](tasks/CY90.md) |
-| Ground tactics | [CY84 personal encounters](tasks/CY84.md), [CY86 local rescue and liberation](tasks/CY86.md), [CY88 ten-unit tactics](tasks/CY88.md), [CY89 and CY90](tasks/CY89.md) |
+| Ground tactics | [CY84 personal encounters](tasks/CY84.md), [CY86 local rescue and liberation](tasks/CY86.md), [CY88 ten-unit tactics](tasks/CY88.md), [CY89 expeditions](tasks/CY89.md), [CY90 finale](tasks/CY90.md) |
 
 ## Four-pillar art and story queue
 
@@ -39,6 +39,10 @@ CY97 owns the remaining engineering sequence through the existing game link. CY8
 Keep the packet's implementation, script, art, release IDs and acceptance aligned. Mark blockers against the next playable milestone. Review one full campaign slice before scaling its families. Use batch checks for equivalent assets and content. Complete the packet's real gameplay and approval scope before removing it from the active queue. Log delivery with a Done row and append any new decision to the [decision log](../decisions.md).
 
 ## Done and previous work
+
+| Delivery | Date | Result |
+| --- | --- | --- |
+| [CY97 · Four-act release](tasks/CY97.md) | 2026-11-25 | All four acts, both endings and return to play are live. The exact combined Story and Art catalog is active at the existing link. |
 
 The [historical Done ledger](archive/previous-queue.md#done) records shipped work through D86. The [D87 disposition matrix](archive/four-act-disposition.md) records retired requirements and the active successor for each earlier open packet. The archive preserves the previous pilot and historical decisions for evidence and regression.
 
