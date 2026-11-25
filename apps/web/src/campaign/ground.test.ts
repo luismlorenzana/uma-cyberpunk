@@ -1,6 +1,6 @@
 import { chooseAction, legalTurns, type TurnAction } from '@cyber/battle'
 import {
-  newSave, parseSave, startSupply, storesAt, supplyNight,
+  newMember, newSave, parseSave, startSupply, storesAt, supplyNight,
   type CommandAction, type CommandEncounter, type GroundEncounter, type Save, type StoryPack, type SupplyNetwork,
 } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
@@ -82,7 +82,7 @@ describe('the approach and liberation', () => {
     expect(input.objective).toEqual({ kind: 'freeLeader', collar: 'rigBreak' })
     expect(input.units.find((u) => u.id === ground.rescue?.unit)).toMatchObject({ hold: 'collar', ref: { kind: 'heroine', id: 'test-officer' } })
     let { session } = startSession(input)
-    let save = deploy(ready(ground.id), input)
+    let save = deploy({ ...ready(ground.id), crew: [newMember(outfit), newMember(outfit + 1)] }, input)
     expect(settleGround(finishBattle(save, true), ground, pack)).toMatchObject({ story: { flags: [] } })
     for (let turn = 0; turn < 80 && !session.state.result; turn++) {
       const action = chooseAction(session.state)
@@ -96,7 +96,9 @@ describe('the approach and liberation', () => {
     ]) })
     save = parseSave(JSON.parse(JSON.stringify(finishBattle(save, true))))
     expect(resume(input, session.actions)).toEqual(session)
-    const settled = settleGround(save, ground, pack)
+    const settled = settleGround(save, ground, pack, true)
+    expect(settled.crew.map(member => member.xp)).toEqual([50, 0])
+    expect(settleGround({ ...settled, mission: save.mission }, ground, pack, true).crew).toEqual(settled.crew)
     expect(settled.story.flags).toEqual(['rescued-officer'])
     expect(settled.worlds.missions).toEqual([ground.id])
     expect(settleGround(settled, ground, pack)).toBe(settled)

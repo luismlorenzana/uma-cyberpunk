@@ -56,11 +56,12 @@ describe('campaign ship command', () => {
   })
 
   it('loses unprotected, retries for free, resumes and wins with focused fire', () => {
-    let save = launchCommand(ready(), stock, encounter)
+    let save = launchCommand(assignOfficer(ready(), 'pilot', outf), stock, encounter)
     const evade: CommandAction = { order: 'evade', shields: 1, guns: 1, fighters: 1 }
     const fire: CommandAction = { order: 'fire', shields: 0, guns: 3, fighters: 0 }
     for (let turn = 0; turn < 3; turn++) save = issueCommand(save, encounter.id, turn, evade)
     expect(save.mission?.won).toBe(false)
+    expect(settleCommand(save, encounter.id, { requiredLead: outf })).toBe(save)
     save = retry(save)
     const first = issueCommand(save, encounter.id, 0, fire)
     expect(issueCommand(first, encounter.id, 0, fire)).toBe(first)
@@ -74,6 +75,11 @@ describe('campaign ship command', () => {
     expect(cleared.worlds.missions).toEqual([encounter.id])
     expect(cleared.mission).toBeNull()
     expect(settleCommand(cleared, encounter.id)).toBe(cleared)
+    const awaitingDebrief = { ...save, crew: [...save.crew, newMember(outf + 1)] }
+    const credited = settleCommand(awaitingDebrief, encounter.id, { requiredLead: outf })
+    expect(parseSave(credited).crew.map(member => member.xp)).toEqual([50, 0])
+    const restoredResult = { ...credited, mission: awaitingDebrief.mission }
+    expect(settleCommand(restoredResult, encounter.id, { requiredLead: outf }).crew).toEqual(credited.crew)
   })
 
   it('rejects power overdrafts and applies fighter and engineering orders', () => {

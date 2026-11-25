@@ -131,7 +131,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
       {state.step === 'results' && !save.commandCinema.pending && <div className="flex flex-wrap gap-2">
         {run?.state.last && <p className="w-full text-sm">{commandFacts(savedCommandEvent(save, run.state.turn)!)}</p>}
         {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{state.won && emitterRoute && ` · ${emitterRoute}`}</p>}
-        {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id))}>Debrief</button>
+        {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id, loaded.book.fourAct ? { requiredLead } : undefined))}>Debrief</button>
           : <button type="button" className={primary} onClick={() => {
             if (reports) { setShowRetry(true); setContext(reports.retry) }
             else void updateSave(retryCommand)
