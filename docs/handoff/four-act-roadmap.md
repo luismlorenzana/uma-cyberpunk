@@ -1,8 +1,8 @@
 # Four-act production roadmap
 
-**Active roadmap · D87 · 2026-11-24.** The [game design](../design/campaign-rework.md) defines what ships, the [systems plan](../technical/four-act-campaign.md) defines the runtime contracts, and the [authoring contract](../design/campaign-art-delivery.md) defines the shared production records and deliverables.
+**Four-act production record · D87 · 2026-11-25.** The [game design](../design/campaign-rework.md) defines what ships, the [systems plan](../technical/four-act-campaign.md) defines the runtime contracts, and the [authoring contract](../design/campaign-art-delivery.md) defines the shared production records and deliverables.
 
-[CY97](tasks/CY97.md) owns the remaining implementation and release sequence. The [implementation launch](four-act-implementation-launch.md) records the earlier milestone and source handoffs.
+[CY97](tasks/CY97.md) records the live four-act delivery, the completed engineering sequence, and the remaining Art coverage. The [implementation launch](four-act-implementation-launch.md) preserves the original milestone and source handoffs.
 
 Deliver through the real campaign. Each milestone has a playable entry, exit, defined production coverage and one acceptance pass. Technical experiments belong to the milestone they answer. Keep a single release manifest and cross-workstream status so the working chapter remains part of the full campaign.
 
@@ -38,23 +38,23 @@ Deliver through the real campaign. Each milestone has a playable entry, exit, de
 - **The first M3 playthrough carries a real M2 save.** Budget the other four capital routes ahead of the first expedition. Their minimum content includes every local prerequisite needed to reach actual victories. Later branches and other duo recoveries stay available for M4 production.
 - **Batch production after the first whole chain is playable.** Reuse the first mission family's authored data and visual templates. Expand by system, combat family and actor role. Prepare art and scripts in parallel while preserving exact approval scopes. One batch data check and shared branch samples cover routine variants. Give a new mechanic, outcome or silhouette family its own check in the relevant campaign mission.
 - **Package and publish continuously to private review.** Intake, verify, stage, play and accept each milestone. Platform canonical art and game release selection have separate receipts. Mark a packet closed only when its integrated work passes or the remaining requirement has an explicit active successor. Publish approved assets with exact bytes, stable references and rollback. Keep Farm and other games out of the scope.
-- **No production cutover during planning.** Use the current preview as implementation evidence until the new profile and release are ready. Preserve the older runtime and source artifacts for reference. The final installed game opens a new save. An old-progression migration is outside the release scope.
+- **Use the existing campaign link.** The game opens the fresh four-act profile. Keep the earlier verified artifacts for release rollback and retain the exact build and content IDs in the release receipt.
 
-## Active packets by workstream
+## Packet disposition by workstream
 
-| Workstream | Packets |
-| --- | --- |
-| Campaign foundation | [CY83 · Registry, graph and fresh profile](tasks/CY83.md) |
-| Early game | [CY84 · Act I](tasks/CY84.md), [CY85 · Rehabilitation and relationships](tasks/CY85.md), [CY86 · Duos and five capitals](tasks/CY86.md) |
-| Expedition systems | [CY87 · Ships and ship combat](tasks/CY87.md), [CY88 · Ten-unit tactics](tasks/CY88.md), [CY89 · Seraine expeditions](tasks/CY89.md) |
-| Ending and release | [CY90 · Finale and soft ending](tasks/CY90.md), [CY91 · iPhone release](tasks/CY91.md) |
-| Story authoring | [CY92 · All four acts and private delivery](tasks/CY92.md) |
-| General art | [CY93 · Places, ships, maps, props and effects](tasks/CY93.md) |
-| Character art | [CY94 · Wardrobes, portraits, expressions and splashes](tasks/CY94.md) |
-| Sprite authoring | [CY95 · Combat figures, equipment families and motion](tasks/CY95.md) |
-| Integration across all lanes | [CY96 · Combined releases, coverage and acceptance](tasks/CY96.md) |
+| Workstream | Packets | Status |
+| --- | --- | --- |
+| Campaign foundation | [CY83](tasks/CY83.md) | Fresh campaign entry delivered. |
+| Early game | [CY84](tasks/CY84.md), [CY85](tasks/CY85.md), [CY86](tasks/CY86.md) | 50 personal arcs and rehabilitations, six returns per duo and all five capitals delivered. |
+| Expedition systems | [CY87](tasks/CY87.md), [CY88](tasks/CY88.md), [CY89](tasks/CY89.md) | All 25 ten-person expeditions and their ship and ground results delivered. |
+| Ending and release | [CY90](tasks/CY90.md), [CY91](tasks/CY91.md), [CY97](tasks/CY97.md) | Both endings and return to play live. Physical iPhone check remains open. |
+| Story authoring | [CY92](tasks/CY92.md) | Approved four-act catalog and dialogue delivered. |
+| General art | [CY93](tasks/CY93.md) | Approved exact bindings are integrated. Dedicated location and liberated-state assets remain in authoring. |
+| Character art | [CY94](tasks/CY94.md) | Approved exact bindings are integrated. New variants and splashes need the matching role, outfit and scene approval. |
+| Sprite authoring | [CY95](tasks/CY95.md) | All 250 albums published. Game has 551 exact sets. Unmatched fittings remain on the Art lane. |
+| Integration across all lanes | [CY96](tasks/CY96.md) | CY97 recorded the combined release. Recurring Story and Art intake continues here. |
 
-## Decisions to resolve while delivering
+## Design decisions and their delivery checkpoints
 
 | Decision | Owner and checkpoint | Working treatment |
 | --- | --- | --- |
@@ -63,7 +63,7 @@ Deliver through the real campaign. Each milestone has a playable entry, exit, de
 | Expedition length, first destination past the Gate, target hierarchy and liberation consequences | Story and Engineering, before M3 play | Named Herald or Echo for each expedition. Use the Seraine bible and one actual initial route instead of generic enemy filler. |
 | Layout, enemy count and turn/asset budgets for ten friendly units | Engineering, Sprite Art and General Art, M3 | Keep all ten active. Measure controls and pacing with representative loads and real missions before changing authoring caps. |
 | Shared music, sound or silence for authored moments | Story and Engineering, M0 intake and milestone scenes | Register existing and required cues alongside visuals. Use shared tracks or effects where they fit. Record whether a cue needs new runtime support. |
-| Which optional expeditions change Act IV access or ending, Queen structure and post-ending support | Owner and Story through CY90 | Preserve recorded outcomes now. Confirm the rules at the Act IV workshop. |
-| Title, exact release identifier, and installed link cutover | Owner and Engineering, M6 | Fresh private campaign identity. Earlier build remains a recoverable release artifact. |
+| Which expedition results open Act IV, Queen structure and post-ending support | CY90 and CY97 | Five recorded witnesses across the five courts unlock Act IV. Legal ten-person formation, Queen survival, both endings, civic visits and repairs ship together. |
+| Exact release and installed link | CY97 | The four-act catalog is selected at the existing campaign link. The previous manifest remains available for rollback. |
 
-Status for each milestone belongs in its packet and the shared private receipt. Start with M0's registry and contracts, then ship M1 as an actual chapter sequence.
+Each milestone retains its implementation packet and private evidence. The current hosted release and outstanding device and Art items are recorded in CY97.

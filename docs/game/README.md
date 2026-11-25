@@ -1,10 +1,10 @@
 # The uma-cyberpunk manual
 
-The manual records mechanics as built. For the next release, the [four-act player guide](campaign.md) describes the planned experience and links to its roadmap. Update the manual in the packet that ships each rule.
+Start with the [four-act player guide](campaign.md) for the playable campaign. The other pages cover the mechanics that support it and document earlier engine tools.
 
 | Page | What | Visual page |
 |---|---|---|
-| [Four-act campaign guide](campaign.md) | Planned player flow from recruitment through the finale | [campaign.html](previews/campaign.html) |
+| [Four-act campaign guide](campaign.md) | Player flow from the first sign-on through both endings and return to play | [campaign.html](previews/campaign.html) |
 | [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
 | [The battle](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break; the roles' Back units, Tech, chance skills, items, Stride, the bench call; objectives, the forecast, and the tuning tables, live (CY4, CY5) | [battle.html](previews/battle.html) |
 | [The ship and the worlds](ship.md) | The rooms and their keys, rooms opening with leads, the star map, a world's map, the Continue card, save v3 (CY10, CY12) | [ship.html](previews/ship.html) |
@@ -17,8 +17,8 @@ The manual records mechanics as built. For the next release, the [four-act playe
 | [The captain and bonds](captain-and-bonds.md) | The captain, the watch, bonds 1–10, rapport, bond scenes, Trust or Heart, messages, save v5 (CY13) | [captain-and-bonds.html](previews/captain-and-bonds.html) |
 | [Cabins, decor and visits](cabins.md) | The Quarters deck, cabins and their six slots, items and styles, Comfort, visits (talk, gifts, decorating together, invitations), tastes, requests, the cabin's look, save v6 (CY14) | [cabins.html](previews/cabins.html) |
 | [The story](story.md) | The story's files and steps, `pnpm story:check` and `pnpm story:pack`, delivery and the stand-in, the scene player, the story state in save v2 (CY9); the Chapter 1 loop: pickups, interjection slots, debriefs (CY12); the life-aboard loop: every system of ship life on the stand-in, Phase 4's exit (CY19) | [story.html](previews/story.html) |
-| [The sandbox](sandbox.md) | Setting up and playing any skirmish, autosave and Resume, the results, the test scenario (CY8) | [sandbox.html](previews/sandbox.html) |
-| [The board](board.md) | The battle board on uma-stage: terrain, figures with their rings and wedges, the overlays, taps, the pan, the fade, the loop, the test bench at `/board`, and the five checks (CY7) | [board.html](previews/board.html) |
+| [Historical sandbox reference](sandbox.md) | Earlier development controls for building and replaying test skirmishes (CY8) | [sandbox.html](previews/sandbox.html) |
+| [The board](board.md) | The battle board on uma-stage: terrain, figures with their rings and wedges, the overlays, taps, the pan, the fade, the loop, the earlier board test bench, and the five engine checks (CY7) | [board.html](previews/board.html) |
 | [How enemies choose](enemy-ai.md) | The enemy AI and ally Auto: where she stands, what she does, never idling (CY6) | [enemy-ai.html](previews/enemy-ai.html) |
 | [Terrain, props and terminals](terrain.md) | The five tile states and how they spread, props, cover and grating, terminals, the terrain card (CY5) | [terrain.html](previews/terrain.html) |
 | [The Holds and the factions](factions.md) | How heroines are freed, and the Steel Muster's reload, volley and pinning fire (CY5) | [factions.html](previews/factions.html) |
