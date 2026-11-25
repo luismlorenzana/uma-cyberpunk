@@ -88,8 +88,9 @@ Each layer names a declared asset and stays within the canvas. Fit is `contain` 
 opacity is an integer percentage, default 100. There are at most twelve layers. A scripted full
 illustration replaces these pose layers until cleared; its portrait policy still comes from the
 composition. An image decode failure hides that layer while preserving the dialogue and backdrop.
-Assets are loaded for the current scene and released on exit. Campaign books/releases support 4,096
-assets and 8,192 reused face placements for the combined cast.
+Assets are loaded for the current scene and released on exit. Four-act books and releases support 8,192
+image entries and 8,192 reused face placements for the combined cast. Other campaign books and releases support
+4,096 image entries.
 
 ### Dialogue face crops
 
