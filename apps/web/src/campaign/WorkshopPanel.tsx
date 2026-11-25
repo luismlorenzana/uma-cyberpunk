@@ -1,6 +1,7 @@
-import { awayMembers, crewSpeaker, issuedCampaignRig, PARTS_BY_ID, shipmentAt, SLOT_NAME, storesAt, type CampaignReleaseFile, type Save } from '@cyber/domain'
+import { awayMembers, crewSpeaker, issuedCampaignRig, PARTS_BY_ID, rigStats, STAND_IN_BANDS, shipmentAt, SLOT_NAME, storesAt, type CampaignReleaseFile, type Save } from '@cyber/domain'
 import { useEffect, useState } from 'react'
 import { updateSave } from '../save/game'
+import { RigSheet } from './RigSheet'
 import { nameOf } from '../story/runner'
 import { campaignImage, type LoadedCampaign } from './load'
 import { craftCampaignPart, fitCampaignPart, fittedSummary, sendWorkshopAlloy, workshopAt } from './workshop'
@@ -31,6 +32,7 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
   const crew = save.crew.filter(({ outfit, expeditionOnly }) => !expeditionOnly && !ashore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit))
   const member = crew.find(({ outfit }) => outfit === selection) ?? crew[0]
   const rig = member?.rig ?? issuedCampaignRig()
+  const currentStats = rigStats(rig, STAND_IN_BANDS)
   const gear = save.campaignGear
   const shipment = shipmentAt(at.cargo, at.port, 'alloy')
   function change(fn: (save: Save) => Save) {
@@ -51,8 +53,12 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
       </select>
       <span>{fittedSummary(rig)}</span>
     </label>}
+    {member && <RigSheet rig={rig} xp={member.xp} />}
+    <p className="text-sm">Workshop reference · Load {currentStats.load}/{currentStats.capacity} · Move {currentStats.move} · Core HP {currentStats.hp.core} · Guard {currentStats.guard}</p>
     <ul className="grid gap-2 sm:grid-cols-2">
       {at.workshop.recipes.map((recipe) => {
+        const preview = rigStats({ ...rig, [recipe.slot]: recipe.part }, STAND_IN_BANDS)
+        const installed = partName(rig[recipe.slot]) ?? 'Empty'
         const owned = gear.parts.includes(recipe.part)
         const fitted = rig[recipe.slot] === recipe.part
         const icon = loaded.assets.get(recipe.icon)
@@ -63,6 +69,8 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
             {icon && <RecipeIcon image={icon} />}
             <div><p className="font-semibold">{name}</p><p>{SLOT_NAME[recipe.slot]} · {fitted ? 'Fitted' : owned ? 'In stock' : PARTS_BY_ID.get(recipe.part)?.note}</p></div>
           </div>
+          <p className="text-white/75">{fitted ? 'Installed' : 'Replaces ' + installed} · Load {preview.load}/{preview.capacity} · Move {preview.move} · HP {preview.hp.core}/{preview.hp.leftArm}/{preview.hp.rightArm}/{preview.hp.legs} · Guard {preview.guard}</p>
+          {preview.weapons.filter(weapon => weapon.name === name).map(weapon => <p key={weapon.mount}>{weapon.band} range · {weapon.hit}% base hit · {weapon.hits} × {weapon.damage} damage</p>)}
           {!owned ? <button type="button" className={button} disabled={busy || gear.alloy < recipe.alloy}
             onClick={() => change((s) => craftCampaignPart(s, loaded.book, recipe.part))}>Build {name} · {recipe.alloy} Alloy</button>
             : <button type="button" className={button} disabled={busy || !fit || fit(save) === save}

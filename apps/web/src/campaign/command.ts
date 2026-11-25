@@ -3,6 +3,7 @@ import {
   type CommandCast, type CampaignSupply, type CommandAction, type CommandEncounter, type CommandInput, type CommandStation, type Save,
 } from '@cyber/domain'
 import { deploy, finishBattle, finishMission, recordAction, retry, setSquad } from '../mission/director'
+import { expeditionOfficer } from './expedition'
 import { creditCampaignClear } from './progression'
 
 export function missionOfficer(save: Save, station: CommandStation) {
@@ -52,17 +53,18 @@ export function canLaunch(supply: CampaignSupply, encounter: CommandEncounter): 
 export function launchCommand(save: Save, supply: CampaignSupply, encounter: CommandEncounter,
   support?: { ashore: ReadonlySet<number>; relay: number; preparation?: { alloy: number; integrity: number };
     qualifications?: ReadonlyMap<number, CommandStation>; contributions?: string[]; cast?: CommandCast; requiredLead?: number }): Save {
-  if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id || !canLaunch(supply, encounter)) return save
+  if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id) return save
   if (save.expedition) {
     const current = save.expedition
-    if (!canLaunch({ ...supply, fuel: current.fuel, provisions: current.provisions }, encounter)) return save
+    if (current.berthed || !canLaunch({ ...supply, fuel: current.fuel, provisions: current.provisions }, encounter)) return save
     const presentation = support?.cast
     if (!presentation) return save
-    const officers = Object.fromEntries(COMMAND_STATIONS.map(station => [station, presentation.crew[station] ? 1 : 0])) as CommandInput['officers']
-    const input = commandSnapshot(shipWith(['bridge']), encounter, presentation, officers, 0, [])
+    const officers = Object.fromEntries(COMMAND_STATIONS.map(station => [station, presentation.crew[station] ? expeditionOfficer(current, station).drills : 0])) as CommandInput['officers']
+    const input = commandSnapshot(shipWith(['bridge']), encounter, presentation, officers, Number(!!current.reinforced), [])
     return deploy({ ...save, commandCinema: { ...save.commandCinema, retries: 0, pending: null },
       expedition: { ...current, fuel: current.fuel - encounter.cost.fuel, provisions: current.provisions - encounter.cost.provisions } }, input)
   }
+  if (!canLaunch(supply, encounter)) return save
   const cost = support?.preparation?.alloy ?? 0
   if (save.wallet.alloy < cost) return save
   const away = new Set(awayMembers(save.operations, save.squads))

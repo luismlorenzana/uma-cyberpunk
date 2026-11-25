@@ -1,4 +1,4 @@
-import { EXPEDITION_RULES_VERSION, type BattleAction, type BattleInput } from '@cyber/battle'
+import { capacityOf, EXPEDITION_RULES_VERSION, loadOf, maxHpOf, moveOf, type BattleAction, type BattleInput } from '@cyber/battle'
 import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useRef, useState } from 'react'
@@ -14,6 +14,7 @@ import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { nameOf } from '../story/runner'
 import { expeditionGroundInput, groundInput, groundSquadCapacity, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
+import { campaignBattleProgression, veteranCoreHp } from './progression'
 import { fittedGroundRig, fittedSummary } from './workshop'
 import { formationReady, specialistInput } from './specialist-input'
 
@@ -161,6 +162,45 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   if (!scenario || !Object.hasOwn(SCENARIOS, scenario)) return <main className={panel} style={insets}>
     <p role="alert">The battle layout is unavailable.</p><button type="button" className={action} onClick={close}>Campaign</button>
   </main>
+  function prepare(s: Save) {
+    const selected = s.mission!.squad.filter(outfit => eligible(s, outfit))
+    const prepareCrew = (input: BattleInput) => {
+      const aboard = editableSquad || formation ? lifeAboardInput(input, s, () => null) : input
+      return loaded?.book.fourAct ? campaignBattleProgression(aboard, s) : aboard
+    }
+    if (combat) {
+      const ready = !!combatShift && s.story.flags.includes(combatShift)
+      if (combat.kind === 'combined' && !formationReady(s, combat, ready, ashore)) throw new Error('The assigned formation is unavailable.')
+      return prepareCrew(specialistInput({ scenario: scenario!, combat, save: s, story: pack, outfits: selected, shifted: ready,
+        alternate: alternateFit, expansion: ground?.expansion, boss: ground?.boss }))
+    }
+    const issueIfUnfitted = !!s.mission!.callUp || requiredLead !== undefined || !!loaded?.book.fourAct && !!mission.fixedSquad
+    const companions = s.mission!.squad.slice(1).filter(outfit => eligible(s, outfit)).flatMap(outfit => {
+      const member = s.crew.find(candidate => candidate.outfit === outfit)
+      return member ? [{ outfit, heroine: member.heroine, label: nameOf(pack, crewSpeaker(member)), rig: member.rig, issueIfUnfitted }] : []
+    })
+    const rig = fitted && useFitted ? fittedGroundRig(s.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario!, ground?.expansion) : null
+    if (fitted && useFitted && !rig) throw new Error('The fitted rig cannot deploy in this mission.')
+    return prepareCrew(groundInput(scenario!, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions, rig ?? undefined,
+      ground, s.story.flags, formationMember(s)?.rig ?? undefined))
+  }
+  let deployment: BattleInput | undefined
+  if (state.step === 'deploy') {
+    try {
+      deployment = expedition && formationState
+        ? campaignBattleProgression(expeditionGroundInput(mission, formationState, pack), save) : prepare(save)
+    } catch { /* The deployment button reports a rejected fit or formation. */ }
+  }
+  const deploymentStats = deployment && <details className="rounded-lg border border-white/10 px-3">
+    <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Effective sortie stats</summary>
+    <ul className="space-y-2 pb-2 text-sm">{deployment.units.filter(unit => unit.side === 'squad').map(unit => {
+      const hp = maxHpOf(unit)
+      return <li key={unit.id}><b>{unit.label ?? nameOf(pack, unit.ref?.kind === 'uma' ? Number(unit.ref.id) : unit.ref?.id ?? null)}</b>
+        <p>Load {loadOf(unit.loadout)}/{capacityOf(unit)} · Move {moveOf(unit, { hp })} · Core {hp.core} · Arms {hp.leftArm}/{hp.rightArm} · Legs {hp.legs}</p>
+        {unit.frozenRig && <p className="text-slate-300">{Object.values(unit.frozenRig).flatMap(id => id && PARTS_BY_ID.get(id)?.name || []).join(' · ')}</p>}
+      </li>
+    })}</ul>
+  </details>
   return (<>
     <main className={panel} style={insets} data-training={state.step}>
       <div className="mx-auto max-w-2xl space-y-3">
@@ -186,12 +226,13 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               return <li key={actor}>{nameOf(pack, actor)}</li>
             })}
           </ul>
+          {deploymentStats}
           <button type="button" className={primary} onClick={() => {
             setLaunching(true)
             void updateSave(s => {
               const run = formationRun ?? s.expedition
               if (!run || s.mission?.id !== mission.id || s.mission.step !== 'deploy') return s
-              return deploy(s, expeditionGroundInput(mission, run, pack), formationRun ?? undefined)
+              return deploy(s, campaignBattleProgression(expeditionGroundInput(mission, run, pack), s), formationRun ?? undefined)
             }).finally(() => setLaunching(false))
           }}>Deploy all ten</button>
         </>}
@@ -282,6 +323,9 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               </button>)}
             </fieldset>}
           </div>)}
+          {deploymentStats}
+          {loaded?.book.fourAct && save.crew.filter(member => state.squad.includes(member.outfit) && veteranCoreHp(member.xp) > 0).map(member =>
+            <p key={member.outfit} className="text-sm text-cyan-200">{nameOf(pack, crewSpeaker(member))} · +{veteranCoreHp(member.xp)} veteran Core HP</p>)}
           {deploymentError && <p role="alert" className="text-sm text-red-300">{deploymentError}</p>}
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => {
@@ -292,33 +336,15 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                 if (!readyFormation(s)) return s
                 if (loaded?.book.fourAct && mission.fixedSquad?.some(outfit => !s.mission!.squad.includes(outfit) || !eligible(s, outfit))) return s
                 if (requiredLead !== undefined && (s.mission.squad[0] !== requiredLead || !eligible(s, requiredLead))) return s
-                const issueIfUnfitted = !!s.mission.callUp || requiredLead !== undefined || !!loaded?.book.fourAct && !!mission.fixedSquad
-                if (combat) {
-                  const ready = !!combatShift && s.story.flags.includes(combatShift)
-                  if (combat.kind === 'combined' && !formationReady(s, combat, ready, ashore)) throw new Error('The assigned formation is unavailable.')
-                  const outfits = s.mission.squad.filter((outfit) => eligible(s, outfit))
-                  const input = specialistInput({ scenario, combat, save: s, story: pack, outfits, shifted: ready,
-                    alternate: alternateFit, expansion: ground?.expansion, boss: ground?.boss })
-                  const squad = input.units.flatMap((unit) => unit.side === 'squad' && unit.ref?.kind === 'uma' ? [Number(unit.ref.id)] : [])
-                  return deploy(setSquad(s, squad), editableSquad ? lifeAboardInput(input, s, () => null) : input)
-                }
-                const companions = s.mission.squad.slice(1).filter((outfit) => eligible(s, outfit)).flatMap((outfit) => {
-                  const member = s.crew.find((candidate) => candidate.outfit === outfit)
-                  return member ? [{ outfit, heroine: member.heroine, label: nameOf(pack, crewSpeaker(member)), rig: member.rig,
-                    issueIfUnfitted }] : []
-                })
-                const rig = fitted && useFitted
-                  ? fittedGroundRig(s.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario, ground?.expansion) : null
-                if (fitted && useFitted && !rig) return s
-                const input = groundInput(scenario, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions, rig ?? undefined,
-                  ground, s.story.flags, formationMember(s)?.rig ?? undefined)
+                const input = prepare(s)
                 const squad = input.units.flatMap((unit) => {
                   if (unit.side !== 'squad') return []
                   if (unit.ref?.kind === 'uma') return [Number(unit.ref.id)]
+                  if (combat) return []
                   const ally = s.crew.find(member => member.heroine && unit.ref?.kind === 'heroine' && member.heroine === unit.ref.id)
                   return ally ? [ally.outfit] : []
                 })
-                return deploy(setSquad(s, squad), editableSquad || formation ? lifeAboardInput(input, s, () => null) : input)
+                return deploy(setSquad(s, squad), input)
               }).catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
                 .finally(() => setLaunching(false))
             }}>Deploy</button>

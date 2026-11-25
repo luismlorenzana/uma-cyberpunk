@@ -50,14 +50,14 @@ export function startSupply(network: SupplyNetwork): CampaignSupply {
 export const storesAt = (supply: CampaignSupply, port: SupplyPort): Supplies => supply.stores[port.id] ?? port.stock
 
 /** A dock keeps its reserve and enough to pay its next upkeep before offering a shipment. */
-export function shipmentAt(supply: CampaignSupply, port: SupplyPort, kind: SupplyKind): number {
+export function shipmentAt(supply: CampaignSupply, port: SupplyPort, kind: SupplyKind, batch = SHIPMENT_SIZE): number {
   if (supply.port !== port.id) return 0
   const available = Math.max(0, storesAt(supply, port)[kind] - port.reserve[kind] - port.upkeep[kind])
-  return Math.min(SHIPMENT_SIZE, available, kind === 'alloy' ? SHIPMENT_SIZE : SHIP_CARGO_MAX - supply[kind])
+  return Math.min(batch, available, kind === 'alloy' ? SHIPMENT_SIZE : SHIP_CARGO_MAX - supply[kind])
 }
 
-export function loadShipment(supply: CampaignSupply, port: SupplyPort, kind: SupplyKind): { supply: CampaignSupply; alloy: number } | null {
-  const count = shipmentAt(supply, port, kind)
+export function loadShipment(supply: CampaignSupply, port: SupplyPort, kind: SupplyKind, batch = SHIPMENT_SIZE): { supply: CampaignSupply; alloy: number } | null {
+  const count = shipmentAt(supply, port, kind, batch)
   if (count === 0) return null
   const stock = storesAt(supply, port)
   const next = { ...supply, stores: { ...supply.stores, [port.id]: { ...stock, [kind]: stock[kind] - count } } }
@@ -75,14 +75,14 @@ export function jumpRoute(supply: CampaignSupply, route: SupplyRoute, capabiliti
   return port ? { ...supply, port, fuel: supply.fuel - route.fuel } : supply
 }
 
-export function nextCampaignStop(network: SupplyNetwork, from: string, to: string, capabilities: readonly string[], flags: readonly string[] = []): string | null {
+export function campaignJourney(network: SupplyNetwork, from: string, to: string, capabilities: readonly string[], flags: readonly string[] = []) {
   const stops = new Map([[from, { fuel: 0, first: from }]])
   const open = new Set([from])
   while (open.size) {
     const [port] = [...open].sort((a, b) => stops.get(a)!.fuel - stops.get(b)!.fuel)
     open.delete(port!)
     const stop = stops.get(port!)!
-    if (port === to) return stop.first
+    if (port === to) return stop
     for (const route of network.routes) {
       if (!routeOpen(route, capabilities, flags)) continue
       const next = route.from === port ? route.to : route.to === port ? route.from : null
@@ -93,6 +93,10 @@ export function nextCampaignStop(network: SupplyNetwork, from: string, to: strin
     }
   }
   return null
+}
+
+export function nextCampaignStop(network: SupplyNetwork, from: string, to: string, capabilities: readonly string[], flags: readonly string[] = []): string | null {
+  return campaignJourney(network, from, to, capabilities, flags)?.first ?? null
 }
 
 /** A night first produces and pays locally; the ship then pays its provisions bill. */

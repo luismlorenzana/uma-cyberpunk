@@ -2,6 +2,7 @@ import {
   campaignPreviewIndex, documentsInStoryPage, parseCampaignBook, parseCampaignRelease, requireCampaignIdentity,
   type CampaignBook, type CampaignIdentity, type CampaignRelease, type CampaignReleaseFile,
 } from '@cyber/domain'
+import { fourActLocations } from './four-act-locations'
 import { CONTENT } from '../content/client'
 
 const decode = (data: Uint8Array): unknown => JSON.parse(new TextDecoder().decode(data))
@@ -65,7 +66,7 @@ async function loadRelease(content: Pick<typeof CONTENT, 'pack'>, release: Campa
       throw new Error(`campaign.json: assets: ${id} is missing or has a different format in the release`)
     }
   }
-  return { book, release, assets }
+  return { book: fourActLocations(book, assets), release, assets }
 }
 
 export async function campaignImage(ref: CampaignReleaseFile): Promise<string> {

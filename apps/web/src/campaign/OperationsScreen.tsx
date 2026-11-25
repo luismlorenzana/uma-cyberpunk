@@ -10,7 +10,7 @@ const pageSize = 16
 
 export default function OperationsScreen({ book, save, port, complete, navigation, open, travel, browse, onBrowse }: {
   book: CampaignBook; save: Save; port?: string; complete: ReadonlySet<string>; navigation: CampaignNavigation
-  open: (quest: CampaignQuest) => void; travel: () => void
+  open: (quest: CampaignQuest) => void; travel: (destination?: string) => void
   browse: OperationBrowse; onBrowse: (state: OperationBrowse) => void
 }) {
   const { type, act, state, search, page } = browse
@@ -29,6 +29,7 @@ export default function OperationsScreen({ book, save, port, complete, navigatio
     if (state === 'Completed' && !completeHere || state === 'Ready' && !local.has(quest.id)
       || state === 'Locked' && (completeHere || local.has(quest.id))) return false
     return (quest.title + ' ' + (quest.port ? ports.get(quest.port) ?? '' : '')).toLocaleLowerCase().includes(query)
+      || !!query && !!quest.encounter && (navigation.missions.get(quest.encounter)?.chapter.id ?? '').toLocaleLowerCase().includes(query)
   })
   const current = Math.min(page, Math.max(Math.ceil(matching.length / pageSize) - 1, 0))
   return <section aria-labelledby="operations-title" className="space-y-3">

@@ -19,6 +19,7 @@ export function locationAvailable(save: Save, book: CampaignBook, location: Mana
   if (!at) return false
   const entry = location.entry
   const sectors = book.sectors?.filter(({ port }) => port === at.port.id) ?? []
+  if (entry.kind === 'port' && book.fourAct && book.supply?.ports.some(port => port.id === location.id)) return at.port.id === location.id
   if (entry.kind === 'module') return !!moduleAt(save.ship, entry.module)
   if (entry.kind === 'quest') {
     const quest = book.quests.find(({ id }) => id === entry.quest)
@@ -59,6 +60,11 @@ export function locationState(save: Save, book: CampaignBook, location: Manageme
   if (entry.kind === 'workshop') {
     if (fittedMembers(save, book).length) return 'fitted'
     return save.campaignGear.alloy > 0 ? 'stocked' : 'ready'
+  }
+  if (location.family === 'planet' && at && book.fourAct) {
+    const capitals = [...book.fourAct.systems.values()].flatMap(system => system.capital?.settlement ?? [])
+    const capital = book.quests.find(quest => capitals.includes(quest.id) && quest.port === at.port.id)
+    if (capital) return questComplete(save, capital, book) ? 'restored' : 'occupied'
   }
   if (location.family === 'planet' && at?.port.liberation) return save.story.flags.includes(at.port.liberation.flag) ? 'restored' : 'occupied'
   if (visibleLocationProps(save, book, location).length && location.family === 'operations') return 'stocked'

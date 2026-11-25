@@ -3,6 +3,7 @@ import {
   nextCampaignStop, rehabilitationQuestIds, shipCapabilities,
   type CampaignBook, type CampaignQuest, type Save, type Speaker,
 } from '@cyber/domain'
+import { SCENARIOS } from '../mission/battleInput'
 import { expeditionForQuest, expeditionQuestBlock } from './expedition'
 import { generalPhase, personalMissionBlock, questAvailable } from './quests'
 
@@ -94,10 +95,32 @@ export function indexCampaignNavigation(book: CampaignBook) {
       .some(step => step.kind === 'flag' && step.flag === finale.returnToPlay))
     tagChain(homecoming?.id, 'Act IV')
   }
-  return { quests, acts, roster }
+  const missions = new Map(Object.values(book.story.chapters).flatMap(chapter =>
+    chapter.missions.map(mission => [mission.id, { mission, chapter }] as const)))
+  return { quests, acts, roster, missions }
 }
 
 export type CampaignNavigation = ReturnType<typeof indexCampaignNavigation>
+
+export function operationObjective(book: CampaignBook, save: Save, quest: CampaignQuest, navigation: CampaignNavigation) {
+  const id = quest.encounter
+  if (!id || book.commands.has(id)) return undefined
+  const ground = book.ground.get(id)
+  if (ground?.rescue) return 'Break the Collar and recover the leader'
+  const alternate = ground?.alternate
+  const scenario = alternate && save.story.flags.includes(alternate.flag) ? alternate.scenario : navigation.missions.get(id)?.mission.scenario
+  const objective = scenario ? SCENARIOS[scenario]?.input.objective : undefined
+  switch (objective?.kind) {
+    case 'hack': return objective.last ? 'Secure the channels before the final terminal' : 'Secure ' + objective.count + (objective.count === 1 ? ' terminal' : ' terminals')
+    case 'hold': return 'Hold for ' + objective.rounds + ' rounds'
+    case 'escort': return 'Escort the protected unit'
+    case 'reach': return 'Reach the objective zone'
+    case 'freeLeader': return 'Free the leader'
+    case 'defeatLeader': return 'Subdue the commander'
+    case 'defeatAll': return 'Clear the opposition'
+    default: return ground?.title
+  }
+}
 
 export function rosterStatus(entry: RosterEntry, save: Save, book: CampaignBook, complete: ReadonlySet<string>) {
   if (entry.kind === 'Uma') return save.crew.some(member => member.outfit === entry.speaker) ? 'Recruited' : 'Recruitment'

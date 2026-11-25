@@ -1,11 +1,14 @@
 
 import { useMemo, useState } from 'react'
-import { crewSpeaker, levelOf, PARTS_BY_ID, ROLE_NAME, type CampaignBook, type CampaignDate, type CampaignQuest,
+import { awayMembers, campaignSupport, crewSpeaker, levelOf, ROLE_NAME, type CampaignBook, type CampaignDate, type CampaignQuest,
   type CampaignReleaseFile, type Save, type Speaker } from '@cyber/domain'
 import { nameOf } from '../story/runner'
 import { CampaignThumbnail } from './CampaignThumbnail'
 import { campaignControl, CampaignQuestRow } from './CampaignQuestRow'
+import { expeditionWatchScene } from './expedition'
+import { questScene } from './quests'
 import { dateAvailable } from './dates'
+import { RigSheet } from './RigSheet'
 import { DatePanel } from './DatePanel'
 import { campaignActs, rosterStatus, type CampaignNavigation, type RosterBrowse, type RosterEntry, type RosterKind } from './navigation'
 import { Wardrobe } from './Wardrobe'
@@ -13,11 +16,16 @@ import { Wardrobe } from './Wardrobe'
 const roles: readonly RosterKind[] = ['Uma', 'General', 'Lieutenant']
 const choices = { Uma: 'Umas', General: 'Generals', Lieutenant: 'Lieutenants' }
 const pageSize = 18
+const assignments = {
+  uma: 'Rifle officer', 'boss-ally': 'Melee officer', 'melee-shield': 'Shield specialist',
+  'ranged-medic': 'Combat medic', 'long-range': 'Long-range specialist',
+} as const
 
-export default function RosterScreen({ book, save, assets, complete, navigation, port, open, travel, evening, browse, onBrowse }: {
+export default function RosterScreen({ book, save, assets, complete, navigation, port, open, travel, evening, shared, report, browse, onBrowse }: {
   book: CampaignBook; save: Save; assets: ReadonlyMap<string, CampaignReleaseFile>; complete: ReadonlySet<string>
   navigation: CampaignNavigation; port?: string
-  open: (quest: CampaignQuest) => void; travel: () => void; evening?: (date: CampaignDate) => void
+  open: (quest: CampaignQuest) => void; travel: (destination?: string) => void; evening?: (date: CampaignDate) => void
+  shared?: (actor: Speaker) => (() => void) | undefined; report?: (scene: string) => void
   browse: RosterBrowse; onBrowse: (state: RosterBrowse) => void
 }) {
   const { kind, search, page, selected } = browse
@@ -54,12 +62,30 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
   const guestWardrobes = book.wardrobe?.members.filter(row => typeof row.speaker === 'string' && !rosterSpeakers.has(row.speaker)
     && row.after && save.story.seen.includes(row.after) && (!row.requiresFlag || save.story.flags.includes(row.requiresFlag))) ?? []
   const member = entry ? members.get(entry.speaker) : undefined
-  const date = member && book.dates?.find(row => row.companion === member.outfit)
-  const relationship = date && dateAvailable(save, book, date) ? date : undefined
+  const ally = book.allies?.find(row => row.heroine === entry?.speaker)
+  const companion = entry?.kind === 'General' ? ally?.member : entry?.kind === 'Uma' ? entry.speaker : undefined
+  const date = book.dates?.find(row => row.companion === companion)
+  const canVisit = date && !save.expedition && dateAvailable(save, book, date)
+  const sharedEvening = entry && shared?.(entry.speaker)
   const chapters = entry?.quests.flatMap(id => navigation.quests.get(id) ?? []) ?? []
   const lead = entry?.lead ?? (typeof entry?.speaker === 'number' ? entry.speaker : undefined)
   const duo = lead === undefined ? undefined : [...book.fourAct?.duos.values() ?? []].find(row => row.umas.includes(lead))
   const partner = duo?.umas.find(outfit => outfit !== lead)
+  const assignment = duo?.expedition?.members.find(row => (row.role === 'uma' ? row.outfit : row.heroine) === entry?.speaker)
+  const route = duo?.expedition?.route
+  const related = [...new Set([duo?.local?.base, duo?.local?.evidence, ...(duo?.returns.map(row => row.quest) ?? []),
+    route?.launch, ...route?.stops ?? [], route?.return])].flatMap(id =>
+    id && !entry?.quests.includes(id) ? navigation.quests.get(id) ?? [] : [])
+  const returned = entry?.kind === 'Lieutenant' && entry.quests.every(id => complete.has(id))
+  const watch = returned && save.expedition?.duo === duo?.id ? expeditionWatchScene(save, book, complete) : null
+  const hasActor = (scene: string) => book.scenes.get(scene)?.cast.some(actor => (actor.outfit ?? actor.heroine) === entry?.speaker)
+  const returnScene = returned ? chapters.filter(row => complete.has(row.id)).map(row => questScene(save, row))
+    .findLast(id => save.story.seen.includes(id) && hasActor(id)) : undefined
+  const crewWatch = watch && hasActor(watch.scene) ? watch : null
+  const duty = member && (awayMembers(save.operations, save.squads).includes(member.outfit) ? 'Away on assignment'
+    : campaignSupport(book, save).ashore.has(member.outfit) ? 'Ashore'
+      : save.expedition ? assignment && duo?.id === save.expedition.duo ? 'Assigned to the active expedition' : 'On Homestretch'
+        : 'Aboard Homestretch')
   const signOn = lead === undefined ? undefined : book.recruits?.find(recruit => recruit.outfit === lead)
   return <section aria-labelledby="roster-title" className="space-y-3">
     <h1 id="roster-title" className="font-display text-2xl font-bold">Roster</h1>
@@ -105,8 +131,7 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
         {entry.kind === 'Uma' && partner !== undefined && <p className="text-sm text-slate-300">Fixed partner · {names.get(partner)}</p>}
         {member && <div className="rounded-lg border border-white/10 p-2 text-sm">
           <p>Level {levelOf(member.xp)} · {member.xp} XP{member.role && ' · ' + ROLE_NAME[member.role]}</p>
-          <p className="text-slate-300">{member.rig ? Object.values(member.rig).filter((part): part is string => part !== null)
-            .map(part => PARTS_BY_ID.get(part)?.name ?? part).join(' · ') : 'Issued mission kit'}</p>
+          <RigSheet rig={member.rig} xp={member.xp} />
         </div>}
         <section aria-label="Character chapters">
           <h3 className="font-semibold">Chapters</h3>
@@ -120,9 +145,27 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
             </div> : null
           })}
         </section>
-        {relationship && <><DatePanel save={save} book={book} dates={[relationship]} compact />
-          {evening && <button type="button" className={campaignControl} onClick={() => evening(relationship)}>Visit this evening</button>}</>}
-        {duo?.expedition?.route && <p className="text-sm text-slate-300">Act III · {duo.expedition.route.name}</p>}
+        <section className="space-y-2 rounded-lg border border-white/10 p-2 text-sm" aria-label="Personal interactions">
+          {duty && <p className="text-slate-300">{duty}</p>}
+          {date && member && <DatePanel save={save} book={book} dates={[date]} compact />}
+          {date && canVisit && evening ? <button type="button" className={campaignControl} onClick={() => evening(date)}>Visit this evening</button>
+            : date && <p>{!member || !complete.has(date.after) ? 'Evenings open after ' + (navigation.quests.get(date.after)?.title ?? 'the introduction')
+              : entry.kind === 'General' && lead !== undefined && !complete.has(book.fourAct?.arcs.get(lead)?.rehabilitation?.quarters ?? '')
+                ? 'Evenings open after the shared quarters settlement' : 'Evening visit unavailable at this watch'}</p>}
+          {sharedEvening && <button type="button" className={campaignControl} onClick={sharedEvening}>Invite both to an evening</button>}
+          {entry.kind === 'Lieutenant' && <p>{returned ? assignment && save.expedition?.duo === duo?.id ? 'With the expedition formation' : 'Returned to the local crew'
+            : 'Crew interactions open after recovery'}</p>}
+          {returned && report && crewWatch && <button type="button" className={campaignControl}
+            onClick={() => report(crewWatch.scene)}>{crewWatch.shortfall ? 'Join supply report' : 'Join off-duty watch'}</button>}
+          {returned && report && returnScene && <button type="button" className={campaignControl}
+            onClick={() => report(returnScene)}>Revisit the return conversation</button>}
+        </section>
+        {route && assignment && <p className="text-sm text-slate-300">{route.name} · {assignments[assignment.role]}</p>}
+        {related.length > 0 && <details className="rounded-lg border border-white/10">
+          <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold">Duo operations</summary>
+          <ol>{related.map(quest => <CampaignQuestRow key={quest.id} quest={quest} book={book} save={save}
+            port={port} complete={complete} navigation={navigation} open={open} travel={travel} />)}</ol>
+        </details>}
       </article>}
     </div>
     {guestWardrobes.length > 0 && <details className="rounded-xl border border-white/10 bg-[#101b2d] p-2">
