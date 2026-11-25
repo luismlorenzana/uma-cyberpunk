@@ -14,7 +14,7 @@
 
 Start M0 with CY83 and CY92–CY96. Accept each milestone in playable campaign content. Advance M1 as a complete Act I and release the rest through the same graph. The roadmap defines the downstream work, including integrated ten-unit controls, every art lane, a full campaign batch, the Act IV workshop and iPhone release.
 
-**The M4 Acts I–III candidate is staged.** One campaign save completes all five capitals, 50 personal captures and rehabilitation paths, 150 returns and 25 expeditions. The first duo to depart opens the shared Gate. The route and release receipts are in `content/four-act-m4/`. Final art, installed iPhone acceptance and Act IV remain open.
+**Acts I–III are live at the installed campaign entry.** One campaign save covers all five capitals, 50 personal captures and rehabilitation paths, 150 returns and 25 expeditions. The first duo to depart opens the shared Gate. Keep the route and publication receipts in the private content folders. Remaining scene art, physical iPhone acceptance and Act IV are open.
 
 ## Four-pillar implementation queue
 
