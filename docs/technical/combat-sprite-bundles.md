@@ -2,7 +2,7 @@
 
 ## Active format
 
-The board plays approved `complete-character-animation-bundle` schema 2 files. Each assigned loadout contains its own complete cels and animation clips in the four quarter views. The game uses the approved foot pivot and exact atlas rectangles, and loads only the pages the deployed loadout uses.
+The board plays approved `complete-character-animation-bundle` schema 2 files. Each assigned loadout contains its own complete cels and animation clips in the four quarter views. The game uses the approved foot pivot and exact atlas rectangles, and loads only the pages the deployed loadout uses. The four-act publisher reads `content/campaign-art-plan/four-act-combat-sprite-sources.json` by default. Use the [palette batch handoff](../handoff/prompts/sprite-palette-batch.md) for compatible variants.
 
 The local **Character**, **Boss** and **Lieutenant** albums share the publisher. Boss art lives in one Boss category. A Boss binding may authorize either story side according to the actual campaign assignment. Lieutenants use the campaign's sub-boss role for hostile encounters and returned combatants. A playable fitting matches frozen gear, while a fixed opponent matches the authored encounter fitting and role. Exact approvals cover the album manifest, placements and atlas bytes. Read back Platform payloads before selecting the game release.
 

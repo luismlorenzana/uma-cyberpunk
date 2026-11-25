@@ -4,9 +4,14 @@ import type { CampaignCombatSprite, CampaignReleaseFile, CombatSpriteIdentity, C
 import { parseCompleteSpriteBundle } from '../../apps/web/src/board/complete-sprite-format'
 import { sha } from './model'
 
-export async function readCompleteCombatSprite(directory: string, source: {
-  manifest: string; placements: string; character: string; version: string; loadouts: CombatSpriteLoadout[]
-}, identity: CombatSpriteIdentity) {
+export interface CompleteSpritePlacement {
+  setId: string; view: string; pose: string; page: string; sha256: string
+  rect: { x: number; y: number; width: number; height: number }
+  pivot: { x: number; y: number }
+  bounds?: { x: number; y: number; width: number; height: number }
+}
+
+export async function readCompleteSpriteSource(directory: string, source: { manifest: string; placements: string }) {
   const root = await realpath(directory)
   const payloads = new Map<string, Buffer>()
   async function pinned(file: string, extension: 'json' | 'png', expected: string): Promise<CampaignReleaseFile> {
@@ -20,10 +25,7 @@ export async function readCompleteCombatSprite(directory: string, source: {
   }
   const manifest = await pinned('bundle.json', 'json', source.manifest)
   const bundle = parseCompleteSpriteBundle(JSON.parse(payloads.get(manifest.path)!.toString()))
-  if (bundle.character !== source.character || bundle.status !== 'approved' || bundle.version !== source.version ||
-    source.loadouts.length !== bundle.sets.length || source.loadouts.some(row => !bundle.sets.some(set => set.id === row.set))) {
-    throw new Error('Complete sprite identity, loadouts or approval differs from the album')
-  }
+  if (bundle.status !== 'approved') throw new Error('A complete sprite source requires album approval')
   const placements = await pinned('asset-placements.json', 'json', source.placements)
   const data = JSON.parse(payloads.get(placements.path)!.toString())
   const placementRows: unknown[] = data.frames
@@ -34,16 +36,17 @@ export async function readCompleteCombatSprite(directory: string, source: {
     JSON.stringify(data.views) !== JSON.stringify(bundle.views) || !Array.isArray(placementRows) || placementRows.length !== expectedFrames.size) {
     throw new Error('Complete sprite placements disagree with the manifest')
   }
+  const frames: CompleteSpritePlacement[] = []
   for (const value of placementRows) {
     if (!value || typeof value !== 'object') throw new Error('Invalid complete sprite placement')
-    const row = value as { setId: string; view: string; pose: string; page: string; sha256: string;
-      rect: { x: number; y: number; width: number; height: number }; pivot: { x: number; y: number } }
+    const row = value as CompleteSpritePlacement
     const key = row.setId + '/' + row.view + '/' + row.pose
     const cel = expectedFrames.get(key)
     if (!cel || row.page !== cel.page || row.sha256 !== cel.sha256 ||
       !cel.rect.every((dimension, index) => dimension === [row.rect?.x, row.rect?.y, row.rect?.width, row.rect?.height][index]) ||
       row.pivot?.x !== bundle.foot[0] || row.pivot?.y !== bundle.foot[1]) throw new Error('Complete sprite placement differs: ' + key)
     expectedFrames.delete(key)
+    frames.push(row)
   }
 
   const pages = await Promise.all(Object.values(bundle.pages).map(async page => {
@@ -55,6 +58,17 @@ export async function readCompleteCombatSprite(directory: string, source: {
     }
     return { file: page.file, ...entry }
   }))
+  return { bundle, manifest, placements, pages, payloads, frames }
+}
+
+export async function readCompleteCombatSprite(directory: string, source: {
+  manifest: string; placements: string; character: string; version: string; loadouts: CombatSpriteLoadout[]
+}, identity: CombatSpriteIdentity) {
+  const { bundle, manifest, placements, pages, payloads } = await readCompleteSpriteSource(directory, source)
+  if (bundle.character !== source.character || bundle.version !== source.version ||
+    source.loadouts.length !== bundle.sets.length || source.loadouts.some(row => !bundle.sets.some(set => set.id === row.set))) {
+    throw new Error('Complete sprite identity or loadouts differ from the approved album')
+  }
   const ref: CampaignCombatSprite = { ...identity, manifest, placements, pages, loadouts: source.loadouts }
   return { ref, payloads }
 }

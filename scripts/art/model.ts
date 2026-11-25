@@ -84,7 +84,7 @@ export function parsePublishConfig(value: unknown): PublishConfig {
         const route = p.object(v, f, ['scene', 'outfit'])
         return { scene: p.slug(route.scene, f), outfit: p.slug(route.outfit, f) }
       }, 4096) }) }
-  }, 200)
+  }, 512)
   if (wardrobes && (new Set(wardrobes.map(row => row.speaker)).size !== wardrobes.length || new Set(wardrobes.map(row => row.character)).size !== wardrobes.length)) p.fail('wardrobes', 'duplicate cast identity')
   return { schemaVersion: 1, bindings, portraits, ...(wardrobes ? { wardrobes } : {}), ...(root.authoringRoot === undefined ? {} : { authoringRoot: p.text(root.authoringRoot, 'authoringRoot', 300) }) }
 }

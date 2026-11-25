@@ -39,7 +39,8 @@ export async function main(args = process.argv.slice(2)) {
     return
   }
   if (event === 'combat-sprites') {
-    const sourcePath = resolve(value('--sprite-sources') ?? process.env.CYBER_COMBAT_SPRITE_SOURCES ?? 'content/campaign-art-plan/combat-sprite-sources.json')
+    const sourcePath = resolve(value('--sprite-sources') ?? process.env.CYBER_COMBAT_SPRITE_SOURCES ??
+      (campaign === 'four-act' ? 'content/campaign-art-plan/four-act-combat-sprite-sources.json' : 'content/campaign-art-plan/combat-sprite-sources.json'))
     const output = resolve(value('--receipt') ?? `content/campaign-art-plan/receipts/combat-sprites-${Date.now()}.json`)
     if (sourcePath === output) throw new Error('Combat sprite receipts need a separate file from the producer approval index')
     const journal: Record<string, unknown> = { schemaVersion: 1, universe: 'cyberpunk', campaign, event, only, dryRun, at: new Date().toISOString() }
@@ -109,7 +110,8 @@ export async function main(args = process.argv.slice(2)) {
   }
   if (splashBindings) throw new Error('--splash-bindings requires --event splashes')
   if (localRelease && (event !== 'general' || !dryRun)) throw new Error('--local-release supports general and splash dry runs only')
-  const configPath = resolve(value('--config') ?? process.env.CYBER_ART_CONFIG ?? 'content/campaign-art-plan/art-publish.json')
+  const configPath = resolve(value('--config') ?? process.env.CYBER_ART_CONFIG ?? (campaign === 'four-act' ?
+    'content/campaign-art-plan/four-act-art-publish.json' : 'content/campaign-art-plan/art-publish.json'))
   let raw: unknown
   try { raw = JSON.parse(await readFile(configPath, 'utf8')) }
   catch { throw new Error(`Cyberpunk game publish needs its private binding registry: ${configPath}. Platform art can be repaired into the game with pnpm art:publish after the registry is configured.`) }
