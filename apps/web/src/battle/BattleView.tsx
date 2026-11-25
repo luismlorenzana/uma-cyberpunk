@@ -112,7 +112,7 @@ export function BattleView(props: BattleViewProps) {
       const face = portrait && new Image()
       if (face && portrait) face.src = portrait.url
       void Promise.all([
-        looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }),
+        looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }, props.combatSprites === undefined),
         face ? face.decode().then(() => face, () => null) : undefined,
         props.combatSprites ? campaignCombatLooks(props.session.input, props.combatSprites) : undefined,
       ]).then(([units, decoded, combat]) => {
@@ -130,7 +130,7 @@ export function BattleView(props: BattleViewProps) {
   return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, onCommit, onEnd, onQuit, onStoryCues, onTalkReply, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, combatSprites, onCommit, onEnd, onQuit, onStoryCues, onTalkReply, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -249,8 +249,8 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
     if (!sc || skipping.current) return
     const speed = speedOf(side)
     const interrupted = () => skipping.current || scene.current !== sc
-    const visual = sc.hasCombatArt ? new CombatVisualPlayback(sc, action, cues, before, speed, interrupted,
-      entry => { if (debug) combatTrace.current.push(entry) }) : null
+    const visual = new CombatVisualPlayback(sc, action, cues, before, speed, interrupted,
+      entry => { if (debug) combatTrace.current.push(entry) })
     let current: CutInView | null = null
     for (const [i, c] of cues.entries()) {
       if (interrupted()) break
@@ -364,9 +364,9 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       const ref = s.input.units.find((i) => i.id === u.id)
       const own = looks.get(u.id)
       // Her own look (an Uma's set or face), else a stand-in set for the first four squad units, else a plain card.
-      const standIn = u.side === 'squad' && ref?.ref?.kind !== 'uma' && sprite < 4 && !/guest/i.test(ref?.label ?? '')
+      const standIn = combatSprites === undefined && u.side === 'squad' && ref?.ref?.kind !== 'uma' && sprite < 4 && !/guest/i.test(ref?.label ?? '')
       const look: BoardFigure['look'] = own?.kind === 'combat' ? own : own?.kind === 'set' ? { kind: 'sprite', source: own.source } : own?.kind === 'face' ? { kind: 'standee', face: own.face }
-        : standIn || (ref?.ref?.kind === 'uma' && sprite < 4) ? { kind: 'sprite', set: sprite++ } : { kind: 'standee', face: null }
+        : standIn || (combatSprites === undefined && ref?.ref?.kind === 'uma' && sprite < 4) ? { kind: 'sprite', set: sprite++ } : { kind: 'standee', face: null }
       sc.addFigure({ id: u.id, tile: [u.x, u.y], facing: u.facing, hue: SIDE_HUE[u.side], look })
     }
     sync(s)

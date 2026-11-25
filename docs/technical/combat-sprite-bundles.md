@@ -1,5 +1,15 @@
 # Combat sprite authoring and album bundles
 
+## Active format
+
+The board plays approved `complete-character-animation-bundle` schema 2 files. Each assigned loadout contains its own complete cels and animation clips in the four quarter views. The game uses the approved foot pivot and exact atlas rectangles, and loads only the pages the deployed loadout uses.
+
+The local **Character**, **Boss** and **Lieutenant** albums share the publisher. Boss art lives in one Boss category. A Boss binding may authorize either story side according to the actual campaign assignment. Lieutenants use the campaign's sub-boss role for hostile encounters and returned combatants. A playable fitting matches frozen gear, while a fixed opponent matches the authored encounter fitting and role. Exact approvals cover the album manifest, placements and atlas bytes. Read back Platform payloads before selecting the game release.
+
+A batch with `replaceLegacy: true` and complete `loadouts` removes older references from the four-act pointer. Immutable historical release receipts remain available. Unmatched figures use portrait standees. Older tooling and asset formats below describe the historical fitted pipeline.
+
+
+
 > **Reusable foundation.** This page documents the existing compact bundle and album workflow. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
 
 The first crew sprite delivery uses a compact helmeted 2D body and the four existing board facings.

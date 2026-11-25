@@ -130,9 +130,46 @@ export type CombatSpriteIdentity = { outfit: number; form?: never; roles?: never
 
 const heroineSpriteRoles: readonly HeroineSpriteRole[] = ['boss-enemy', 'boss-ally', 'sub-boss']
 
+export interface CombatSpriteLoadout {
+  set: string
+  rigs: { left: string | null; right: string | null; back?: string | null }[]
+  encounters: string[]
+  attacks: ('left' | 'right' | 'back')[]
+  medic?: true
+}
+
+export function parseCombatSpriteLoadouts(p: P, value: unknown, path: string): CombatSpriteLoadout[] {
+  const part = (value: unknown, field: string) => value === null ? null : p.slug(value, field)
+  const rows = p.list(value, path, (value, field): CombatSpriteLoadout => {
+    const row = p.object(value, field, ['set', 'rigs', 'encounters', 'attacks', 'medic'], ['set', 'rigs', 'encounters', 'attacks'])
+    const rigs = p.list(row.rigs, field + '.rigs', (value, f) => {
+      const rig = p.object(value, f, ['left', 'right', 'back'], ['left', 'right'])
+      return { left: part(rig.left, f + '.left'), right: part(rig.right, f + '.right'),
+        ...(rig.back === undefined ? {} : { back: part(rig.back, f + '.back') }) }
+    }, 40)
+    const encounters = p.list(row.encounters, field + '.encounters', (value, f) => p.slug(value, f), 80)
+    const attacks = p.list(row.attacks, field + '.attacks', (value, f) =>
+      value === 'left' || value === 'right' || value === 'back' ? value : p.fail(f, 'expected a mount'), 3)
+    unique(p, field + '.attacks', attacks, mount => mount)
+    if (!rigs.length && !encounters.length) p.fail(field, 'expected an actual rig or encounter fitting')
+    if (row.medic !== undefined && row.medic !== true) p.fail(field + '.medic', 'expected true')
+    return { set: p.slug(row.set, field + '.set'), rigs, encounters, attacks, ...(row.medic === true ? { medic: true } : {}) }
+  }, 64)
+  if (!rows.length) p.fail(path, 'expected complete loadouts')
+  unique(p, path, rows, row => row.set)
+  unique(p, path + '.encounters', rows.flatMap(row => row.encounters), fitting => fitting)
+  const rigs = rows.flatMap(row => row.rigs.map(rig => ({ ...rig, set: row.set })))
+  for (const [index, rig] of rigs.entries()) {
+    if (rigs.slice(0, index).some(other => other.set !== rig.set && other.left === rig.left && other.right === rig.right
+      && (other.back === undefined || rig.back === undefined || other.back === rig.back))) p.fail(path, 'overlapping rig assignments')
+  }
+  return rows
+}
+
 export type CampaignCombatSprite = CombatSpriteIdentity & {
   manifest: CampaignReleaseFile
   placements: CampaignReleaseFile
+  loadouts?: CombatSpriteLoadout[]
   pages: (CampaignReleaseFile & { file: string })[]
 }
 
@@ -297,7 +334,7 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     return pages
   })()
   const combatSprites = index.combatSprites === undefined ? undefined : p.list(index.combatSprites, 'combatSprites', (value, path) => {
-    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages', 'form', 'roles'], ['outfit', 'manifest', 'placements', 'pages'])
+    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages', 'form', 'roles', 'loadouts'], ['outfit', 'manifest', 'placements', 'pages'])
     const reference = (key: 'manifest' | 'placements') => entry(p.object(row[key], path + '.' + key, ['path', 'sha256', 'bytes']), path + '.' + key, false)
     const pages = p.list(row.pages, path + '.pages', (value, field) => {
       const page = p.object(value, field, ['file', 'path', 'sha256', 'bytes'])
@@ -310,8 +347,9 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     if (!pages.length) p.fail(path + '.pages', 'expected at least one page')
     unique(p, path + '.pages', pages, page => page.file)
     return { ...parseCombatSpriteIdentity(p, row, path),
-      manifest: reference('manifest'), placements: reference('placements'), pages }
-  }, 100)
+      manifest: reference('manifest'), placements: reference('placements'), pages,
+      ...(row.loadouts === undefined ? {} : { loadouts: parseCombatSpriteLoadouts(p, row.loadouts, path + '.loadouts') }) }
+  }, 512)
   if (combatSprites) unique(p, 'combatSprites', combatSprites, combatSpriteKey)
   const campaign = index.campaign
   if (campaign !== undefined && campaign !== 'four-act') return p.fail('release.campaign', 'unknown campaign identity')

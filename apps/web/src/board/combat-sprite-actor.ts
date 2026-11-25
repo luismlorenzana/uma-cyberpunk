@@ -1,6 +1,6 @@
 import type { Dir, PartHp, UnitStatus } from '@cyber/battle'
-import { CanvasTexture, CircleGeometry, Group, Mesh, MeshBasicMaterial, NearestFilter, Sprite, SpriteMaterial, SRGBColorSpace } from 'three'
-import type { Clip, EffectTrack, Layer } from './combat-sprite-format'
+import { BoxGeometry, CanvasTexture, CircleGeometry, DoubleSide, Group, Mesh, MeshBasicMaterial, NearestFilter, RingGeometry, Sprite, SpriteMaterial, SRGBColorSpace } from 'three'
+import type { Clip, Layer } from './combat-sprite-format'
 import type { CombatLook, LoadedCombatArt } from './local-combat-sprites'
 import { composedClip, hasNativeHands, isBackMotion } from './combat-sprite-composition'
 import { paintComposition } from './combat-sprite-gear'
@@ -251,26 +251,37 @@ export class CombatSpriteActor extends CombatCell {
   override dispose(): void { super.dispose(); this.shadowMesh.geometry.dispose(); this.shadowMesh.material.dispose() }
 }
 
-export class CombatTileEffect extends CombatCell {
+export class CombatTileEffect {
+  readonly group = new Group()
+  private readonly mesh: Mesh<BoxGeometry | RingGeometry, MeshBasicMaterial>
   private elapsed = 0
-  private active = 0
-  private readonly cels: Cel[]
 
-  constructor(art: LoadedCombatArt, track: EffectTrack, readonly held: boolean, private readonly speed: number, still: boolean) {
-    super(art, art.effects.origin)
-    this.cels = track.frames.map((layer, i) => ({ layers: [layer], ms: track.ms[i] ?? Infinity }))
-    if (still) this.active = this.cels.length - 1
-    this.paint(this.cels[this.active]!.layers)
+  constructor(readonly held: boolean, private readonly speed: number, private readonly still: boolean, reboot = false) {
+    this.mesh = new Mesh(held ? new BoxGeometry(0.77, 0.35, 0.77) : new RingGeometry(0.18, 0.36, 24),
+      new MeshBasicMaterial({ color: reboot ? 0x89e6ff : held ? 0x5bafff : 0x87e8c0,
+        transparent: true, opacity: held ? 0.30 : 0.70, depthWrite: false, side: DoubleSide }))
+    if (held) this.mesh.position.y = 0.175
+    else this.mesh.rotation.x = -Math.PI / 2
+    this.group.renderOrder = 1
+    this.group.add(this.mesh)
   }
 
   update(dt: number): 'playing' | 'held' | 'finished' {
+    if (this.held) return 'held'
     this.elapsed += dt * this.speed
-    const previous = this.active
-    while (this.active < this.cels.length && this.elapsed >= this.cels[this.active]!.ms) {
-      this.elapsed -= this.cels[this.active++]!.ms
+    const progress = this.elapsed / 295
+    if (progress >= 1) return 'finished'
+    if (!this.still) {
+      this.mesh.material.opacity = 0.70 * (1 - progress)
+      this.mesh.scale.setScalar(1 + progress * 0.9)
     }
-    if (this.active === this.cels.length) return 'finished'
-    if (previous !== this.active) this.paint(this.cels[this.active]!.layers)
-    return this.held && this.active === this.cels.length - 1 ? 'held' : 'playing'
+    return 'playing'
   }
+
+  stand(x: number, y: number, z: number, order: number): void {
+    this.group.position.set(x, y, z)
+    this.mesh.renderOrder = order
+  }
+
+  dispose() { this.mesh.geometry.dispose(); this.mesh.material.dispose() }
 }
