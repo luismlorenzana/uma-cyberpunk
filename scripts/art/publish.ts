@@ -65,7 +65,7 @@ export function buildArtCandidate(selected: SelectedCampaign, resolved: Resolved
   if (resolved.wardrobe) config.wardrobe = resolved.wardrobe
   const assets = (config.assets as { id: string; file: string }[])
   const art = config.art as { scene: string; backdrop?: string; portraits: { speaker: string | number; asset: string; emote?: string; profile?: string }[];
-    backdropCues?: { at: string; asset: string; location?: string }[]; composition?: unknown }[]
+    backdropCues?: { at: string; asset: string | null; location?: string; portraits?: 'show' | 'hide' }[]; composition?: unknown }[]
   const byAsset = new Map(selected.release.assets.map(asset => [asset.id, asset]))
   const definitions = new Map(assets.map(asset => [asset.id, asset]))
   const payloads = new Map<string, Buffer>()
@@ -123,7 +123,8 @@ export function buildArtCandidate(selected: SelectedCampaign, resolved: Resolved
     if (!entry) { entry = { scene: splash.scene, portraits: [] }; art.push(entry) }
     if (splash.at) {
       const cues = entry.backdropCues ??= []
-      if (!cues.some(cue => cue.at === splash.at)) cues.push({ at: splash.at, asset: splash.asset })
+      if (!cues.some(cue => cue.at === splash.at)) cues.push({ at: splash.at, asset: splash.asset, ...(splash.portraits === 'hide' ? { portraits: 'hide' } : {}) })
+      if (splash.returnAt && !cues.some(cue => cue.at === splash.returnAt)) cues.push({ at: splash.returnAt, asset: null })
     } else {
       entry.composition = { width: splash.width, height: splash.height, portraits: splash.portraits,
         layers: [{ asset: splash.asset, x: 0, y: 0, width: splash.width, height: splash.height }] }

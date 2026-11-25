@@ -91,7 +91,7 @@ export function parsePublishConfig(value: unknown): PublishConfig {
 
 export interface ImageReplacement { asset: string; bytes: Buffer; extension: '.png' | '.webp'; width: number; height: number }
 export interface PortraitReplacement { base: string; speaker: Speaker; faces: { emote: string; image: ImageReplacement; at: { x: number; y: number } }[]; profile?: string }
-export interface SceneSplash { scene: string; asset: string; at?: string; width: number; height: number; portraits: 'show' | 'hide' }
+export interface SceneSplash { scene: string; asset: string; at?: string; returnAt?: string; width: number; height: number; portraits: 'show' | 'hide' }
 export interface ResolvedArt {
   images: ImageReplacement[]; portraits: PortraitReplacement[]; skipped: string[]; sourceChecks: (() => Promise<void>)[]
   sources?: { path: string; sha256: string; generation: string }[]

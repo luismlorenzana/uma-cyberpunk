@@ -39,6 +39,18 @@ Deliver through the real campaign. Each milestone has a playable entry, exit, de
 | 3 | [CY104 System and location navigation](tasks/CY104.md), [CY105 Expedition operations](tasks/CY105.md), [CY106 Individual relationships](tasks/CY106.md) | Runtime routes, state, costs, withdrawal, and personal activities are wired. Art supplies exact location plates and Story supplies any new actor-specific scenes. |
 | Throughout | [CY91 iPhone checks](tasks/CY91.md), [CY92 Story](tasks/CY92.md), [CY93 General Art](tasks/CY93.md), [CY94 Character Art](tasks/CY94.md), [CY95 Sprites](tasks/CY95.md), [CY96 Intake](tasks/CY96.md) | Update the authored scene, UI destination, imagery and verification as mechanics change. |
 
+## Story and art coverage closure
+
+| Order | Packet | Delivery |
+| --- | --- | --- |
+| 1 | [CY107 Exact splash destinations](tasks/CY107.md) | Review the asset-to-scene queue. Keep approved alternatives and uncovered Story beats explicit. |
+| 2 | [CY108 Lieutenant splash publication](tasks/CY108.md) | Publish the approved album through Platform. Apply destinations once Story and Character Splash Art agree on the exact scenes. |
+| 3 | [CY109 Ordered splash playback](tasks/CY109.md) | Show reviewed frames, overlays and return cues in the real campaign. |
+| Authoring | [CY110 Story](tasks/CY110.md), [CY111 General Art](tasks/CY111.md), [CY112 Character Splash Art](tasks/CY112.md) | Story returns exact scenes and cues. General Art owns environments and ship spaces. Character Splash Art supplies the per-actor and paired shots. |
+| Follow-through | [CY113 Portraits and expressions](tasks/CY113.md), [CY114 Combat art](tasks/CY114.md) | Review exact cues and reachable fittings, then repeat CY96 integration in the same campaign. |
+
+Use the private `content/cy90/content-coverage` audit as the baseline. The coverage queue tracks scene approval separately from source art approval. CY92–CY96 retain the overarching authoring and release contracts.
+
 ## Dependencies and parallel work
 
 - **Story calls first where they affect mechanics.** Pin the duo register, which capital action counts as liberation, the recovery alternatives, the expedition destination and named targets. The existing inventory is a content source. Use the J1–J9 and Core remap in CY92 before treating any earlier requirement as current. Establish how unfinished optional expeditions appear in Act IV before writing finale-specific epilogues.

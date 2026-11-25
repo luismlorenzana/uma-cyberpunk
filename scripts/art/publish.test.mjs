@@ -332,11 +332,25 @@ test('scene splash intake verifies its album and Story pins and preserves backdr
   await configure([{ ...binding, from: { ...binding.from, actor: 9000002 } }])
   await assert.rejects(resolveSplashBindings(path, f.selected, f.storage, { ...options, only: [] }), /actor is not in this Story scene/)
   await configure([{ ...binding, at: 'steps[999]' }])
-  await assert.rejects(resolveSplashBindings(path, f.selected, f.storage, options), /valid step without a full composition/)
-  await configure([{ ...binding, at: 'steps[0]' }])
-  const cut = await resolveSplashBindings(path, f.selected, f.storage, options)
-  assert.equal(cut.sceneSplashes[0].at, 'steps[0]')
-  assert((await publishArtCandidate(f.storage, f.selected, cut, { dryRun: true })).changes.includes('campaign:presentation'))
+  await assert.rejects(resolveSplashBindings(path, f.selected, f.storage, options), /requires a valid step/)
+  const second = { ...local, id: 'officer-one-second-frame', image: 'second.png', sha256: sha(f.original),
+    approval: { ...local.approval, imageSha256: sha(f.original) } }
+  await writeFile(join(folder, second.image), f.original)
+  await writeFile(join(folder, 'catalog.json'), encode({ assets: [local, second] }))
+  const secondBinding = { ...binding, from: { ...binding.from, id: second.id, sha256: second.sha256 } }
+  await configure([{ ...binding, at: 'steps[0]', portraits: 'hide' },
+    { ...secondBinding, at: 'steps[1]', returnAt: 'steps[2]' }])
+  const cuts = await resolveSplashBindings(path, f.selected, f.storage, options)
+  assert.deepEqual(cuts.sceneSplashes.map(row => row.at), ['steps[0]', 'steps[1]'])
+  const candidate = await publishArtCandidate(f.storage, f.selected, cuts, { dryRun: true })
+  assert(candidate.changes.includes('campaign:presentation'))
+  const composed = { ...binding, at: 'steps[0]', portraits: 'hide' }
+  await configure([composed])
+  await assert.rejects(resolveSplashBindings(path, after, f.storage, options), /exact existing layout hash/)
+  await configure([{ ...composed, replacesCompositionSha256: sha(encode(art.composition)) }])
+  assert.equal((await resolveSplashBindings(path, after, f.storage, options)).sceneSplashes.length, 1)
+  await configure([{ ...secondBinding, at: 'steps[1]', returnAt: 'steps[0]' }])
+  await assert.rejects(resolveSplashBindings(path, f.selected, f.storage, options), /return must be later/)
   await configure([{ ...binding, review: 'review' }])
   await assert.rejects(resolveSplashBindings(path, f.selected, f.storage, cloud), /destination approval is pending/)
 })
@@ -667,21 +681,26 @@ test('canonical album splashes publish privately and bind without the authoring 
   t.after(() => rm(authoring, { recursive: true, force: true }))
   const root = join(authoring, 'character-universes', 'cyberpunk')
   const pin = sha(f.newer)
-  const albums = async (folder, record) => {
+  const albums = async (folder, record, approval = { by: 'owner', status: 'approved', imageSha256: pin }) => {
     const path = join(root, folder)
     await mkdir(path, { recursive: true })
     await writeFile(join(path, 'frame.png'), f.newer)
     await writeFile(join(path, 'manifest.json'), encode({ assets: [{ ...record, image: 'frame.png', width: 40, height: 60, sha256: pin,
-      approval: { by: 'owner', status: 'approved', imageSha256: pin } }] }))
+      approval }] }))
   }
   await albums('splash-art', { id: 'solo-evening', outfitId: 9000001, outfit: 'quarters', scene: 'quarters-seated' })
   const ally = { id: 'ally-recovery', unitId: 'commander-one', role: 'boss-ally', outfit: 'reform-front', scene: 'spa-chair' }
   await albums('enemies/casual/splash-art', ally)
   await albums('enemies/splash-art', ally)
+  const lieutenant = { id: 'lieutenant-first-watch', unitId: 'lieutenant-test', role: 'lieutenant', outfit: 'outdoor', scene: 'side-street' }
+  await albums('enemies/lieutenants/splash-art', lieutenant, { by: 'owner', status: 'approved', sha256: pin })
   const platform = new MemoryStorage(SPLASH_INDEX.slice(0, -'index.json'.length))
   const catalog = await readSplashAlbums(authoring)
-  assert.equal(catalog.sources.length, 2)
-  assert.equal((await publishSplashAlbums(catalog, platform)).changes, 2)
+  assert.equal(catalog.sources.length, 3)
+  assert.equal((await publishSplashAlbums(catalog, platform)).changes, 3)
+  const lieutenantOnly = await readSplashAlbums(authoring, 'lieutenant')
+  assert.equal(lieutenantOnly.sources.length, 1)
+  assert.equal((await publishSplashAlbums(lieutenantOnly, platform)).total, 3)
   const first = platform.writes.length
   assert.equal((await publishSplashAlbums(catalog, platform)).changes, 0)
   assert.equal(platform.writes.length, first)
@@ -694,9 +713,24 @@ test('canonical album splashes publish privately and bind without the authoring 
     chapter: chapter.source, chapterSha256: chapter.sha256, place: scene.place, review: 'approved',
     from: { role: 'crew', id: 'solo-evening', platformId: splashPlatformId('crew', 'solo-evening'), actor: 9000001,
       outfit: 'quarters', variant: 'quarters-seated', sha256: pin } }] }))
-  const art = await resolveSplashBindings(registry, f.selected, platform, { localAssets: false, dryRun: false, only: [] })
+  const options = { localAssets: false, dryRun: false, only: [] }
+  const art = await resolveSplashBindings(registry, f.selected, platform, options)
   assert((await publishArtCandidate(f.storage, f.selected, art)).promoted)
   assert.equal((await loadSelected(f.storage)).book.art[0].composition.layers[0].asset, 'splash-' + pin.slice(0, 48))
+
+  const cameo = { ...scene, cast: [...scene.cast, { heroine: lieutenant.unitId }] }
+  const destination = { ...f.selected, book: { ...f.selected.book, scenes: new Map(f.selected.book.scenes).set(cameo.id, cameo) } }
+  const from = { role: 'lieutenant', id: lieutenant.id, actor: lieutenant.unitId, outfit: lieutenant.outfit, variant: lieutenant.scene, sha256: pin }
+  const binding = { scene: cameo.id, chapter: chapter.source, chapterSha256: chapter.sha256, place: cameo.place, review: 'approved', from }
+  const setDestination = async row => writeFile(registry, encode({ schemaVersion: 1, campaign: 'cyberpunk', bindings: [row] }))
+  await setDestination(binding)
+  await assert.rejects(resolveSplashBindings(registry, destination, platform, options), /not a four-act Lieutenant/)
+  destination.book.fourAct = { duos: new Map([['duo', { returns: [{ heroine: lieutenant.unitId }] }]]) }
+  await setDestination({ ...binding, with: ['absent-ally'] })
+  await assert.rejects(resolveSplashBindings(registry, destination, platform, options), /supporting splash actor/)
+  await setDestination(binding)
+  const placement = await resolveSplashBindings(registry, destination, platform, options)
+  assert.equal(placement.sceneSplashes[0].asset, 'splash-' + pin.slice(0, 48))
 })
 
 test('a long cloud art batch refreshes an expired access token and retries the guarded write', async () => {
