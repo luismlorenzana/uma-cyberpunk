@@ -294,6 +294,8 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
   return { after, start, ports, routes }
 }
 
+const FOUR_ACT_IMAGE_LIMIT = 8192
+
 export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_INDEX): CampaignRelease {
   const p = new P(file)
   const fields = ['schemaVersion', 'release', 'files', 'assets']
@@ -319,7 +321,7 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
   const assets = p.list(index.assets, 'assets', (v, path) => {
     const o = p.object(v, path, ['id', 'path', 'sha256', 'bytes'])
     return { id: p.slug(o.id, `${path}.id`), ...entry(o, path, true) }
-  }, 4096)
+  }, index.campaign === 'four-act' ? FOUR_ACT_IMAGE_LIMIT : 4096)
   if (!unique(p, 'files', files, (f) => f.source).has('campaign.json')) p.fail('files', 'campaign.json is missing')
   unique(p, 'assets', assets, (a) => a.id)
   const storyPages = index.storyPages === undefined ? undefined : (() => {
@@ -463,7 +465,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     const file = p.text(a.file, `${path}.file`, 72)
     if (!ART_FILE.test(file)) p.fail(`${path}.file`, 'expected a PNG or WebP filename under art/')
     return { id: p.slug(a.id, `${path}.id`), file }
-  }, 4096)
+  }, identity === 'four-act' || fourActCatalog ? FOUR_ACT_IMAGE_LIMIT : 4096)
   const byAsset = unique(p, 'assets', assets, (a) => a.id)
   const asset = (id: unknown, path: string): string => {
     const key = p.slug(id, path)
