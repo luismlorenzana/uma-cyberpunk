@@ -172,8 +172,10 @@ From uma-rpg's 2026-10-30 incident, where a hand grant wiped unsynced progress. 
 
 - **The install:** Safari → Share → Add to Home Screen. The app opens standalone, with an opaque status bar and the
   safe areas kept; the manifest's orientation is `any`, since iOS can't lock a web app's (the turned landscape stage
-  arrives with the board, CY7). Its icon is a neon ring with a gap on dark ink, drawn by `scripts/make-icons.mjs` (iOS
-  keeps the icon it saw at install).
+  arrives with the board, CY7). Its approved icon is a titanium horseshoe around a neon reactor, matched to Farm
+  branding. Versioned favicon, 180 px Apple touch, 192/512 px PWA and padded maskable PNGs use the same approved image.
+  Legacy icon URLs serve matching exports. `node scripts/make-icons.mjs <private-approved-master.png>` regenerates them;
+  the full-resolution master stays private. Large installation icons load on demand. iOS may keep the icon it saw at install.
 - **Updates:** the service worker precaches the build. When a newer build is waiting, uma-kit shows **Update ready ·
   Restart**; Restart activates it. The shell (`/`, `index.html`, `sw.js`) is served `no-cache`, so a new build is seen
   on the next open.

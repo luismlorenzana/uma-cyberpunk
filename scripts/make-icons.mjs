@@ -1,8 +1,6 @@
-// The app icon (CY3): a neon ring with a gap on uma-kit's dark ink, original and abstract, drawn in code so it costs no art
-// and exports the same bytes every time (copied from uma-quest's at cc42fd1, with this game's mark). Real icon art is
-// Claude's code-drawn pixel art later (uma-platform P147); iOS keeps the icon it saw at Add to Home Screen, so a change
-// means a reinstall. Run: node scripts/make-icons.mjs (writes apps/web/public/icons/).
-import { mkdirSync, writeFileSync } from 'node:fs'
+// Export the approved app logo from its private master. The original abstract PNG encoder remains for synthetic
+// story fixtures only; production icons are resized from the owner-approved artwork, never redrawn by that encoder.
+import { mkdirSync, realpathSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { deflateSync } from 'node:zlib'
@@ -74,11 +72,40 @@ export function png(size) {
     chunk('IDAT', deflateSync(pixels(size), { level: 9 })), chunk('IEND', Buffer.alloc(0))])
 }
 
-export const ICONS = { 'icon-64.png': 64, 'apple-touch-icon.png': 180, 'icon-192.png': 192, 'icon-512.png': 512 }
+export const ICONS = {
+  'uma-cyberpunk-v1-64.png': 64,
+  'uma-cyberpunk-v1-touch-180.png': 180,
+  'uma-cyberpunk-v1-192.png': 192,
+  'uma-cyberpunk-v1-512.png': 512,
+  'uma-cyberpunk-v1-maskable-512.png': 512,
+}
+export const LEGACY_ICONS = {
+  'icon-64.png': 'uma-cyberpunk-v1-64.png',
+  'apple-touch-icon.png': 'uma-cyberpunk-v1-touch-180.png',
+  'icon-192.png': 'uma-cyberpunk-v1-192.png',
+  'icon-512.png': 'uma-cyberpunk-v1-512.png',
+}
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+/** Only icon exports enter the app; keep the approved full-resolution source in private authoring content. */
+export async function renderIcons(source) {
+  if (!source) throw new Error('Pass the private approved logo PNG: node scripts/make-icons.mjs <source.png>')
+  const { default: sharp } = await import('sharp')
+  const meta = await sharp(source).metadata()
+  if (meta.width !== meta.height || meta.width < 512) throw new Error('The approved logo must be square and at least 512 px')
   const out = join(dirname(fileURLToPath(import.meta.url)), '../apps/web/public/icons')
   mkdirSync(out, { recursive: true })
-  for (const [name, size] of Object.entries(ICONS)) writeFileSync(join(out, name), png(size))
-  console.log(`icons → ${out}`)
+  for (const [name, size] of Object.entries(ICONS)) {
+    const maskable = name.includes('-maskable-')
+    let image = sharp(source).resize(maskable ? 436 : size, maskable ? 436 : size, { kernel: 'lanczos3' }).removeAlpha()
+    // The complete emblem fits inside the circular safe area; copied edge pixels keep the background opaque.
+    if (maskable) image = image.extend({ top: 38, bottom: 38, left: 38, right: 38, extendWith: 'copy' })
+    const bytes = await image.png({ compressionLevel: 9, palette: false }).toBuffer()
+    writeFileSync(join(out, name), bytes)
+    for (const [legacy, current] of Object.entries(LEGACY_ICONS)) if (current === name) writeFileSync(join(out, legacy), bytes)
+  }
+}
+
+if (process.argv[1] && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
+  await renderIcons(process.argv[2])
+  console.log('Exported approved app icons and their legacy URL aliases.')
 }

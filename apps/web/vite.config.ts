@@ -52,8 +52,9 @@ export default defineConfig(({ mode }) => {
         // The kit's "Update ready · Restart" prompt instead of a silent reload (watchAppUpdates in main.tsx).
         registerType: 'prompt',
         injectRegister: null,
-        // The icon is generated (scripts/make-icons.mjs). iOS keeps the icon it saw at Add to Home Screen.
-        includeAssets: ['icons/icon-64.png', 'icons/apple-touch-icon.png'],
+        // Approved branding uses versioned URLs; iOS may keep the image selected at Add to Home Screen.
+        includeAssets: ['icons/uma-cyberpunk-v1-64.png', 'icons/uma-cyberpunk-v1-touch-180.png'],
+        includeManifestIcons: false,
         manifest: {
           name: 'Uma Cyberpunk',
           short_name: 'Uma Cyberpunk',
@@ -67,13 +68,15 @@ export default defineConfig(({ mode }) => {
           background_color: '#0b0d17',
           theme_color: '#0b0d17',
           icons: [
-            { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
-            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+            { src: '/icons/uma-cyberpunk-v1-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icons/uma-cyberpunk-v1-512.png', sizes: '512x512', type: 'image/png' },
+            { src: '/icons/uma-cyberpunk-v1-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           ],
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+          // Large installation icons are requested by the installer, outside the offline game shell.
+          globIgnores: ['icons/*512.png'],
           // three.js arrives as a lazy chunk in CY7: precache it too, so the game opens offline after install.
           maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
           navigateFallback: '/index.html',
