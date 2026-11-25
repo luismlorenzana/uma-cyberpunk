@@ -18,7 +18,7 @@ import {
 import { levelOf, toRoomDesign } from './design'
 import { CombatSpriteActor, CombatTileEffect, limbPose, type CombatPose } from './combat-sprite-actor'
 import type { CombatEffects } from './combat-sprite-format'
-import type { CombatLook, LoadedCombatArt } from './local-combat-sprites'
+import type { CombatLook } from './local-combat-sprites'
 
 export type Tile = readonly [x: number, z: number]
 
@@ -29,7 +29,7 @@ export const NIGHT_GRADE: StageGrade = {
 
 /** The post layer (uma-stage 0.5.0's ST5, our first stage request; D18). Measured on the rendered night frame, not the
  * nominal colours: the cyan ring reads about 0.49 luminance, the red and magenta rings and the danger overlay about
- * 0.28–0.30, the lamps about 0.24, and 96% of the board under 0.1. A threshold of 0.22 blooms all the neon and leaves the
+ * 0.28â€“0.30, the lamps about 0.24, and 96% of the board under 0.1. A threshold of 0.22 blooms all the neon and leaves the
  * terrain dark (the figures' cards, about 0.45, glow a little at any useful threshold, hence the modest strength). The
  * tilt-shift is softened so the board's front and back rows, where units stand, stay sharp. */
 export const BOARD_EFFECTS = { bloom: { threshold: 0.22, strength: 0.5, radius: 0.5 }, tiltShift: { strength: 0.8 } } as const satisfies EffectsOptions
@@ -132,7 +132,6 @@ export class BoardScene {
   private map: BattleMap | null = null
   private world: { page: CanvasTexture; shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
   private readonly figures = new Map<string, Live>()
-  private combatArt: LoadedCombatArt | null = null
   private readonly combatEffects = new Map<string, { tile: Tile; sprite: CombatTileEffect }>()
   private nextEffect = 0
   private disposed = false
@@ -328,7 +327,6 @@ export class BoardScene {
     this.removeFigure(spec.id)
     const body = spec.look.kind === 'combat' ? new CombatSpriteActor(spec.look) : spec.look.kind === 'sprite'
       ? new SpriteActor('source' in spec.look ? spec.look.source : standInSet(spec.look.set)) : new Standee(spec.look.face)
-    if (spec.look.kind === 'combat') this.combatArt ??= spec.look.art
     const { group, wedge } = baseRing(spec.hue)
     this.scene.add(body.group, body.shadowMesh, group)
     const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], speed: 1, done: null, body, base: group, wedge, down: false }
@@ -397,7 +395,6 @@ export class BoardScene {
   }
 
   get stillCombat(): boolean { return this.reducedMotion?.matches ?? false }
-  get hasCombatArt(): boolean { return this.combatArt !== null }
 
   combatClip(id: string, action: string, pose: CombatPose, facing?: Dir) {
     const f = this.figures.get(id)
@@ -416,22 +413,12 @@ export class BoardScene {
     return this.stillCombat ? 0 : duration
   }
 
-  private effectArt(actor?: string): LoadedCombatArt | null {
-    const body = actor ? this.figures.get(actor)?.body : undefined
-    return body instanceof CombatSpriteActor ? body.look.art : this.combatArt
+  placeBarrier(id: string, tile: Tile, speed = 1): void {
+    if (!this.combatEffects.has(id)) this.addCombatEffect(id, tile, new CombatTileEffect(true, speed, this.stillCombat))
   }
 
-  placeBarrier(id: string, tile: Tile, speed?: number, actor?: string): void {
-    const art = this.effectArt(actor)
-    if (!art || this.combatEffects.has(id)) return
-    // The battle records position and HP. The same canonical prop faces the camera after resume.
-    this.addCombatEffect(id, tile, new CombatTileEffect(art, art.effects.barrier.S, true, speed ?? 1, speed === undefined || this.stillCombat))
-  }
-
-  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number, recipient: string): void {
-    const art = this.effectArt(recipient)
-    if (!art) return
-    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(art, art.effects.recipient[effect], false, speed, this.stillCombat))
+  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number): void {
+    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(false, speed, this.stillCombat, effect !== 'mend'))
   }
 
   private addCombatEffect(id: string, tile: Tile, sprite: CombatTileEffect): void {
@@ -694,7 +681,7 @@ export class BoardScene {
       else fig.body.stand(placed.x, placed.y, placed.z, order, fig.down ? [tint[0] * 0.4, tint[1] * 0.4, tint[2] * 0.45] : tint)
     }
     for (const { tile: [x, z], sprite } of this.combatEffects.values()) {
-      sprite.stand(x + 0.5, this.groundAt(x + 0.5, z + 0.5) + 0.025, z + 0.5, Math.round((z + 0.5) * 100) + 1, worldPerCss)
+      sprite.stand(x + 0.5, this.groundAt(x + 0.5, z + 0.5) + 0.025, z + 0.5, Math.round((z + 0.5) * 100) + 1)
     }
     this.renderer.info.reset()
     const effects = this.effectsOn()
@@ -736,7 +723,6 @@ export class BoardScene {
     this.effects?.dispose()
     for (const id of [...this.figures.keys()]) this.removeFigure(id)
     for (const id of this.combatEffects.keys()) this.removeCombatEffect(id)
-    this.combatArt = null
     this.setOverlay([])
     this.setStates([])
     this.setCursor(null)

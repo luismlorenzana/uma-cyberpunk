@@ -47,9 +47,9 @@ function faceOf(path: string): Promise<HTMLImageElement | null> {
 }
 
 /** Her look: her sprite set, else her face, else null (a stand-in). */
-export async function lookOf(art: ArtIndex | null, outfit: number): Promise<UnitLook | null> {
+export async function lookOf(art: ArtIndex | null, outfit: number, allowSprites = true): Promise<UnitLook | null> {
   if (!art) return null
-  if (hasSet(art, outfit)) {
+  if (allowSprites && hasSet(art, outfit)) {
     const source = await setOf(art, outfit)
     if (source) return { kind: 'set', source }
   }
@@ -65,14 +65,14 @@ export function preloadLooks(art: ArtIndex | null, outfits: readonly number[]): 
 
 /** Every Uma's look in a battle by unit id, waiting `ms` at most: whatever hasn't loaded by then plays as a stand-in. A
  * first battle downloads about 1.6 MB a sprite set; after that they're cached on the device. `progress` hears each one. */
-export async function looksFor(input: BattleInput, art: ArtIndex | null, ms = 25_000, progress?: (done: number, of: number) => void): Promise<Map<string, UnitLook>> {
+export async function looksFor(input: BattleInput, art: ArtIndex | null, ms = 25_000, progress?: (done: number, of: number) => void, allowSprites = true): Promise<Map<string, UnitLook>> {
   const out = new Map<string, UnitLook>()
   const umas = input.units.filter((u) => u.ref?.kind === 'uma' && Number(u.ref.id) > 0)
   if (!art || umas.length === 0) return out
   let done = 0
   progress?.(0, umas.length)
   const all = Promise.all(umas.map(async (u) => {
-    const look = await lookOf(art, Number(u.ref!.id))
+    const look = await lookOf(art, Number(u.ref!.id), allowSprites)
     if (look) out.set(u.id, look)
     progress?.(++done, umas.length)
   }))
