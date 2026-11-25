@@ -119,6 +119,7 @@ export interface GroundEncounter extends GroundRules {
   kit?: { weapons: string[]; expansions: string[] }
   boss?: { unit: string; name: string; portrait: string }
   cues?: GroundCues
+  signatureSplashes?: { unit: string; signature: string; asset: string }[]
   win: { flag?: string; file?: string; reward?: Wallet }
 }
 
@@ -551,7 +552,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     }
   }
   const ground = unique(p, 'ground', o.ground === undefined ? [] : p.list(o.ground, 'ground', (v, path): GroundEncounter => {
-    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win', 'rescue', 'talk', 'formation', 'cues', 'signatures', 'combat'], ['id', 'title', 'win'])
+    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win', 'rescue', 'talk', 'formation', 'cues', 'signatures', 'signatureSplashes', 'combat'], ['id', 'title', 'win'])
     const id = p.slug(g.id, `${path}.id`)
     const mission = encounters.get(id)
     if (!mission?.scenario || mission.scenario === 'training' || commands.has(id) || !quests.some((q) => q.encounter === id)) {
@@ -631,9 +632,16 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     })()
     const cues = g.cues === undefined ? undefined : parseGroundCues(p, g.cues, `${path}.cues`, scenes, talk ?? [])
     const signatures = g.signatures === undefined ? undefined : parseGroundSignatures(p, g.signatures, `${path}.signatures`)
+    const signatureSplashes = g.signatureSplashes === undefined ? undefined : p.list(g.signatureSplashes, path + '.signatureSplashes', (value, field) => {
+      const splash = p.object(value, field, ['unit', 'signature', 'asset'])
+      const unit = p.slug(splash.unit, field + '.unit'), signature = p.slug(splash.signature, field + '.signature')
+      if (!signatures?.some(row => row.unit === unit && row.action.id === signature)) p.fail(field, 'expected a signature assigned to this battle unit')
+      return { unit, signature, asset: asset(splash.asset, field + '.asset') }
+    }, 16)
+    if (signatureSplashes) unique(p, path + '.signatureSplashes', signatureSplashes, splash => splash.unit)
     return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
       ...(combat ? { combat } : {}), ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), ...(rescue ? { rescue } : {}), ...(talk ? { talk } : {}),
-      ...(formation ? { formation } : {}), ...(cues ? { cues } : {}), ...(signatures ? { signatures } : {}), win: { flag, file, reward } }
+      ...(formation ? { formation } : {}), ...(cues ? { cues } : {}), ...(signatures ? { signatures } : {}), ...(signatureSplashes ? { signatureSplashes } : {}), win: { flag, file, reward } }
   }, fourActCatalog ? 512 : 64), (g) => g.id)
   const liberationFlags = new Set([...ground.values()].map(encounter => encounter.win.flag))
   if (o.fourAct !== undefined) {

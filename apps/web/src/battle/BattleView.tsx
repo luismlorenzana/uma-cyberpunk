@@ -89,6 +89,7 @@ export interface BattleViewProps {
   objectiveLabel?: string
   portrait?: { unit: string; url: string }
   campaignPortraits?: ReadonlyMap<string, CampaignReleaseFile>
+  signatureSplashes?: readonly (readonly [string, CampaignReleaseFile])[]
   standInKit?: 'biome' | 'town'
   combatSprites?: CampaignRelease['combatSprites']
   onCommit: (s: Session) => void
@@ -106,6 +107,7 @@ export function BattleView(props: BattleViewProps) {
   const art = master.status === 'ready' ? master.view.art : null
   const [looks, setLooks] = useState<Map<string, UnitLook | CombatLook> | null>(null)
   const [loaded, setLoaded] = useState<[number, number]>([0, 0])
+  const [signatureArt, setSignatureArt] = useState<ReadonlyMap<string, string>>(new Map())
   useEffect(() => {
     let live = true
     const campaignUrls: string[] = []
@@ -129,6 +131,13 @@ export function BattleView(props: BattleViewProps) {
           return []
         }
       })
+      void Promise.all((props.signatureSplashes ?? []).map(async ([key, asset]) => {
+        const url = await campaignImage(asset).catch(() => undefined)
+        if (!url) return []
+        if (!live) { URL.revokeObjectURL(url); return [] }
+        campaignUrls.push(url)
+        return [[key, url] as const]
+      })).then(rows => { if (live) setSignatureArt(new Map(rows.flat())) })
       void Promise.all([
         looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }, props.combatSprites === undefined),
         face ? face.decode().then(() => face, () => null) : undefined,
@@ -147,10 +156,10 @@ export function BattleView(props: BattleViewProps) {
   }, [])
   const albums = useMemo(() => albumArt((id) => props.session.input.units.find((u) => u.ref?.id === id)?.label ?? `Uma ${id}`), [props.session.input])
   if (!looks) return <div data-loading-squad className="flex h-full items-center justify-center bg-[#0b0d17] font-display text-[15px] text-white/60">Bringing the squad aboard…{loaded[1] ? ` ${loaded[0]} of ${loaded[1]}` : ''}</div>
-  return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
+  return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} signatureArt={signatureArt} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, combatSprites, onCommit, onEnd, onQuit, quitLabel = 'Setup', onStoryCues, onTalkReply, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, combatSprites, onCommit, onEnd, onQuit, quitLabel = 'Setup', onStoryCues, onTalkReply, looks, signatureArt, signatureSplashes }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook>; signatureArt: ReadonlyMap<string, string> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -170,7 +179,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   const [cutIn, setCutIn] = useState<CutInView | null>(null)
   const [resonance, setResonance] = useState<{ unit: string; path: 'trust' | 'heart' | null; key: number } | null>(null)
   const expanded = first.input.units.filter(({ side }) => side === 'squad').length > 5
-  const [cutInSetting, setCutInSetting] = useState<CutInSetting>(expanded ? 'off' : 'auto')
+  const [cutInSetting, setCutInSetting] = useState<CutInSetting>(expanded && !signatureSplashes?.length ? 'off' : 'auto')
   const [quickTurns, setQuickTurns] = useState(expanded)
   const [reachAll, setReachAll] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -283,7 +292,9 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
         const sp = cutInSpeed(settingRef.current, seen.current, c, after)
         seen.current.add(`${c.unit}:${c.with}`)
         if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
-        current = sp === 'off' ? null : { attacker: c.unit, target: c.target, band: c.band, role: c.role, signature: c.signature?.label, speed: sp, numbers: [], key: Math.random() }
+        const splash = sp === 'full' && c.signature ? signatureArt.get(c.unit + ':' + c.signature.id) : undefined
+        current = sp === 'off' ? null : { attacker: c.unit, target: c.target, band: c.band, role: c.role, signature: c.signature?.label,
+          splash, speed: sp, numbers: [], key: Math.random() }
         setCutIn(current)
         if (current) await wait(CUT_IN_MS[sp] / speed / 2)
       } else if (c.kind === 'signatureWarning' || c.kind === 'signatureCanceled') {

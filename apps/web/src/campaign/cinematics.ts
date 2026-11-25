@@ -1,5 +1,5 @@
 import { awayMembers, commandFacts, crewSpeaker, resolvedCommand, resumeCommand, walkSteps,
-  type CampaignBook, type CommandAction, type CommandCast, type Save } from '@cyber/domain'
+  type CampaignBook, type CommandAction, type CommandActorArt, type CommandCast, type Save, type Speaker } from '@cyber/domain'
 import { retry } from '../mission/director'
 import { nameOf } from '../story/runner'
 import { missionAshore } from './call-up'
@@ -14,6 +14,16 @@ export function freezeCommandCast(save: Save, book: CampaignBook, encounter: str
       return { speaker, name: nameOf(book.story, speaker) }
     }),
     ...(commander === undefined ? {} : { commander: { speaker: commander, name: nameOf(book.story, commander) } }) }
+}
+
+export function commandStationArt(book: Pick<CampaignBook, 'commandCinematics' | 'wardrobe'>, speaker: Speaker): { actor: CommandActorArt; portraitOnly?: true } | undefined {
+  const role = typeof speaker === 'number' ? 'crew' : 'ally'
+  const actor = book.commandCinematics?.actors.find(row => row.speaker === speaker && row.role === role)
+  if (actor) return { actor }
+  const looks = book.wardrobe?.members.find(row => row.speaker === speaker)?.looks
+  const pilot = looks?.pilot ?? looks?.['combat-station']
+  if (!pilot) return undefined
+  return { actor: { speaker, role, base: pilot.portrait ?? pilot.dialogue ?? pilot.asset, poseSlot: 'station', ...(pilot.profile ? { profile: pilot.profile } : {}) }, portraitOnly: true }
 }
 
 export function savedCommandEvent(save: Save, turn = save.commandCinema.pending?.turn) {

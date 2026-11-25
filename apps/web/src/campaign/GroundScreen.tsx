@@ -115,7 +115,10 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
       if (asset) campaignPortraits.set(unit.id, asset)
     }
     return <><GroundBattle layout={layout} input={input} actions={state.battle.actions as BattleAction[]} close={close} campaignPortraits={campaignPortraits}
-      combatSprites={combatSprites}
+      combatSprites={combatSprites} signatureSplashes={ground?.signatureSplashes?.flatMap(splash => {
+        const asset = loaded?.assets.get(splash.asset)
+        return asset ? [[splash.unit + ':' + splash.signature, asset] as const] : []
+      })}
       withdraw={reports ? () => void updateSave(s => withdrawCampaignAttempt(s, mission.id)) : undefined}
       onStoryCues={ground?.cues || hushCrew || voices ? cues => {
         const input = state.battle!.input as BattleInput
@@ -390,13 +393,14 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   )
 }
 
-function GroundBattle({ layout, input, actions, close, mission, portrait, interior, title, combatSprites, campaignPortraits, onStoryCues, onTalkReply, withdraw }: {
+function GroundBattle({ layout, input, actions, close, mission, portrait, interior, title, combatSprites, campaignPortraits, signatureSplashes, onStoryCues, onTalkReply, withdraw }: {
   layout: StageLayout; input: BattleInput; actions: BattleAction[]; close: () => void; mission: string; portrait?: { url: string; unit: string }; interior: boolean; title?: string
   combatSprites?: CampaignRelease['combatSprites']
   onStoryCues?: import('../battle/BattleView').BattleViewProps['onStoryCues']
   onTalkReply?: import('../battle/BattleView').BattleViewProps['onTalkReply']
   withdraw?: () => void
   campaignPortraits?: ReadonlyMap<string, CampaignReleaseFile>
+  signatureSplashes?: readonly (readonly [string, CampaignReleaseFile])[]
 }) {
   const [session] = useState(() => resume(input, actions))
   if ('error' in session) return <div className={panel} style={insets}>
@@ -414,7 +418,7 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
     : title ? `Objective · ${title}` : input.objective.kind === 'hack' ? input.objective.count > 1 ? 'Objective · Disconnect both consoles' : 'Objective · Secure manifest console'
     : input.objective.kind === 'defeatLeader' ? 'Objective · Subdue the commander' : undefined)
   return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training combatSprites={combatSprites ?? []} portrait={portrait} campaignPortraits={campaignPortraits} objectiveLabel={objectiveLabel}
-    onStoryCues={onStoryCues} onTalkReply={onTalkReply}
+    onStoryCues={onStoryCues} onTalkReply={onTalkReply} signatureSplashes={signatureSplashes}
     standInKit={interior ? 'town' : undefined}
     onCommit={(next) => {
       const action = next.actions.at(-1)

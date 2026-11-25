@@ -1,8 +1,8 @@
 import { commandEffectKeys, commandFacts, newMember, newSave, parseSave, resolvedCommand, resumeCommand,
-  type CommandAction, type CommandEncounter, type CommandInput, type Save } from '@cyber/domain'
+  type CampaignBook, type CommandAction, type CommandEncounter, type CommandInput, type Save } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { assignOfficer, issueCommand, launchCommand, settleCommand } from './command'
-import { advanceCommandCinema, commandLog, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
+import { advanceCommandCinema, commandLog, commandStationArt, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
 
 const first = 9000701, second = 9000702
 const encounter: CommandEncounter = { id: 'escort', cost: { fuel: 1, provisions: 2 }, transport: 6, enemy: 15,
@@ -20,6 +20,23 @@ const reload = (save: Save) => parseSave(JSON.parse(JSON.stringify(save)))
 const mechanical = (save: Save) => ({ mission: save.mission, stock: save.campaignSupply, wallet: save.wallet, day: save.campaignDay, story: save.story })
 
 describe('committed ship order cinematics', () => {
+  it('uses the recorded officer’s station art and keeps the enemy role separate', () => {
+    const book: Pick<CampaignBook, 'commandCinematics' | 'wardrobe'> = {
+      commandCinematics: { actors: [
+        { speaker: first, role: 'crew', base: 'crew-art', poseSlot: 'station' },
+        { speaker: 'commander', role: 'enemy', base: 'enemy-art', poseSlot: 'station' },
+      ], encounters: [], stations: [] },
+      wardrobe: { members: [
+        { speaker: 'commander', looks: { 'combat-station': { asset: 'ally-art', profile: 'ally-profile' } } },
+        { speaker: second, looks: { street: { asset: 'street-art' } } },
+      ], scenes: [], crops: [] },
+    }
+    expect(commandStationArt(book, savedCommandEvent(issueCommand(launched(), 'escort', 0, fire))!.actor!.speaker))
+      .toMatchObject({ actor: { base: 'crew-art' } })
+    expect(commandStationArt(book, 'commander')).toMatchObject({ actor: { role: 'ally', base: 'ally-art', profile: 'ally-profile' }, portraitOnly: true })
+    expect(commandStationArt(book, second)).toBeUndefined()
+  })
+
   it('commits once, freezes the actual officer and restores the result after reassignment or reload', () => {
     const start = launched(), committed = issueCommand(start, encounter.id, 0, fire)
     expect(committed.mission!.battle!.actions).toHaveLength(1)

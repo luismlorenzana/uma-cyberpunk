@@ -2,7 +2,7 @@
 // and the cut-in. DOM over the board; each reads the battle's state and the forecast, and decides nothing.
 import { talkContact, type BattleState, type Forecast, type StrikeForecast, type TerrainCard, type UnitState } from '@cyber/battle'
 import { FaceTile, UmaBust } from '@luismlorenzana/uma-kit/album'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { CutInSpeed } from './playback'
 
 export const SIDE_HUE = { squad: '#2ee6ff', enemy: '#ff3d6e' } as const
@@ -143,12 +143,13 @@ export function TerrainPanel({ card, onClose }: { card: TerrainCard; onClose: ()
   )
 }
 
-export interface CutInView { attacker: string; target: string; band: string; role: string; signature?: string; speed: CutInSpeed; numbers: string[]; key: number }
+export interface CutInView { attacker: string; target: string; band: string; role: string; signature?: string; splash?: string; speed: CutInSpeed; numbers: string[]; key: number }
 
 /** The cut-in (TC28): a side view of the two, the Uma facing left on the right, the enemy facing right on the left, with
  * the numbers as they land. An Uma shows her bust from master data (D19); stand-ins and enemies stay cards until the
  * full-body renders and the heroines arrive. */
 export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
+  const [missingSplash, setMissingSplash] = useState(false)
   const a = state.units.find((u) => u.id === c.attacker), t = state.units.find((u) => u.id === c.target)
   if (!a || !t) return null
   const squad = a.side === 'squad' ? a : t, enemy = a.side === 'squad' ? t : a
@@ -164,9 +165,12 @@ export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
     </div>
   )
   const full = c.speed === 'full'
+  const splash = full && !missingSplash ? c.splash : undefined
   return (
     <div data-cut-in className={`pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col ${full ? 'h-[62%]' : 'h-[34%]'} bg-gradient-to-r from-black/80 via-[#141827]/85 to-black/80`}>
-      <div className="flex h-full">{card(enemy, false)}{card(squad, true)}</div>
+      {splash
+        ? <img alt="" className="absolute inset-0 h-full w-full object-contain" src={splash} data-signature-splash onError={() => setMissingSplash(true)} />
+        : <div className="flex h-full">{card(enemy, false)}{card(squad, true)}</div>}
       <div className="absolute inset-x-0 top-2 text-center font-display text-[13px] font-bold uppercase tracking-widest text-white/80">{c.signature ?? (c.role === 'main' ? c.band : `${c.role} · ${c.band}`)}</div>
       <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 font-display text-[20px] font-bold text-white [text-shadow:0_1px_3px_#000]">{c.numbers.map((n, i) => <span key={i}>{n}</span>)}</div>
     </div>
