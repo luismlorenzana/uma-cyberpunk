@@ -133,7 +133,7 @@ export function checkTurn(state: BattleState, action: TurnAction): { reach: Reac
   }
   const act = declared.kind === 'prepare' ? { ...declared, kind: 'attack' as const, aim: undefined, mode: undefined } : declared
   if (act.kind === 'attack') {
-    if (action.act.mode) return 'Choose a signature or a firing mode'
+    if (act.signature && act.mode) return { error: 'Choose a signature or a firing mode' }
     const signature = inputOf(state, action.unit).signature
     if (act.signature !== undefined && (act.signature !== true || !signature || signature.mount !== act.with || u.signatureUsed
       || unitById(placed, u.id).charge < signature.charge || act.aim || !state.units.some(t => t.id === act.target))) {
