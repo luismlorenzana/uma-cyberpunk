@@ -17,6 +17,10 @@ CY97 delivered CY83–CY90 through the existing game link. CY91 records the host
 
 **Acts I–IV are live at the [campaign entry](https://uma-cyberpunk.web.app/campaign).** One campaign save covers the 50 personal arcs, five capitals, 150 returns, 25 expeditions, the finale and both Lark endings. See CY97 for the selected release, play evidence and remaining Art destinations.
 
+## Active interaction and systems work
+
+Start with [Ship Home](tasks/CY98.md), [Roster and character chapters](tasks/CY99.md), and [Operations](tasks/CY100.md), then deliver [advancement and equipment](tasks/CY101.md), [battle balance](tasks/CY102.md), and [resource balance](tasks/CY103.md). [Interactive systems and locations](tasks/CY104.md) and [expedition operations](tasks/CY105.md) extend Home and Operations. [Individual relationships](tasks/CY106.md) extends the roster. The roadmap tracks dependencies and checks.
+
 ## Four-pillar implementation record
 
 | Pillar | Delivered engineering packets |
