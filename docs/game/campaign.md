@@ -6,6 +6,8 @@ Open **Roster** to find the 50 recruitment candidates, the 50 Generals and the 1
 
 Open **Operations** for story actions and ship or ground encounters. Filter by act, type or status and search by operation or port. Use the ready list for the current location and the completed list to check settled progress. Expedition Readiness shows each duo’s returns and clearances.
 
+A first settled ship or ground victory gives 50 XP to each eligible participating crew member. Check the character’s level and XP in **Roster**. Ship credit follows the assigned bridge officers and required personal lead. Ground credit follows the deployed squad.
+
 The 50 sign-ons span the five home systems. A recruited Uma receives her quarters, and her Crew Stories card opens her origin and personal missions through ship combat, ground capture and custody. Training is optional. Captain visits use the existing evening flow.
 
 Five capital operations are playable on one save. Open Expedition Readiness to see your capital tally, each duo’s lieutenant returns and both General clearances. A duo can depart once its own six lieutenants have returned and all five capitals are liberated. Then muster its crew at the launch berth with the listed supplies.
