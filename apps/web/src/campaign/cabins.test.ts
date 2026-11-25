@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { newMember, newSave, parsePack, parseSave, startSupply, STAND_IN_FILES,
+import { issuedCampaignRig, newMember, newSave, parsePack, parseSave, startSupply, STAND_IN_FILES,
   type CabinEvening, type CabinNight, type CampaignBook, type Save, type SupplyNetwork } from '@cyber/domain'
-import { cabinAvailable, cabinStage, canStay, chooseCabinOutcome, finishCabinScene, leaveCabinEarly, startCabinEvening } from './cabins'
+import { cabinAvailable, cabinStage, canStay, chooseCabinOutcome, finishCabinScene, finishSharedConsent, leaveCabinEarly, sharedConsentOffer, startCabinEvening } from './cabins'
+import { finishCampaignDialogue, questAvailable, questComplete } from './quests'
 
 const officer = 9000001, other = 9000002, now = '2026-11-19T12:00:00Z'
 const cabin: CabinEvening = { id: 'first-cabin', source: { companion: officer }, chatRapport: 100,
@@ -153,6 +154,35 @@ describe('the authored campaign cabin evening', () => {
     save.story.flags.push('custody')
     expect(cabinAvailable(save, book, shared)).toBe(false)
     expect(startCabinEvening(save, book, shared, 1)).toBe(save)
+  })
+
+  it('keeps shared consent in Quarters and requires a fresh stay choice on each night', () => {
+    const { book, save } = fixture()
+    const consentQuest = { id: 'shared-invitation', title: 'Talk about a shared evening', scene: 'shared-decision', after: 'joined' }
+    const ally = { heroine: 'guest', member: other, partner: officer, release: { flag: 'released', quest: 'joined' },
+      pairFlag: 'shared-consent', pairConsent: consentQuest.id, role: 'vanguard' as const, rig: issuedCampaignRig('hand-blade', 'back-thruster') }
+    const trio: CabinEvening = { ...cabin, id: 'trio', source: { trio: 'guest' }, chatRapport: 0 }
+    book.quests.push(consentQuest)
+    book.allies = [ally]
+    book.cabinEvenings = [trio]
+    book.dates = [{ ...book.dates![0]!, overnightRank: 8 }, { ...book.dates![0]!, companion: other, overnightRank: 10 }]
+    save.story.flags.push(ally.release.flag)
+    save.crew[0]!.bond.rank = 8
+    const accepted = [{ kind: 'flag', set: true, flag: 'shared-consent' }] as const
+    expect(sharedConsentOffer(save, book, ally)).toBe(consentQuest)
+    expect(questAvailable(save, book, consentQuest, 'port')).toBe(false)
+    expect(finishCampaignDialogue(save, book, consentQuest, accepted, 'port')).toBe(save)
+    expect(finishSharedConsent(save, book, ally, 1, [])).toBe(save)
+    const stale = restored(save)
+    stale.crew[1]!.bond.rank = 9
+    expect(finishSharedConsent(stale, book, ally, 1, accepted)).toBe(stale)
+    const agreed = restored(finishSharedConsent(save, book, ally, 1, accepted))
+    expect(questComplete(agreed, consentQuest, book)).toBe(true)
+    expect(finishSharedConsent(agreed, book, ally, 1, accepted)).toBe(agreed)
+    expect(agreed.story.flags).toEqual(['released', 'shared-consent'])
+    expect(night(startCabinEvening(agreed, book, trio, 1)).outcome).toBeNull()
+    agreed.captain.romance = 'friends'
+    expect(cabinAvailable(agreed, book, trio)).toBe(false)
   })
 
   it('refuses malformed or ambiguous saved outcomes rather than replaying a different branch', () => {

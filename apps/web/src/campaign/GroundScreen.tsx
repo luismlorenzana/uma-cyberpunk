@@ -1,5 +1,5 @@
 import { capacityOf, EXPEDITION_RULES_VERSION, loadOf, maxHpOf, moveOf, type BattleAction, type BattleInput } from '@cyber/battle'
-import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
+import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, groundOpponentScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useRef, useState } from 'react'
 import { BattleView } from '../battle/BattleView'
@@ -23,7 +23,7 @@ const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
 const panel = 'absolute inset-0 overflow-auto bg-[#0b0d17] p-4 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, requiredLead, loaded, expedition, formationRun, combatShift }: {
+export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, requiredLead, loaded, expedition, formationRun, combatShift, onSettled }: {
   save: Save; mission: Mission; layout: StageLayout; trainee: number; label: string; close: () => void
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
   combatSprites?: CampaignRelease['combatSprites']
@@ -34,6 +34,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   expedition?: string
   formationRun?: Save['expedition']
   loaded?: LoadedCampaign
+  onSettled?: (scenes: string[]) => void
   combatShift?: string
 }) {
   const state = save.mission
@@ -44,6 +45,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const [expansion, setExpansion] = useState<string>(expansions[0]!.id)
   const [useFitted, setUseFitted] = useState(true)
   const [launching, setLaunching] = useState(false)
+  const [settling, setSettling] = useState(false)
   const [specialistTraining, setSpecialistTraining] = useState(false)
   const [alternateFit, setAlternateFit] = useState<Record<number, boolean>>({})
   const [deploymentError, setDeploymentError] = useState<string | null>(null)
@@ -117,7 +119,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
       withdraw={reports ? () => void updateSave(s => withdrawCampaignAttempt(s, mission.id)) : undefined}
       onStoryCues={ground?.cues || hushCrew || voices ? cues => {
         const input = state.battle!.input as BattleInput
-        const scenes = ground?.cues ? groundCueScenes(ground.cues, cues) : []
+        const scenes = ground?.cues ? groundCueScenes(ground.cues, cues, input) : []
         const savedHush = [] as string[]
         if (hushCrew || voices) for (const cue of cues) {
           if (!('unit' in cue)) continue
@@ -211,8 +213,10 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           <p className="text-sm text-white/80">{mission.brief}</p>
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => void (async () => {
-              const preparation = ground?.cues?.preparation
-              if (preparation) await present([preparation])
+              const binding = ground?.cues
+              const warning = binding?.opponents?.length && formationState
+                ? groundOpponentScenes(binding, expeditionGroundInput(mission, formationState, pack), 'warning') : []
+              await present([...(binding?.preparation ? [binding.preparation] : []), ...warning])
               await updateSave(toDeploy)
             })()}>Prepare gear</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
@@ -352,11 +356,25 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           </div>
         </>}
         {state.step === 'results' && <div className="flex gap-2">
-          {state.won ? <button type="button" className={primary} onClick={() => void (async () => {
+          {state.won ? <button type="button" className={primary} disabled={settling} onClick={() => {
+            setSettling(true)
             const victory = ground?.cues?.victory ?? (hushCrew && mission.id === loaded?.book.fourActFinale?.ground.at(-1) ? hushCrew.secured : undefined)
-            if (victory) await present([victory])
-            await updateSave(ground ? (s) => settleGround(s, ground, pack, !!loaded?.book.fourAct) : settleTraining)
-          })()}>Debrief</button>
+            const debrief = async () => {
+              if (victory) await present([victory])
+              let released: string[] = []
+              await updateSave(s => {
+                if (!ground) return settleTraining(s)
+                const settled = settleGround(s, ground, pack, !!loaded?.book.fourAct)
+                if (s.worlds.missions.includes(ground.id) || !settled.worlds.missions.includes(ground.id) || !s.mission?.battle || !ground.cues) return settled
+                released = groundOpponentScenes(ground.cues, s.mission.battle.input as BattleInput, 'released')
+                  .filter(scene => !settled.story.seen.includes(scene))
+                return released.length ? { ...settled, story: released.reduce(seeScene, settled.story) } : settled
+              })
+              if (released.length) onSettled?.(released)
+            }
+            void debrief().catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
+              .finally(() => setSettling(false))
+          }}>Debrief</button>
             : <button type="button" className={primary} onClick={() => void (async () => {
               await present([reports?.retry ?? ground?.cues?.retry].filter((id): id is string => !!id))
               await updateSave(retryCampaignAttempt)

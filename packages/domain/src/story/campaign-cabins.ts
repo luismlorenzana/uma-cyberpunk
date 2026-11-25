@@ -72,7 +72,7 @@ export function parseCabinEvenings(value: unknown, book: Pick<CampaignBook, 'dat
     return { id, source, chatRapport, chats, invitation: invite, bed,
       morning: { stay: scene(morning.stay, `${field}.morning.stay`), leave: scene(morning.leave, `${field}.morning.leave`) },
       changeMind: scene(row.changeMind, `${field}.changeMind`) }
-  }, 100)
+  }, 150)
 }
 
 /** Save v17 uses the same strict keys, without interpreting story configuration as save state. */

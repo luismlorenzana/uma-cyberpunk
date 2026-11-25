@@ -18,10 +18,13 @@ export default function OperationsScreen({ book, save, port, complete, navigatio
     ? book.quests.filter(quest => questAvailable(save, book, quest, port)).map(quest => quest.id) : []),
     [state, save, book, port])
   const ports = useMemo(() => new Map(book.supply?.ports.map(row => [row.id, row.name])), [book])
-  const signOns = useMemo(() => new Set(book.recruits?.map(recruit => recruit.signOn)), [book])
+  const exclude = useMemo(() => new Set([
+    ...book.recruits?.map(recruit => recruit.signOn) ?? [],
+    ...book.allies?.flatMap(ally => ally.pairConsent ?? []) ?? [],
+  ]), [book])
   const query = search.trim().toLocaleLowerCase()
   const matching = book.quests.filter(quest => {
-    if (signOns.has(quest.id)) return false
+    if (exclude.has(quest.id)) return false
     const kind = quest.encounter ? book.commands.has(quest.encounter) ? 'Ship' : 'Ground' : 'Story'
     const group = navigation.acts.get(quest.id) ?? 'Shared'
     if (type !== 'All' && type !== kind || act !== 'All acts' && act !== group) return false

@@ -2,7 +2,7 @@ import type { SceneDecision } from '../story/ScenePlayer'
 import {
   awayMembers, campaignCaptures, campaignSpeaker, campaignSupport, campaignUpkeep, CORE_CAPTURES, crewSpeaker, developedPort, expeditionReadiness, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, pairProgress, pairVisit, rehabilitationQuestIds, seeScene, SIGNAL_CAPTURES,
   sectorNightId, sectorVisit, startCampaignNight, startSupply,
-  type CabinEvening, type CampaignDate, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save, type Speaker,
+  type CabinEvening, type CampaignAlly, type CampaignDate, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save, type Speaker,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
@@ -36,7 +36,7 @@ import { expeditionForQuest, expeditionPlan, expeditionQuestBlock } from './expe
 import { beginCampaignEncounter } from './sortie'
 import { finaleActivities, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
   finishFinaleActivity, selectFinaleFormation, selectFinaleVoice, workFinaleRepair } from './cy90'
-import { cabinAvailable, chooseCabinOutcome, finishCabinScene, leaveCabinEarly, startCabinEvening } from './cabins'
+import { cabinAvailable, chooseCabinOutcome, finishCabinScene, finishSharedConsent, leaveCabinEarly, sharedConsentOffer, startCabinEvening } from './cabins'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
@@ -66,8 +66,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const owner = useGame((g) => g.uid)
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [location, setLocation] = useState<string | null>(null)
+  const [groundReports, setGroundReports] = useState<string[]>([])
   const [reportScene, setReportScene] = useState<string | null>(null)
   const [finaleScene, setFinaleScene] = useState<string | null>(null)
+  const [sharedConsent, setSharedConsent] = useState<{ ally: CampaignAlly; quest: CampaignQuest; day: number } | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(true)
@@ -135,6 +137,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const ground = mission && loaded?.book.ground.get(mission.id)
   const hush = loaded && save && ground && loaded.book.fourActFinale?.ground.includes(ground.id) ? finaleRun(save, loaded.book) : undefined
   const trainee = personalLead ?? missionState?.squad[0] ?? missionChapter?.leads[0]
+  if (loaded && groundReports[0]) {
+    const advance = () => setGroundReports(scenes => scenes.slice(1))
+    return <CampaignScene key={groundReports[0]} loaded={loaded} sceneId={groundReports[0]} finish={advance} fail={advance} />
+  }
   if (loaded && save && mission && (training || ground) && trainee !== undefined && !sortieAshore?.has(trainee) && !groundPaused) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
       <GroundScreen key={mission.id} loaded={loaded} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
@@ -144,7 +150,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
         acceptsFitted={!!ground && !ground.combat && !expeditionFight && !hush && (!!loaded.book.fourAct || loaded.book.workshop?.missions.includes(mission.id))}
         ashore={sortieAshore} requiredLead={personalLead}
         editableSquad={!!ground && (!!loaded.book.sectors?.length || !!missionState?.callUp || personalLead !== undefined)}
-        close={() => setGroundPaused(true)} />
+        onSettled={setGroundReports} close={() => setGroundPaused(true)} />
     </Suspense>
   }
   if (loaded && save && mission && command && supply && support) {
@@ -205,6 +211,18 @@ function Campaign({ layout }: { layout: StageLayout }) {
           .finally(() => setReportScene(null))
       }} />
   }
+  if (loaded && sharedConsent) return <CampaignScene key={sharedConsent.quest.scene} loaded={loaded} sceneId={sharedConsent.quest.scene}
+    fail={(message) => { setError(message); setSharedConsent(null) }}
+    decision={{ commit: async index => {
+      const current = useGame.getState().save
+      if (index === 0 && (!current || current.campaignDay.day !== sharedConsent.day
+        || !sharedConsentOffer(current, loaded.book, sharedConsent.ally))) throw new Error('This invitation is unavailable now.')
+    } }}
+    finish={(effects) => {
+      commitScene(s => finishSharedConsent(s, loaded.book, sharedConsent.ally, sharedConsent.day, effects))
+      setSharedConsent(null)
+    }} />
+
   const speaker = save?.finaleProgress?.speaker
   const finalBook = loaded?.book.fourActFinale
   const activeScene = active && save ? questScene(save, active) : undefined
@@ -366,6 +384,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
     return { visit: { kind: 'visit' as const, companion: date.companion, scene: visit.scene, morning: visit.morning }, title: visit.title, cabin }
   }) : []
   const sharedCabins = loaded && save && canRest ? loaded.book.cabinEvenings?.filter(c => !('companion' in c.source) && cabinAvailable(save, loaded.book, c)) ?? [] : []
+  const consentOffers = quarters && loaded && save && canRest ? loaded.book.allies?.flatMap(ally => {
+    const quest = sharedConsentOffer(save, loaded.book, ally)
+    return quest ? [{ ally, quest }] : []
+  }) ?? [] : []
   function chooseCabin(cabin: CabinEvening) {
     if (!loaded || !day || !canRest) return
     setEveningOpen(false)
@@ -517,6 +539,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
                   {room.title}<span className="ml-2 text-xs capitalize text-white/60">{locationState(save, loaded.book, room)}</span>
                 </button>)}
             </div>
+          </section>}
+          {quarters && loaded && day && consentOffers.length > 0 && <section aria-label="Shared evening invitations" className="flex flex-wrap gap-2">
+            {consentOffers.map(({ ally, quest }) => <button key={quest.id} type="button" className={button}
+              onClick={() => setSharedConsent({ ally, quest, day: day.day })}>
+              Talk about a shared evening with {nameOf(loaded.book.story, ally.partner)} and {nameOf(loaded.book.story, ally.heroine)}
+            </button>)}
           </section>}
           {quarters && canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
           {quarters && canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">

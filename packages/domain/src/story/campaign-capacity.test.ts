@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest'
 import { COMMAND_ORDERS } from '../ship/command'
-import { parseCampaignBook } from './campaign'
+import { parseCampaignBook, parseCampaignRelease } from './campaign'
 import { STAND_IN_FILES } from './stand-in'
 
 it('loads art, Captain arcs, quests and encounters for five combined intakes', () => {
@@ -68,4 +68,17 @@ it('loads art, Captain arcs, quests and encounters for five combined intakes', (
   expect(book.quests).toHaveLength(726)
   expect(book.ground.size).toBe(groundCount)
   expect(book.commands.size).toBe(commandCount)
+})
+
+it('accepts the larger four-act Story manifest when its pages cover every pin', () => {
+  const sha256 = '1'.repeat(64), pin = { sha256, path: 'campaign/files/pack.' + sha256 + '.json', bytes: 100 }
+  const story = Array.from({ length: 2056 }, (_, i) => ({ ...pin, source: 'chapters/example-' + i + '.json' }))
+  const files = [{ ...pin, source: 'campaign.json' }, ...story]
+  const storyPages = Array.from({ length: Math.ceil(story.length / 40) }, (_, i) => ({
+    ...pin, sources: story.slice(i * 40, i * 40 + 40).map(row => row.source),
+  }))
+  const base = { schemaVersion: 1, campaign: 'four-act', release: 'large-campaign', files, assets: [] }
+  expect(parseCampaignRelease({ ...base, storyPages }).files).toHaveLength(2057)
+  expect(() => parseCampaignRelease({ ...base, storyPages: storyPages.slice(1) })).toThrow(/complete story coverage/)
+  expect(() => parseCampaignRelease(base)).toThrow(/2048/)
 })

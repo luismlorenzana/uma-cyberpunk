@@ -1,22 +1,46 @@
 import { awayMembers, campaignSupport, homeOutcome, pairProgress, sectorAssignment, seeScene,
-  type CabinEvening, type CabinNight, type CabinStage, type CampaignBook, type EffectStep, type Save } from '@cyber/domain'
+  setFlag, type CabinEvening, type CabinNight, type CabinStage, type CampaignAlly, type CampaignBook, type EffectStep, type Save } from '@cyber/domain'
 import { dateAvailable, dateProgress } from './dates'
 import { pairAvailable } from './pair'
 import { applyStep } from '../mission/director'
 import { settleCampaignDay } from './watch'
-import { questComplete } from './quests'
+import { questAvailable, questComplete } from './quests'
 import { giveRapport } from '../bonds/bonds'
 
-function trioReady(save: Save, book: CampaignBook, heroine: string): boolean {
-  const ally = book.allies?.find(row => row.heroine === heroine)
-  if (!ally || save.captain.romance === 'friends' || !ally.pairFlag || !save.story.flags.includes(ally.pairFlag)) return false
-  const away = awayMembers(save.operations, save.squads), ashore = campaignSupport(book, save).ashore
+function trioParticipantsReady(save: Save, book: CampaignBook, ally: CampaignAlly): boolean {
+  if (save.captain.romance === 'friends' || save.expedition) return false
+  const ashore = campaignSupport(book, save).ashore
   return [ally.partner, ally.member].every(id => {
     const date = book.dates?.find(d => d.companion === id)
     const bond = save.crew.find(member => member.outfit === id)?.bond
     return !!date && dateAvailable(save, book, date) && dateProgress(save, book, date).visit === date.regular
-      && !away.includes(id) && !ashore.has(id) && bond?.path === 'heart' && bond.rank >= (date.overnightRank ?? 10)
+      && !ashore.has(id) && bond?.path === 'heart' && bond.rank >= (date.overnightRank ?? 10)
   })
+}
+
+export function sharedConsentOffer(save: Save, book: CampaignBook, ally: CampaignAlly) {
+  const quest = book.quests.find(row => row.id === ally.pairConsent)
+  const evening = book.quests.find(row => row.id === book.evening?.after)
+  if (!quest || !evening || !ally.pairFlag || save.story.flags.includes(ally.pairFlag) || save.mission
+    || save.pairScene || save.campaignDay.pending || !questComplete(save, evening, book)
+    || !save.story.flags.includes(ally.release.flag)
+    || !questAvailable(save, book, quest, save.campaignSupply?.port ?? book.supply?.start, 'quarters')
+    || !trioParticipantsReady(save, book, ally)) return undefined
+  return quest
+}
+
+export function finishSharedConsent(save: Save, book: CampaignBook, ally: CampaignAlly, expectedDay: number, effects: readonly EffectStep[]): Save {
+  if (save.campaignDay.day !== expectedDay) return save
+  const quest = sharedConsentOffer(save, book, ally)
+  if (!quest || !ally.pairFlag || effects.length !== 1) return save
+  const accepted = effects[0]!
+  if (accepted.kind !== 'flag' || !accepted.set || accepted.flag !== ally.pairFlag) return save
+  return { ...save, story: seeScene(setFlag(save.story, ally.pairFlag), quest.scene) }
+}
+
+function trioReady(save: Save, book: CampaignBook, heroine: string): boolean {
+  const ally = book.allies?.find(row => row.heroine === heroine)
+  return !!ally?.pairFlag && save.story.flags.includes(ally.pairFlag) && trioParticipantsReady(save, book, ally)
 }
 
 export function cabinAvailable(save: Save, book: CampaignBook, cabin: CabinEvening): boolean {
