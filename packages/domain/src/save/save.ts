@@ -219,7 +219,17 @@ export interface ExpeditionRun {
   provisions: number
 }
 
+export interface FinaleProgress {
+  releases: string[]
+  witnesses?: string[]
+  duo?: string
+  speaker?: number | string
+  withdrawn?: string
+  repair?: { quest: string; progress: number; paused: boolean }
+}
+
 export interface SaveV20 extends Omit<SaveV19, 'version'> {
+  finaleProgress?: FinaleProgress
   version: 20
   expedition: ExpeditionRun | null
   combatTraining?: Record<string, CombatTraining>
@@ -756,9 +766,11 @@ export function parseSave(value: unknown, path = 'save'): Save {
     if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
     return { ...parseSaveV19(value, path), version: 20, expedition: null }
   }
-  const { expedition, combatTraining, ...rest } = object(value, path, Object.keys(value as Obj))
+  const { expedition, combatTraining, finaleProgress, ...rest } = object(value, path, Object.keys(value as Obj))
   const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path)
-  const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}) }
+  const finale = finaleProgress === undefined ? undefined : parseFinaleProgress(finaleProgress, path + '.finaleProgress')
+  const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}),
+    ...(finale ? { finaleProgress: finale } : {}) }
   if (expedition == null) return { ...base, version: 20, expedition: null }
   const field = path + '.expedition'
   const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions'])
@@ -790,6 +802,30 @@ export function parseSave(value: unknown, path = 'save'): Save {
   }
   return { ...base, version: 20, expedition: { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
     fuel: bounded(data.fuel, field + '.fuel', SHIP_CARGO_MAX), provisions: bounded(data.provisions, field + '.provisions', SHIP_CARGO_MAX) } }
+}
+
+function parseFinaleProgress(raw: unknown, path: string): FinaleProgress {
+  const row = object(raw, path, ['duo', 'speaker', 'releases', 'witnesses', 'withdrawn', 'repair'])
+  const ordered = (value: unknown, key: string, count: number) => {
+    const field = path + '.' + key
+    if (!Array.isArray(value) || value.length > count || new Set(value).size !== value.length)
+      throw new SaveParseError(field, 'invalid release order')
+    return value.map(value => id(value, field))
+  }
+  const releases = ordered(row.releases, 'releases', 25)
+  const witnesses = row.witnesses === undefined ? undefined : ordered(row.witnesses, 'witnesses', 5)
+  if (witnesses && (witnesses.length !== 5 || witnesses.some(flag => !releases.includes(flag))))
+    throw new SaveParseError(path + '.witnesses', 'expected five frozen local releases')
+  const speaker = row.speaker === undefined ? undefined : typeof row.speaker === 'number'
+    ? bounded(row.speaker, path + '.speaker', Number.MAX_SAFE_INTEGER) : id(row.speaker, path + '.speaker')
+  const repair = row.repair === undefined ? undefined : (() => {
+    const value = object(row.repair, path + '.repair', ['quest', 'progress', 'paused'])
+    if (typeof value.paused !== 'boolean') throw new SaveParseError(path + '.repair.paused', 'expected a pause state')
+    return { quest: id(value.quest, path + '.repair.quest'), progress: bounded(value.progress, path + '.repair.progress', 2), paused: value.paused }
+  })()
+  return { releases, ...(repair ? { repair } : {}), ...(witnesses ? { witnesses } : {}), ...(row.duo === undefined ? {} : { duo: id(row.duo, path + '.duo') }),
+    ...(speaker === undefined ? {} : { speaker }),
+    ...(row.withdrawn === undefined ? {} : { withdrawn: id(row.withdrawn, path + '.withdrawn') }) }
 }
 
 function parseCombatTraining(combatTraining: unknown, path: string): Record<string, CombatTraining> {

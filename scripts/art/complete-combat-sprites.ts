@@ -62,11 +62,11 @@ export async function readCompleteSpriteSource(directory: string, source: { mani
 }
 
 export async function readCompleteCombatSprite(directory: string, source: {
-  manifest: string; placements: string; character: string; version: string; loadouts: CombatSpriteLoadout[]
+  manifest: string; placements: string; character: string; version: string; loadouts: CombatSpriteLoadout[]; compatibleOnly?: boolean
 }, identity: CombatSpriteIdentity) {
   const { bundle, manifest, placements, pages, payloads } = await readCompleteSpriteSource(directory, source)
   if (bundle.character !== source.character || bundle.version !== source.version ||
-    source.loadouts.length !== bundle.sets.length || source.loadouts.some(row => !bundle.sets.some(set => set.id === row.set))) {
+    (!source.compatibleOnly && source.loadouts.length !== bundle.sets.length) || source.loadouts.some(row => !bundle.sets.some(set => set.id === row.set))) {
     throw new Error('Complete sprite identity or loadouts differ from the approved album')
   }
   const ref: CampaignCombatSprite = { ...identity, manifest, placements, pages, loadouts: source.loadouts }

@@ -4,6 +4,7 @@
 
 **D87 · Four-act campaign.** Build a fresh campaign profile in the existing app and tactics engine. All 50 leads are available from the opening, each Uma can finish Act I on her own, and Story supplies the fixed planetary duos. Five liberated capitals and that duo's own six returned lieutenants open its ten-person expedition. The Queens and soft ending belong to Act IV.
 
+- [CY97 · Full release implementation and verification](tasks/CY97.md)
 - [Full production roadmap and active packet sequence](four-act-roadmap.md)
 - [Implementation launch and cross-lane delivery order](four-act-implementation-launch.md)
 - [Game design and act rules](../design/campaign-rework.md)
@@ -12,9 +13,9 @@
 - [Packet disposition and archive](archive/four-act-disposition.md)
 - [As-built game manual](../game/README.md)
 
-Start M0 with CY83 and CY92–CY96. Accept each milestone in playable campaign content. Advance M1 as a complete Act I and release the rest through the same graph. The roadmap defines the downstream work, including integrated ten-unit controls, every art lane, a full campaign batch, the Act IV workshop and iPhone release.
+CY97 owns the remaining engineering sequence through the existing game link. CY83–CY89 supply the opening, all three earlier acts, and regression coverage. CY90 owns the finale details. CY91 and CY96 supply the installed app checks and publication workflow. CY92–CY95 continue as the Story and Art source lanes.
 
-**Acts I–III are live at the installed campaign entry.** One campaign save covers all five capitals, 50 personal captures and rehabilitation paths, 150 returns and 25 expeditions. The first duo to depart opens the shared Gate. Keep the route and publication receipts in the private content folders. Remaining scene art, physical iPhone acceptance and Act IV are open.
+**Acts I–III are live at the installed campaign entry.** One campaign save covers all five capitals, 50 personal captures and rehabilitation paths, 150 returns and 25 expeditions. The first duo to depart opens the shared Gate. Keep the route and publication receipts in the private content folders. Act IV is implemented in the private candidate. CY97 tracks delivering and verifying the combined release.
 
 ## Four-pillar implementation queue
 

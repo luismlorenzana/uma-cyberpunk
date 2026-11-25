@@ -206,7 +206,7 @@ const sortieMembers = (save: Save, squad: readonly number[]): number[] => {
 export const setSquad = (save: Save, squad: number[]): Save =>
   save.mission ? withMission(save, { ...save.mission, squad: sortieMembers(save, squad) }) : save
 /** Deploys: the battle's frozen input (built by the caller from the mission's scenario and the squad), no actions yet. */
-export function deploy(save: Save, input: unknown): Save {
+export function deploy(save: Save, input: unknown, finaleFormation?: NonNullable<Save['expedition']>): Save {
   const mission = save.mission
   if (!mission) return save
   const squad = sortieMembers(save, mission.squad)
@@ -214,8 +214,11 @@ export function deploy(save: Save, input: unknown): Save {
   const restricted = save.crew.filter(member => member.expeditionOnly)
   if (restricted.length && input && typeof input === 'object' && 'units' in input && Array.isArray(input.units)) {
     const units = input.units as BattleInput['units']
-    if ('rulesVersion' in input && input.rulesVersion === EXPEDITION_RULES_VERSION && save.expedition) {
-      const identities = new Set(save.expedition.members.map(member => member.role === 'uma' ? 'uma:' + member.outfit : 'heroine:' + member.heroine))
+    const finale = finaleFormation && save.finaleProgress?.witnesses?.length === 5 && save.finaleProgress.duo === finaleFormation.duo
+      ? finaleFormation : undefined
+    const formation = save.expedition ?? finale
+    if ('rulesVersion' in input && input.rulesVersion === EXPEDITION_RULES_VERSION && formation) {
+      const identities = new Set(formation.members.map(member => member.role === 'uma' ? 'uma:' + member.outfit : 'heroine:' + member.heroine))
       const active = units.filter(unit => unit.side === 'squad')
       if (active.length !== identities.size || active.some(unit => !unit.ref || !identities.delete(unit.ref.kind + ':' + unit.ref.id))) return save
     } else if (units.some(unit => unit.side === 'squad' && restricted.some(member => unit.ref?.kind === 'heroine'

@@ -1,7 +1,7 @@
 import { EXPEDITION_RULES_VERSION, type BattleAction, type BattleInput } from '@cyber/battle'
-import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, PARTS_BY_ID, resting, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
+import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { BattleView } from '../battle/BattleView'
 import { resume } from '../battle/session'
 import { deploy, finishBattle, finishMission, recordAction, retry, setSquad, toDeploy } from '../mission/director'
@@ -9,6 +9,7 @@ import { updateSave } from '../save/game'
 import { lifeAboardInput, SCENARIOS } from '../mission/battleInput'
 import { moveToSquad } from '../crew/squads'
 import { settleGround } from './ground'
+import { retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { nameOf } from '../story/runner'
@@ -21,7 +22,7 @@ const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
 const panel = 'absolute inset-0 overflow-auto bg-[#0b0d17] p-4 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, requiredLead, loaded, expedition, combatShift }: {
+export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, requiredLead, loaded, expedition, formationRun, combatShift }: {
   save: Save; mission: Mission; layout: StageLayout; trainee: number; label: string; close: () => void
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
   combatSprites?: CampaignRelease['combatSprites']
@@ -30,6 +31,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   editableSquad?: boolean
   requiredLead?: number
   expedition?: string
+  formationRun?: Save['expedition']
   loaded?: LoadedCampaign
   combatShift?: string
 }) {
@@ -46,6 +48,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const [deploymentError, setDeploymentError] = useState<string | null>(null)
   const [portrait, setPortrait] = useState<string | null>()
   const [dialogue, setDialogue] = useState<{ scenes: string[]; done: () => void } | null>(null)
+  const playedCues = useRef(new Set<string>())
   const present = (scenes: string[]) => scenes.length && loaded ? new Promise<void>(done => setDialogue({ scenes, done })) : Promise.resolve()
   function advanceDialogue() {
     if (!dialogue) return
@@ -67,6 +70,11 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
     return () => { live = false; if (url) URL.revokeObjectURL(url) }
   }, [bossArt])
   if (!state) return null
+  const reports = loaded?.book.fourActFinale?.reports.get(mission.id)
+  const formationState = formationRun ?? save.expedition
+  const hushCrew = formationRun && loaded?.book.fourActFinale?.hushCrews.get(formationRun.duo)
+  const voices = loaded?.book.fourActFinale?.voices
+  const withdrew = save.finaleProgress?.withdrawn === mission.id
   const title = ground?.title ?? 'Training'
   const alternate = ground?.alternate && save.story.flags.includes(ground.alternate.flag) ? ground.alternate : undefined
   const scenario = alternate?.scenario ?? mission.scenario
@@ -90,9 +98,56 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   if (launching) return <div className={panel} style={insets} role="status">Saving deployment…</div>
   if (state.step === 'battle' && state.battle) {
     if (bossArt && portrait === undefined) return <div className={panel} style={insets} role="status">Preparing the battle…</div>
-    return <><GroundBattle layout={layout} input={state.battle.input as BattleInput} actions={state.battle.actions as BattleAction[]} close={close}
+    const input = state.battle.input as BattleInput
+    const campaignPortraits = new Map<string, CampaignReleaseFile>()
+    if (loaded) for (const unit of input.units) {
+      const actor = unit.ref?.kind === 'uma' ? Number(unit.ref.id) : unit.ref?.id
+      if (actor === undefined) continue
+      const looks = loaded.book.wardrobe?.members.find(row => row.speaker === actor)?.looks
+      const armor = looks?.['armor-helmet'] ?? looks?.['helmeted-full-combat-armor']
+      const station = looks?.['combat-station'] ?? looks?.pilot
+      const id = armor?.portrait ?? armor?.profile ?? station?.portrait ?? station?.profile
+      const asset = id ? loaded.assets.get(id) : typeof actor === 'string' && actor.startsWith('seraine-')
+        ? loaded.assets.get(actor + '-joined-approved') ?? loaded.assets.get(actor + '-joined-base') : undefined
+      if (asset) campaignPortraits.set(unit.id, asset)
+    }
+    return <><GroundBattle layout={layout} input={input} actions={state.battle.actions as BattleAction[]} close={close} campaignPortraits={campaignPortraits}
       combatSprites={combatSprites}
-      onStoryCues={ground?.cues ? cues => present(groundCueScenes(ground.cues!, cues)) : undefined}
+      withdraw={reports ? () => void updateSave(s => withdrawCampaignAttempt(s, mission.id)) : undefined}
+      onStoryCues={ground?.cues || hushCrew || voices ? cues => {
+        const input = state.battle!.input as BattleInput
+        const scenes = ground?.cues ? groundCueScenes(ground.cues, cues) : []
+        const savedHush = [] as string[]
+        if (hushCrew || voices) for (const cue of cues) {
+          if (!('unit' in cue)) continue
+          const unit = input.units.find(unit => unit.id === cue.unit && unit.side === 'squad')
+          const speaker = unit?.ref?.kind === 'uma' ? Number(unit.ref.id) : unit?.ref?.id
+          const line = speaker === undefined ? undefined : hushCrew?.roster.get(speaker)
+          const voice = speaker === undefined ? undefined : voices?.get(speaker)
+          if (!line && !voice) continue
+          const reported = line?.role === 'officer' ? cue.kind === 'attack' && cue.band === 'short' || cue.kind === 'cover'
+            : line?.role === 'general' ? cue.kind === 'attack' && cue.band === 'melee'
+            : line?.role === 'melee-shield' ? cue.kind === 'guard' || cue.kind === 'barrier' || cue.kind === 'cover'
+            : line?.role === 'ranged-medic' ? cue.kind === 'mended' || cue.kind === 'rebooted'
+            : line?.role === 'long-range' && cue.kind === 'attack' && cue.with === 'back'
+          if (line && reported && !save.story.seen.includes(line.ground)) {
+            scenes.push(line.ground); savedHush.push(line.ground); continue
+          }
+          if (!voice || voice.expeditionOnly && !formationState?.members.some(member => member.role !== 'uma' && member.heroine === speaker)) continue
+          const key = cue.kind === 'attack' ? cue.signature ? 'signature' : cue.with === 'back' ? 'mounted' : cue.aim ? 'aim' : cue.band === 'melee' ? 'melee' : 'ranged'
+            : cue.kind === 'mended' ? 'heal' : cue.kind === 'rebooted' ? 'reboot' : cue.kind === 'hacked' ? 'hack'
+            : cue.kind === 'rigBreak' ? 'rig-break' : cue.kind
+          const scene = key === 'signature' ? voice.signature.execute : voice.ground[key]
+          if (scene && !playedCues.current.has(scene)) {
+            playedCues.current.add(scene)
+            scenes.push(scene)
+          }
+        }
+        const distinct = [...new Set(scenes)]
+        return present(distinct).then(() => {
+          if (savedHush.length) void updateSave(s => ({ ...s, story: savedHush.reduce(seeScene, s.story) }), { quiet: true })
+        })
+      } : undefined}
       onTalkReply={ground?.cues?.talk || ground?.cues?.refusal ? (target, reason) => {
         const refusal = ground.cues?.refusal
         const scene = ground.cues?.talk?.find(row => row.target === target)?.[reason] ?? (refusal?.target === target ? refusal.scene : undefined)
@@ -110,22 +165,23 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
     <main className={panel} style={insets} data-training={state.step}>
       <div className="mx-auto max-w-2xl space-y-3">
         <h1 className="font-display text-2xl font-bold">{state.step === 'briefing' ? title
-          : state.step === 'deploy' ? `${title} Hangar` : state.won ? (ground ? 'Objective secured' : 'Exercise passed') : (ground ? 'Squad withdrew' : 'Exercise lost')}</h1>
+          : state.step === 'deploy' ? `${title} Hangar` : state.won ? (ground ? 'Objective secured' : 'Exercise passed') : (withdrew ? 'Squad withdrawn' : ground ? 'Objective lost' : 'Exercise lost')}</h1>
         {approach && state.step !== 'results' && <p className="text-sm font-semibold text-cyan-200">{approach}</p>}
         {state.step === 'briefing' && <>
           <p className="text-sm text-white/80">{mission.brief}</p>
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => void (async () => {
-              if (ground?.cues?.preparation) await present([ground.cues.preparation])
+              const preparation = ground?.cues?.preparation
+              if (preparation) await present([preparation])
               await updateSave(toDeploy)
             })()}>Prepare gear</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
           </div>
         </>}
-        {state.step === 'deploy' && expedition && save.expedition && <>
+        {state.step === 'deploy' && expedition && formationState && <>
           <p className="font-semibold">{expedition} · 10 deploy</p>
           <ul className="grid grid-cols-2 gap-1 text-sm">
-            {save.expedition.members.map(member => {
+            {formationState.members.map(member => {
               const actor = member.role === 'uma' ? member.outfit : member.heroine
               return <li key={actor}>{nameOf(pack, actor)}</li>
             })}
@@ -133,8 +189,9 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           <button type="button" className={primary} onClick={() => {
             setLaunching(true)
             void updateSave(s => {
-              if (!s.expedition || s.mission?.id !== mission.id || s.mission.step !== 'deploy') return s
-              return deploy(s, expeditionGroundInput(mission, s.expedition, pack))
+              const run = formationRun ?? s.expedition
+              if (!run || s.mission?.id !== mission.id || s.mission.step !== 'deploy') return s
+              return deploy(s, expeditionGroundInput(mission, run, pack), formationRun ?? undefined)
             }).finally(() => setLaunching(false))
           }}>Deploy all ten</button>
         </>}
@@ -270,13 +327,16 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
         </>}
         {state.step === 'results' && <div className="flex gap-2">
           {state.won ? <button type="button" className={primary} onClick={() => void (async () => {
-            if (ground?.cues?.victory) await present([ground.cues.victory])
+            const victory = ground?.cues?.victory ?? (hushCrew && mission.id === loaded?.book.fourActFinale?.ground.at(-1) ? hushCrew.secured : undefined)
+            if (victory) await present([victory])
             await updateSave(ground ? (s) => settleGround(s, ground, pack, !!loaded?.book.fourAct) : settleTraining)
           })()}>Debrief</button>
             : <button type="button" className={primary} onClick={() => void (async () => {
-              await present([ground?.cues?.withdrawal, ground?.cues?.retry].filter((id): id is string => !!id))
-              await updateSave(retry)
+              await present([reports?.retry ?? ground?.cues?.retry].filter((id): id is string => !!id))
+              await updateSave(retryCampaignAttempt)
             })()}>Retry</button>}
+          {!state.won && reports && <button type="button" className={action}
+            onClick={() => void present(withdrew ? [reports.withdrawal, ...(hushCrew ? [hushCrew.withdrawal] : [])] : [reports.failure])}>Crew report</button>}
           <button type="button" className={action} onClick={close}>Campaign</button>
         </div>}
         {state.callUp && !state.won && <button type="button" className={action} onClick={() => void updateSave((current) =>
@@ -286,11 +346,13 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   )
 }
 
-function GroundBattle({ layout, input, actions, close, mission, portrait, interior, title, combatSprites, onStoryCues, onTalkReply }: {
+function GroundBattle({ layout, input, actions, close, mission, portrait, interior, title, combatSprites, campaignPortraits, onStoryCues, onTalkReply, withdraw }: {
   layout: StageLayout; input: BattleInput; actions: BattleAction[]; close: () => void; mission: string; portrait?: { url: string; unit: string }; interior: boolean; title?: string
   combatSprites?: CampaignRelease['combatSprites']
   onStoryCues?: import('../battle/BattleView').BattleViewProps['onStoryCues']
   onTalkReply?: import('../battle/BattleView').BattleViewProps['onTalkReply']
+  withdraw?: () => void
+  campaignPortraits?: ReadonlyMap<string, CampaignReleaseFile>
 }) {
   const [session] = useState(() => resume(input, actions))
   if ('error' in session) return <div className={panel} style={insets}>
@@ -298,16 +360,16 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
     <button type="button" className={primary} onClick={() => void updateSave((save) => toDeploy(retry(save)))}>Prepare again</button>
   </div>
   const objective = input.objective
-  const preserve = input.units.find(unit => unit.id === input.preserve)?.label
+  const preserve = input.units.find(unit => unit.id === input.preserve || input.protect?.includes(unit.id))?.label
   const expeditionObjective = input.rulesVersion === EXPEDITION_RULES_VERSION
-    ? preserve ? `Reach the mark · Keep ${preserve} alive`
-      : objective.kind === 'hack' ? 'Activate the terminal'
+    ? preserve ? `Complete the objective · Keep ${preserve} alive`
+      : objective.kind === 'hack' ? objective.last ? 'Separate the five witness channels, then break the Collar · Keep both Seraine alive' : 'Activate the terminal'
         : objective.kind === 'hold' ? `Hold for ${objective.rounds} rounds` : undefined
     : undefined
   const objectiveLabel = expeditionObjective ?? (input.objective.kind === 'freeLeader' && input.objective.collar === 'rigBreak' ? 'Objective · Break the Collar'
     : title ? `Objective · ${title}` : input.objective.kind === 'hack' ? input.objective.count > 1 ? 'Objective · Disconnect both consoles' : 'Objective · Secure manifest console'
     : input.objective.kind === 'defeatLeader' ? 'Objective · Subdue the commander' : undefined)
-  return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training combatSprites={combatSprites ?? []} portrait={portrait} objectiveLabel={objectiveLabel}
+  return <BattleView layout={layout} session={session} control={{ squad: 'player', enemy: 'ai' }} debug={false} training combatSprites={combatSprites ?? []} portrait={portrait} campaignPortraits={campaignPortraits} objectiveLabel={objectiveLabel}
     onStoryCues={onStoryCues} onTalkReply={onTalkReply}
     standInKit={interior ? 'town' : undefined}
     onCommit={(next) => {
@@ -315,5 +377,5 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
       if (action) void updateSave((save) => save.mission?.step === 'battle' && save.mission.id === mission ? recordAction(save, action) : save, { quiet: true })
     }}
     onEnd={(next) => void updateSave((save) => save.mission?.step === 'battle' && save.mission.id === mission ? finishBattle(save, next.state.result?.winner === 'squad') : save)}
-    onQuit={close} />
+    quitLabel={withdraw ? 'Withdraw' : undefined} onQuit={withdraw ?? close} />
 }
