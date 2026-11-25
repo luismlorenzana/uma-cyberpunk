@@ -83,9 +83,9 @@ function Mission({ layout }: { layout: StageLayout }) {
     const scenario = mission.scenario ?? 'sandbox-muster'
     if (!SCENARIOS[scenario]) return
     const units = squad.map((v) => ({ outfit: v.outfit, label: v.name, bands: v.bands, loadout: loadoutOf(v.rig), stride: v.stride }))
-    const base = missionInput(scenario, units, bench.map((v) => v.role), `${mission.id}:1`)
+    const base = missionInput(scenario, units, bench.filter(({ member }) => !member.expeditionOnly).map((v) => v.role), `${mission.id}:1`)
     // Rules version 3 (CY17): bonds, partners, Orders, the powered systems and the meal (eaten) go into the frozen input.
-    const all = [...squad, ...bench]
+    const all = [...squad, ...bench].filter(({ member }) => !member.expeditionOnly)
     const bandOfPost = (post: PostKind) => { const h = all.find((v) => v.member.post && postKind(v.member.post) === post); return h ? Math.max(...POSTS[post].bands.map((b) => h.bands[b])) as Band : null }
     // A finale's unmet readiness needs (CY18) add their harsh conditions; the squad's cohesion goes in too.
     void updateSave((s) => ({ ...deploy(setSquad(s, squad.map((v) => v.outfit)), lifeAboardInput(base, s, bandOfPost, finaleConditions(pack, s, mission))), meal: null }))

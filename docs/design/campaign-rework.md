@@ -1,63 +1,84 @@
-# Uma Cyberpunk campaign rework
+# Uma Cyberpunk · Four-act campaign
 
-The new campaign uses the existing landscape iPhone app and HD-2D tactics engine with a fresh campaign save. First Watch opens the civilian routes and ten recruit requests. Sign-on adds the officer to the roster, where the Captain can start her operation separately. The [implementation queue](../handoff/README.md#four-pillar-implementation-queue) follows the authored Tier 1 campaign. The prototype remains a reference for earlier releases and saves.
+**Current game design, D86, 2026-11-24.** A personal landscape iPhone tactics RPG. The player is the Captain of the Homestretch. One Uma's story opens into a planetary partnership, then a ten-person expedition, then the shared finale. Build in the existing repo and ship the campaign on a fresh profile. The [roadmap](../handoff/four-act-roadmap.md) sequences delivery. The [game manual](../game/README.md) describes the implementation available today.
 
-## Campaign loop
+## Campaign rules
 
-The Homestretch is a refitted rescue tender. Ten officers join it on temporary assignment to free their home sectors. The Captain commands ship encounters and deploys squads for boarding and ground battles. Civilian ports cover their reserves and upkeep before exporting supplies for operations, equipment and refits. Each liberated sector and its civilian authority determine the conditions for appointing the officer to local command. Her assignment changes where she can serve and how her sector contributes.
+| Decision | Game rule |
+| --- | --- |
+| Recruitment | The short opening exposes all 50 Uma recruitment leads. The player can choose any as the first recruit or return to sign on another at any point before the ending. Home location and her own sign-on scenes can be prerequisites. |
+| Individual progression | Each Uma can clear her whole Act I with herself as the only Uma recruited. Her own missions and scenes carry her story. The Captain can use other eligible crew for support as they join. Other Umas' stories can advance independently. |
+| Planetary pairings | Story supplies a fixed same-system duo for each Uma. The two personal routes remain independently tracked until their shared planetary work. With 50 Umas across five ten-Uma systems, the production scope is 25 duos unless Story revises the map or roster. |
+| Act III admission | The five distinct home capitals must all be liberated. Each launching duo must have all six of its own named lieutenants recovered and its 2 Umas and 2 Boss Allies cleared for that expedition. Finishing other duos' personal stories or recovering their lieutenants is optional for that launch. |
+| Expedition party | Each fixed duo launches a smaller ship from the Homestretch with exactly 2 Umas, 2 Boss Allies and 6 lieutenants. All ten deploy together on every Act III ground battle. Their dialogue, ship roles and gear follow the same ten identities. |
+| Opponents | The early opposition is the Palinode and its controlled or loyal forces. Act II reveals the Seraine threat. All combat opponents in Act III are Seraine. Each duo frees a named Herald or Echo at the end of its mission. The Queens are reserved for Act IV. |
+| Ending | Act IV is the final battle and soft ending. The specific readiness rule, Queen encounters, final choice and ending variations go through the Act IV workshop. |
 
-The Captain chooses one evening plan per day. Individual friendships and romances can develop concurrently. Shared evenings and quarters remain separate choices. Former commanders account for their own orders, with local custody or supervised release according to the journey. An officer's civilian appointment and the pair's personal choices each have their own prerequisites and consequences.
+The Act III gate is evaluated from completed capital operations and the actual six returned people. Five arbitrary captures, the age of the save, a relationship rank, an unrelated home result, or reaching a chapter in the earlier tier pack have no role in admission.
 
-Five systems each have an early civilian berth and two separately opened operations. Ground tactics retain the board, forecast and AI. Main weapons and limited armor expansions give each fighter her own style. Optional Training is a crew exercise in the real campaign after sign-on. The day ends by player choice, with one nightly visit and upkeep resolution.
+## Act I · The Uma and her General
 
-The next presentation/authoring delivery is [the four-pillar plan](campaign-art-delivery.md) (D64).
-It starts with meeting, confession, seated cabin chat and spending the night, then carries coordinated
-development, Art and Story packets through management rooms, ship cinematics, composed equipment
-sprites and signature attacks. These are planned extensions on the current campaign, with draft
-content integrated alongside implementation and approved replacements using the same bindings.
+1. **Meet her.** A short playable origin introduces her home, personal stakes and antagonist. Her sign-on and first quarters scene make her immediately identifiable on the roster. The civilian star chart can reach each starting berth with the starter ship, with authored travel as needed. Show a usable next action even before a port has been visited.
+2. **Live and work aboard.** Signed-on Umas can work regular ship posts and operations, mine or recover resources through authored jobs, engineer, craft, fly ship stations and deploy on ground missions. Use the roster to return to any recruit's next chapter. An Uma's own unavailable state comes with a route to rest, return from an operation or resume her story.
+3. **Play her conflict.** The featured Uma supplies the required story and deployment slot. Ship approaches, escorts, rival calls, boarding, and surface encounters use her authored stakes. Other recruited Umas can take legal bridge or squad slots and contribute authored interjections. Include an issued kit and fallback support for any route that would otherwise require an extra recruit, scarce part, upgrade or specific romance choice. Optional Training happens after sign-on inside the campaign.
+4. **Capture the General.** The climax confirms nonlethal capture through the authored combat outcome. Breaking the Collar and actually securing custody are distinct events where a mission needs both. The General enters rehabilitation. Her three lieutenants scatter or become individually unaccounted for. Record their identities once for their Act II return.
+5. **Continue the relationship.** Each Uma has her own Captain relationship and confession, cabin chat, stay or leave and morning. Keep friendship and romance valid ways through the campaign. Milestones in romance can open personal scenes and cabin choices.
 
-## Story and art milestones
+The protagonist's personal conflict ends here. She can begin her General's rehabilitation with the Captain before the second Uma is ready. The first cross-recruit prerequisite is the authored shared planetary branch.
 
-| Playable delivery | Story | Art |
-|---|---|---|
-| First Watch and sign-on | Stage the premise, ten sign-ons, first story objectives, first visits and optional familiarization. | Stage the bridge, civilian berths, recruitment props, expression cues and Training map. |
-| Paired local operations | Give each sector a civilian stake, ship and ground objectives, a local resolution and a command handoff. One operation files the required case and the other offers corroboration. | Match port, bridge, ship and ground art to the protected service and actual mission outcome. Use existing approved looks and stage pending art in the same slots. |
-| Custody and life aboard | Script each former commander's accountability and disposition, as well as the distinct relationship, room and appointment choices. | Stage custody, cabin and local command views to show where each person lives and serves. |
-| Investigation, fleet and handover | Compare the five cases. Mobilize ten commands and give each one a visible role. Follow victory with a civilian crossing and each officer's personal handover. | Stage the evidence comparison, bridge calls, both breach routes, objective states and restored civilian services. |
+## Act II · Rehabilitation and planetary liberation
 
-## The enemy behind the occupations
+### Rehabilitation and the Boss Ally
 
-The hidden enemy manipulates orders and redirects the systems' resources. Each local operation has its own civilian stakes. The five required cases establish **what was redirected, what it enables, and what the crew can stop**. The private case ledger and joint-operation script carry the enemy's identity, motive and details.
+Write a care and accountability arc with the Uma, General and Captain. Reuse the authored stages of waking, remembering, relapse and choosing when they fit. After choosing, the Boss Ally can move into the Uma's quarters, develop her own consensual Captain relationship, and appear in shared cabin scenes. The personal script determines who is present. Consent, residence, trust and clearance have separate saved outcomes.
 
-- **Seed.** Establish the significance of an altered order locally. Give the player a concrete prop or objective that works whichever operation comes first.
-- **Corroborate.** File each verified required case at its liberation debrief. The other operation's testimony can add context about the same sector or system.
-- **Reveal.** Compare the five cases and record the discovery. An outstanding operation can acknowledge the new information and continue to its purpose.
-- **Confront.** Mobilize ten sector commands, including visible contributions from officers ashore. Play the approach and a bounded squad breach, then prove the restored civilian passage in the aftermath. Personal handovers follow fleet victory.
+She can advise, identify people or codes, and help during investigation and recovery dialogue. During Act II she has no resource, engineering, dispatch, bridge combat or tactics assignment. Her presence on the roster and approved Boss Ally portrait must reflect her actual state without unlocking those actions. A joint combat technique from the older liberation route can be staged as a story beat or reserved for her cleared expedition deployment.
 
-Before scripting all five arcs, outline the alien objective, the evidence that makes it discoverable, and one plausible final operation. Before commissioning bespoke final art, agree on the objective, scene beats, enemy silhouettes, phases and states that must be readable during play. Record the actual names, pairings, dialogue and spoilers in the private story files.
+### The two homes, their base and the capital
+
+Bring the fixed duo together after the required individual chapters. Give both Umas distinct home objectives, local investigation scenes, and the opportunity to recover their own three lieutenants. Gather witnesses, identify altered orders, open an actual local base and restore civilian services. Build joint scenes for the two Umas, their two Boss Allies and the returned lieutenants, with cast-aware versions for scenes before all six are present. Use the active Uma crew for ship and ground fighting. Boss Ally contributions can be scripted from the base, investigation scene or radio outside an assigned battle role.
+
+Each lieutenant can be located, confronted or reached by a named speaker, then cleared to return. Author an alternate route after a refused Talk or Rig Break. A retreated opponent, recovered person and committed expedition member each need a clear settlement. Local choices can change the approach, conversation and civilian payoff while keeping a route to the required person. Their elven identities and past service remain visible in both opposing and allied roles.
+
+Each system has one capital operation with a real objective, a controller or authority that changes on victory, and a permanent system result. **Production default:** give each capital a route from a feasible local base and authored readiness evidence that a player can reach without finishing every duo there. Story defines the specific entry and stakes for each capital. Its settlement remains distinct from the progress of all ten local homes. The global campaign ledger shows all five capital results and separately shows each fixed duo's readiness.
+
+Reveal the Seraine through recovered testimony, local evidence and the original purpose of the Collar. Preserve the difference between the Seraine people, the joined Choir, the Palinode generals and their elf lieutenants. Story must reconcile the earlier Core scenes' reveal timing and details with its current Seraine bible before their casts or art are bound.
+
+## Act III · The ten-person expeditions
+
+Launch from the Homestretch with a dedicated small ship, its crew, support allocation and a named route beyond the home systems. Show expedition selection, crew readiness, supplies, its own bridge and the next objective. Give each group a briefing, approach, several distinct operations, a last encounter with its named Herald or Echo, liberation and return. Agree objective chains and exact chapter counts in CY92. Use common ship interiors, tools and equipment families across routes, with local landmarks, outcomes and authored differences to make each expedition distinct.
+
+| Group | Count | Tactics identity |
+| --- | --- | --- |
+| Umas | 2 | Mid-range laser rifles and flexible protection, mobility or point-control equipment |
+| Boss Allies | 2 | Two-handed melee weapons and role-appropriate armor and support |
+| Melee and shield lieutenants | 2 | Guard, Cover or intercept lanes with close-range equipment |
+| Ranged and healing lieutenants | 2 | Ranged pressure, repair, healing or Reboot with compatible equipment |
+| Long-range lieutenants | 2 | Existing Back-mounted long-range family, with clear range and ammunition decisions |
+
+These are encounter fitting families. Tune variants within each family and mark any fixed story weapon explicitly. Keep ordinary loadout choices outside those commitments. All ten start on the board at each Act III tactical deployment. An objective may spread them across multiple entrances on one board. Turn speed, camera and reactions must support ten friendly figures plus the authored opposing force.
+
+The target's release is a gameplay outcome followed by authored aftermath. Establish the reason she can break away and the place she goes. Her release updates the story and finale ledger. An additional playable Seraine roster would be a separate owner decision. With five duos per home system and five Seraine courts, Story can use three Heralds and two Echoes as targets per court if that mapping fits. Record the actual lineup privately.
+
+## Act IV · Final battle and a soft ending
+
+Use the five capitals, named Seraine releases, expedition outcomes, and actual relationship and home histories to construct the finale. The Queens and their relationship to the Choir belong here. Keep resolution and individual epilogues connected to what happened in play. Reserve decisions on the Queen sequence, threshold of expedition victories, exact final mechanics, shared ship roles and ending branches for CY90. An unfinished optional expedition needs a deliberate place in the ending design.
+
+## Four gameplay pillars
+
+| Pillar | Campaign commitment |
+| --- | --- |
+| Relationships | Individual identities and Captain relationships across all four acts. Rehab, shared quarters, romance, deployment and home residence are independent. Existing cabin flow and approved CG slots stay reusable. |
+| Ship and planet management | Real Uma duties, operations, mining or recovery, engineering, crafting and logistics. Planet bases and capitals yield meaningful changes. Expedition ships have a saved local operating context and draw bounded support from the Homestretch. |
+| Ship combat | Authored ship missions in personal routes, liberation, expeditions and the finale. Station eligibility, objectives, cost, ship and actor presentation freeze at launch. Actions and outcomes drive the staging. |
+| Ground tactics | Named protagonists with roster support in early acts, then ten on-board expedition members. Keep nonlethal rig and liberation outcomes, forecast, equipment fitting and replay. Bind actual figures and effects from the encounter state. |
+
+For current screen priorities and intended player navigation, see the [campaign guide](../game/campaign.md). For detailed saved state, pack and runtime work, see the [technical plan](../technical/four-act-campaign.md).
 
 ## Playable baseline and content releases
 
-Each delivery includes enough original draft writing and placeholder art to exercise the real feature. The opening baseline is a short playable conversation with invented characters, a choice with a saved consequence, named speakers and expression cues, plus placeholder portraits and a backdrop. CY22 extends it through a Training briefing, encounter and debrief. Later packets add baseline calls, scenes and assets as their rules need them. The coding contributor can author these directly while story and art develop the approved versions.
-
-Run the baseline through the same versioned contract, checker, packer, private preview publication and app loader used for approved content. Publish a second preview release with a rewritten line and a replacement image under the same story and asset IDs. Verify that the app discovers the update, renders the new files, and can still continue or resume a save that used the first release. Document how to return to a known-good pack if a release fails.
-
-Label the baseline as draft in preview. Keep source files and assets in ignored private content. CI uses small invented fixtures for automated checks. When the approved script and art land, use the same IDs and publish them through the verified path. If an approved revision changes quest state or an ID, define how existing saves continue before publishing it.
+Build through authored campaign entry points, using small private drafts and approved reuse art while production assets are in flight. Each release pins its own Story and Art revisions. Keep earlier release identities and their saved inputs available as technical reference. The four-act launch gets a fresh profile and no old plot-progress migration. User-specific names, drafts, source pins and game screenshots stay in private content.
 
 ## Shared quest brief and review
 
-At the start of each delivery, code, story and art agree on a quest brief with the player entry point, scenes and choices, mission objectives and fail/retry rules, consequences saved and shown, and required assets. Use the same IDs in the game, script and art brief. For a clue, specify where it appears, what it means on first encounter, and where it pays off. Story can change an encounter outcome or require a new rule. Art can change the staging when intent or ownership reads poorly on the phone. Update the brief and affected packets together.
-
-Review every delivery through the campaign on the iPhone. Verify the intended outcome, retry and resume, the visible consequences, and the authored lines and art in context. Use the same encounter definition for automated and simulator checks. Keep source story, casting, art and screenshots in private content. CI can run invented fixtures that exercise the same schema and mission entry.
-
-## How the pillar packets ship
-
-The [four-pillar queue](../handoff/README.md#four-pillar-implementation-queue) extends the playable campaign. CY29 starts with the Captain's relationships. CY30 shows planetary exports changing the squad's gear and a real boarding fight. Their planning can overlap. Integrate their save changes in order and verify each against the deployed campaign save version.
-
-For each packet, keep a shared brief that names the campaign entry, objectives and player choices, saved consequences, dialogue beats, asset slots and how to check them in the live scene. Use those IDs in code, draft scripts and the art handoff. A new story beat or art requirement that changes a rule updates the brief and the implementation together.
-
-Supply playable draft scenes, dialogue and compatible placeholder assets with each code delivery. The story and art sessions can review and replace them through the same private release format. Carry both a fresh save and a save from the preceding release through the checkpoint. Keep the real quest as the place to review the result. Use scripted runs for repeated balance and save checks.
-
-Record each delivered rule and its review result in the handoff. When a packet closes, point its dependents to the delivered design or manual before removing the packet.
-
-CY36 reviews approved content and tuning across all four pillars. CY37 verifies the owner-only release path, phone play and save recovery. The existing CY22–CY24 and CY28 reviews carry into those checkpoints.
+One shared brief defines each quest's prerequisite, cast, encounter, player choice, mission outcome, saved consequence, art slots and acceptance. Art and Story can both change the game requirement and update this brief together. The [authoring delivery contract](campaign-art-delivery.md) and the [roadmap](../handoff/four-act-roadmap.md) are the current instructions.

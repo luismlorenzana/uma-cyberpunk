@@ -2,7 +2,7 @@ import type { Dir, PartHp, UnitStatus } from '@cyber/battle'
 import { CanvasTexture, CircleGeometry, Group, Mesh, MeshBasicMaterial, NearestFilter, Sprite, SpriteMaterial, SRGBColorSpace } from 'three'
 import type { Clip, EffectTrack, Layer } from './combat-sprite-format'
 import type { CombatLook, LoadedCombatArt } from './local-combat-sprites'
-import { composedClip } from './combat-sprite-composition'
+import { composedClip, hasNativeHands, isBackMotion } from './combat-sprite-composition'
 import { paintComposition } from './combat-sprite-gear'
 
 type Cel = { layers: Layer[]; ms: number }
@@ -73,27 +73,54 @@ export interface CombatPose { hp: PartHp; status: UnitStatus }
 
 const intact: CombatPose = { hp: { core: 1, leftArm: 1, rightArm: 1, legs: 1 }, status: 'active' }
 
+function nativeStateClip(action: string, hp: PartHp, twoHand: boolean): string {
+  const bothArmsLost = hp.leftArm <= 0 && hp.rightArm <= 0
+  if (bothArmsLost && hp.legs <= 0) {
+    if (action === 'rig-break' || action === 'down' || action === 'reboot-rise') return `${action}-damaged`
+    if (action === 'idle') return 'post-reboot-damaged'
+  }
+  if (twoHand && (hp.leftArm <= 0 || hp.rightArm <= 0)) {
+    if (isBackMotion(action) || action === 'dash-walk') {
+      const suffix = bothArmsLost ? 'both-arms-broken' : hp.leftArm <= 0 ? 'one-right' : 'one-left'
+      return `${action}-${suffix}`
+    }
+    return action
+  }
+  if (hp.legs <= 0) {
+    if (action === 'walk' || action === 'dash-walk') return `${action}-degraded`
+    if (action === 'idle' || action === 'settle') return 'idle-degraded'
+  }
+  return action
+}
+
 export function limbPose(look: CombatLook, facing: Dir, pose: CombatPose, action: string): string | undefined {
   if (look.composed) {
     const { leftArm, rightArm } = pose.hp
     const one = leftArm <= 0 ? 'right' : 'left'
-    const { composition, motions } = look.art.bundle
+    const bundle = look.art.bundle
+    const { composition, motions } = bundle
+    const native = hasNativeHands(bundle)
+    const bothArmsBroken = leftArm <= 0 && rightArm <= 0
     const donor = look.composed.twoHand && look.composed[look.composed.twoHand] === 'rifle'
     const blade = composition && motions[composition.blade]?.[facing].clips
-    const attack = action === 'attack-left' || action === 'attack-right' || action === 'attack-back'
-    if (attack && leftArm <= 0 && rightArm <= 0) return
+    const handAttack = action === 'attack-left' || action === 'attack-right'
+    if (bothArmsBroken && (handAttack || (!native && action === 'attack-back'))) return
     if (action === 'guard' || action === 'cover') {
       const { guards } = look.composed
       const left = leftArm > 0 ? guards.left : 0, right = rightArm > 0 ? guards.right : 0
       return right > left ? action + '-right' : left ? action : undefined
     }
-    if (action === 'attack-left' || action === 'attack-right') {
+    if (handAttack) {
       const hand = action === 'attack-left' ? 'left' : 'right'
       if (!look.composed[hand] || (!look.composed.twoHand && pose.hp[hand === 'left' ? 'leftArm' : 'rightArm'] <= 0)) return
       if (look.composed.twoHand && (leftArm <= 0 || rightArm <= 0)) {
         const key = `attack-one-${one}`
         return donor || blade?.[key] ? key : `attack-${one}-degraded`
       }
+    }
+    if (native) {
+      const stateClip = nativeStateClip(action, pose.hp, !!look.composed.twoHand)
+      if (stateClip !== action && composedClip(bundle, look.composed, facing, stateClip)) return stateClip
     }
     if (donor && ['idle', 'walk', 'settle'].includes(action) && (leftArm <= 0 || rightArm <= 0)) {
       return leftArm <= 0 && rightArm <= 0 ? 'idle-both-arms-broken' : `${action}-one-${one}`
@@ -108,10 +135,18 @@ export function limbPose(look: CombatLook, facing: Dir, pose: CombatPose, action
   if (!clips) return undefined
   const { leftArm, rightArm, legs } = pose.hp
   const allBroken = leftArm <= 0 && rightArm <= 0 && legs <= 0
-  const life = action === 'rig-break' || action === 'down' || action === 'reboot-rise'
+  const life = action === 'rig-break' || action === 'down' || action === 'reboot-rise' || action === 'collar-release'
   const stateClip = life && allBroken ? action + '-damaged' : action === 'idle' && allBroken ? 'post-reboot-damaged' : action
-  if (life || stateClip !== action) return clips[stateClip] ? stateClip : undefined
-  if (leftArm <= 0 && rightArm <= 0 && ['idle', 'walk', 'settle', 'attack'].includes(action)) {
+  if (stateClip !== action && clips[stateClip]) return stateClip
+  if (life) return clips[action] ? action : undefined
+  const bothArmsBroken = leftArm <= 0 && rightArm <= 0
+  const backClip = action + '-both-arms-broken'
+  if (bothArmsBroken && isBackMotion(action) && clips[backClip]) return backClip
+  if (legs <= 0) {
+    const degraded = action === 'settle' ? 'idle-degraded' : action + '-degraded'
+    if (['idle', 'walk', 'settle', 'dash-walk'].includes(action) && clips[degraded]) return degraded
+  }
+  if (bothArmsBroken && ['idle', 'walk', 'settle', 'attack'].includes(action)) {
     if (action === 'attack') return undefined
     if (clips['idle-both-arms-broken']) return 'idle-both-arms-broken'
   }
@@ -126,11 +161,11 @@ export function limbPose(look: CombatLook, facing: Dir, pose: CombatPose, action
 
 function missingLimbArt(name: string, hp: PartHp): string[] {
   if (name.endsWith('-damaged')) return []
-  const bothShown = name === 'idle-both-arms-broken'
+  const bothShown = name.endsWith('-both-arms-broken')
   return [
     ...(hp.leftArm <= 0 && !bothShown && !name.endsWith('-one-right') && !name.endsWith('-shield-arm-broken') ? ['L'] : []),
     ...(hp.rightArm <= 0 && !bothShown && !name.endsWith('-one-left') ? ['R'] : []),
-    ...(hp.legs <= 0 ? ['LEG'] : []),
+    ...(hp.legs <= 0 && !name.endsWith('-degraded') ? ['LEG'] : []),
   ]
 }
 
@@ -171,7 +206,7 @@ export class CombatSpriteActor extends CombatCell {
     if (moving !== this.walking) { this.walking = moving; this.fallbackTime = 0 }
     const motion = moving ? null : this.motion
     const direction = motion?.facing ?? facing
-    const action = this.pose.status === 'down' ? 'down' : moving ? this.motion?.name === 'back-dash' ? 'dash-walk' : 'walk' : 'idle'
+    const action = this.pose.status === 'down' ? 'down' : moving ? this.motion?.name.startsWith('back-dash') ? 'dash-walk' : 'walk' : 'idle'
     const name = motion?.name ?? limbPose(this.look, direction, this.pose, action) ?? 'idle'
     const pose = motion?.pose ?? this.pose
     const rig = this.look.composed

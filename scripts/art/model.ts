@@ -3,7 +3,7 @@ import { P, type Speaker } from '../../packages/domain/src/story/index'
 import type { CampaignWardrobe } from '../../packages/domain/src/campaign-wardrobe'
 
 export const sha = (bytes: Uint8Array): string => createHash('sha256').update(bytes).digest('hex')
-export const EVENTS = ['all', 'looks', 'portraits', 'enemies', 'weapons', 'combat-sprites', 'general'] as const
+export const EVENTS = ['all', 'looks', 'portraits', 'enemies', 'weapons', 'combat-sprites', 'splashes', 'general'] as const
 export type ArtEvent = typeof EVENTS[number]
 export type ArtCollection = 'looks' | 'enemies' | 'local'
 export interface Selector { collection: ArtCollection; id?: string; character?: string; outfit?: string; unitId?: string; look?: string; category?: string }
@@ -20,6 +20,7 @@ export interface PortraitBinding {
 export interface WardrobeImport {
   speaker: Speaker; character: string; from: { collection: 'looks' | 'enemies'; character?: string; unitId?: string }
   default?: string; after?: string; requiresFlag?: string; labels?: Record<string, string>; routes?: { scene: string; outfit: string }[]
+  visibleLooks?: string[]
 }
 export interface PublishConfig { schemaVersion: 1; bindings: AssetBinding[]; portraits: PortraitBinding[]; wardrobes?: WardrobeImport[]; authoringRoot?: string }
 
@@ -65,16 +66,19 @@ export function parsePublishConfig(value: unknown): PublishConfig {
       outfit: p.slug(b.outfit, `${field}.outfit`), ...(profile ? { profile } : {}) }
   }, 1024)
   const wardrobes = root.wardrobes === undefined ? undefined : p.list(root.wardrobes, 'wardrobes', (v, field): WardrobeImport => {
-    const row = p.object(v, field, ['speaker', 'character', 'from', 'default', 'after', 'requiresFlag', 'labels', 'routes'], ['speaker', 'character', 'from'])
+    const row = p.object(v, field, ['speaker', 'character', 'from', 'default', 'after', 'requiresFlag', 'labels', 'routes', 'visibleLooks'], ['speaker', 'character', 'from'])
     const from = p.object(row.from, field + '.from', ['collection', 'character', 'unitId'], ['collection'])
     if (from.collection !== 'looks' && from.collection !== 'enemies') p.fail(field, 'expected Cyberpunk looks or enemies')
     const key = from.collection === 'looks' ? 'character' : 'unitId'
     if (Object.keys(from).some(k => k !== 'collection' && k !== key)) p.fail(field, 'wrong source identity key')
     const labels = row.labels === undefined ? undefined : p.object(row.labels, field + '.labels', Object.keys((row.labels ?? {}) as object), [])
+    const visibleLooks = row.visibleLooks === undefined ? undefined : p.list(row.visibleLooks, field + '.visibleLooks', (value, path) => p.slug(value, path), 32)
+    if (visibleLooks && new Set(visibleLooks).size !== visibleLooks.length) p.fail(field + '.visibleLooks', 'duplicate visible look')
     return { speaker: p.speaker(row.speaker, field), character: p.slug(row.character, field), from: { collection: from.collection as 'looks' | 'enemies', [key]: p.text(from[key], field, 120) },
       ...(row.default === undefined ? {} : { default: p.slug(row.default, field) }),
       ...(row.after === undefined ? {} : { after: p.slug(row.after, field) }),
       ...(row.requiresFlag === undefined ? {} : { requiresFlag: p.slug(row.requiresFlag, field) }),
+      ...(visibleLooks ? { visibleLooks } : {}),
       ...(labels ? { labels: Object.fromEntries(Object.entries(labels).map(([k, v]) => [p.slug(k, field), p.text(v, field, 64)])) } : {}),
       ...(row.routes === undefined ? {} : { routes: p.list(row.routes, field + '.routes', (v, f) => {
         const route = p.object(v, f, ['scene', 'outfit'])
@@ -87,10 +91,14 @@ export function parsePublishConfig(value: unknown): PublishConfig {
 
 export interface ImageReplacement { asset: string; bytes: Buffer; extension: '.png' | '.webp'; width: number; height: number }
 export interface PortraitReplacement { base: string; speaker: Speaker; faces: { emote: string; image: ImageReplacement; at: { x: number; y: number } }[]; profile?: string }
+export interface SceneSplash { scene: string; asset: string; at?: string; width: number; height: number; portraits: 'show' | 'hide' }
 export interface ResolvedArt {
   images: ImageReplacement[]; portraits: PortraitReplacement[]; skipped: string[]; sourceChecks: (() => Promise<void>)[]
   sources?: { path: string; sha256: string; generation: string }[]
   wardrobe?: CampaignWardrobe
   newAssets?: string[]
   retiredPortraits?: string[]
+  sceneSplashes?: SceneSplash[]
+  sceneBackdrops?: { scene: string; asset: string; replaces: string }[]
+  scenePortraits?: { scene: string; speaker: Speaker; asset: string }[]
 }

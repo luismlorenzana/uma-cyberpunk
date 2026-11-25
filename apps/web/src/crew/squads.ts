@@ -1,11 +1,12 @@
 // Squads through the save (CY18): moving an Uma between squads (or out of them), a new squad, renaming and the leader.
 // A squad away on an operation keeps its members until it's back. Every change goes through the domain's rules.
-import { leaveSquad, newSquad, setSquad, SQUAD_TUNING, squadOf, squadProblem, type Save, type Squad } from '@cyber/domain'
+import { canTakeOrdinaryAssignment, leaveSquad, newSquad, setSquad, SQUAD_TUNING, squadOf, squadProblem, type Save, type Squad } from '@cyber/domain'
 
 const awaySquad = (save: Save, id: string | undefined): boolean => !!id && save.operations.some((r) => r.squad === id)
 
 /** Why an Uma can't move to that squad now, or null. */
 export function moveProblem(save: Save, outfit: number, to: string | 'new' | null): string | null {
+  if (to !== null && !canTakeOrdinaryAssignment(save.crew.find(member => member.outfit === outfit))) return 'Unavailable for squads'
   const from = squadOf(save.squads, outfit)
   if (awaySquad(save, from?.id)) return `${from!.name} is away on an operation`
   if (to === null || to === from?.id) return null

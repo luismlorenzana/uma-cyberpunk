@@ -1,9 +1,10 @@
 # The uma-cyberpunk manual
 
-What the game **is**, as built. Every packet that ships a rule writes or updates its page in the same commit.
+The manual records mechanics as built. For the next release, the [four-act player guide](campaign.md) describes the planned experience and links to its roadmap. Update the manual in the packet that ships each rule.
 
 | Page | What | Visual page |
 |---|---|---|
+| [Four-act campaign guide](campaign.md) | Planned player flow from recruitment through the finale | [campaign.html](previews/campaign.html) |
 | [The app as built](architecture.md) | The pages, the save and how it syncs, sign-in, updates, deploys and local setup (CY3) | [architecture.html](previews/architecture.html) |
 | [The battle](battle.md) | The map format, the rig, the timeline and Charge, movement, attacks, Cover, Crossfire, counters, Rig Break; the roles' Back units, Tech, chance skills, items, Stride, the bench call; objectives, the forecast, and the tuning tables, live (CY4, CY5) | [battle.html](previews/battle.html) |
 | [The ship and the worlds](ship.md) | The rooms and their keys, rooms opening with leads, the star map, a world's map, the Continue card, save v3 (CY10, CY12) | [ship.html](previews/ship.html) |

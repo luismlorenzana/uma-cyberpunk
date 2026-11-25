@@ -1,5 +1,7 @@
 # Life aboard: the captain, the ship, the bonds and the duties
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-13 (D20), for the owner's review.** The owner set five directions to take the game past the
 > sandbox (quoted in §1). Three research passes ran in parallel ([research-life-aboard.md](research-life-aboard.md):
 > ship building, crew duties, bonds and quarters), and this page designs the answer: a **captain** as the player's
@@ -518,7 +520,7 @@ elements; the first worlds move to Phase 5.
 | 6 | Progression and the ship's later systems: levels, roles, licences, remodels, side jobs, the Call, talents, boarding missions | The first two worlds play end to end and need the progression to win |
 | 7 | Worlds as content waves | Each world plays end to end |
 
-Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/README.md#phase-4-life-aboard-on-test-content):
+Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/archive/previous-queue.md#phase-4-life-aboard-on-test-content):
 
 | Id | Packet | Builds |
 |---|---|---|
@@ -533,7 +535,7 @@ Phase 4's packets, written on the owner's go (D21), in [the handoff](../handoff/
 ## 10. World v2: the story's requests, answered (TC75–TC80)
 
 The story session's world v2 ([world.md](world.md), D28) carries the owner's six notes and files **five story
-requests** in [the handoff](../handoff/README.md#story-requests) (WD48). SB16 asks the game to revise this design from
+requests** in [the handoff](../handoff/archive/previous-queue.md#story-requests) (WD48). SB16 asks the game to revise this design from
 the world before its next packets. This section answers each request with a call and revises what the world changes.
 Every answer is a recommendation, adopted until the owner changes it (D34). They're built in **Phase 5** (§10.7),
 because the first two worlds use them: the Ring ends Act I in a ship battle you can't win, and Tidewell's flagship is the

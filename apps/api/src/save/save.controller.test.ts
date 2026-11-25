@@ -33,6 +33,14 @@ describe('PUT /api/save', () => {
     expect(stored.save?.account.updatedAt).toBe(NOW)
   })
 
+  it('keeps a request with a different account out of both the save and rescue stores', async () => {
+    const put = vi.fn(async () => EMPTY_ENVELOPE)
+    const { repo, controller } = fake(put)
+    await expect(controller.put('another-owner', upload())).rejects.toThrow('Save belongs to a different account')
+    expect(put).not.toHaveBeenCalled()
+    expect(repo.rescue).not.toHaveBeenCalled()
+  })
+
   it('keeps an upload the store refuses, as sent, and still fails it', async () => {
     const { repo, controller } = fake(async () => { throw new Error('3 INVALID_ARGUMENT: invalid nested entity') })
     const body = upload()

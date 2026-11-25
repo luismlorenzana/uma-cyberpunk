@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the build plan
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-12 (D4).** The owner asked for the work here to start with "the full app buildout and some of the
 > combat testing side of things", and to "see what we can reuse from the uma-platform HD-2D engine and so on". This page
 > answers both: what's reused and how, the shape of the code, how the combat is tested, the app's screens, and the

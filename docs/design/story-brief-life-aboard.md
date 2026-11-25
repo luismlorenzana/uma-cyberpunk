@@ -1,5 +1,7 @@
 # The story brief, part two: the captain, the squads, the factions and life aboard
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-13 (D20).** From the game session to the story session, after the owner's new direction for the
 > game. This part is **light and open on purpose**: the owner asked for worldbuilding and base story elements first,
 > "do not restrict that session". It adds to [the story brief](story-brief.md) (SB1–SB11), which still holds where this
@@ -119,7 +121,7 @@ New with this part:
   anything with names or casting in `content/stories/bibles/` (private).
 - **Tell the owner when a layer is ready.** After the owner reads it, the game session revises
   [life-aboard.md](life-aboard.md) from it and writes Phase 4's and 5's packets.
-- **Ask for what the game lacks** with a story request in [the handoff](../handoff/README.md#story-requests): a
+- **Ask for what the game lacks** with a story request in [the handoff](../handoff/archive/previous-queue.md#story-requests): a
   mechanic, a room, a kind of scene. The game answers in its next packet.
 - **Start line** for a new story session:
 

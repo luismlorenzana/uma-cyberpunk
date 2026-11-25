@@ -26,5 +26,8 @@ export interface SaveRepository {
 
 export const SAVE_REPOSITORY = Symbol('SAVE_REPOSITORY')
 export const CAMPAIGN_SAVE_REPOSITORY = Symbol('CAMPAIGN_SAVE_REPOSITORY')
+export const PILOT_SAVE_REPOSITORY = Symbol('PILOT_SAVE_REPOSITORY')
+
+export const FOUR_ACT_SAVE_REPOSITORY = Symbol('FOUR_ACT_SAVE_REPOSITORY')
 
 export const EMPTY_ENVELOPE: SaveEnvelope = { revision: 0, save: null }

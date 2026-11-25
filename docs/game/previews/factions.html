@@ -43,17 +43,20 @@
 </head>
 <body>
 <div class="wrap">
-<nav class="toc"><a href="#top"><b>The Holds and the factions</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-holds">The Holds</a><a class="h2" href="#the-steel-muster">The Steel Muster</a></nav>
+<nav class="toc"><a href="#top"><b>The Holds and the factions</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#the-holds">The Holds</a><a class="h2" href="#talk">Talk</a><a class="h2" href="#the-steel-muster">The Steel Muster</a></nav>
 <main id="top">
 <h1 id="the-holds-and-the-factions">The Holds and the factions</h1>
+<blockquote><p><b>Built behavior.</b> For the planned changes to Palinode, returned lieutenants and Seraine, see the <a href="campaign.html">four-act campaign guide</a> and <a href="../../handoff/four-act-roadmap.md">roadmap</a>.</p></blockquote>
 <blockquote><p><b>Status: 2026-11-12, CY5 (D9).</b> Rules version 2. How heroines are freed, never killed (TC26, WD9), and the first faction's mechanic, the Steel Muster's (WD11). Each world brings at most two new mechanics; the others arrive with their worlds. The world and the cast are the story session's (<a href="../../design/story-brief.md">the story brief</a>); this page holds the rules only.</p></blockquote>
 <h2 id="the-short-answer">The short answer</h2>
-<ul><li><b>A heroine is never killed.</b> She carries a Hold: an <b>Anchor</b>, a <b>Collar</b>, or <b>none</b>.</li><li><b>Freeing her</b> (breaking her Anchor or Collar, or a Jack-Out) takes her off the field and counts as beating her. <b>Rig Break</b> beats her without freeing her.</li><li><b>The Steel Muster</b> fights from cover, reloads after it fires, builds a shared volley it signals a round ahead, and pins arms.</li></ul>
+<ul><li><b>A heroine is never killed.</b> She carries a Hold: an <b>Anchor</b>, a <b>Collar</b>, or <b>none</b>.</li><li><b>Freeing her</b> takes her off the field and counts as beating her. Break her Anchor or Collar, or use Jack-Out.</li><li><b>Rig Break</b> beats her. In a Collar rescue that calls for it, breaking the leader's rig also breaks her Collar.</li><li><b>The Steel Muster</b> fights from cover, reloads after it fires, builds a shared volley it signals a round ahead, and pins arms.</li></ul>
 <h2 id="the-holds">The Holds</h2>
 <p>A heroine unit has <code>hold: "anchor" | "collar" | "none"</code> in her input.</p>
 <div class="scroll"><table><tr><th></th><th>Anchor or Collar</th><th>None</th></tr><tr><td>On her rig</td><td>An extra part with its own HP (30 unless she says), hit only when <b>aimed</b> at or by <b>Tech</b></td><td>Nothing extra</td></tr><tr><td>Freed by</td><td>Breaking it, or a <b>Jack-Out</b></td><td>A <b>Jack-Out</b></td></tr></table></div>
 <ul><li><b>Aiming at the Hold</b> needs her to be able to aim (a Visor with <code>aim</code>, or a Launcher), at −25% hit. Every hit of an aimed strike goes to the Hold. A covering ally takes the strike unaimed: there's no Hold on her to hit.</li><li><b>A landed Stun or Jam</b> also does 10 damage to the Hold.</li><li><b>Jack-Out</b> (2 Charge, adjacent, on a heroine below 30% Core): Wit against Guts.</li><li><b>Freed:</b> she leaves the field (<code>freed</code> cue, so the board swaps her palette back, TC41), counts as beaten for every objective, and <b>all her unbroken parts are salvage</b>.</li><li><b>Broken (Rig Break):</b> beaten, not freed; only her unbroken parts are salvage, and she won't join as a guest.</li></ul>
-<p>The battle's result lists each enemy as <code>freed</code>, <code>broken</code> or <code>standing</code>, with her salvage, so the app can open guests and Files later. <b>Free the leader</b> is lost if the leader is broken instead.</p>
+<p>The battle's result lists each enemy as <code>freed</code>, <code>broken</code> or <code>standing</code>, with her salvage, so the app can open guests and Files later. <b>Free the leader</b> needs a freed leader to win. The encounter states whether Rig Break frees her.</p>
+<h2 id="talk">Talk</h2>
+<p>On encounters with Talk, inspect a target for the contact hint. Move the named ally to an adjacent tile and spend her turn on <b>Talk</b>. Some targets only listen after a hit from that ally. A successful Talk takes the target off the field. Breaking the target's rig can lead to a different outcome. Both carry over after the battle is won and debriefed.</p>
 <h2 id="the-steel-muster">The Steel Muster</h2>
 <p>On when the input lists <code>factions: ["steel-muster"]</code>; its units carry <code>faction: "steel-muster"</code>.</p>
 <pre class="mermaid">flowchart LR

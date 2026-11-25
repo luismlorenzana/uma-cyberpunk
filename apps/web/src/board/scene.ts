@@ -130,7 +130,7 @@ export class BoardScene {
   private device = { width: 1, height: 1, ratio: 1 }
   private css = { width: 1, height: 1 }
   private map: BattleMap | null = null
-  private world: { shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
+  private world: { page: CanvasTexture; shared: Group; parts: Map<string, { group: Group; alpha: number; order: number }>; occluders: Occluder[]; lights: { x: number; y: number; z: number; color: string; radius: number }[] } | null = null
   private readonly figures = new Map<string, Live>()
   private combatArt: LoadedCombatArt | null = null
   private readonly combatEffects = new Map<string, { tile: Tile; sprite: CombatTileEffect }>()
@@ -141,6 +141,8 @@ export class BoardScene {
   private cursor: LineLoop | null = null
   private focus = new Set<string>()
   private look = { x: 0, z: 0 }
+  private scale = 1
+  private overviewHeight = 0
   private drag: { x: number; y: number; lookX: number; lookZ: number; moved: boolean } | null = null
   private raf = 0
   private last = 0
@@ -205,8 +207,9 @@ export class BoardScene {
       occluders.push({ id, z: z + 0.5, box: boxOf([{ x, y, z }, { x: x + 1, y, z }, { x, y: 0, z: z + 1 }, { x: x + 1, y: 0, z: z + 1 }]) })
       parts.set(id, { group, alpha: 1, order: Math.round((z + 1) * 100) })
     }
-    this.world = { shared: split.shared, parts, occluders, lights: geo.lights.map((l) => ({ x: l.at.x, y: l.at.y, z: l.at.z, color: l.color, radius: l.radius })) }
+    this.world = { page, shared: split.shared, parts, occluders, lights: geo.lights.map((l) => ({ x: l.at.x, y: l.at.y, z: l.at.z, color: l.color, radius: l.radius })) }
     if (!same) this.look = { x: map.width / 2, z: map.depth / 2 }
+    if (map.schemaVersion === 2) this.frameMap()
     for (const f of this.figures.values()) this.stand(f)
     this.wake()
   }
@@ -217,6 +220,7 @@ export class BoardScene {
       this.scene.remove(g)
       g.traverse((o) => { const m = o as Mesh; m.geometry?.dispose(); (m.material as MeshBasicMaterial | undefined)?.dispose?.() })
     }
+    this.world.page.dispose()
     this.world = null
   }
 
@@ -226,21 +230,41 @@ export class BoardScene {
     this.css = { width: cssWidth, height: cssHeight }
     this.renderer.setPixelRatio(this.device.ratio)
     this.renderer.setSize(cssWidth, cssHeight, false)
-    Object.assign(this.camera, frustum(this.device.width, this.device.height))
-    this.camera.updateProjectionMatrix()
+    this.frameMap()
     this.effects?.setSize(cssWidth, cssHeight, this.device.ratio)
     this.wake()
+  }
+
+  private frameMap(): void {
+    const map = this.map
+    if (map?.schemaVersion === 2) {
+      const top = Math.max(...map.heights.flatMap(row => Array.from(row, Number))) + FIGURE_HEAD
+      const depth = map.depth * Math.sin(CAMERA_PITCH) + top * Math.cos(CAMERA_PITCH)
+      this.overviewHeight = top / 2
+      this.scale = Math.min(1, this.device.width / (TEXELS_PER_UNIT * (map.width + 2)),
+        this.device.height * 0.76 / (TEXELS_PER_UNIT * depth))
+    } else {
+      this.overviewHeight = 0
+      this.scale = 1
+    }
+    Object.assign(this.camera, this.cameraBounds())
+    this.camera.updateProjectionMatrix()
+  }
+
+  private cameraBounds(): ReturnType<typeof frustum> {
+    return frustum(this.device.width / this.scale, this.device.height / this.scale)
   }
 
   // --- The camera, the pan and taps ----------------------------------------------------------------------------------
 
   get view(): View {
-    return { look: { x: this.look.x, y: 0, z: this.look.z }, width: this.css.width, height: this.css.height, ratio: this.device.ratio }
+    return { look: { x: this.look.x, y: this.overviewHeight, z: this.look.z }, width: this.css.width, height: this.css.height,
+      ratio: this.device.ratio, scale: this.scale }
   }
 
   /** World units a CSS px of drag moves the camera, across and in depth. */
   private perPx(): { x: number; z: number } {
-    const unit = this.device.ratio / TEXELS_PER_UNIT
+    const unit = this.device.ratio / (TEXELS_PER_UNIT * this.scale)
     return { x: unit, z: unit / Math.sin(CAMERA_PITCH) }
   }
 
@@ -304,7 +328,7 @@ export class BoardScene {
     this.removeFigure(spec.id)
     const body = spec.look.kind === 'combat' ? new CombatSpriteActor(spec.look) : spec.look.kind === 'sprite'
       ? new SpriteActor('source' in spec.look ? spec.look.source : standInSet(spec.look.set)) : new Standee(spec.look.face)
-    if (spec.look.kind === 'combat') this.combatArt = spec.look.art
+    if (spec.look.kind === 'combat') this.combatArt ??= spec.look.art
     const { group, wedge } = baseRing(spec.hue)
     this.scene.add(body.group, body.shadowMesh, group)
     const f: Live = { spec, x: spec.tile[0] + 0.5, z: spec.tile[1] + 0.5, facing: spec.facing, path: [], speed: 1, done: null, body, base: group, wedge, down: false }
@@ -392,15 +416,22 @@ export class BoardScene {
     return this.stillCombat ? 0 : duration
   }
 
-  placeBarrier(id: string, tile: Tile, speed?: number): void {
-    if (!this.combatArt || this.combatEffects.has(id)) return
-    // The battle records position and HP. The same canonical prop faces the camera after resume.
-    this.addCombatEffect(id, tile, new CombatTileEffect(this.combatArt, this.combatArt.effects.barrier.S, true, speed ?? 1, speed === undefined || this.stillCombat))
+  private effectArt(actor?: string): LoadedCombatArt | null {
+    const body = actor ? this.figures.get(actor)?.body : undefined
+    return body instanceof CombatSpriteActor ? body.look.art : this.combatArt
   }
 
-  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number): void {
-    if (!this.combatArt) return
-    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(this.combatArt, this.combatArt.effects.recipient[effect], false, speed, this.stillCombat))
+  placeBarrier(id: string, tile: Tile, speed?: number, actor?: string): void {
+    const art = this.effectArt(actor)
+    if (!art || this.combatEffects.has(id)) return
+    // The battle records position and HP. The same canonical prop faces the camera after resume.
+    this.addCombatEffect(id, tile, new CombatTileEffect(art, art.effects.barrier.S, true, speed ?? 1, speed === undefined || this.stillCombat))
+  }
+
+  combatRepair(effect: keyof CombatEffects['recipient'], tile: Tile, speed: number, recipient: string): void {
+    const art = this.effectArt(recipient)
+    if (!art) return
+    this.addCombatEffect(`repair:${this.nextEffect++}`, tile, new CombatTileEffect(art, art.effects.recipient[effect], false, speed, this.stillCombat))
   }
 
   private addCombatEffect(id: string, tile: Tile, sprite: CombatTileEffect): void {
@@ -546,7 +577,13 @@ export class BoardScene {
   get effectsSettings() { return this.saver ? null : this.effects?.settings ?? null }
   private effectsOn(): Effects | null {
     if (this.saver) return null
-    if (!this.effects) { this.effects = new Effects(this.renderer, this.scene, this.camera, BOARD_EFFECTS); this.effects.setSize(this.css.width, this.css.height, this.device.ratio) }
+    if (!this.effects) {
+      const effects = this.map?.schemaVersion === 2
+        ? { bloom: { threshold: 0.58, strength: 0.18, radius: 0.4 }, tiltShift: false as const }
+        : BOARD_EFFECTS
+      this.effects = new Effects(this.renderer, this.scene, this.camera, effects)
+      this.effects.setSize(this.css.width, this.css.height, this.device.ratio)
+    }
     return this.effects
   }
 
@@ -636,14 +673,14 @@ export class BoardScene {
   private draw(now: number): void {
     const look = this.view.look, o = cameraOffset()
     const eye = new Vector3(look.x, look.y + o.y, look.z + o.z)
-    const per = TEXELS_PER_UNIT
+    const per = TEXELS_PER_UNIT * this.scale
     const snapped = RIGHT.clone().multiplyScalar(snapToGrid(eye.dot(RIGHT), 0, per)).add(UP.clone().multiplyScalar(snapToGrid(eye.dot(UP), 0, per)))
       .add(FORWARD.clone().multiplyScalar(eye.dot(FORWARD)))
     this.camera.position.copy(snapped)
     this.camera.quaternion.setFromAxisAngle(RIGHT, -CAMERA_PITCH)
     this.camera.updateMatrixWorld()
     this.placeLamps(look)
-    const f = frustum(this.device.width, this.device.height)
+    const f = this.cameraBounds()
     const base: [number, number, number] = [new Color(this.grade.tint).r, new Color(this.grade.tint).g, new Color(this.grade.tint).b]
     const lights = this.lamps.filter((l) => l.intensity > 0).map((l) => ({ x: l.position.x, y: l.position.y, z: l.position.z, color: [l.color.r, l.color.g, l.color.b] as [number, number, number], radius: l.distance, strength: l.intensity / 9 }))
     const worldPerCss = (f.top - f.bottom) / this.css.height
@@ -705,5 +742,9 @@ export class BoardScene {
     this.setCursor(null)
     this.dropWorld()
     this.renderer.dispose()
+    // The renderer can share a connected canvas with a new mount. A removed canvas has no remaining board owner.
+    queueMicrotask(() => {
+      if (!this.renderer.domElement.isConnected) this.renderer.forceContextLoss()
+    })
   }
 }

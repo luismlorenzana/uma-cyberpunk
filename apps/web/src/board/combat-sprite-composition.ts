@@ -31,7 +31,8 @@ export interface ComposedRig {
 
 export function compositionFor(bundle: SpriteBundle, unit: UnitInput): ComposedRig | undefined {
   const rig = unit.frozenRig
-  if (!bundle.composition || !rig || unit.ref?.kind !== 'uma' || unit.ref.id !== String(bundle.outfit)) return
+  const kind = typeof bundle.outfit === 'number' ? 'uma' : 'heroine'
+  if (!bundle.composition || !rig || unit.ref?.kind !== kind || unit.ref.id !== String(bundle.outfit)) return
   if (Object.keys(RIG_SLOTS).some(key => {
     const id = rig[key as keyof Rig]
     return id !== null && !visualOf(id)
@@ -47,13 +48,65 @@ export function compositionFor(bundle: SpriteBundle, unit: UnitInput): ComposedR
 }
 
 export const reflectedFacing: Record<Dir, Dir> = { S: 'S', N: 'N', W: 'E', E: 'W' }
-export type CompositionClip = { clip: Clip; track: Track; flip: boolean; twoGrip: boolean; authored?: true }
+export type CompositionClip = { clip: Clip; track: Track; flip: boolean; twoGrip: boolean; authored?: true; native?: true }
+
+// A reverse donor opts this bundle into native handedness and per-slot prop lanes.
+export const hasNativeHands = (bundle: SpriteBundle): boolean => Object.hasOwn(bundle.motions, 'mixed-reverse')
+export const isBackMotion = (name: string): boolean => name === 'attack-back' || name.startsWith('back-')
+
+const ranged = (hand: Visual | undefined): boolean => hand === 'pistol' || hand === 'rifle'
+const melee = (hand: Visual | undefined): boolean => hand === 'blade' || hand === 'gauntlet' || hand === 'greatblade'
+
+function nativeClip(bundle: SpriteBundle, rig: ComposedRig, facing: Dir, name: string): CompositionClip | undefined {
+  const sources = bundle.composition!
+  const body = bundle.motions[sources.body]![facing]
+  const reverse = bundle.motions['mixed-reverse']![facing]
+  const shield = bundle.motions.shield?.[facing]
+  const armedSide = name.match(/^attack-(left|right)$/)?.[1] as 'left' | 'right' | undefined
+  const side = name.match(/-one-(left|right)$/)?.[1]
+  const disabled = name.endsWith('-both-arms-broken')
+  const action = name.replace(/-one-(left|right)$|-both-arms-broken$/, '')
+  const twoGrip = rig.twoHand !== undefined
+  let track: Track = body
+  let key = name
+  let clip: Clip | undefined
+
+  if (twoGrip) {
+    track = bundle.motions[rig[rig.twoHand!] === 'greatblade' ? sources.blade : sources.rifle]![facing]
+    if (armedSide) key = 'attack'
+    if (name === 'dash-walk-degraded') key = 'walk-degraded'
+    clip = track.clips[key]
+    if (!clip && action === 'dash-walk' && side) clip = track.clips[`walk-one-${side}`]
+    if (!clip && (isBackMotion(action) || action === 'dash-walk')) {
+      const carry = track.clips[disabled ? 'idle-both-arms-broken' : side ? `idle-one-${side}` : 'idle']
+      const source = track.clips[action] ?? (action === 'attack-back' ? body.clips[action] : undefined)
+      const frame = carry?.frames[0]?.frame
+      if (frame && source) clip = { ...source, frames: source.frames.map(({ ms }) => ({ frame, ms })) }
+    }
+  } else {
+    const guarding = /^(guard|cover)(-right)?$/.test(name)
+    const wantsReverse = armedSide ? armedSide === 'right' ? ranged(rig.right) : melee(rig.left)
+      : (ranged(rig.right) && !ranged(rig.left)) || (melee(rig.left) && !melee(rig.right))
+    if (rig.left === 'shield' && shield && (guarding || (!wantsReverse && name !== 'attack-back'))) {
+      track = shield
+      if (armedSide === 'right') key = 'attack'
+    } else if (wantsReverse) track = reverse
+    if (guarding) key = name.startsWith('guard') ? 'guard' : 'cover'
+    if (name === 'dash-walk-degraded') key = 'walk-degraded'
+    clip = track.clips[key]
+  }
+  return clip && { track, clip, flip: false, twoGrip, authored: true, native: true }
+}
 
 const staged = (frame: string, times: number[], cue?: string): Clip => ({
   frames: times.map(ms => ({ frame, ms })), loop: false, events: cue ? [{ frame: 1, cue }] : [],
 })
 
 export function composedClip(bundle: SpriteBundle, rig: ComposedRig, facing: Dir, name: string): CompositionClip | undefined {
+  if (hasNativeHands(bundle)) {
+    const native = nativeClip(bundle, rig, facing, name)
+    if (native) return native
+  }
   const sources = bundle.composition!
   const degraded = name.endsWith('-degraded')
   const action = degraded ? name.slice(0, -'-degraded'.length) : name

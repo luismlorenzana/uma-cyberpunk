@@ -7,17 +7,18 @@ import { gainCharge, harm, spendCharge, v2 } from './harm'
 import { checkTurn } from './legal'
 import { BattleInputError, inBounds, isSolid, parseMap } from './map'
 import { fireVolley, startOwnTurn } from './muster'
-import { checkLoadout, maxHpOf } from './rig'
+import { armed, checkLoadout, maxHpOf, MOUNTS } from './rig'
 import { hash32 } from './rng'
-import { DIRS } from './sight'
+import { DIRS, inReach, sameTile } from './sight'
 import { benchError, callBench, mend, placeBarrier, reboot, useItem } from './support'
 import { outcomes, resolveHack, resolveTech } from './tech'
-import { expire, keyOf, lightsOut, liveTiles, newField } from './terrain'
-import { advanceClocks, nextTurn, roundAt } from './timeline'
+import { checkTalkContacts, resolveTalk } from './talk'
+import { boardOf, expire, keyOf, lightsOut, liveTiles, newField } from './terrain'
+import { advanceClocks, inputOf, nextTurn, roundAt } from './timeline'
 import { TUNING } from './tuning'
 import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, DuoAction, FieldState, Objective, Role, UnitState } from './types'
 import { cloneV3, DUO_TECHS, duoError, duoKey, giveOrder, landStrike, orderError, partnerOf, startV3, v3 } from './v3'
-import { SUPPORTED_VERSIONS } from './version'
+import { EXPEDITION_RULES_VERSION, EXPEDITION_SQUAD_SIZE, SUPPORTED_VERSIONS } from './version'
 
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,63}$/
 const isBand = (v: unknown) => v === 1 || v === 2 || v === 3 || v === 4 || v === 5
@@ -27,6 +28,8 @@ function checkInput(input: BattleInput): void {
   if (!SUPPORTED_VERSIONS.includes(input.rulesVersion)) throw new BattleInputError('rulesVersion', `unknown rules version ${String(input.rulesVersion)}`)
   if (typeof input.seed !== 'string' || input.seed.length === 0 || input.seed.length > 64) throw new BattleInputError('seed', 'expected a string of 1–64 characters')
   const map = parseMap(input.map)
+  const expedition = input.rulesVersion === EXPEDITION_RULES_VERSION
+  if (expedition !== (map.schemaVersion === 2)) throw new BattleInputError('map.schemaVersion', 'an expedition map requires expedition rules and vice versa')
   const later = input.rulesVersion >= 2
   const needs2 = (path: string, present: unknown) => { if (present !== undefined && !later) throw new BattleInputError(path, 'needs rules version 2') }
   needs2('map.props', input.map.props)
@@ -54,9 +57,18 @@ function checkInput(input: BattleInput): void {
     if (u.holdHp !== undefined && !(Number.isSafeInteger(u.holdHp) && u.holdHp >= 1 && (u.hold === 'anchor' || u.hold === 'collar'))) throw new BattleInputError(`${path}.holdHp`, 'expected a positive integer on an Anchor or a Collar')
     if (u.faction !== undefined && u.faction !== 'steel-muster') throw new BattleInputError(`${path}.faction`, 'unknown faction')
     checkLoadout(u, path, input.rulesVersion)
+    if (u.signature !== undefined) {
+      const s = u.signature
+      if (input.rulesVersion < 6 || !s || typeof s.id !== 'string' || !SAFE_ID.test(s.id) || typeof s.label !== 'string' || !s.label.trim() || s.label.length > 64
+        || !MOUNTS.includes(s.mount) || !Number.isInteger(s.charge) || s.charge < 1 || s.charge > u.chargeCap
+        || !Number.isInteger(s.power) || s.power < 1 || s.power > 12) throw new BattleInputError(path + '.signature', 'invalid mounted signature')
+    }
   })
   const squad = input.units.filter((u) => u.side === 'squad').length, enemies = input.units.length - squad
-  if (squad < 1 || squad > TUNING.map.squad) throw new BattleInputError('units', `expected 1–${TUNING.map.squad} squad units`)
+  if (expedition) {
+    if (squad !== EXPEDITION_SQUAD_SIZE) throw new BattleInputError('units', `expected ${EXPEDITION_SQUAD_SIZE} expedition units`)
+    if (input.bench?.length) throw new BattleInputError('bench', 'the full expedition deploys')
+  } else if (squad < 1 || squad > TUNING.map.squad) throw new BattleInputError('units', `expected 1–${TUNING.map.squad} squad units`)
   if (enemies < 1 || enemies > TUNING.map.maxEnemies) throw new BattleInputError('units', `expected 1–${TUNING.map.maxEnemies} enemies`)
   if (input.items) {
     let total = 0
@@ -76,6 +88,7 @@ function checkInput(input: BattleInput): void {
     }
   }
   checkObjective(input, map)
+  checkTalkContacts(input)
 }
 
 const ORDER_KINDS = ['sure', 'hold', 'reboot', 'resonance', 'strike', 'sweep', 'barrier', 'drone', 'reinforce']
@@ -106,6 +119,13 @@ function checkV3(input: BattleInput): void {
 
 function checkObjective(input: BattleInput, map: BattleInput['map']): void {
   const o = input.objective
+  if (input.goalRequired !== undefined && (input.goalRequired !== true || input.rulesVersion < 6 || (o.kind !== 'reach' && o.kind !== 'hack' && o.kind !== 'hold'))) {
+    throw new BattleInputError('goalRequired', 'expected a reach, hold or hack objective on rules version 6 or later')
+  }
+  if (input.preserve !== undefined && (input.rulesVersion < EXPEDITION_RULES_VERSION || o.kind !== 'reach'
+    || !input.units.some(unit => unit.id === input.preserve && unit.side === 'enemy'))) {
+    throw new BattleInputError('preserve', 'expected a living enemy in an expedition reach objective')
+  }
   const tileOk = (path: string, [x, y]: readonly [number, number]) => { if (!inBounds(map, x, y) || isSolid(map, x, y)) throw new BattleInputError(path, 'expected a standing tile on the map') }
   if (['escort', 'hack', 'freeLeader'].includes(o.kind) && input.rulesVersion < 2) throw new BattleInputError('objective.kind', 'needs rules version 2')
   if (o.kind === 'reach') tileOk('objective.tile', o.tile)
@@ -115,6 +135,9 @@ function checkObjective(input: BattleInput, map: BattleInput['map']): void {
     const leaders = input.units.filter((u) => u.side === 'enemy' && u.leader)
     if (leaders.length !== 1) throw new BattleInputError('objective', 'expected exactly one enemy leader')
     if (o.kind === 'freeLeader' && leaders[0]!.hold === undefined) throw new BattleInputError('objective', 'the leader to free must be a heroine with a Hold')
+    if (o.kind === 'freeLeader' && o.collar !== undefined
+      && (input.rulesVersion < 5 || o.collar !== 'rigBreak' || leaders[0]!.hold !== 'collar'))
+      throw new BattleInputError('objective.collar', 'Rig Break rescue needs a Collar leader and rules version 5')
   } else if (o.kind === 'escort') {
     if (!input.units.some((u) => u.id === o.unit && u.side === 'squad')) throw new BattleInputError('objective.unit', 'expected a squad unit')
     tileOk('objective.tile', o.tile)
@@ -143,6 +166,7 @@ export function objectiveProgress(state: BattleState): { value: number; of: numb
 
 /** Rules version 2's ways to fail: the escort is out, or the leader to free was broken instead. */
 function failed(state: BattleState): boolean {
+  if (state.input.preserve && unitById(state, state.input.preserve).status !== 'active') return true
   const o = state.input.objective
   if (o.kind === 'escort') return unitById(state, o.unit).status !== 'active'
   if (o.kind === 'freeLeader') {
@@ -158,7 +182,8 @@ function settle(state: BattleState, cues: Cue[]): boolean {
   const progress = objectiveProgress(state)
   const enemiesBeaten = state.units.filter((u) => u.side === 'enemy').every(beaten)
   const squadBeaten = state.units.filter((u) => u.side === 'squad').every(beaten)
-  const winner = failed(state) ? 'enemy' : progress.value >= progress.of || enemiesBeaten ? 'squad' : squadBeaten ? 'enemy' : null
+  const achieved = progress.value >= progress.of || (enemiesBeaten && !state.input.goalRequired)
+  const winner = failed(state) ? 'enemy' : achieved ? 'squad' : squadBeaten ? 'enemy' : null
   if (!winner) return false
   state.result = { winner, reason: winner === 'squad' ? 'objective' : 'defeated', ...(v2(state) ? { enemies: outcomes(state) } : {}) }
   state.active = null
@@ -168,6 +193,12 @@ function settle(state: BattleState, cues: Cue[]): boolean {
 
 /** Runs the clock to the next turn: timers run out, a signalled volley lands, down units extract on theirs, stunned
  * units lose theirs, idle turrets sit theirs out, and a held objective may be met on the way. */
+function cancelSignature(unit: UnitState, cues: Cue[]) {
+  if (!unit.signatureMark) return
+  delete unit.signatureMark
+  cues.push({ kind: 'signatureCanceled', unit: unit.id })
+}
+
 function startNextTurn(state: BattleState, cues: Cue[]): void {
   for (;;) {
     if (settle(state, cues)) return
@@ -187,6 +218,7 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
     const u = unitById(state, next.id)
     if (u.status !== 'active' && u.status !== 'down') continue
     if (u.status === 'down') {
+      cancelSignature(u, cues)
       // Not rebooted by the end of her next turn: she extracts (TC25).
       u.status = 'out'
       u.clock = 0
@@ -197,6 +229,7 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
     const idle = state.input.units.find((i) => i.id === u.id)!.fixed && lightsOut(state)
     const spent = !!state.v3?.spent.includes(u.id)
     if (u.stunned || idle || spent) {
+      cancelSignature(u, cues)
       cues.push({ kind: 'skipped', unit: u.id, why: spent ? 'duo' : u.stunned ? 'stunned' : 'idle' })
       if (spent) state.v3!.spent = state.v3!.spent.filter((x) => x !== u.id)
       delete u.stunned
@@ -211,6 +244,26 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
     const from = u.charge
     u.charge = Math.min(state.input.units.find((i) => i.id === u.id)!.chargeCap, u.charge + TUNING.charge.perTurn)
     if (u.charge !== from) cues.push({ kind: 'charge', unit: u.id, from, to: u.charge, why: 'turn' })
+    const mark = u.signatureMark
+    if (mark) {
+      const target = unitById(state, mark.target)
+      const input = inputOf(state, u.id), signature = input.signature!
+      const arm = armed(input, u, signature.mount)
+      if (!arm || target.status !== 'active' || !sameTile(tileOf(target), mark.tile)
+        || !inReach(boardOf(state), arm.weapon, tileOf(u), mark.tile)) cancelSignature(u, cues)
+      else if (target.turns > mark.targetTurn) {
+        const before = objectiveProgress(state)
+        delete u.signatureMark
+        resolveAttack(state, u.id, signature.mount, target.id, undefined, cues, signature)
+        const after = objectiveProgress(state)
+        if (after.value !== before.value) cues.push({ kind: 'objective', objective: state.input.objective.kind, value: after.value, of: after.of })
+        u.clock = 0
+        u.turns += 1
+        state.turn += 1
+        state.active = null
+        continue
+      }
+    }
     return
   }
 }
@@ -322,7 +375,20 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
   const reached = (o === 'reach' || o === 'escort') && objectiveProgress(next).value === 1
   if (!reached && u.status === 'active') {
     const act = action.act
-    if (act.kind === 'attack') resolveAttack(next, u.id, act.with, act.target, act.aim, cues)
+    if (act.kind === 'attack') {
+      const input = inputOf(next, u.id), signature = act.signature ? input.signature : undefined
+      if (!signature) resolveAttack(next, u.id, act.with, act.target, act.aim, cues)
+      else if (armed(input, u, signature.mount)) {
+        const target = unitById(next, act.target)
+        spendCharge(u, signature.charge, 'signature', cues)
+        u.signatureUsed = true
+        if (u.side === 'squad') resolveAttack(next, u.id, signature.mount, act.target, undefined, cues, signature)
+        else {
+          u.signatureMark = { target: target.id, tile: tileOf(target), targetTurn: target.turns }
+          cues.push({ kind: 'signatureWarning', unit: u.id, tile: u.signatureMark.tile, label: signature.label })
+        }
+      }
+    }
     else if (act.kind === 'wait') {
       const from = u.charge
       u.charge = Math.min(next.input.units.find((i) => i.id === u.id)!.chargeCap, u.charge + TUNING.charge.wait)
@@ -335,6 +401,7 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     else if (act.kind === 'mend') mend(next, u.id, act.target, act.part, cues)
     else if (act.kind === 'reboot') reboot(next, u.id, act.target, cues)
     else if (act.kind === 'item') useItem(next, u.id, act, cues)
+    else if (act.kind === 'talk') resolveTalk(next, u.id, act.target, cues)
     if (u.status === 'active') {
       u.facing = action.face
       cues.push({ kind: 'faced', unit: u.id, facing: action.face })

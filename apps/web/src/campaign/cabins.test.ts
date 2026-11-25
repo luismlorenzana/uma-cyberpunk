@@ -130,7 +130,7 @@ describe('the authored campaign cabin evening', () => {
     const shortage = JSON.stringify(s.campaignSupply)
     s = finish(s, book)
     expect(JSON.stringify(s.campaignSupply)).toBe(shortage)
-    const { commandCinema: _cinema1, management: _management, cabinVisits: _, ...old } = save
+    const { expedition: _expedition, commandCinema: _cinema1, management: _management, cabinVisits: _, ...old } = save
     const migrated = parseSave({ ...old, version: 16, campaignDay: { day: 4, pending: { kind: 'morning', companion: officer, scene: 'legacy-morning' } } })
     expect(migrated.cabinVisits).toEqual({})
     expect(migrated.account.updatedAt).toBe(now)

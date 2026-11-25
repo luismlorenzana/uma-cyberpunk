@@ -3,7 +3,7 @@ import { newMember, newSave, openRooms, parsePack, parseSave, STAND_IN_FILES, ty
 import { describe, expect, it } from 'vitest'
 import {
   afterMission, applyStep, atNode, cantDeploy, chapterOf, closeResults, defaultSquad, deploy, ensureWorld, finishBattle, finishMission, lockedMembers, markSeen,
-  reachableWorlds, recordAction, retry, rewards, startMission, toDeploy, travel, waiting,
+  reachableWorlds, recordAction, retry, rewards, setSquad, startMission, toDeploy, travel, waiting,
 } from './director'
 
 const pack = parsePack(STAND_IN_FILES).pack as StoryPack
@@ -51,6 +51,17 @@ describe('the director', () => {
     const next = afterMission(pack, markSeen(markSeen(save, 'sw1-ch1-s1'), 'sw1-ch1-s2'), 'sw1', 'sw1-ch1-m1')
     expect(next.kind === 'scene' && next.scene.id).toBe('sw1-ch1-s3')
     expect(roundTrip(finishMission(save)).mission).toBeNull()
+  })
+  it('blocks a restricted guest in a stale squad and in a direct battle input', () => {
+    const guest = { ...newMember(9000002), heroine: 'adviser', expeditionOnly: true as const }
+    const save = toDeploy(startMission({ ...newSave('u', T0), crew: [newMember(9000001), guest] }, chapter, mission))
+    const stale = roundTrip({ ...save, mission: { ...save.mission!, squad: [9000001, guest.outfit] } })
+    const blocked = deploy(stale, {})
+    expect(blocked.mission).toMatchObject({ step: 'deploy', squad: [9000001], battle: null })
+    expect(setSquad(save, [9000001, guest.outfit]).mission?.squad).toEqual([9000001])
+    const named = { units: [{ side: 'squad', ref: { kind: 'heroine', id: guest.heroine } }] }
+    expect(deploy(save, named)).toBe(save)
+    expect(deploy(save, { units: [{ ...named.units[0], side: 'enemy' }] }).mission?.step).toBe('battle')
   })
   it('a loss ends the mission without counting it', () => {
     const save = closeResults(finishBattle(deploy(startMission(newSave('u', T0), chapter, mission), {}), false))

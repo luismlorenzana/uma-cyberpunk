@@ -67,6 +67,10 @@ export function sectorVisit(book: CampaignBook, save: Save, sector: CampaignSect
 
 export function campaignSupport(book: CampaignBook, save: Pick<Save, 'story'>) {
   const support = campaignHomeSupport(book.pairs, save.story)
+  for (const ally of book.allies ?? []) if (ally.home && save.story.flags.includes(ally.home.flag)) {
+    support.ashore.add(ally.member)
+    support.ashore.add(ally.partner)
+  }
   for (const sector of book.sectors ?? []) {
     const assignment = sectorAssignment(book, save.story, sector)
     if (assignment === 'aboard') continue

@@ -1,7 +1,7 @@
 // Fetch client with a pluggable token provider (copied from uma-rpg at 30a322a). The API is same-origin: /api is proxied
 // by Vite in dev and rewritten to Cloud Run by Firebase Hosting in production.
 import { parseSaveEnvelope, type Save, type SaveEnvelope } from '@cyber/domain'
-import { inCampaign } from '../app/campaign'
+import { saveScope } from '../app/campaign'
 
 let tokenProvider: () => Promise<string | null> = async () => null
 export function setTokenProvider(fn: () => Promise<string | null>): void {
@@ -39,7 +39,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   return body as T
 }
 
-const savePath = inCampaign ? '/api/campaign/save' : '/api/save'
+const savePath = { legacy: '/api/save', current: '/api/campaign/save', pilot: '/api/campaign/pilot/save', 'four-act': '/api/campaign/four-act/save' }[saveScope]
 export const saveApi = {
   load: async (): Promise<SaveEnvelope> => parseSaveEnvelope(await request<unknown>(savePath)),
   put: async (baseRevision: number, save: Save): Promise<SaveEnvelope> =>

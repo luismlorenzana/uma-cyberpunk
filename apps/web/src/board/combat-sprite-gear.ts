@@ -1,6 +1,7 @@
 import type { Dir, PartHp } from '@cyber/battle'
 import type { Frame, Layer, Point } from './combat-sprite-format'
 import type { ComposedRig, CompositionClip } from './combat-sprite-composition'
+import { visualOf } from './combat-sprite-composition'
 
 type Hand = 'left' | 'right'
 type PaintLayer = (layer: Layer) => void
@@ -72,17 +73,19 @@ function energy(ctx: CanvasRenderingContext2D, at: Point, x: number, y: number, 
 export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, selection: CompositionClip, options: {
   rig: ComposedRig; facing: Dir; hp: PartHp; action: string; index: number; foot: Point
 }, draw: PaintLayer): Frame['anchors'] {
-  const { rig, facing, hp, action, index, foot } = options
-  const { flip, twoGrip } = selection
+  const { rig, facing, hp, index, foot } = options
+  const { flip, twoGrip, native } = selection
+  const action = options.action.replace(/(?:-one-(?:left|right)|-both-arms-broken)$/, '')
   const hands = (side: Hand) => flip ? other(side) : side
   const sided = facing === 'W' ? -1 : facing === 'E' ? 1 : 0
   const dir = flip ? -sided : sided
   const anchors = { ...row.anchors }
   const phase = [0, .42, .82, 1][index] ?? 0
   const knee = selection.authored ? 0 : action === 'down' ? 1 : action === 'rig-break' ? phase : action === 'reboot-rise' ? 1 - phase : 0
-  const recoil = action === 'hurt' ? [0, -4, 2, 0][index] ?? 0 : 0
-  const dash = action === 'back-dash' || action === 'dash-walk'
-  const active = action === 'dash-walk' || selection.clip.events.some(event => event.frame === index && event.cue === 'emitter')
+  const recoil = !native && action === 'hurt' ? [0, -4, 2, 0][index] ?? 0 : 0
+  const dashWalk = action.startsWith('dash-walk')
+  const dash = action === 'back-dash' || dashWalk
+  const active = dashWalk || selection.clip.events.some(event => event.frame === index && event.cue === 'emitter')
   const shot = selection.clip.events.some(event => event.frame === index && (event.cue === 'shot-pulse' || event.cue === 'impact'))
   const mount = row.anchors['back-mount'] ?? [foot[0], foot[1] - 85]
   let emitter: Point = mount
@@ -94,12 +97,21 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
 
   // Draw replacements in the original prop lanes so fingers, helmet and shoulders keep their occlusion.
   let backDrawn = false
+  let backEffectDrawn = false
   const handDrawn = new Set<Hand>()
   for (const layer of row.layers) {
     const when = layer.when
     if (layer.effect && when) {
       if (when.slot === 'back') {
-        if (rig.back === 'launcher') draw(layer)
+        if (native ? visualOf(when.part) === rig.back && (active || shot) : rig.back === 'launcher') {
+          draw(layer)
+          backEffectDrawn = true
+        }
+      } else if (native) {
+        const hand = when.slot === 'leftHand' ? 'left' : 'right'
+        const grip = options.action.endsWith('-one-left') ? 'left' : options.action.endsWith('-one-right') ? 'right' : hand
+        const gear = twoGrip ? rig[rig.twoHand!] : rig[hand]
+        if (shot && hp[armSlot[grip]] > 0 && gear === visualOf(when.part)) draw(layer)
       } else {
         const source = when.slot === 'leftHand' ? 'left' : 'right'
         const hand = hands(source)
@@ -116,9 +128,13 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
       continue
     }
     if (when?.slot === 'back') {
+      if (native && visualOf(when.part) !== rig.back) continue
       if (when.part === 'back-missiles' && rig.back === 'launcher') {
         draw(layer)
         emitter = row.anchors['pod-muzzle'] ?? mount
+      } else if (native) {
+        draw(layer)
+        emitter = row.anchors[`back-${rig.back}-emitter`] ?? row.anchors['back-emitter'] ?? mount
       } else if (!backDrawn && rig.back) emitter = pack(ctx, mount, rig.back, flip && sided ? (dir < 0 ? 'W' : 'E') : facing)
       backDrawn = true
       continue
@@ -133,11 +149,11 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
       const grip = row.anchors[side + '-grip'] ?? mount
       handDrawn.add(hand)
       ctx.save()
-      if (damaged) {
+      if (damaged && !(native && options.action.endsWith('-damaged'))) {
         ctx.filter = 'saturate(.35) brightness(.68)'
         ctx.translate(0, 7)
       }
-      if ((gear === 'blade' && side === 'right') || (gear === 'pistol' && side === 'left')) draw(layer)
+      if (native ? gear === visualOf(when.part) : (gear === 'blade' && side === 'right') || (gear === 'pistol' && side === 'left')) draw(layer)
       else if (when.part === 'hand-blade' && gear === 'shield') {
         const width = dir ? 16 : 25
         attachment(ctx, grip, [[-width/2,-15],[0,-20],[width/2,-15],[width/2,12],[0,21],[-width/2,12]], '#edbb61',
@@ -156,8 +172,12 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
     }
     const limb = layer.limb
     const affected = limb === 'leftArm' || limb === 'rightArm' ? armSlot[hands(limb === 'leftArm' ? 'left' : 'right')] : limb
+    const bakedDamage = native && (options.action.endsWith('-damaged') || options.action.endsWith('-both-arms-broken') && affected !== 'legs'
+      || affected === 'legs' && action.endsWith('-degraded')
+      || affected === 'leftArm' && options.action.endsWith('-one-right')
+      || affected === 'rightArm' && options.action.endsWith('-one-left'))
     ctx.save()
-    if (affected && hp[affected] <= 0) {
+    if (affected && hp[affected] <= 0 && !bakedDamage) {
       ctx.filter = 'saturate(.35) brightness(.63)'
       if (affected !== 'legs') ctx.translate(0, 7)
       else if (action.startsWith('walk')) ctx.translate(index % 4 < 2 ? 1 : -1, 0)
@@ -166,7 +186,7 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
     ctx.restore()
     // Legacy two-grip cels combine the feet with the torso. Keep their pose and apply the same
     // damage finish below the knee until the authoring source supplies independent greave layers.
-    if (twoGrip && !affected && hp.legs <= 0) {
+    if (!native && twoGrip && !affected && hp.legs <= 0) {
       ctx.save()
       ctx.beginPath()
       ctx.rect(0, foot[1] - 29, 2 * foot[0], 34)
@@ -176,12 +196,12 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
       ctx.restore()
     }
   }
-  if (!twoGrip && selection.authored && (action === 'down' || action === 'rig-break' || action === 'reboot-rise')) {
+  if ((!twoGrip && selection.authored && (action === 'down' || action === 'rig-break' || action === 'reboot-rise')) || native) {
     // Collapse and rise cels use the actual bent legs and lowered arms from the recovery rig.
     // Keep each mounted prop at its surviving grip or retention point throughout the transition.
     for (const hand of ['left', 'right'] as const) {
       const grip = row.anchors[hand + '-grip'], gear = rig[hand]
-      if (!grip || !gear || handDrawn.has(hand)) continue
+      if (!grip || !gear || handDrawn.has(hand) || native && twoGrip && hand === rig.twoHand) continue
       const x = grip[0], y = grip[1] + (hp[armSlot[hand]] <= 0 ? 6 : 0)
       const length = gear === 'shield' ? 14 : gear === 'blade' || gear === 'greatblade' ? 16 : 6
       attachment(ctx, [x, y], [[-5, 4],[-5,-length],[1,-length-3],[5,-length],[6,5]],
@@ -189,10 +209,10 @@ export function paintComposition(ctx: CanvasRenderingContext2D, row: Frame, sele
     }
   }
   if (!backDrawn && rig.back) emitter = pack(ctx, mount, rig.back, facing)
-  if (active) {
+  if (active && !backEffectDrawn) {
     const color = action === 'back-med' ? '#7cf8af' : action === 'back-tech' ? '#65e3ff' : dash ? '#ff9851' : '#fdc960'
     energy(ctx, emitter, dash ? -dir * 16 : dir * 9, dash ? 20 + index % 4 : -12, color)
-  } else if (action === 'attack-back' && shot && (rig.back !== 'launcher' || twoGrip)) {
+  } else if (action === 'attack-back' && shot && !backEffectDrawn && (native || rig.back !== 'launcher' || twoGrip)) {
     energy(ctx, emitter, dir * 17, dir ? -3 : -16, '#fca152')
   }
   ctx.restore()

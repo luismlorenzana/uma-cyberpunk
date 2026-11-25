@@ -1,7 +1,7 @@
 // Operations and standing through the save (CY18, TC70, TC71): what Comms offers on the worlds visited, sending a squad
 // and recalling it, its return on a watch with a deterministic outcome and a report, each faction's standing as it
 // stands now (the story's start, the moves, heroines freed), and the readiness total. Pure (D31).
-import { levelOf, STRAIN_REST } from './crew'
+import { canTakeOrdinaryAssignment, levelOf, STRAIN_REST } from './crew'
 import {
   clampStanding, genericOperations, outcomeOf, outcomePay, readinessOf, squadPower, SQUAD_TUNING, type Operation, type OperationRun, type Outcome, type Squad,
 } from './squads'
@@ -84,6 +84,7 @@ export function powerOf(save: Save, squad: Squad): number {
 
 /** Why a squad can't go now, or null: already away, a member resting (Strain 3) or in the mission under way. */
 export function sendProblem(save: Save, squad: Squad): string | null {
+  if (squad.members.some(outfit => !canTakeOrdinaryAssignment(save.crew.find(member => member.outfit === outfit)))) return 'A squad member cannot deploy'
   if (save.operations.some((r) => r.squad === squad.id)) return `${squad.name} is already away`
   if (save.operations.length >= SQUAD_TUNING.maxSquads) return 'Every squad is away'
   const busy = squad.members.find((o) => save.mission?.squad.includes(o))

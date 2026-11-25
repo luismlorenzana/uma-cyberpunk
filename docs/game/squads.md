@@ -1,5 +1,7 @@
 # Squads, operations, standing and readiness
 
+> **Built behavior.** For the planned changes to the expedition roster and temporary assignments, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY18 (D31).** The crew forms named squads that grow cohesion by fighting together. A squad not
 > deployed runs an operation and comes back after its watches with a deterministic outcome. Each faction has a standing
 > with the ship, and a finale measures the ship's readiness: each unmet need makes its battle harder, never anyone lost.

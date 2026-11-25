@@ -1,5 +1,7 @@
 # Selden crew evenings and workshop art
 
+> **Earlier release brief.** Reuse approved sources in the corresponding [four-act asset slot](../campaign-art-delivery.md). Current scene and encounter needs come from that release register.
+
 Use the existing character and environment guides and the private Crew Prep story brief. The current campaign release reuses existing images in the intended slots. Replace those sources under the same IDs and review the result with the dialogue and in-game controls.
 
 | Asset ID | In play | What to show |

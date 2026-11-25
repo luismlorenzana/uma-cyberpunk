@@ -1,6 +1,6 @@
 import { getApps, initializeApp } from 'firebase-admin/app'
 import { FieldValue, getFirestore, type DocumentSnapshot, type Firestore } from 'firebase-admin/firestore'
-import { parseSave, versionOf, type Save, type SaveEnvelope } from '@cyber/domain'
+import { parseSave, versionOf, type CampaignSaveScope, type Save, type SaveEnvelope } from '@cyber/domain'
 import { EMPTY_ENVELOPE, RevisionConflict, type SaveRepository } from './save.repository'
 
 // Production persistence in the `cyber` database (FIRESTORE_DATABASE): `saves/{uid}` = { revision, save, storedAt },
@@ -10,16 +10,20 @@ import { EMPTY_ENVELOPE, RevisionConflict, type SaveRepository } from './save.re
 // (uma-rpg D69), so a migration can be undone by hand. An upload this server refuses waits in `saveRescues/{uid}`,
 // newest only (uma-rpg D260).
 const storedSave = (data: { save?: unknown } | undefined): unknown => (typeof data?.save === 'string' ? JSON.parse(data.save) as unknown : data?.save)
-const legacyCollections = { saves: 'saves', backups: 'saveBackups', rescues: 'saveRescues' }
-const campaignCollections = { saves: 'campaignSaves', backups: 'campaignSaveBackups', rescues: 'campaignSaveRescues' }
+const collectionsByScope = {
+  legacy: { saves: 'saves', backups: 'saveBackups', rescues: 'saveRescues' },
+  current: { saves: 'campaignSaves', backups: 'campaignSaveBackups', rescues: 'campaignSaveRescues' },
+  pilot: { saves: 'pilotSaves', backups: 'pilotSaveBackups', rescues: 'pilotSaveRescues' },
+  'four-act': { saves: 'fourActSaves', backups: 'fourActSaveBackups', rescues: 'fourActSaveRescues' },
+}
 
 export class FirestoreSaveRepository implements SaveRepository {
   private firestore: Firestore | null = null
 
-  private readonly collections: typeof legacyCollections
+  private readonly collections: (typeof collectionsByScope)[CampaignSaveScope]
 
-  constructor(private readonly databaseId: string, campaign = false) {
-    this.collections = campaign ? campaignCollections : legacyCollections
+  constructor(private readonly databaseId: string, scope: CampaignSaveScope = 'legacy') {
+    this.collections = collectionsByScope[scope]
   }
 
   private db(): Firestore {

@@ -29,7 +29,7 @@ const selected = (row: Row, only: readonly string[]) => !only.length || only.som
   [row.id, row.character, row.outfit, row.unitId, row.look, row.faction].some(value => value === key || normalized(value) === normalized(key)))
 const matches = (row: Row, selector: Selector) => Object.entries(selector).every(([key, value]) => key === 'collection' || row[key] === value)
 
-async function image(asset: string, bytes: Buffer, ref: Row): Promise<ImageReplacement> {
+export async function image(asset: string, bytes: Buffer, ref: Row): Promise<ImageReplacement> {
   if (bytes.length > 20 * 1024 * 1024 || sha(bytes) !== ref.sha256 || (ref.bytes !== undefined && bytes.length !== ref.bytes)) {
     throw new Error(`${asset}: published image failed its approved hash/size check`)
   }
@@ -146,6 +146,13 @@ export async function resolveArt(storage: ArtStorage, config: PublishConfig, opt
       if (actor.default) member.default = actor.default
       if (actor.after) member.after = actor.after
       if (actor.requiresFlag) member.requiresFlag = actor.requiresFlag
+      if (actor.visibleLooks) {
+        member.visibleLooks = actor.visibleLooks.filter(look => {
+          if (Object.hasOwn(member.looks, look)) return true
+          result.skipped.push(`${actor.character}/${look}: visible outfit not yet published`)
+          return false
+        })
+      }
       if (!existing) wardrobe.members.push(member)
       for (const route of actor.routes ?? []) {
         // A later outfit can be authored without blocking this actor's approved subset.

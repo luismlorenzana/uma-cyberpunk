@@ -1,5 +1,7 @@
 # Duties, the ship log and jump events
 
+> **Built behavior.** For the planned changes to Uma-only Act I and II operations policy and expedition availability, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY16 (D27).** The crew hold posts in the ship's modules. Each post makes its output once a
 > watch onto one ship-log card, applied at once. Aptitude, running style, mastery and station chiefs shape the output,
 > auto-assign and presets keep it to seconds a stop, and a jump sometimes brings an event card. The design is

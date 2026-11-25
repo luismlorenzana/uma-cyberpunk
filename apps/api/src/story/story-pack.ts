@@ -10,7 +10,7 @@
 import { resolve } from 'node:path'
 import { BucketFileSource, DirectoryFileSource, fileSource, PrivatePackModule, type FileSource, type PackAllow } from '@luismlorenzana/uma-server/content'
 import type { DynamicModule } from '@nestjs/common'
-import { CAMPAIGN_FILE_PATH, CAMPAIGN_PREVIEW_INDEX } from '@cyber/domain'
+import { CAMPAIGN_FILE_PATH, CAMPAIGN_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, PILOT_PREVIEW_INDEX } from '@cyber/domain'
 
 /** `story.json`, and `story/<name>.<hash8>.json` (`scripts/story/pack.ts`'s names). */
 export const STORY_ALLOW: PackAllow = ['story.json', /story\/[a-z0-9]+(-[a-z0-9]+)*\.[a-f0-9]{8}\.json/]
@@ -39,7 +39,7 @@ export function storyPackModule(env: Record<string, string | undefined> = proces
   const campaignSource: FileSource = campaignBucket && campaignPrefix ? { read: (path) => campaign.read(`${campaignPrefix}/${path}`) } : campaign
   return PrivatePackModule.forRoot({
     route: 'content',
-    allow: [...STORY_ALLOW, ...LOOKS_ALLOW, CAMPAIGN_PREVIEW_INDEX, CAMPAIGN_FILE_PATH],
+    allow: [...STORY_ALLOW, ...LOOKS_ALLOW, CAMPAIGN_PREVIEW_INDEX, PILOT_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, CAMPAIGN_FILE_PATH],
     source: contentSource(story, looks, env.LOOKS_PREFIX || LOOKS_PREFIX, campaignSource),
   })
 }

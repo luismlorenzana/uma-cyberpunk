@@ -7,8 +7,21 @@ import { settleCampaignDay } from './watch'
 import { questComplete } from './quests'
 import { giveRapport } from '../bonds/bonds'
 
+function trioReady(save: Save, book: CampaignBook, heroine: string): boolean {
+  const ally = book.allies?.find(row => row.heroine === heroine)
+  if (!ally || save.captain.romance === 'friends' || !ally.pairFlag || !save.story.flags.includes(ally.pairFlag)) return false
+  const away = awayMembers(save.operations, save.squads), ashore = campaignSupport(book, save).ashore
+  return [ally.partner, ally.member].every(id => {
+    const date = book.dates?.find(d => d.companion === id)
+    const bond = save.crew.find(member => member.outfit === id)?.bond
+    return !!date && dateAvailable(save, book, date) && dateProgress(save, book, date).visit === date.regular
+      && !away.includes(id) && !ashore.has(id) && bond?.path === 'heart' && bond.rank >= (date.overnightRank ?? 10)
+  })
+}
+
 export function cabinAvailable(save: Save, book: CampaignBook, cabin: CabinEvening): boolean {
   const away = awayMembers(save.operations, save.squads), source = cabin.source
+  if ('trio' in source) return trioReady(save, book, source.trio)
   if ('companion' in source) {
     const date = book.dates?.find(d => d.companion === source.companion)
     return !!date && dateAvailable(save, book, date) && !away.includes(source.companion)
@@ -41,14 +54,15 @@ export function cabinStage(save: Save, book: CampaignBook, cabin: CabinEvening):
     const id = cabin.source.pair, pair = book.pairs.find(p => p.id === id)
     return pair && pairProgress(pair, save.story).bond === 'romance' ? 'partner' : 'friend'
   }
-  return 'friend' // Residence alone does not establish a romance with either participant.
+  return 'trio' in cabin.source ? 'partner' : 'friend'
 }
 
 export function canStay(save: Save, book: CampaignBook, cabin: CabinEvening): boolean {
   if (!cabinAvailable(save, book, cabin)) return false
   if (!('companion' in cabin.source)) return true // Shared scripts invite each person to separate berths.
   const id = cabin.source.companion, bond = save.crew.find(c => c.outfit === id)?.bond
-  return bond?.rank === 10 && bond.path === 'heart' && save.captain.romance !== 'friends'
+  const rank = book.dates?.find(date => date.companion === id)?.overnightRank ?? 10
+  return !!bond && bond.rank >= rank && bond.path === 'heart' && save.captain.romance !== 'friends'
 }
 
 export function startCabinEvening(save: Save, book: CampaignBook, cabin: CabinEvening, expectedDay: number): Save {
@@ -59,6 +73,7 @@ export function startCabinEvening(save: Save, book: CampaignBook, cabin: CabinEv
   const scene = cabin.chats[stage][count % cabin.chats[stage].length]!
   const source = cabin.source
   const companion = 'companion' in source ? source.companion : 'sector' in source ? book.sectors?.find(s => s.id === source.sector)?.officer
+    : 'trio' in source ? book.allies?.find(ally => ally.heroine === source.trio)?.partner
     : book.pairs.find(p => p.id === source.pair)?.members[0].outfit
   const pending: CabinNight = { kind: 'cabin', id: cabin.id, phase: 'chat', scene, round: 0, outcome: null, choice: null,
     plan: { location: companion && campaignSupport(book, save).ashore.has(companion) ? 'ashore' : 'aboard',

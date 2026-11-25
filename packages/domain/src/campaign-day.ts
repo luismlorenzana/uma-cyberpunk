@@ -1,7 +1,7 @@
 import type { CabinNight } from './campaign-cabins'
 
 export type SoloNight =
-  | { kind: 'visit'; companion: number; scene: string; morning: string | null }
+  | { kind: 'visit'; companion: number; scene: string; morning: string | null; pathChoice?: 'trust' | 'heart' }
   | { kind: 'morning'; companion: number; scene: string }
 export type PairNight =
   | { kind: 'pair-visit'; pair: string; scene: string; morning: string | null }

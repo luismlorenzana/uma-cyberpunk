@@ -258,7 +258,7 @@ export function parseCasting(value: unknown, file = 'casting.json'): Casting {
       const x = p.object(h, hp, ['board', 'faction', 'hold'])
       if (!['anchor', 'collar', 'none'].includes(x.hold as string)) p.fail(`${hp}.hold`, 'expected anchor, collar or none')
       return { board: p.slug(x.board, `${hp}.board`), faction: p.slug(x.faction, `${hp}.faction`), hold: x.hold as 'anchor' | 'collar' | 'none' }
-    }, 200),
+    }, 256),
     minor: o.minor === undefined ? [] : p.list(o.minor, 'minor', (x, xp) => p.slug(x, xp), 200),
   }
   if (o.bondGates !== undefined) {

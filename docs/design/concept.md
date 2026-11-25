@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the concept
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-12, revised the same day at the owner's direction (D3).** The first concept (D1) set a tactics RPG
 > on a neon orbital ring with heroines from other worlds. The owner then set five directions:
 > 1. **a spinoff that uses Uma Musume's characters only,** like uma-quest and uma-farm;

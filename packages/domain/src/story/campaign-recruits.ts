@@ -47,10 +47,10 @@ export function parseCampaignRecruits(p: P, value: unknown, context: {
     outfits.add(outfit)
     const signOn = p.slug(row.signOn, `${path}.signOn`)
     const quest = byQuest.get(signOn)
-    if (!quest?.port || !ports.has(quest.port) || !quest.after || quest.encounter || usedQuests.has(signOn)) {
+    if (!quest?.port || !ports.has(quest.port) || !quest.after || quest.encounter || quest.sceneWhen || usedQuests.has(signOn)) {
       return p.fail(`${path}.signOn`, 'expected a unique dialogue quest at a civilian port with a campaign prerequisite')
     }
-    if (quest.after === opening && (!reachable.has(quest.port) || quest.requires?.length || quest.flags?.length)) {
+    if (quest.after === opening && (!reachable.has(quest.port) || quest.requires?.length || quest.requiresAny?.length || quest.flags?.length)) {
       return p.fail(`${path}.signOn`, 'opening sign-ons must be available on starting fuel after the shared opening')
     }
     usedQuests.add(signOn)

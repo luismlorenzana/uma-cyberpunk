@@ -1,5 +1,7 @@
 # How enemies choose
 
+> **Built behavior.** For the planned changes to range, reactions and turn pacing at expedition size, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY6 (D10).** The enemy AI and ally Auto as `packages/battle/src/ai.ts` plays them: one scorer
 > for both sides. The simulator plays both sides with it; the app may offer ally Auto later.
 

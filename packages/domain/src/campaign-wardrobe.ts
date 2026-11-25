@@ -1,4 +1,4 @@
-import { lookFor, type LookContext } from './looks'
+import { lookFor, placeLookContext, type LookContext } from './looks'
 import type { CampaignBook, CampaignSceneArt } from './story/campaign'
 import type { Speaker } from './story/types'
 
@@ -9,7 +9,7 @@ export interface PortraitDerivation {
   profile: { asset: string; left: number; top: number; size: number }
 }
 export interface CampaignWardrobe {
-  members: { speaker: Speaker; looks: Record<string, WardrobeLook>; default?: string; after?: string; requiresFlag?: string }[]
+  members: { speaker: Speaker; looks: Record<string, WardrobeLook>; default?: string; after?: string; requiresFlag?: string; visibleLooks?: string[] }[]
   scenes: { scene: string; context: LookContext; outfits?: { speaker: Speaker; look: string }[] }[]
   crops: PortraitDerivation[]
 }
@@ -19,15 +19,22 @@ export function wardrobeSceneArt(book: CampaignBook, sceneId: string): CampaignS
   let art = book.art.find(row => row.scene === sceneId)
   const binding = book.wardrobe?.scenes.find(row => row.scene === sceneId)
   if (!book.wardrobe) return art
-  const cast = book.scenes.get(sceneId)?.cast ?? []
+  const scene = book.scenes.get(sceneId)
+  const cast = scene?.cast ?? []
+  const role = binding && lookFor(binding.context, scene?.look)
+  const cabin = book.cabinEvenings?.some(row => row.invitation.scene === sceneId || row.changeMind === sceneId
+    || row.morning.stay === sceneId || row.morning.leave === sceneId || row.bed.includes(sceneId)
+    || Object.values(row.chats).some(scenes => scenes.includes(sceneId)))
+  const natural = scene && lookFor(cabin ? 'cabin' : placeLookContext(scene.place), scene.look)
   const missing = book.wardrobe.members.flatMap(member => {
-    const look = member.default && member.looks[member.default]
+    const explicit = binding?.outfits?.find(row => row.speaker === member.speaker)?.look
+    const selected = explicit ?? (role && member.looks[role] ? role : member.default ?? natural)
+    const look = selected ? member.looks[selected] : undefined
     return look && cast.some(row => (row.outfit ?? row.heroine) === member.speaker) && !art?.portraits.some(row => row.speaker === member.speaker && row.emote === undefined)
-      ? [{ speaker: member.speaker, asset: look.asset }] : []
+      ? [{ speaker: member.speaker, asset: look.portrait ?? look.dialogue ?? look.asset, profile: look.profile }] : []
   })
   if (missing.length) art = { ...art, scene: sceneId, portraits: [...(art?.portraits ?? []), ...missing] }
   if (!art) return art
-  const role = binding && lookFor(binding.context, book.scenes.get(sceneId)?.look)
   const replacements = new Map<string, string>()
   const neutrals = new Map(art.portraits.filter(p => p.emote === undefined).map(p => [p.speaker, p.asset]))
   const portraits = art.portraits.flatMap(portrait => {

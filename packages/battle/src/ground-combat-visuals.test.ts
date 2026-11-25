@@ -14,7 +14,7 @@ const visualCues = [
   'burn', 'burst', 'hacked', 'door', 'heights', 'turned', 'lights', 'tech', 'stunned', 'skipped', 'holdHit',
   'freed', 'barrier', 'barrierHit', 'dash', 'mended', 'rebooted', 'item', 'skill', 'bench', 'scan', 'reload',
   'pinned', 'volleySignal', 'volley', 'order', 'resonance', 'strikeMarked', 'endure', 'freeJoin',
-  'freeCover', 'duo', 'sweep', 'drone', 'shielded',
+  'freeCover', 'duo', 'sweep', 'drone', 'shielded', 'talked', 'signatureWarning', 'signatureCanceled',
 ] as const satisfies readonly Cue['kind'][]
 
 // A new engine cue must be assigned a treatment before the matrix counts as current.

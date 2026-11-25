@@ -1,11 +1,11 @@
-import { chooseAction } from '@cyber/battle'
+import { chooseAction, legalTurns, type TurnAction } from '@cyber/battle'
 import {
   newSave, parseSave, startSupply, storesAt, supplyNight,
   type CommandAction, type CommandEncounter, type GroundEncounter, type Save, type StoryPack, type SupplyNetwork,
 } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { act, resume, startSession } from '../battle/session'
-import { finishBattle, retry } from '../mission/director'
+import { deploy, finishBattle, recordAction, retry } from '../mission/director'
 import { issueCommand, launchCommand, settleCommand } from './command'
 import { settleGround } from './ground'
 import { groundInput } from './training'
@@ -73,6 +73,97 @@ describe('the approach and liberation', () => {
     expect(session.state.result?.winner).toBe('squad')
     expect(resume(input, session.actions)).toEqual(session)
     if (expansion === 'back-deck') expect(session.state.field?.hacked).toContain('manifest-console')
+  })
+
+  it('captures the named Collar leader once after a resumed victory on the existing boarding map', () => {
+    const ground: GroundEncounter = { id: 'rescue', title: 'Rescue', win: { flag: 'rescued-officer' },
+      rescue: { unit: 'station-commander', heroine: 'test-officer', label: 'Officer' } }
+    const input = groundInput('quarantine-board-cargo', outfit, 'Trainee', 'hand-greatblade', 'back-bulwark', undefined, [], undefined, ground)
+    expect(input.objective).toEqual({ kind: 'freeLeader', collar: 'rigBreak' })
+    expect(input.units.find((u) => u.id === ground.rescue?.unit)).toMatchObject({ hold: 'collar', ref: { kind: 'heroine', id: 'test-officer' } })
+    let { session } = startSession(input)
+    let save = deploy(ready(ground.id), input)
+    expect(settleGround(finishBattle(save, true), ground, pack)).toMatchObject({ story: { flags: [] } })
+    for (let turn = 0; turn < 80 && !session.state.result; turn++) {
+      const action = chooseAction(session.state)
+      const next = act(session, action)
+      if ('error' in next) throw new Error(next.error)
+      save = recordAction(save, action)
+      session = next.session
+    }
+    expect(session.state.result).toMatchObject({ winner: 'squad', enemies: expect.arrayContaining([
+      expect.objectContaining({ id: 'station-commander', fate: 'freed', freedBy: expect.stringMatching(/hold|rigBreak/) }),
+    ]) })
+    save = parseSave(JSON.parse(JSON.stringify(finishBattle(save, true))))
+    expect(resume(input, session.actions)).toEqual(session)
+    const settled = settleGround(save, ground, pack)
+    expect(settled.story.flags).toEqual(['rescued-officer'])
+    expect(settled.worlds.missions).toEqual([ground.id])
+    expect(settleGround(settled, ground, pack)).toBe(settled)
+  })
+
+  it('freezes the released ally and three named contacts on a separate drydock formation', () => {
+    const released = 'partner-released', paired = 'pair-established'
+    const ground: GroundEncounter = {
+      id: 'parley', title: 'Parley', win: { flag: 'port-won' },
+      formation: {
+        lead: { unit: 'trainee', outfit }, duoWhen: paired,
+        ally: { unit: 'ally', heroine: 'test-ally', label: 'Ally', released, at: [0, 6], main: 'hand-greatblade', back: 'back-thruster' },
+        opponents: [
+          { unit: 'station-commander', from: 'station-commander', heroine: 'test-rival', label: 'Rival' },
+          { unit: 'cargo-sentry', from: 'cargo-sentry', heroine: 'test-loyal', label: 'Loyal' },
+          { unit: 'registrar', from: 'cargo-sentry', heroine: 'test-doubter', label: 'Doubter', at: [6, 3] },
+        ],
+      },
+      talk: [
+        { actor: 'trainee', target: 'station-commander', requires: 'actorHit', hint: 'Land a hit.', outcome: 'rival-freed', brokenOutcome: 'rival-home' },
+        { actor: 'ally', target: 'cargo-sentry', requires: 'active', hint: 'Send the ally.', outcome: 'loyal-freed', brokenOutcome: 'loyal-home' },
+        { actor: 'trainee', target: 'registrar', requires: 'active', hint: 'Send the lead.', outcome: 'doubter-freed', brokenOutcome: 'doubter-home' },
+      ],
+    }
+    const deployFormation = (flags: string[]) => groundInput('drydock-command', outfit, 'Lead', 'hand-rifle', 'back-bulwark', undefined, [], undefined, ground, flags)
+    expect(() => deployFormation([])).toThrow(/cleared/)
+    const input = deployFormation([released, paired])
+    expect(input.units.map((unit) => [unit.side, unit.ref?.id])).toEqual([
+      ['squad', String(outfit)], ['squad', 'test-ally'], ['enemy', 'test-rival'], ['enemy', 'test-loyal'], ['enemy', 'test-doubter'],
+    ])
+    expect(input.units.slice(0, 2).map((u) => u.partner)).toEqual([{ unit: 'ally', level: 3 }, { unit: 'trainee', level: 3 }])
+    expect(deployFormation([released]).units.slice(0, 2).every((unit) => !unit.partner)).toBe(true)
+    const original = groundInput('drydock-command', outfit, 'Lead', 'hand-rifle', 'back-bulwark')
+    expect(original.units).toHaveLength(3)
+    expect(original.map.spawns.enemy).toHaveLength(2)
+    const next = (session: ReturnType<typeof startSession>['session']): TurnAction => {
+      const state = session.state, unit = state.active!
+      const options = legalTurns(state)
+      const talk = options.find(({ act }) => act.kind === 'talk')
+      if (talk) return { kind: 'turn', unit, to: talk.to, act: talk.act, face: 'N' }
+      const active = state.units.find((u) => u.id === unit)!
+      if (active.side === 'enemy') return { kind: 'turn', unit, act: { kind: 'none' }, face: 'S' }
+      const targetId = unit === 'ally' ? 'cargo-sentry' : state.units.find((u) => u.id === 'registrar')?.status === 'active' ? 'registrar' : 'station-commander'
+      const target = state.units.find((u) => u.id === targetId)!
+      if (unit === 'ally' && target.status !== 'active' || target.id === 'station-commander' && state.units.find((u) => u.id === 'cargo-sentry')?.status === 'active') {
+        return { kind: 'turn', unit, act: { kind: 'none' }, face: 'N' }
+      }
+      const shot = options.find(({ act }) => act.kind === 'attack' && act.target === target.id)
+      if (target.id === 'station-commander' && shot?.act.kind === 'attack') return { kind: 'turn', unit, to: shot.to, act: { ...shot.act, aim: 'core' }, face: 'N' }
+      const closest = options.filter(({ act }) => act.kind === 'none').sort((a, b) =>
+        Math.abs(a.to[0] - target.x) + Math.abs(a.to[1] - target.y) - Math.abs(b.to[0] - target.x) - Math.abs(b.to[1] - target.y))[0]!
+      return { kind: 'turn', unit, to: closest.to, act: closest.act, face: 'N' }
+    }
+    let { session } = startSession(input)
+    let save = deploy(ready(ground.id), input)
+    for (let i = 0; !session.state.result && i < 60; i++) {
+      const action = next(session)
+      const result = act(session, action)
+      if ('error' in result) throw new Error(result.error)
+      session = result.session
+      save = recordAction(save, action)
+    }
+    expect(session.state.result?.winner).toBe('squad')
+    expect(resume(input, session.actions)).toEqual(session)
+    const settled = settleGround(parseSave(JSON.parse(JSON.stringify(finishBattle(save, true)))), ground, pack)
+    expect(settled.story.flags).toEqual(expect.arrayContaining(['port-won', 'loyal-freed', 'doubter-freed']))
+    expect(settleGround(settled, ground, pack)).toBe(settled)
   })
 
   it('records capture before liberation, then grants the evidence, payout and higher output once', () => {

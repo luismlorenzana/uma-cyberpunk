@@ -40,6 +40,7 @@ export interface StrikeForecast {
 }
 
 export interface Forecast {
+  signature?: string
   attack: StrikeForecast | null
   /** Who steps in to take the main attack. */
   cover: string | null
@@ -111,15 +112,20 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   if (act.kind === 'reboot') add(turn.unit, TUNING.back.reboot)
   if (act.kind === 'item' && act.item === 'cell') add(act.target ?? turn.unit, -TUNING.items.cell)
   if (act.kind !== 'attack') return { ...empty, charge, timeline: upcomingAfter(state, 0) }
+  const signature = act.signature ? state.input.units.find((unit) => unit.id === turn.unit)!.signature : undefined
+  if (signature) {
+    add(turn.unit, signature.charge)
+    if (unitById(state, turn.unit).side === 'enemy') return { ...empty, signature: signature.label, charge, timeline: upcomingAfter(state, 0) }
+  }
   if (!state.units.some((u) => u.id === act.target)) {
     const s = objectStrikeOf(placed, turn.unit, act.with, act.target, to)!
     return { ...empty, attack: view(s, null), charge, timeline: upcomingAfter(state, 0) }
   }
   const target = unitById(placed, act.target)
   const landed = facingOf(tileOf(target), target.facing, to)
-  const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim })!
+  const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim, power: signature?.power })!
   const cover = coverFor(placed, act.target, landed)
-  const actual = cover ? strikeOf(placed, turn.unit, act.with, cover, to, { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front' })! : main
+  const actual = cover ? strikeOf(placed, turn.unit, act.with, cover, to, { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front', power: signature?.power })! : main
   const recipient = cover ? unitById(placed, cover) : target
   const attack = view(actual, recipient)
   const targets = blastTargets(placed, actual, recipient).map(({ id }) => id)
@@ -150,5 +156,6 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
     }
   }
   return { attack, cover, crossfire, counter, skills, tech: null, volley, charge, timeline: upcomingAfter(state, 0),
+    ...(signature ? { signature: signature.label } : {}),
     ...(targets.length ? { splash: { targets, damage: Math.max(1, Math.floor(actual.damage / 2)) } } : {}) }
 }

@@ -9,7 +9,7 @@ export type CommandCrew = Partial<Record<CommandStation, Officer>>
 export type CommandTraining = Record<number, Partial<Record<CommandStation, Omit<Officer, 'outfit'>>>>
 
 export interface ShipThreat { section: ShieldSection; power: number; fighters: number }
-export interface CommandAssault { emitter: number; disabledFlag: string }
+export interface CommandAssault { emitter: number; disabledFlag: string; emitterRequired?: true }
 export interface CommandEncounter {
   id: string
   cost: { fuel: number; provisions: number }
@@ -94,7 +94,8 @@ export function commandTurn(input: CommandInput, state: CommandState, action: Co
   const hullDamage = incoming - blocked
   const hull = Math.max(0, state.hull - hullDamage)
   const turn = state.turn + 1
-  const result = hull === 0 || transport === 0 ? 'lost' : enemy === 0 ? 'won'
+  const emitterRequired = input.version !== 1 && input.assault.emitterRequired
+  const result = hull === 0 || transport === 0 ? 'lost' : enemy === 0 && (!emitterRequired || emitter === 0) ? 'won'
     : turn === input.threats.length ? (input.version === 1 ? 'won' : 'lost') : null
   return { turn, hull, transport, enemy, emitter, shields: sections, power: input.reactor + (order === 'reroute' ? 1 + engineering : 0), result,
     last: { order, blocked, intercepted, hit: state.enemy - enemy, emitterHit, hullDamage, transportDamage } }

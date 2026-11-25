@@ -7,12 +7,13 @@ import { loadScenePortraits } from './portraits'
 const viewport = 'absolute inset-0 overflow-y-auto bg-[#0b0d17] px-4 py-3 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate, decision, onExit, placeLabel, exitLabel }: {
+export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDate, decision, onExit, placeLabel, exitLabel, squad = [] }: {
   loaded: LoadedCampaign; sceneId: string; finish: (effects: readonly EffectStep[], bondEffects: readonly BondEffect[]) => void; fail: (message: string) => void
   captainDate?: boolean
   decision?: SceneDecision
   onExit?: () => void
   exitLabel?: string
+  squad?: readonly number[]
   placeLabel?: string
   battle?: (id: string, effects: readonly EffectStep[]) => Promise<void>
 }) {
@@ -67,7 +68,7 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
   }, [loaded, art, scene])
 
   if (!presentation) return <div className={viewport} style={insets} role="status">Loading the scene…</div>
-  return <ScenePlayer pack={loaded.book.story} scene={scene} squad={[]} presentation={{ ...presentation, location: placeLabel }}
+  return <ScenePlayer pack={loaded.book.story} scene={scene} squad={squad} presentation={{ ...presentation, location: placeLabel }}
     decision={decision} onExit={onExit} exitLabel={exitLabel}
     pathFooter={captainDate ? 'Either choice keeps the campaign open.' : undefined}
     onEffect={(step) => { steps.current.push(step) }}

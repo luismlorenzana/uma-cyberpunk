@@ -1,9 +1,9 @@
 // The director (CY10, uma-quest's director.ts in shape): the flow's rules between the screens and the save, with no React
 // and no three.js. What's due at a node or after a mission, what a story step changes (the story state, the crew, the
 // rooms), and the mission's steps: briefing → deploy → battle → results → aboard. Every function returns a new save.
-import type { BattleInput } from '@cyber/battle'
+import { EXPEDITION_RULES_VERSION, type BattleInput } from '@cyber/battle'
 import {
-  addCamaraderie, addDeck, addItem, afterMission as crewAfterMission, PARTNER_TUNING, settlePartners, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
+  addCamaraderie, addDeck, addItem, afterMission as crewAfterMission, canTakeOrdinaryAssignment, PARTNER_TUNING, settlePartners, earn, fillFile, finishedChapters, gainLead, modulesOpenedBy, newMember, openModule, passWatch, resting, resultsPay, seeScene,
   drawEvent, GENERIC_EVENTS, runDuties, setAnomaly, setFlag, shipCapabilities, awayMembers, cohesionAfter, keyMet, moveStandingIn, placeNewcomer, readinessNow, returnOperations, standingNow, systemsBuilt, unmetNeeds, type Chapter, type FinaleCondition, type ReadinessNeed, type DutyInfo, type EffectStep, missionItem, restedStrain, type Mission, type MissionState, type Save, type Scene, type Step, type StoryPack, type Trigger, type WorldProgress,
 } from '@cyber/domain'
 import { afterBattleBonds, giveRapport } from '../bonds/bonds'
@@ -72,7 +72,7 @@ export function applyStep(save: Save, pack: StoryPack, step: EffectStep): Save {
     const fresh = !save.crew.some((m) => m.outfit === step.outfit)
     const crew = fresh ? [...save.crew, { ...newMember(step.outfit), xp: joiningXp(save, step.outfit) }] : save.crew
     const ship = step.kind === 'aboard' ? modulesOpenedBy(pack.casting, step.outfit).reduce(openModule, save.ship) : save.ship
-    const squads = fresh ? placeNewcomer(save.squads, pack.casting.squads ?? [], crew.map((m) => m.outfit), step.outfit, save.operations.map((r) => r.squad)) : save.squads
+    const squads = fresh ? placeNewcomer(save.squads, pack.casting.squads ?? [], crew.filter(canTakeOrdinaryAssignment).map((m) => m.outfit), step.outfit, save.operations.map((r) => r.squad)) : save.squads
     return { ...save, crew, ship, squads }
   }
   if (step.kind === 'refit') return { ...save, ship: addDeck(save.ship) }
@@ -164,11 +164,12 @@ export function reachableWorlds(save: Save, pack: StoryPack): string[] {
 /** The squad a mission starts with: its fixed squad (a flash-forward, TC32), else the chapter's leads, then their squads'
  * members (CY18), then the crew not resting (Strain 3, TC27) and not away on an operation, four at most. */
 export function defaultSquad(save: Save, chapter: Chapter, mission: Mission): number[] {
-  if (mission.fixedSquad) return [...mission.fixedSquad]
+  const restricted = new Set(save.crew.filter(member => member.expeditionOnly).map(member => member.outfit))
+  if (mission.fixedSquad) return mission.fixedSquad.filter(outfit => !restricted.has(outfit))
   const away = awayMembers(save.operations, save.squads)
-  const free = (o: number) => !away.includes(o) && !resting(save.crew.find((m) => m.outfit === o) ?? newMember(o))
+  const free = (o: number) => !restricted.has(o) && !away.includes(o) && !resting(save.crew.find((m) => m.outfit === o) ?? newMember(o))
   const theirs = save.squads.filter((s) => s.members.some((m) => chapter.leads.includes(m))).flatMap((s) => s.members)
-  return [...new Set([...chapter.leads, ...theirs.filter(free), ...save.crew.map((m) => m.outfit).filter(free)])].slice(0, 4)
+  return [...new Set([...chapter.leads.filter(outfit => !restricted.has(outfit)), ...theirs.filter(free), ...save.crew.map((m) => m.outfit).filter(free)])].slice(0, 4)
 }
 
 /** Why a member can't join the squad now, or null: resting at Strain 3 (a locked lead deploys anyway), or a rig problem
@@ -177,6 +178,7 @@ export function cantDeploy(save: Save, outfit: number, locked: readonly number[]
   const run = save.operations.find((r) => save.squads.find((s) => s.id === r.squad)?.members.includes(outfit))
   if (run) return `Away on an operation until watch ${run.back}: recall her squad from Comms`
   const m = save.crew.find((x) => x.outfit === outfit)
+  if (m?.expeditionOnly) return 'Unavailable for this sortie'
   if (m && resting(m) && !locked.includes(outfit)) return 'Resting: Strain 3, she sits this mission out'
   return rigProblem ? `${rigProblem}: fix her rig in the Hangar` : null
 }
@@ -197,9 +199,31 @@ export function startMission(save: Save, chapter: Chapter, mission: Mission): Sa
   return withMission(save, { id: mission.id, chapter: chapter.id, step: 'briefing', squad: defaultSquad(save, chapter, mission), battle: null, won: null })
 }
 export const toDeploy = (save: Save): Save => (save.mission ? withMission(save, { ...save.mission, step: 'deploy' }) : save)
-export const setSquad = (save: Save, squad: number[]): Save => (save.mission ? withMission(save, { ...save.mission, squad }) : save)
+const sortieMembers = (save: Save, squad: readonly number[]): number[] => {
+  const restricted = new Set(save.crew.filter(member => member.expeditionOnly).map(({ outfit }) => outfit))
+  return squad.filter(outfit => !restricted.has(outfit))
+}
+export const setSquad = (save: Save, squad: number[]): Save =>
+  save.mission ? withMission(save, { ...save.mission, squad: sortieMembers(save, squad) }) : save
 /** Deploys: the battle's frozen input (built by the caller from the mission's scenario and the squad), no actions yet. */
-export const deploy = (save: Save, input: unknown): Save => (save.mission ? withMission({ ...save, commandCinema: { ...save.commandCinema, pending: null } }, { ...save.mission, step: 'battle', battle: { input, actions: [] }, won: null }) : save)
+export function deploy(save: Save, input: unknown): Save {
+  const mission = save.mission
+  if (!mission) return save
+  const squad = sortieMembers(save, mission.squad)
+  if (squad.length !== mission.squad.length) return withMission(save, { ...mission, squad })
+  const restricted = save.crew.filter(member => member.expeditionOnly)
+  if (restricted.length && input && typeof input === 'object' && 'units' in input && Array.isArray(input.units)) {
+    const units = input.units as BattleInput['units']
+    if ('rulesVersion' in input && input.rulesVersion === EXPEDITION_RULES_VERSION && save.expedition) {
+      const identities = new Set(save.expedition.members.map(member => member.role === 'uma' ? 'uma:' + member.outfit : 'heroine:' + member.heroine))
+      const active = units.filter(unit => unit.side === 'squad')
+      if (active.length !== identities.size || active.some(unit => !unit.ref || !identities.delete(unit.ref.kind + ':' + unit.ref.id))) return save
+    } else if (units.some(unit => unit.side === 'squad' && restricted.some(member => unit.ref?.kind === 'heroine'
+      ? unit.ref.id === member.heroine : unit.ref?.kind === 'uma' && unit.ref.id === String(member.outfit)))) return save
+  }
+  return withMission({ ...save, commandCinema: { ...save.commandCinema, pending: null } },
+    { ...mission, step: 'battle', battle: { input, actions: [] }, won: null })
+}
 export const recordAction = (save: Save, action: unknown): Save =>
   (save.mission?.battle ? withMission(save, { ...save.mission, battle: { ...save.mission.battle, actions: [...save.mission.battle.actions, action] } }) : save)
 export const finishBattle = (save: Save, won: boolean): Save => (save.mission ? withMission(save, { ...save.mission, step: 'results', won }) : save)

@@ -1,10 +1,12 @@
 # Combat sprites: full-proportion cel-shaded first character
 
+> **Historical source trial.** Use [CY95](../handoff/tasks/CY95.md) and the compact bundle contract for current production.
+
 **Earlier 3D source study · 2026-11-20 (D77).** Use the [current compact 2D bundle contract](../technical/combat-sprite-bundles.md)
 for active sprite authoring. This archived source trial built one real recruit with full adult proportions and clean
-cel shading, then export 2D sprites from the editable 3D source. [CY59](../handoff/tasks/CY59.md) owns
-the character source, [CY58](../handoff/tasks/CY58.md) equipment and [CY57](../handoff/tasks/CY57.md)
-game integration. [CY63](../handoff/tasks/CY63.md) keeps the actual cast and staging aligned.
+cel shading, then export 2D sprites from the editable 3D source. [CY59](../handoff/archive/CY59.md) owns
+the character source, [CY58](../handoff/archive/CY58.md) equipment and [CY57](../handoff/archive/CY57.md)
+game integration. [CY63](../handoff/archive/CY63.md) keeps the actual cast and staging aligned.
 
 ## First character and campaign loadout
 
@@ -29,7 +31,7 @@ Check the frozen battle loadout and legal capacity; art never substitutes anothe
 
 Use the [reusable mesh and rig foundation](../design/character-base-rig.md) (D78). Its bounded
 MPFB/Rigify study passes technical feasibility. The owner now requests the
-[full armor and visual-quality pass](../handoff/tasks/CY59.md#current-checkpoint--complete-armor-and-visual-quality-d79)
+[full armor and visual-quality pass](../handoff/archive/CY59.md#current-checkpoint--complete-armor-and-visual-quality-d79)
 (D79) on this same source, recruit and equipment. Review the complete helmet, torso, limbs, gloves,
 boots, materials and contacts against the approved reference. Preserve earlier projects and exact
 source approvals; the new model/render has its own review status.

@@ -31,7 +31,7 @@ export async function syncWardrobes(config: PublishConfig, options: { root: stri
 }
 
 export async function main(args = process.argv.slice(2)) {
-  const valued = ['--config', '--only', '--receipt', '--authoring-root'], switches = ['--dry-run', '--stage-only']
+  const valued = ['--config', '--only', '--receipt', '--authoring-root', '--campaign'], switches = ['--dry-run', '--stage-only']
   const values = new Map<string, string>()
   for (let i = 0; i < args.length; i++) {
     const arg = args[i]!
@@ -39,6 +39,8 @@ export async function main(args = process.argv.slice(2)) {
     if (!valued.includes(arg) || !args[i + 1] || args[i + 1]!.startsWith('--')) throw new Error(`Invalid wardrobe sync option: ${arg}`)
     values.set(arg, args[++i]!)
   }
+  const campaign = values.get('--campaign') ?? 'current'
+  if (campaign !== 'current' && campaign !== 'pilot' && campaign !== 'four-act') throw new Error('--campaign accepts current, pilot or four-act')
   const configPath = resolve(values.get('--config') ?? process.env.CYBER_ART_CONFIG ?? 'content/campaign-art-plan/art-publish.json')
   const config = parsePublishConfig(JSON.parse(await readFile(configPath, 'utf8')))
   const root = values.get('--authoring-root') ?? process.env.UMA_ART_AUTHORING_ROOT ?? config.authoringRoot
@@ -57,7 +59,7 @@ export async function main(args = process.argv.slice(2)) {
   await syncWardrobes(config, { root: resolve(root), only, dryRun: args.includes('--dry-run'), portraitCharacters }, async producerArgs => {
     const result = spawnSync(process.execPath, producerArgs, { cwd: resolve(root), stdio: 'inherit', windowsHide: true })
     if (result.error || result.status !== 0) throw new Error('Art source publication stopped; game selection was not changed. Inspect Platform/source status before retrying.')
-  }, async selectors => { await publishGame(['--config', configPath, '--event', 'all', '--only', selectors.join(','),
+  }, async selectors => { await publishGame(['--config', configPath, '--campaign', campaign, '--event', 'all', '--only', selectors.join(','),
     ...args.filter(arg => switches.includes(arg)), ...(values.has('--receipt') ? ['--receipt', values.get('--receipt')!] : [])]) })
 }
 

@@ -1,5 +1,7 @@
 # Selden quarantine station art
 
+> **Earlier release brief.** Reuse approved sources in the corresponding [four-act asset slot](../campaign-art-delivery.md). Current scene and encounter needs come from that release register.
+
 The art-authoring session owns the approved assets and follows the project's character, enemy and environment style guides. The private `baseline-7` release uses temporary images and the existing stand-in tactics kit. Use the [campaign content guide](../../technical/campaign-content.md) to replace the private files under the same asset IDs.
 
 | Asset ID or encounter | Where it appears | What players need to read |

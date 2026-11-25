@@ -1,5 +1,7 @@
 # Shared evenings and resettlement art
 
+> **Earlier release brief.** Reuse approved sources in the corresponding [four-act asset slot](../campaign-art-delivery.md). Current scene and encounter needs come from that release register.
+
 Use the existing character, quarters and environment guides and the private CY31 draft. Replace placeholders under the
 same asset IDs. Each prefix is the local port ID, `selden`, `orla`, `morrow`, `kestrel` or `vesper`.
 

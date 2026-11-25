@@ -1,7 +1,7 @@
 // A mission's battle (CY10, CY11): its scenario (the game's, in scenarios/, named by the mission) with the squad's Umas in
 // the squad slots, in order, each with her bands, her rig as a loadout and her Stride; the crew left aboard is the bench
 // (its roles for the one bench support call). Slots the squad doesn't fill keep their stand-ins.
-import { parseScenario, scenarioInput, type Band, type Bands, type BattleInput, type BattleMap, type Loadout, type Role, type Scenario, type Stride, type UnitInput } from '@cyber/battle'
+import { parseScenario, scenarioInput, type Band, type Bands, type BattleInput, type BattleMap, type HeroineSpriteRole, type Loadout, type Role, type Scenario, type Stride, type UnitInput } from '@cyber/battle'
 import { cohesionLevel, partnershipOf, sortieOrders, sortieSystems, type FinaleCondition, type PostKind, type Save } from '@cyber/domain'
 
 const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import.meta.glob<{ default: BattleMap }>(['../../../../scenarios/maps/*.json', '../../../../scenarios/campaign/maps/*.json'], { eager: true }))
@@ -9,7 +9,7 @@ const MAPS: Record<string, BattleMap> = Object.fromEntries(Object.entries(import
 export const SCENARIOS: Record<string, Scenario> = Object.fromEntries(Object.values(import.meta.glob<{ default: unknown }>(['../../../../scenarios/*.json', '../../../../scenarios/campaign/*.json'], { eager: true }))
   .map((m) => { const s = parseScenario(m.default, MAPS); return [s.id, s] }))
 
-export interface SquadUnit { outfit: number; label: string; bands: Bands; loadout: Loadout; stride: Stride | null; frozenRig?: UnitInput['frozenRig'] }
+export interface SquadUnit { outfit: number; heroine?: string; label: string; bands: Bands; loadout: Loadout; stride: Stride | null; frozenRig?: UnitInput['frozenRig']; spriteRole?: HeroineSpriteRole }
 
 /** A battle's units with Umas in its squad slots, in order (a null keeps that slot's stand-in): each Uma brings her bands,
  * her rig as a loadout and her Stride; the slot keeps its id, spawn, facing, Charge cap and Link. */
@@ -22,7 +22,8 @@ export function fillSquad(units: readonly UnitInput[], squad: readonly (SquadUni
     return {
       id: u.id, side: u.side, spawn: u.spawn, facing: u.facing, chargeCap: u.chargeCap, link: u.link, bands: m.bands, loadout: m.loadout,
       ...(m.stride ? { stride: m.stride } : {}), ...(m.frozenRig ? { frozenRig: { ...m.frozenRig } } : {}),
-      ref: { kind: 'uma' as const, id: String(m.outfit) }, label: m.label,
+      ref: m.heroine ? { kind: 'heroine', id: m.heroine } : { kind: 'uma', id: String(m.outfit) }, label: m.label,
+      ...(m.heroine ? { sprite: { role: m.spriteRole ?? 'boss-ally', form: 'standard' } as const } : {}),
     }
   })
 }
@@ -41,10 +42,16 @@ export function missionInput(scenarioId: string, squad: readonly SquadUnit[], be
  * into the input: the rules never read the save.
  */
 export function lifeAboardInput(base: BattleInput, save: Save, bandOfPost: (post: PostKind) => Band | null, conditions: readonly FinaleCondition[] = []): BattleInput {
-  const unitOf = new Map(base.units.filter((u) => u.side === 'squad' && u.ref?.kind === 'uma').map((u) => [Number(u.ref!.id), u.id]))
+  const memberOf = (u: UnitInput) => u.ref?.kind === 'heroine' ? save.crew.find(m => m.heroine === u.ref!.id)?.outfit
+    : u.ref?.kind === 'uma' ? Number(u.ref.id) : undefined
+  const unitOf = new Map(base.units.flatMap(u => {
+    const outfit = u.side === 'squad' ? memberOf(u) : undefined
+    return outfit === undefined ? [] : [[outfit, u.id] as const]
+  }))
   const units = base.units.map((u) => {
-    if (u.side !== 'squad' || u.ref?.kind !== 'uma') return u
-    const outfit = Number(u.ref.id), m = save.crew.find((c) => c.outfit === outfit)
+    const outfit = u.side === 'squad' ? memberOf(u) : undefined
+    if (outfit === undefined) return u
+    const m = save.crew.find((c) => c.outfit === outfit)
     const p = partnershipOf(save.partners, outfit)
     const mate = p ? unitOf.get(p.a === outfit ? p.b : p.a) : undefined
     return { ...u, ...(m ? { bond: { rank: m.bond.rank, path: m.bond.path } } : {}), ...(p && mate ? { partner: { unit: mate, level: p.level } } : {}) }

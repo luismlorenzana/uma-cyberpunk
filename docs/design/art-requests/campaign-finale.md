@@ -1,5 +1,7 @@
 # Faction arcs and final operation art
 
+> **Earlier release brief.** Reuse approved sources in the corresponding [four-act asset slot](../campaign-art-delivery.md). Current scene and encounter needs come from that release register.
+
 Use the established character, enemy and environment guides. The private campaign draft wires existing placeholders through the release format. Review the corresponding private scenes and encounter brief as a set before producing the final images.
 
 | Assets | Scenes and kit | What to show |

@@ -1,6 +1,6 @@
 // Duties through the save (CY16): auto-assign fills the posts, presets keep arrangements, a mission's end writes one
 // ship-log card with a deployed Uma at half, a jump may draw an event the pilot resolves.
-import { newMember, newSave, parsePack, STAND_IN_FILES, type Save, type StoryPack } from '@cyber/domain'
+import { assignPost, newMember, newSave, parsePack, parseSave, runDuties, STAND_IN_FILES, type Save, type StoryPack } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { crewViews, infoFrom } from '../crew/view'
 import { closeResults, travel } from '../mission/director'
@@ -25,6 +25,17 @@ describe('duties through the save', () => {
     s = loadPreset(s, 0)
     expect(s.crew.map((m) => m.post?.module ?? null)).toEqual(posts)
     expect(s.dutyPresets[0]!.name).toBe('Day')
+  })
+  it('excludes a restricted guest from persisted presets, watches and live posts', () => {
+    const ordinary = autoAssignSave(crewSave(), views(crewSave()))
+    const first = ordinary.crew[0]!, post = first.post!
+    const stale = parseSave({ ...savePreset(ordinary, 0, 'Day'), crew: ordinary.crew.map(member => member.outfit === first.outfit
+      ? { ...member, heroine: 'adviser', expeditionOnly: true } : member) })
+    expect(assignPost(stale, first.outfit, post)).toBe(stale)
+    expect(savePreset(stale, 1, 'Night').dutyPresets[1]?.posts[first.outfit]).toBeUndefined()
+    expect(loadPreset(stale, 0).crew[0]?.post).toBeNull()
+    expect(autoAssignSave(stale, views(ordinary)).crew[0]?.post).toBeNull()
+    expect(runDuties(stale, dutyInfoFrom(views(stale)), {}, []).log.lines.map(line => line.outfit)).not.toContain(first.outfit)
   })
   it('a mission’s end writes one ship-log card, the deployed Uma at half', () => {
     let s = autoAssignSave(crewSave(), views(crewSave()))

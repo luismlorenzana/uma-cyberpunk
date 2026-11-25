@@ -1,5 +1,7 @@
 # Selden home and relay defense art
 
+> **Earlier release brief.** Reuse approved sources in the corresponding [four-act asset slot](../campaign-art-delivery.md). Current scene and encounter needs come from that release register.
+
 Use the project's approved character, enemy and environment style guides and the private homeworld brief. The draft currently uses existing placeholders. Keep the asset IDs when replacing them through the [campaign release tools](../../technical/campaign-content.md#check-pack-and-select).
 
 | Asset ID | Scenes | What to show |

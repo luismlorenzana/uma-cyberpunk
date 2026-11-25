@@ -1,5 +1,7 @@
 # Reusable character mesh and rig foundation
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 **D78 · 2026-11-20.** Start with an established human mesh, supplied skin weights and a reusable
 control rig. Test MPFB with Rigify on the same first recruit before replacing the current source.
 Keep D77's full adult proportions, approved armor, clean cel shading and offline 2D sprite exports.
@@ -36,7 +38,7 @@ The Sprite Art session verified Blender **5.2.0 LTS**, build `fbe6228777e7`, wit
 supplied weight integrity, static bend/contact checks and saved-project render reproduction.
 The implementation intake verifies the delivery hashes and records visual findings. Final body,
 armor and render approval remain pending. The owner now authorizes the
-[complete single-character armor pass](../handoff/tasks/CY59.md#current-checkpoint--complete-armor-and-visual-quality-d79)
+[complete single-character armor pass](../handoff/archive/CY59.md#current-checkpoint--complete-armor-and-visual-quality-d79)
 (D79), carrying source proportions and appearance review into that pass.
 
 1. Load the pinned MPFB source in an isolated Blender profile/session. Preserve prior projects,

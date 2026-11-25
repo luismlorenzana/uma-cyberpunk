@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the world
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-13, the world v2 (D28): the story's base elements, for the owner's read.** The owner asked to start
 > the story with full worldbuilding, around six notes: an interplanetary adventure exploring cities on planets with
 > different environments; ship travel and time with the captain at base camp; ship maintenance and each character's
@@ -663,7 +665,7 @@ them as boss factions. Their roles move:
 
 ## 14. What the game is asked for (WD48)
 
-**WD48:** five story requests, filed in [the handoff](../handoff/README.md#story-requests) for the game session. Each
+**WD48:** five story requests, filed in [the handoff](../handoff/archive/previous-queue.md#story-requests) for the game session. Each
 is the owner's own note; the game decides the rules and when.
 
 | # | Request | Why | Today |

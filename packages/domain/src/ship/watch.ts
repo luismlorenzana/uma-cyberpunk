@@ -1,6 +1,7 @@
 // A watch's duties (CY16, TC67): every held post makes its output, all of it applied at once and listed on one ship-log
 // card; mastery grows, Umas posted together build camaraderie, a liked duty pays a little rapport. And the jump's event
 // card (TC66): one in three jumps, a short choice resolved by who holds a named post. Pure and deterministic.
+import { canTakeOrdinaryAssignment } from '../crew/crew'
 import type { OpReport } from '../crew/operations'
 import type { Bands, Role } from '@cyber/battle'
 import type { Strategy } from '@luismlorenzana/uma-data'
@@ -44,8 +45,8 @@ export function runDuties(save: Save, info: (outfit: number) => DutyInfo | null,
   const lines: LogLine[] = [], rapport = new Map<number, number>()
   const gains = { ...ZERO }
   let crew = save.crew
-  const held = crew.filter((m) => m.post && shipHasPost(ship, m.post)).map((m) => ({ outfit: m.outfit, post: m.post! }))
-  const bench = crew.filter((m) => !deployed.includes(m.outfit)).map((m) => m.outfit)
+  const held = crew.filter((m) => canTakeOrdinaryAssignment(m) && m.post && shipHasPost(ship, m.post)).map((m) => ({ outfit: m.outfit, post: m.post! }))
+  const bench = crew.filter((m) => canTakeOrdinaryAssignment(m) && !deployed.includes(m.outfit)).map((m) => m.outfit)
   for (const h of held) {
     const kind = postKind(h.post)
     if (!kind) continue
@@ -104,6 +105,7 @@ export function runDuties(save: Save, info: (outfit: number) => DutyInfo | null,
 
 /** Puts an Uma on a post (taking it from whoever held it), or off duty with null. Her tenure starts this watch. */
 export function assignPost(save: Save, outfit: number, post: Post | null): Save {
+  if (post && !canTakeOrdinaryAssignment(save.crew.find(member => member.outfit === outfit))) return save
   const key = post ? `${post.module}:${post.index}` : null
   return { ...save, crew: save.crew.map((m) => {
     if (m.outfit === outfit) {

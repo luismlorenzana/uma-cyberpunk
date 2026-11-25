@@ -86,7 +86,7 @@ describe('committed ship order cinematics', () => {
     expect(savedCommandEvent(committed)!.actor).toBeUndefined()
     expect(commandLog(committed)[0]!.text).toContain('Watch officer')
     expect(resumeCommand(input, [])?.input.version).toBe(1)
-    const { commandCinema: _, ...old } = committed
+    const { expedition: _expedition, commandCinema: _, ...old } = committed
     const migrated = parseSave({ ...old, version: 18 })
     expect(migrated.mission).toEqual(committed.mission)
     expect(migrated.commandCinema.pending).toBeNull()

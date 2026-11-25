@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Playing the four-act campaign</title>
+<!-- Generated from docs/game/campaign.md by scripts/manual-pages.mjs. Edit the Markdown, then run the script. -->
+<style>
+  :root { --page:#eef1f7; --panel:#fff; --raised:#f4f6fb; --sunken:#e5e9f2; --ink:#10131f; --ink-soft:#56607a; --ink-faint:#8891a8;
+    --accent:#0a9fbc; --accent-wash:#ddf5fa; --magenta:#c2268f; --hairline:rgb(16 19 31/.08); --hairline-strong:rgb(16 19 31/.16); color-scheme:light; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13;
+    --ink:#e8ebf5; --ink-soft:#a3abc2; --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8;
+    --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; } }
+  :root[data-theme="dark"] { --page:#0b0d17; --panel:#141827; --raised:#1b2033; --sunken:#090b13; --ink:#e8ebf5; --ink-soft:#a3abc2;
+    --ink-faint:#6d7590; --accent:#2ee6ff; --accent-wash:#0e2a33; --magenta:#ff3dc8; --hairline:rgb(255 255 255/.08); --hairline-strong:rgb(255 255 255/.16); color-scheme:dark; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--page); color:var(--ink); font:14px/1.5 system-ui,-apple-system,'Inter',sans-serif; }
+  .wrap { display:grid; grid-template-columns:240px minmax(0,1fr); gap:24px; max-width:1240px; margin:0 auto; padding:24px 16px 64px; }
+  nav.toc { position:sticky; top:16px; align-self:start; max-height:calc(100vh - 32px); overflow:auto; font-size:12.5px; }
+  nav.toc a { display:block; padding:3px 8px; border-radius:6px; color:var(--ink-soft); text-decoration:none; }
+  nav.toc a.h3 { padding-left:20px; font-size:12px; }
+  nav.toc a:hover { background:var(--sunken); color:var(--ink); }
+  main { background:var(--panel); border-radius:14px; padding:24px 28px; box-shadow:0 1px 0 var(--hairline-strong); min-width:0; }
+  h1 { font:700 26px/1.2 ui-rounded,'SF Pro Rounded',system-ui,sans-serif; margin:0 0 12px; }
+  h2 { font:700 19px/1.3 ui-rounded,system-ui,sans-serif; margin:28px 0 10px; padding-top:14px; border-top:1px solid var(--hairline); }
+  h3 { font:700 15px/1.3 system-ui,sans-serif; margin:20px 0 8px; color:var(--accent); }
+  h4 { font:700 13px/1.3 system-ui,sans-serif; margin:16px 0 6px; }
+  p, li { color:var(--ink-soft); max-width:92ch; } b { color:var(--ink); }
+  a { color:var(--accent); }
+  code { font:12px ui-monospace,SFMono-Regular,Menlo,monospace; background:var(--sunken); padding:1px 5px; border-radius:5px; color:var(--ink); }
+  pre { background:var(--sunken); padding:12px 14px; border-radius:10px; overflow:auto; } pre code { background:none; padding:0; }
+  pre.mermaid { background:var(--raised); text-align:center; }
+  blockquote { margin:12px 0; padding:8px 14px; border-left:3px solid var(--accent); background:var(--accent-wash); border-radius:0 10px 10px 0; }
+  blockquote p { color:var(--ink); }
+  .scroll { overflow-x:auto; margin:10px 0; }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+  th { font:700 12px system-ui; color:var(--ink-soft); background:var(--raised); }
+  td:first-child { font-weight:600; color:var(--ink); }
+  .foot { margin-top:28px; font-size:12px; color:var(--ink-faint); }
+  @media (max-width: 860px) { .wrap { grid-template-columns:1fr; } nav.toc { position:static; max-height:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav class="toc"><a href="#top"><b>Playing the four-act campaign</b></a><a class="h2" href="#current-private-review">Current private review</a></nav>
+<main id="top">
+<h1 id="playing-the-four-act-campaign">Playing the four-act campaign</h1>
+<p><b>Acts I–III are playable in the current private candidate.</b> The <a href="../../design/campaign-rework.md">four-act design</a> and <a href="../../handoff/four-act-roadmap.md">roadmap</a> define this release. The rest of this manual covers mechanics as they exist in the game.</p>
+<h2 id="current-private-review">Current private review</h2>
+<p>The four-act route opens with a shared premise. The private review offers 50 sign-ons across the five home systems. A recruited Uma receives her quarters, and her Crew Stories card opens her origin and personal missions through ship combat, ground capture and custody. Training is optional. Captain visits use the existing evening flow.</p>
+<p>Five capital operations are playable on one save. Open Expedition Readiness to see your capital tally, each duo’s lieutenant returns and both General clearances. A duo can depart once its own six lieutenants have returned and all five capitals are liberated. Then muster its crew at the launch berth with the listed supplies.</p>
+<p>Each of the 25 expeditions takes two Umas, two Generals and six lieutenants. Any ready duo can be the first to cross the Gate. The game records that crossing for later voyages. Its bridge operations use the small ship’s cargo. Choose <b>Deploy all ten</b> to take the full crew into tactics. Follow the objective shown in each battle. Keep the named Herald or Echo alive in the final ground operation to unlock the release scene. Finish the return to restore access to the Homestretch and unload any remaining supplies.</p>
+<div class="scroll"><table><tr><th>Screen or entry</th><th>What you can do</th></tr><tr><td>Opening and roster</td><td>Meet the Captain's crew, choose from all 50 recruitment leads and see their next personal chapter. A single Uma can complete her own conflict. Pick additional crew at any time to support the next mission.</td></tr><tr><td>Homestretch</td><td>Assign eligible crew to duty, repairs, engineering, mining or resource operations, crafting and ship stations. Check cargo and the next heading. Use quarters and independent relationships alongside these activities.</td></tr><tr><td>Personal arc and rehabilitation</td><td>Run the Uma's ship and ground encounters, capture her General and attend rehabilitation with both actors. Move her Boss Ally into the shared quarters and open her own relationship scenes when appropriate.</td></tr><tr><td>Local bases and capitals</td><td>See which same-system Uma is her fixed partner, investigate together, see who the lieutenants are and what remains for their return. Restore services and liberate five capitals.</td></tr><tr><td>Locating the next operation</td><td>A readiness view shows the five capital outcomes and each duo's six individual lieutenant statuses. A ready duo can embark while other duo stories remain open.</td></tr><tr><td>Expedition ship</td><td>Allocate supplies and take two Umas, two cleared Boss Allies and six lieutenants on their own small ship. Play its actual bridge missions. All ten deploy together in Act III battles against the Seraine. See the target's liberation, outcome report and return.</td></tr><tr><td>Finale and return</td><td>Use the recorded expedition outcomes in the Queen and final battle sequence. The soft ending follows the relationships and places involved. Exact finale readiness and epilogues will follow the <a href="../../handoff/tasks/CY90.md">Act IV workshop</a>.</td></tr></table></div>
+<p>Training is an optional authored activity after signing on. The new four-act release starts a fresh campaign profile. Existing result, gear and replay mechanisms are described in the <a href="../README.md">current manual</a>.</p>
+<p class="foot">From <a href="../campaign.md">docs/game/campaign.md</a>. The manual is what the game is, as built.</p>
+</main>
+</div>
+</body>
+</html>

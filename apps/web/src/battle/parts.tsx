@@ -1,6 +1,6 @@
 // The battle screen's pieces (CY8, TC29): the timeline, the unit card, the forecast card, the paper doll, the terrain card
 // and the cut-in. DOM over the board; each reads the battle's state and the forecast, and decides nothing.
-import type { BattleState, Forecast, StrikeForecast, TerrainCard, UnitState } from '@cyber/battle'
+import { talkContact, type BattleState, type Forecast, type StrikeForecast, type TerrainCard, type UnitState } from '@cyber/battle'
 import { FaceTile, UmaBust } from '@luismlorenzana/uma-kit/album'
 import type { ReactNode } from 'react'
 import type { CutInSpeed } from './playback'
@@ -49,6 +49,7 @@ function Bar({ hp, max, hue }: { hp: number; max: number; hue: string }) {
 /** A unit's card: her parts, Charge, link and state. */
 export function UnitCard({ state, unit, onClose }: { state: BattleState; unit: UnitState; onClose: () => void }) {
   const hue = SIDE_HUE[unit.side]
+  const contact = unit.status === 'active' ? talkContact(state, unit.id) : undefined
   return (
     <Panel className="pointer-events-auto w-56">
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -60,6 +61,7 @@ export function UnitCard({ state, unit, onClose }: { state: BattleState; unit: U
         <div key={p} className="flex items-center justify-between gap-2"><span>{PART_NAME[p]}</span><span>{unit.hp[p]}/{unit.maxHp[p]} <Bar hp={unit.hp[p]} max={unit.maxHp[p]} hue={hue} /></span></div>
       ))}
       <div className="mt-1 text-[#a3abc2]">Charge {unit.charge} · Link {unit.link ? 'on' : 'off'} · {unit.status === 'active' ? `facing ${unit.facing}` : unit.status}{unit.stunned ? ' · stunned' : ''}{unit.reloading ? ' · reloading' : ''}</div>
+      {contact && <p className="mt-1 text-[#a3abc2]">{unit.talkHit ? `Talk · ${labelOf(state, contact.actor)}` : contact.hint}</p>}
     </Panel>
   )
 }
@@ -83,7 +85,7 @@ export function ForecastCard({ state, f, onConfirm, onCancel, children }: { stat
   return (
     <Panel className="pointer-events-auto w-64">
       <div data-forecast className="space-y-1">
-        {f.attack && <StrikeLine state={state} s={f.attack} title={f.cover ? `Covered by ${labelOf(state, f.cover)}` : 'Attack'} />}
+        {f.attack && <StrikeLine state={state} s={f.attack} title={f.cover ? `Covered by ${labelOf(state, f.cover)}` : f.signature ?? 'Attack'} />}
         {f.splash && <div className="text-[#ffb84d]">On hit · {f.splash.damage} splash to {f.splash.targets.map((id) => labelOf(state, id)).join(', ')}</div>}
         {f.crossfire.map((c) => <StrikeLine key={c.unit} state={state} s={c} title={`Crossfire (${c.how})`} />)}
         {f.counter && <StrikeLine state={state} s={f.counter} title="Counter" />}
@@ -135,7 +137,7 @@ export function TerrainPanel({ card, onClose }: { card: TerrainCard; onClose: ()
   )
 }
 
-export interface CutInView { attacker: string; target: string; band: string; role: string; speed: CutInSpeed; numbers: string[]; key: number }
+export interface CutInView { attacker: string; target: string; band: string; role: string; signature?: string; speed: CutInSpeed; numbers: string[]; key: number }
 
 /** The cut-in (TC28): a side view of the two, the Uma facing left on the right, the enemy facing right on the left, with
  * the numbers as they land. An Uma shows her bust from master data (D19); stand-ins and enemies stay cards until the
@@ -159,7 +161,7 @@ export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
   return (
     <div data-cut-in className={`pointer-events-none absolute inset-x-0 top-1/2 flex -translate-y-1/2 flex-col ${full ? 'h-[62%]' : 'h-[34%]'} bg-gradient-to-r from-black/80 via-[#141827]/85 to-black/80`}>
       <div className="flex h-full">{card(enemy, false)}{card(squad, true)}</div>
-      <div className="absolute inset-x-0 top-2 text-center font-display text-[13px] font-bold uppercase tracking-widest text-white/80">{c.role === 'main' ? '' : `${c.role} · `}{c.band}</div>
+      <div className="absolute inset-x-0 top-2 text-center font-display text-[13px] font-bold uppercase tracking-widest text-white/80">{c.signature ?? (c.role === 'main' ? c.band : `${c.role} · ${c.band}`)}</div>
       <div className="absolute inset-x-0 bottom-3 flex justify-center gap-3 font-display text-[20px] font-bold text-white [text-shadow:0_1px_3px_#000]">{c.numbers.map((n, i) => <span key={i}>{n}</span>)}</div>
     </div>
   )

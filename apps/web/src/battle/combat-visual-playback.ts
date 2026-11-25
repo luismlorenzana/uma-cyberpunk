@@ -90,6 +90,14 @@ export class CombatVisualPlayback {
     this.guarding.clear()
   }
 
+  async beforeRemoval(cue: Extract<Cue, { kind: 'freed' | 'extracted' | 'talked' }>): Promise<void> {
+    const id = cue.kind === 'talked' ? cue.target : cue.unit
+    if (!this.before.input.units.find(unit => unit.id === id)?.sprite) return
+    const clip = cue.kind === 'freed' ? 'collar-release' : cue.kind === 'talked' ? 'talk-exit' : 'withdraw'
+    const { ends } = this.play(this.unit(id), clip, cue.kind)
+    if (!this.scene.stillCombat) await wait(ends)
+  }
+
   async afterCue(cue: Cue, index: number): Promise<void> {
     if (this.skipped()) return
     const actor = 'unit' in cue ? this.unit(cue.unit) : undefined
@@ -163,7 +171,7 @@ export class CombatVisualPlayback {
       const pose = fitted ? this.play(actor, 'back-deploy', cue.kind, 'emitter') : { ends: 0, anchor: 0 }
       await wait(pose.anchor)
       if (this.skipped()) return
-      this.scene.placeBarrier(cue.id, cue.at, this.speed)
+      this.scene.placeBarrier(cue.id, cue.at, this.speed, cue.unit)
       this.trace({ cue: cue.kind, tile: cue.at, source: fitted ? 'bulwark' : this.action.kind })
       await wait(Math.max(pose.ends - pose.anchor, this.scene.stillCombat ? 0 : 250 / this.speed))
       if (actor && fitted) this.scene.setCombatPose(actor.id, actor)
@@ -177,7 +185,7 @@ export class CombatVisualPlayback {
       await wait(pose.anchor)
       if (this.skipped()) return
       const effect = cue.kind !== 'rebooted' ? 'mend' : fitted ? 'med-reboot' : 'order-reboot'
-      this.scene.combatRepair(effect, [recipient.x, recipient.y], this.speed)
+      this.scene.combatRepair(effect, [recipient.x, recipient.y], this.speed, recipient.id)
       this.trace({ cue: cue.kind, unit: recipient.id, tile: [recipient.x, recipient.y], source: effect })
       let rise = 0
       if (cue.kind === 'rebooted') {

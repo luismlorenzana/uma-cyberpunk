@@ -6,7 +6,7 @@
 // nothing worth doing, it advances. The Steel Muster holds cover and keeps a gun loaded under its volley.
 import { orderError } from './v3'
 import { canAim, counterFor, crossfireFor, mapTarget, objectStrikeOf, strikeOf, tileOf, unitById, type Strike } from './attack'
-import { v2 } from './harm'
+import { breaksCollar, v2 } from './harm'
 import { attacksFrom, supportFrom } from './legal'
 import { movePoints, reachable, type Reach } from './move'
 import { isMuster } from './muster'
@@ -15,6 +15,7 @@ import { roll } from './rng'
 import { DIRS, distance, facingOf, inReach } from './sight'
 import { dashError } from './support'
 import { techChance } from './tech'
+import { talkContact } from './talk'
 import { boardOf, cross, keyOf, liveTiles, type Board } from './terrain'
 import { inputOf } from './timeline'
 import { TUNING } from './tuning'
@@ -76,6 +77,11 @@ function maxReach(state: BattleState, u: UnitState): number {
 function goalOf(state: BattleState, me: UnitState, foes: UnitState[]): Tile | null {
   const o = state.input.objective
   if (me.side === 'squad') {
+    const contact = foes.find((u) => {
+      const route = talkContact(state, u.id)
+      return route?.actor === me.id && (route.requires === 'active' || u.talkHit)
+    })
+    if (contact) return tileOf(contact)
     if (o.kind === 'reach') return o.tile
     if (o.kind === 'escort' && o.unit === me.id) return o.tile
     if (o.kind === 'hack' && inputOf(state, me.id).loadout.back.kind === 'deck') {
@@ -167,7 +173,8 @@ function actValue(c: Ctx, placed: BattleState, to: Tile, act: Act): number {
       return (s.hit / 100) * ((fire ? 8 : 3) * near('foe') - (fire ? 10 : 4) * near('ally'))
     }
     const tIn = inputOf(state, target.id)
-    const s = strikeOf(placed, me.id, act.with, act.target, to, { aim: act.aim })
+    const signature = act.signature ? inputOf(state, me.id).signature : undefined
+    const s = strikeOf(placed, me.id, act.with, act.target, to, { aim: act.aim, power: signature?.power })
     if (!s) return -1
     let v = expected(s)
     if (act.aim === 'hold') {
@@ -180,7 +187,7 @@ function actValue(c: Ctx, placed: BattleState, to: Tile, act: Act): number {
     }
     if (me.side === 'squad' && target.id && state.input.units.find((i) => i.id === target.id)?.leader) {
       if (o.kind === 'defeatLeader') v *= 1.4
-      if (o.kind === 'freeLeader' && act.aim !== 'hold') v -= killChance(s, target) * 60
+      if (o.kind === 'freeLeader' && act.aim !== 'hold' && !breaksCollar(state, target.id)) v -= killChance(s, target) * 60
     }
     for (const j of crossfireFor(placed, me.id, to, act.target)) {
       const js = strikeOf(placed, j.unit, j.mount, act.target, tileOf(unitById(placed, j.unit)))
@@ -198,8 +205,9 @@ function actValue(c: Ctx, placed: BattleState, to: Tile, act: Act): number {
       const loaded = c.allies.filter((a) => isMuster(state, a.id) && !a.reloading)
       if (loaded.length === 0) v -= 3
     }
-    return v
+    return signature ? v * (me.side === 'enemy' ? 0.8 : 1) - reserve(signature.charge) : v
   }
+  if (act.kind === 'talk') return 70
   if (act.kind === 'tech') {
     const p = techChance(state, me.id, act.target) / 100
     const t = unitById(state, act.target)
@@ -303,7 +311,7 @@ export function chooseTurn(state: BattleState, unitId: string = state.active!): 
     // Aiming at a Hold, for a squad unit that can aim.
     if (v2(state) && me.side === 'squad' && canAim(state, unitId)) {
       for (const a of [...acts]) {
-        if (a.kind !== 'attack') continue
+        if (a.kind !== 'attack' || a.signature) continue
         const target = placed.units.find((u) => u.id === a.target)
         if (target?.holdHp) acts.push({ ...a, aim: 'hold' })
       }
