@@ -2,7 +2,8 @@ import { newSave, parseCampaignBook, STAND_IN_FILES } from '@cyber/domain'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, it } from 'vitest'
 import { Wardrobe } from './Wardrobe'
-import { RecruitmentPanel } from './RecruitmentPanel'
+import RosterScreen from './RosterScreen'
+import { indexCampaignNavigation } from './navigation'
 
 const book = (visibleLooks?: string[]) => parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': {
   schemaVersion: 1, draft: true, opening: 'opening', quests: [{ id: 'opening', title: 'Opening', scene: 'sw1-ch1-s1' }],
@@ -34,11 +35,12 @@ it('only browses approved wardrobe looks and starts on the first visible look wh
 it('reveals an ally wardrobe only after its existing campaign scene, without mutating progress', () => {
   const save = newSave('test', '2026-11-21T00:00:00Z'), campaign = book()
   const before = structuredClone(save)
-  const props = { book: campaign, assets: new Map(), recruits: [], open: () => {} }
-  expect(renderToStaticMarkup(<RecruitmentPanel {...props} save={save} />)).not.toContain('Ally wardrobes')
+  const props = { book: campaign, assets: new Map(), complete: new Set<string>(), navigation: indexCampaignNavigation(campaign),
+    open: () => {}, travel: () => {}, browse: { kind: 'Uma' as const, search: '', page: 0 }, onBrowse: () => {} }
+  expect(renderToStaticMarkup(<RosterScreen {...props} save={save} />)).not.toContain('Ally wardrobes')
   const seen = { ...save, story: { ...save.story, seen: ['sw1-ch1-s2'] } }
-  expect(renderToStaticMarkup(<RecruitmentPanel {...props} save={seen} />)).not.toContain('Ally wardrobes')
+  expect(renderToStaticMarkup(<RosterScreen {...props} save={seen} />)).not.toContain('Ally wardrobes')
   const released = { ...seen, story: { ...seen.story, flags: ['commander-released'] } }
-  expect(renderToStaticMarkup(<RecruitmentPanel {...props} save={released} />)).toContain('Ally wardrobes')
+  expect(renderToStaticMarkup(<RosterScreen {...props} save={released} />)).toContain('Ally wardrobes')
   expect(save).toEqual(before)
 })

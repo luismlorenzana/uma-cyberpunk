@@ -2,9 +2,11 @@ import { BOND_TUNING, campaignSpeaker, type CampaignBook, type CampaignDate, typ
 import { nameOf } from '../story/runner'
 import { dateProgress } from './dates'
 
-export function DatePanel({ save, book, dates }: { save: Save; book: CampaignBook; dates: readonly CampaignDate[] }) {
+export function DatePanel({ save, book, dates, compact = false }: {
+  save: Save; book: CampaignBook; dates: readonly CampaignDate[]; compact?: boolean
+}) {
   return <section aria-label="Captain's relationships" className="space-y-2 rounded-xl border border-white/15 bg-white/5 p-3">
-    <h2 className="font-display text-lg font-bold">Captain’s relationships</h2>
+    {compact ? <h3 className="font-semibold">Relationship</h3> : <h2 className="font-display text-lg font-bold">Captain’s relationships</h2>}
     <ul className="space-y-2">
       {dates.map((date) => {
         const { bond, milestone, visit } = dateProgress(save, book, date)

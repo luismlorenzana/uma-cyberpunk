@@ -19,7 +19,7 @@ export function Wardrobe({ book, assets, speaker, back }: {
   const label = (role: string) => member?.looks[role]?.label ?? LOOK_NAME[role as Look] ?? role.replaceAll('-', ' ')
   return <section role="dialog" aria-modal="true" aria-label="Crew wardrobe" className="fixed z-30 flex flex-col gap-3 overflow-hidden bg-[#0b1020] p-3 text-white"
     style={{ inset: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }}>
-    <header className="flex items-center gap-3"><button type="button" className="min-h-11 rounded-lg bg-white/10 px-3" onClick={back}>Crew stories</button>
+    <header className="flex items-center gap-3"><button type="button" className="min-h-11 rounded-lg bg-white/10 px-3" onClick={back}>Back to roster</button>
       <h2 className="min-w-0 flex-1 font-bold">{nameOf(book.story, speaker)}</h2>{role && <span className="text-sm">{label(role)}</span>}</header>
     <div className="grid min-h-0 flex-1 grid-cols-[12rem_minmax(0,1fr)] gap-3">
       <div className="flex flex-col gap-1 overflow-y-auto" aria-label="Outfits">{visibleLooks.map(look =>

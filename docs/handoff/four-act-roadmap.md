@@ -28,7 +28,16 @@ Deliver through the real campaign. Each milestone has a playable entry, exit, de
 | **M5 · Play the final battle and ending** | [CY90](tasks/CY90.md) implements the workshop outcome, finale readiness, encounters, epilogue and post-ending behavior. Workshop can run during M2–M4 once the story outcomes have clear meanings. | Author the Queens and their sequences, finale and epilogue. Plan finale art against actual objectives, choices and states. | Canonical Act IV decisions recorded. Actual playthroughs complete the ending with different legal expedition and relationship histories. |
 | **M6 · Install and release** | [CY91](tasks/CY91.md) builds, stages, selects, installs and verifies the release. CY96 supplies approved pins and scope receipts. | Finish required approvals. Bind each authored set and review the complete playable candidate in order. | Fresh launch on the owner's installed iPhone. End-to-end play, saves, offline/resume, updates, art readback, rollback and active release selection pass. |
 
-**Current checkpoint.** M4 Acts I–III run on one private candidate through all five capitals and 25 expeditions. The full roster, 150 lieutenant returns and 25 named liberations are bound. The art and release packets own remaining visual approvals and installed iPhone acceptance. CY90 owns Act IV.
+**Current checkpoint.** CY97 delivered the playable four-act release through both endings. The current program addresses incomplete navigation, roster and operations interfaces, progression, and campaign balance.
+
+## Interaction and systems implementation
+
+| Order | Packets | Delivery checkpoint |
+| --- | --- | --- |
+| 1 | [CY98 Ship Home](tasks/CY98.md), [CY99 Roster and chapters](tasks/CY99.md), [CY100 Operations](tasks/CY100.md) | Fresh opening, travel, character stories, ship and ground sorties and resume through the real campaign. |
+| 2 | [CY101 Advancement and equipment](tasks/CY101.md), [CY102 Battle balance](tasks/CY102.md), [CY103 Resource balance](tasks/CY103.md) | Show and measure growth, effective gear, battle choices, resource flows, and recovery through all four acts. |
+| 3 | [CY104 System and location navigation](tasks/CY104.md), [CY105 Expedition operations](tasks/CY105.md), [CY106 Individual relationships](tasks/CY106.md) | Bind local and liberated states, verify expedition costs and detours, and surface authored individual interactions across the cast. |
+| Throughout | [CY91 iPhone checks](tasks/CY91.md), [CY92 Story](tasks/CY92.md), [CY93 General Art](tasks/CY93.md), [CY94 Character Art](tasks/CY94.md), [CY95 Sprites](tasks/CY95.md), [CY96 Intake](tasks/CY96.md) | Update the authored scene, UI destination, imagery and verification as mechanics change. |
 
 ## Dependencies and parallel work
 

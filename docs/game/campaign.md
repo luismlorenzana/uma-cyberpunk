@@ -1,10 +1,16 @@
 # Playing the four-act campaign
 
-Open **Campaign** and play **First Watch** to reach the 50 sign-ons across the five home systems. A recruited Uma receives her quarters, and her Crew Stories card opens her origin and personal missions through ship combat, ground capture and custody. Training is optional. Captain visits use the existing evening flow.
+Open **Campaign** and play **First Watch** on the Homestretch. **Home** shows the current ship, dock and ready activities. Use **Navigation** to jump or load supplies, **Ship systems** to fund projects, refit or craft at the Hangar, and **Quarters** for evening visits. During an expedition, Home shows the active ship and its separate cargo.
+
+Open **Roster** to find the 50 recruitment candidates, the 50 Generals and the 150 Lieutenants. Select a character to see her chapters, her current status and port, and relevant wardrobe or relationship options. Sign on at the listed port and continue from the same character's chapter list.
+
+Open **Operations** for story actions and ship or ground encounters. Filter by act, type or status and search by operation or port. Use the ready list for the current location and the completed list to check settled progress. Expedition Readiness shows each duo’s returns and clearances.
+
+The 50 sign-ons span the five home systems. A recruited Uma receives her quarters, and her Crew Stories card opens her origin and personal missions through ship combat, ground capture and custody. Training is optional. Captain visits use the existing evening flow.
 
 Five capital operations are playable on one save. Open Expedition Readiness to see your capital tally, each duo’s lieutenant returns and both General clearances. A duo can depart once its own six lieutenants have returned and all five capitals are liberated. Then muster its crew at the launch berth with the listed supplies.
 
-After a duo establishes its local base, open **Projects** at its home port. Fund the base project with Alloy, then use the normal watch to advance construction. The base report follows the actual funding, completion, or supply state. Once operating, the project produces at its port.
+After a duo establishes its local base, open **Ship systems** at its home port. Fund the base project with Alloy, then use the normal watch to advance construction. The base report follows the actual funding, completion, or supply state. Once operating, the project produces at its port.
 
 Each of the 25 expeditions takes two Umas, two Generals and six lieutenants. Any ready duo can be the first to cross the Gate. The game records that crossing for later voyages. Its bridge operations use the small ship’s cargo. After the first approach, the crew can go off duty during a safe pause. A supply report appears when the next ship operation needs more than the voyage has aboard. Choose **Deploy all ten** to take the full crew into tactics. Follow the objective shown in each battle. Keep the named Herald or Echo alive in the final ground operation to unlock the release scene. Finish the return to restore access to the Homestretch and unload any remaining supplies.
 
