@@ -25,7 +25,9 @@ export function placeBarrier(state: BattleState, unitId: string, at: Tile, cues:
   const field = state.field!
   spendCharge(unitById(state, unitId), TUNING.back.barrier, 'barrier', cues)
   const id = `barrier-${field.nextBarrier++}`
-  field.barriers.push({ id, x: at[0], y: at[1], hp: TUNING.back.barrierHp })
+  const role = inputOf(state, unitId).specialty
+  const hp = role?.kind === 'laser' && role.subclass === 'shield' ? Math.floor(TUNING.back.barrierHp / 2) : TUNING.back.barrierHp
+  field.barriers.push({ id, x: at[0], y: at[1], hp })
   cues.push({ kind: 'barrier', unit: unitId, id, at })
 }
 

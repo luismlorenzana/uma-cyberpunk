@@ -60,7 +60,7 @@ export function withProfile(input: BattleInput, profile: Profile): BattleInput {
   if (profile === 'cohesion') return { ...withProfile(input, 'life'), cohesion: { level: 5, leader: squad[0]!, members: squad } }
   const ranks = [3, 7, 10]
   return {
-    ...input, rulesVersion: 3, meal: 'curry', systems: ['sensors', 'shield', { id: 'battery', level: 1, band: 3 }], orders: { slots: 2, kinds: ['sure', 'reboot'] },
+    ...input, rulesVersion: Math.max(3, input.rulesVersion), meal: 'curry', systems: ['sensors', 'shield', { id: 'battery', level: 1, band: 3 }], orders: { slots: 2, kinds: ['sure', 'reboot'] },
     units: input.units.map((u) => {
       const i = squad.indexOf(u.id)
       if (i < 0) return u
@@ -105,7 +105,8 @@ export function simulate(s: Scenario, map: Parameters<typeof scenarioInput>[1], 
         if (state.units.find((u) => u.id === c.unit)?.side === 'squad') r.playerTurns++
       } else if (c.kind === 'attack') {
         const w = weaponOf(input, c.unit, c.with)
-        current = { type: w?.type ?? null, band: c.band }
+        const modeType = c.mode === 'thermal' ? 'F' : c.mode === 'impact' || c.mode === 'suppress' ? 'I' : c.mode === 'area' ? 'P' : undefined
+        current = { type: modeType ?? w?.type ?? null, band: c.band }
       } else if (c.kind === 'hit') {
         r.damageByBand[current.band] = (r.damageByBand[current.band] ?? 0) + c.amount
         if (current.type) r.damageByType[current.type] = (r.damageByType[current.type] ?? 0) + c.amount
@@ -160,7 +161,7 @@ export function targets(r: ScenarioReport): Target[] {
 }
 
 function markdown(reports: ScenarioReport[], seeds: number, before?: ScenarioReport[]): string {
-  const lines = [`# Battle simulator report`, '', `${seeds} seeds a scenario, AI against AI, rules version 2. Minutes at ${SECONDS_A_TURN} s a player turn.`, '']
+  const lines = [`# Battle simulator report`, '', `${seeds} seeds a scenario, AI against AI. Minutes at ${SECONDS_A_TURN} s a player turn.`, '']
   for (const r of reports) {
     const n = r.battles
     const old = before?.find((b) => b.id === r.id)

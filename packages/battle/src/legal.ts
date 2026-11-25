@@ -11,6 +11,7 @@ import { hackError, techError } from './tech'
 import { talkError } from './talk'
 import { boardOf } from './terrain'
 import { inputOf } from './timeline'
+import { fireModes, modeCost, modeWeapon } from './specialists'
 import type { Act, BattleState, ItemKind, Tile, TurnAction } from './types'
 import { PARTS } from './types'
 
@@ -32,11 +33,23 @@ export function attacksFrom(state: Pick<BattleState, 'input' | 'units' | 'field'
   for (const mount of MOUNTS) {
     const arm = armed(input, u, mount)
     if (!arm) continue
+    const modes = fireModes(input, mount, state.input.rulesVersion)
+      .filter((mode) => u.charge >= modeCost(mode))
+      .map((mode) => ({ mode, weapon: modeWeapon(state, unitId, mount, arm.weapon, mode)! }))
     for (const t of state.units) {
       if (t.side === u.side || t.status !== 'active') continue
       if (inReach(board, arm.weapon, from, tileOf(t))) out.push({ kind: 'attack', with: mount, target: t.id })
+      for (const { mode, weapon } of modes) {
+        if (inReach(board, weapon, from, tileOf(t))) {
+          out.push({ kind: 'attack', with: mount, target: t.id, mode })
+        }
+      }
     }
-    for (const t of mapTargets(state)) if (inReach(board, arm.weapon, from, t.tile)) out.push({ kind: 'attack', with: mount, target: t.id })
+    for (const t of mapTargets(state)) {
+      if (!inReach(board, arm.weapon, from, t.tile)) continue
+      out.push({ kind: 'attack', with: mount, target: t.id })
+      if (modes.some(({ mode }) => mode === 'thermal')) out.push({ kind: 'attack', with: mount, target: t.id, mode: 'thermal' })
+    }
   }
   return out
 }
@@ -113,8 +126,14 @@ export function checkTurn(state: BattleState, action: TurnAction): { reach: Reac
   if (!reach) return { error: `${action.unit} can't reach ${to[0]},${to[1]}` }
   // The board as it stands after the move, with Dash's Charge spent.
   const placed = { ...at(state, action.unit, to), units: at(state, action.unit, to).units.map((x) => (x.id === action.unit && action.dash ? { ...x, charge: x.charge - 1 } : x)) }
-  const act = action.act
+  const declared = action.act
+  if (declared.kind === 'prepare' && (state.input.rulesVersion < 5 || inputOf(state, action.unit).specialty?.kind !== 'windup'
+    || u.windupUsed || u.suppressed || !state.units.some((unit) => unit.id === declared.target && unit.side !== u.side && unit.status === 'active'))) {
+    return { error: 'Cannot prepare that shot' }
+  }
+  const act = declared.kind === 'prepare' ? { ...declared, kind: 'attack' as const, aim: undefined, mode: undefined } : declared
   if (act.kind === 'attack') {
+    if (action.act.mode) return 'Choose a signature or a firing mode'
     const signature = inputOf(state, action.unit).signature
     if (act.signature !== undefined && (act.signature !== true || !signature || signature.mount !== act.with || u.signatureUsed
       || unitById(placed, u.id).charge < signature.charge || act.aim || !state.units.some(t => t.id === act.target))) {
@@ -122,23 +141,28 @@ export function checkTurn(state: BattleState, action: TurnAction): { reach: Reac
     }
     const arm = armed(inputOf(state, action.unit), u, act.with)
     if (!arm) return { error: `${action.unit} can't fire ${act.with}` }
+    const weapon = modeWeapon(state, action.unit, act.with, arm.weapon, act.mode)
+    if (!weapon) return { error: 'That firing mode is unavailable' }
+    if (act.mode && unitById(placed, action.unit).charge < modeCost(act.mode)) return { error: 'Insufficient Charge for this shot' }
+    if (act.aim && (act.mode === 'area' || act.mode === 'suppress')) return { error: 'Area attacks cannot aim at a part' }
     const t = state.units.find((x) => x.id === act.target)
     if (!t) {
       const thing = v2(state) ? mapTarget(state, act.target) : undefined
       if (!thing) return { error: `${act.target} isn't a standing enemy` }
+      if (act.mode && act.mode !== 'thermal') return { error: 'This mode targets enemy units' }
       if (act.aim) return { error: 'things on the map take no aim' }
-      if (!inReach(boardOf(state), arm.weapon, to, thing.tile)) return { error: `${act.target} is out of reach` }
-      return objectStrikeOf(placed, action.unit, act.with, act.target, to) ? { reach } : { error: 'no strike' }
+      if (!inReach(boardOf(state), weapon, to, thing.tile)) return { error: `${act.target} is out of reach` }
+      return objectStrikeOf(placed, action.unit, act.with, act.target, to, act.mode) ? { reach } : { error: 'no strike' }
     }
     if (t.side === u.side || t.status !== 'active') return { error: `${act.target} isn't a standing enemy` }
-    if (!inReach(boardOf(state), arm.weapon, to, tileOf(t))) return { error: `${act.target} is out of reach` }
+    if (!inReach(boardOf(state), weapon, to, tileOf(t))) return { error: `${act.target} is out of reach` }
     if (act.aim) {
       if (!canAim(state, action.unit)) return { error: `${action.unit} can't aim` }
       if (act.aim === 'hold') {
         if (!v2(state) || !t.holdHp) return { error: `${act.target} has no Hold to aim at` }
       } else if (t.hp[act.aim] <= 0) return { error: `${act.target}'s ${act.aim} is already broken` }
     }
-    if (!strikeOf(placed, action.unit, act.with, act.target, to)) return { error: 'no strike' }
+    if (!strikeOf(placed, action.unit, act.with, act.target, to, { mode: act.mode })) return { error: 'no strike' }
     return { reach }
   }
   if (act.kind === 'wait' || act.kind === 'none') return { reach }

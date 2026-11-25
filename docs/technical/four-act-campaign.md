@@ -1,6 +1,6 @@
 # Four-act campaign systems plan
 
-**Target design, D86.** Implementation packets are in the [roadmap](../handoff/four-act-roadmap.md). Use the shipped story runner, battle engine, dialogue and art paths. Continue to read fixed legacy inputs where they are supported. The four-act profile begins fresh.
+**Target design, D87.** Implementation packets are in the [roadmap](../handoff/four-act-roadmap.md). Use the shipped story runner, battle engine, dialogue and art paths. Continue to read fixed legacy inputs where they are supported. The four-act profile begins fresh.
 
 ## Content graph and identities
 

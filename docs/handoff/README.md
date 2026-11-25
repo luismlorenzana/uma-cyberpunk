@@ -2,7 +2,7 @@
 
 ## Current packets
 
-**D86 · Four-act campaign.** Build a fresh campaign profile in the existing app and tactics engine. All 50 leads are available from the opening, each Uma can finish Act I on her own, and Story supplies the fixed planetary duos. Five liberated capitals and that duo's own six returned lieutenants open its ten-person expedition. The Queens and soft ending belong to Act IV.
+**D87 · Four-act campaign.** Build a fresh campaign profile in the existing app and tactics engine. All 50 leads are available from the opening, each Uma can finish Act I on her own, and Story supplies the fixed planetary duos. Five liberated capitals and that duo's own six returned lieutenants open its ten-person expedition. The Queens and soft ending belong to Act IV.
 
 - [Full production roadmap and active packet sequence](four-act-roadmap.md)
 - [Implementation launch and cross-lane delivery order](four-act-implementation-launch.md)
@@ -39,7 +39,7 @@ Keep the packet's implementation, script, art, release IDs and acceptance aligne
 
 ## Done and previous work
 
-The [historical Done ledger](archive/previous-queue.md#done) records shipped work through D85. The [D86 disposition matrix](archive/four-act-disposition.md) records retired requirements and the active successor for each earlier open packet. The archive preserves the previous pilot and historical decisions for evidence and regression.
+The [historical Done ledger](archive/previous-queue.md#done) records shipped work through D86. The [D87 disposition matrix](archive/four-act-disposition.md) records retired requirements and the active successor for each earlier open packet. The archive preserves the previous pilot and historical decisions for evidence and regression.
 
 ## Phase 4: life aboard, on test content
 

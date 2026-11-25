@@ -124,6 +124,13 @@ export interface UnitRef {
   id: string
 }
 
+export const COMBAT_SUBCLASSES = ['melee', 'heal', 'shield', 'long', 'support'] as const
+export type CombatSubclass = typeof COMBAT_SUBCLASSES[number]
+export type FireMode = 'thermal' | 'impact' | 'area' | 'suppress'
+export type Specialty =
+  | { kind: 'laser'; rank: number; subclass?: CombatSubclass }
+  | { kind: 'wing' | 'shield' | 'sniper' | 'medic' | 'windup' }
+
 export type HeroineSpriteRole = 'boss-enemy' | 'boss-ally' | 'sub-boss'
 
 export interface HeroineSprite {
@@ -144,6 +151,7 @@ export interface Signature {
 export interface UnitInput {
   sprite?: HeroineSprite
   signature?: Signature
+  specialty?: Specialty
   /** Optional frozen equipment identities for presentation. The reducer uses loadout. */
   frozenRig?: Record<'core' | 'leftArm' | 'rightArm' | 'legs' | 'visor', string>
     & Record<'leftHand' | 'rightHand' | 'back' | 'coat', string | null>
@@ -252,6 +260,10 @@ export interface PartHp {
 }
 
 export interface UnitState {
+  patched?: true
+  suppressed?: true
+  windupUsed?: true
+  windup?: { target: string; with: Mount }
   id: string
   side: Side
   x: number
@@ -373,7 +385,8 @@ export type AimAt = PartId | 'hold'
 export type TechKind = 'stun' | 'jam' | 'jackout'
 
 export type Act =
-  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt; signature?: true }
+  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt; signature?: true; mode?: FireMode }
+  | { kind: 'prepare'; with: Mount; target: string }
   | { kind: 'wait' }
   | { kind: 'none' }
   // Rules version 2 (CY5):
@@ -432,10 +445,11 @@ export interface DuoAction {
 }
 
 export type BattleAction = TurnAction | LinkAction | BenchAction | OrderAction | DuoAction
+  | { kind: 'quickPatch'; unit: string; target: string }
 
 // --- Cues: what the board and the cut-in play; the scene decides nothing ----------------------------------------------
 
-export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo' | 'signature'
+export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo' | 'signature' | 'mode' | 'patch'
 export type AttackRole = 'main' | 'crossfire' | 'counter'
 
 export type Cue =
@@ -445,9 +459,11 @@ export type Cue =
   | { kind: 'faced'; unit: string; facing: Dir }
   | { kind: 'waited'; unit: string }
   | { kind: 'linked'; unit: string; on: boolean }
-  | { kind: 'attack'; unit: string; target: string; with: Mount; band: Exclude<WeaponBand, 'tech'>; role: AttackRole; facing: Facing; aim?: PartId; signature?: { id: string; label: string } }
+  | { kind: 'attack'; unit: string; target: string; with: Mount; band: Exclude<WeaponBand, 'tech'>; role: AttackRole; facing: Facing; aim?: PartId; mode?: FireMode; signature?: { id: string; label: string } }
   | { kind: 'signatureWarning'; unit: string; tile: Tile; label: string }
   | { kind: 'signatureCanceled'; unit: string }
+  | { kind: 'prepared'; unit: string; target: string }
+  | { kind: 'suppressed'; unit: string; target: string; interrupted: boolean }
   | { kind: 'cover'; unit: string; for: string; attacker: string }
   | { kind: 'crossfire'; unit: string; target: string; how: 'pincer' | 'link' }
   | { kind: 'counter'; unit: string; target: string }

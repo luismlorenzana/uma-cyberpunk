@@ -2,7 +2,7 @@
 
 A personal sci-fi tactics RPG for landscape play on the owner’s iPhone Home Screen. The Captain recruits up to 50 Umas, follows their independent stories, liberates five systems, and sends story-defined duos on ten-member expeditions against the Seraine. A final battle and soft ending close the campaign.
 
-**Current development.** D86 defines the four-act campaign and a fresh profile in the existing app. Read the [game design](docs/design/campaign-rework.md), [production roadmap](docs/handoff/four-act-roadmap.md) and [handoff queue](docs/handoff/README.md). The previous campaign and local pilot supply reusable systems and historical play evidence.
+**Current development.** D87 defines the four-act campaign and a fresh profile in the existing app. Read the [game design](docs/design/campaign-rework.md), [production roadmap](docs/handoff/four-act-roadmap.md) and [handoff queue](docs/handoff/README.md). The previous campaign and local pilot supply reusable systems and historical play evidence.
 
 ## Layout
 

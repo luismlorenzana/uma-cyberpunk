@@ -1,6 +1,6 @@
 # Four-act production roadmap
 
-**Active roadmap · D86 · 2026-11-24.** The [game design](../design/campaign-rework.md) defines what ships, the [systems plan](../technical/four-act-campaign.md) defines the runtime contracts, and the [authoring contract](../design/campaign-art-delivery.md) defines the shared production records and deliverables.
+**Active roadmap · D87 · 2026-11-24.** The [game design](../design/campaign-rework.md) defines what ships, the [systems plan](../technical/four-act-campaign.md) defines the runtime contracts, and the [authoring contract](../design/campaign-art-delivery.md) defines the shared production records and deliverables.
 
 The [implementation launch](four-act-implementation-launch.md) gives the build order, source handoffs and playable acceptance gates.
 

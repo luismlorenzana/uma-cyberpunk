@@ -9,7 +9,7 @@ import { TUNING } from './tuning'
 import type { Cue } from './types'
 
 const visualCues = [
-  'turnStarted', 'charge', 'moved', 'faced', 'waited', 'linked', 'attack', 'cover', 'crossfire', 'counter',
+  'turnStarted', 'charge', 'moved', 'faced', 'waited', 'linked', 'attack', 'prepared', 'suppressed', 'cover', 'crossfire', 'counter',
   'guard', 'hit', 'miss', 'partBroke', 'holdOn', 'rigBreak', 'extracted', 'objective', 'ended', 'terrain',
   'burn', 'burst', 'hacked', 'door', 'heights', 'turned', 'lights', 'tech', 'stunned', 'skipped', 'holdHit',
   'freed', 'barrier', 'barrierHit', 'dash', 'mended', 'rebooted', 'item', 'skill', 'bench', 'scan', 'reload',

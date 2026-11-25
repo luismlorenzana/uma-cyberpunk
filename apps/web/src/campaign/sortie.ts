@@ -22,6 +22,11 @@ export function beginCampaignEncounter(save: Save, book: CampaignBook, quest: Ca
   const members = quest.callUp ? campaignCallUp(book, next, quest) : []
   const started = members.length ? { ...opening, mission: { ...opening.mission!, callUp: { members } } } : opening
   const ashore = missionAshore(book, started)
+  const combat = book.ground.get(mission.id)?.combat
+  if (combat?.kind === 'combined') {
+    const roster = [...combat.members.filter(({ role }) => role === 'laser'), ...combat.members.filter(({ role }) => role !== 'laser')]
+    return setSquad(started, roster.flatMap(({ outfit }) => outfit === undefined ? [] : [outfit]))
+  }
   const away = awayMembers(save.operations, save.squads)
   const available = next.crew.filter((member) => canTakeOrdinaryAssignment(member) && !ashore.has(member.outfit) && !away.includes(member.outfit) && !resting(member)).map(({ outfit }) => outfit)
   const lead = personalMissionLead(book, quest)

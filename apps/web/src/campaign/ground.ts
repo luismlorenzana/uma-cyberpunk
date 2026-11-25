@@ -1,5 +1,5 @@
 import { replayBattle, type BattleAction, type BattleInput } from '@cyber/battle'
-import { earn, fillFile, setFlag, type GroundEncounter, type Save, type StoryPack } from '@cyber/domain'
+import { advanceCombatTraining, earn, fillFile, setFlag, type GroundEncounter, type Save, type StoryPack } from '@cyber/domain'
 import { finishMission } from '../mission/director'
 
 /** The settled clear is the commit marker for the reward, evidence and campaign outcome. */
@@ -33,6 +33,8 @@ export function settleGround(save: Save, ground: GroundEncounter, storyPack: Sto
   }
   const file = win.file ? storyPack.files[win.file] : undefined
   file?.lines.forEach((_, line) => { story = fillFile(story, file.id, line) })
-  return finishMission({ ...save, story, wallet: win.reward ? earn(save.wallet, win.reward) : save.wallet,
+  const complete = mission.battle?.input as BattleInput | undefined
+  const trained = complete?.rulesVersion === 5 ? advanceCombatTraining(save, complete.units) : save
+  return finishMission({ ...trained, story, wallet: win.reward ? earn(save.wallet, win.reward) : save.wallet,
     worlds: { ...save.worlds, missions: [...save.worlds.missions, mission.id] } })
 }

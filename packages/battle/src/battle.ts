@@ -19,6 +19,7 @@ import { TUNING } from './tuning'
 import type { ActionResult, BattleAction, BattleInput, BattleState, Cue, DuoAction, FieldState, Objective, Role, UnitState } from './types'
 import { cloneV3, DUO_TECHS, duoError, duoKey, giveOrder, landStrike, orderError, partnerOf, startV3, v3 } from './v3'
 import { EXPEDITION_RULES_VERSION, EXPEDITION_SQUAD_SIZE, SUPPORTED_VERSIONS } from './version'
+import { modeCost, quickPatch, quickPatchTargets, validSpecialty } from './specialists'
 
 const SAFE_ID = /^[A-Za-z0-9][A-Za-z0-9:_.-]{0,63}$/
 const isBand = (v: unknown) => v === 1 || v === 2 || v === 3 || v === 4 || v === 5
@@ -27,7 +28,7 @@ const ROLES: readonly Role[] = ['vanguard', 'striker', 'gunner', 'netrunner', 'm
 function checkInput(input: BattleInput): void {
   if (!SUPPORTED_VERSIONS.includes(input.rulesVersion)) throw new BattleInputError('rulesVersion', `unknown rules version ${String(input.rulesVersion)}`)
   if (typeof input.seed !== 'string' || input.seed.length === 0 || input.seed.length > 64) throw new BattleInputError('seed', 'expected a string of 1–64 characters')
-  const map = parseMap(input.map)
+  const map = parseMap(input.map, 'map', input.rulesVersion === 5 && input.units?.some(unit => unit.specialty) ? 5 : 4)
   const expedition = input.rulesVersion === EXPEDITION_RULES_VERSION
   if (expedition !== (map.schemaVersion === 2)) throw new BattleInputError('map.schemaVersion', 'an expedition map requires expedition rules and vice versa')
   const later = input.rulesVersion >= 2
@@ -63,12 +64,18 @@ function checkInput(input: BattleInput): void {
         || !MOUNTS.includes(s.mount) || !Number.isInteger(s.charge) || s.charge < 1 || s.charge > u.chargeCap
         || !Number.isInteger(s.power) || s.power < 1 || s.power > 12) throw new BattleInputError(path + '.signature', 'invalid mounted signature')
     }
+    if (u.specialty !== undefined && (input.rulesVersion < 5 || !validSpecialty(u.specialty, u))) {
+      throw new BattleInputError(`${path}.specialty`, 'expected a version 5 specialist with a compatible fitting')
+    }
   })
   const squad = input.units.filter((u) => u.side === 'squad').length, enemies = input.units.length - squad
   if (expedition) {
     if (squad !== EXPEDITION_SQUAD_SIZE) throw new BattleInputError('units', `expected ${EXPEDITION_SQUAD_SIZE} expedition units`)
     if (input.bench?.length) throw new BattleInputError('bench', 'the full expedition deploys')
-  } else if (squad < 1 || squad > TUNING.map.squad) throw new BattleInputError('units', `expected 1–${TUNING.map.squad} squad units`)
+  } else {
+    const capacity = input.rulesVersion === 5 && input.units.some(unit => unit.specialty) ? 10 : TUNING.map.squad
+    if (squad < 1 || squad > capacity) throw new BattleInputError('units', `expected 1–${capacity} squad units`)
+  }
   if (enemies < 1 || enemies > TUNING.map.maxEnemies) throw new BattleInputError('units', `expected 1–${TUNING.map.maxEnemies} enemies`)
   if (input.items) {
     let total = 0
@@ -233,6 +240,7 @@ function startNextTurn(state: BattleState, cues: Cue[]): void {
       cues.push({ kind: 'skipped', unit: u.id, why: spent ? 'duo' : u.stunned ? 'stunned' : 'idle' })
       if (spent) state.v3!.spent = state.v3!.spent.filter((x) => x !== u.id)
       delete u.stunned
+      delete u.windup
       startOwnTurn(state, u.id)
       u.clock = 0
       state.turn += 1
@@ -325,6 +333,14 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     unitById(next, action.unit).link = action.on
     return { state: next, cues: [{ kind: 'linked', unit: action.unit, on: action.on }], error: null }
   }
+  if (action.kind === 'quickPatch') {
+    if (!quickPatchTargets(state, action.unit).some((unit) => unit.id === action.target)) {
+      return { state, cues: [], error: 'Emergency patch is unavailable' }
+    }
+    const next = clone(state), cues: Cue[] = []
+    quickPatch(next, action.unit, action.target, cues)
+    return { state: next, cues, error: null }
+  }
   if (action.kind === 'order') {
     const error = orderError(state, action)
     if (error) return { state, cues: [], error }
@@ -377,7 +393,10 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     const act = action.act
     if (act.kind === 'attack') {
       const input = inputOf(next, u.id), signature = act.signature ? input.signature : undefined
-      if (!signature) resolveAttack(next, u.id, act.with, act.target, act.aim, cues)
+      if (!signature) {
+        if (act.mode) spendCharge(u, modeCost(act.mode), 'mode', cues)
+        resolveAttack(next, u.id, act.with, act.target, act.aim, cues, undefined, act.mode)
+      }
       else if (armed(input, u, signature.mount)) {
         const target = unitById(next, act.target)
         spendCharge(u, signature.charge, 'signature', cues)
@@ -388,6 +407,10 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
           cues.push({ kind: 'signatureWarning', unit: u.id, tile: u.signatureMark.tile, label: signature.label })
         }
       }
+    } else if (act.kind === 'prepare') {
+      u.windupUsed = true
+      u.windup = { target: act.target, with: act.with }
+      cues.push({ kind: 'prepared', unit: u.id, target: act.target })
     }
     else if (act.kind === 'wait') {
       const from = u.charge
@@ -418,6 +441,7 @@ export function applyBattleAction(state: BattleState, action: BattleAction): Act
     else delete u.waited
   }
   u.clock = restart
+  if (action.act.kind !== 'prepare') delete u.windup
   u.turns += 1
   if (next.v3) {
     if (next.v3.sure === u.id) next.v3.sure = null

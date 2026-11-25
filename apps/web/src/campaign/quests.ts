@@ -2,6 +2,7 @@ import { awayMembers, canTakeOrdinaryAssignment, briefingReady, campaignCaptures
 import { applyStep } from '../mission/director'
 import { commitExpedition, expeditionForQuest, expeditionQuestBlock } from './expedition'
 import { clearCampaignPosts, homeQuestReady } from './pair'
+import { formationReady } from './specialist-input'
 
 export function questScene(save: Save, quest: CampaignQuest): string {
   const variant = quest.sceneWhen
@@ -66,10 +67,19 @@ export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQu
     return !!required && questComplete(save, required, book)
   }
   if (quest.requires?.some(id => !prerequisiteMet(id)) || (quest.requiresAny && !quest.requiresAny.some(prerequisiteMet))) return false
+  const combat = quest.encounter ? book.ground.get(quest.encounter)?.combat : undefined
+  if (combat?.kind === 'combined' && !formationReady(save, combat, shiftedCombat(save, book), campaignSupport(book, save).ashore)) return false
+  if (quest.requires?.some((id) => {
+    const required = book.quests.find((entry) => entry.id === id)
+    return !required || !questComplete(save, required, book)
+  })) return false
   if (!quest.after) return true
   const prior = book.quests.find(({ id }) => id === quest.after)
   return !!prior && questComplete(save, prior, book)
 }
+
+export const shiftedCombat = (save: Save, book: Pick<CampaignBook, 'combatShift'>): boolean =>
+  !!book.combatShift && save.story.flags.includes(book.combatShift)
 
 export function optionalCampaignTraining(book: CampaignBook, quest: CampaignQuest): boolean {
   return !!quest.encounter && !!book.recruits?.length && !book.recruits.some(({ story }) => story.includes(quest.id))

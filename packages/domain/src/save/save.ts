@@ -6,6 +6,8 @@ import type { CommandCinemaState } from '../ship/command-cinema'
 
 import { MANAGEMENT_EVENTS, type CampaignManagementState, type ManagementReceipt } from '../campaign-management'
 import { EXPEDITION_RULES_VERSION, EXPEDITION_SQUAD_SIZE, type BattleInput, type Role } from '@cyber/battle'
+import { COMBAT_SUBCLASSES, type CombatTraining } from '../combat-training'
+import type { CombatSubclass } from '@cyber/battle'
 import { CAPTAIN_NAME_MAX, DEFAULT_CAPTAIN, PRONOUNS, ROMANCE, type Captain, type Pronouns, type Romance } from '../captain'
 import { BOND_MAX, BOND_PATHS, BOND_TUNING, newBond, type Bond, type BondPath } from '../crew/bonds'
 import { emptyCabin, ITEMS_BY_ID, LINE_SLOTS, placeable, SLOTS, STARTER_STOCK, TOPICS, type Cabin, type Reveal, type Slot } from '../cabins/items'
@@ -220,6 +222,7 @@ export interface ExpeditionRun {
 export interface SaveV20 extends Omit<SaveV19, 'version'> {
   version: 20
   expedition: ExpeditionRun | null
+  combatTraining?: Record<string, CombatTraining>
 }
 
 export type Save = SaveV20
@@ -253,6 +256,8 @@ export function newSave(uid: string, now: string): Save {
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
   return { ...migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))), version: 20, expedition: null }
 }
+
+export const migrateV19 = (save: SaveV19): SaveV20 => ({ ...save, version: 20, expedition: null })
 
 export const migrateV18 = (save: SaveV18): SaveV19 => ({ ...save, version: 19, commandCinema: { fast: false, retries: 0, pending: null } })
 
@@ -748,12 +753,13 @@ export function parseSave(value: unknown, path = 'save'): Save {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version < 20) {
-    if (value && typeof value === 'object' && 'expedition' in value) throw new SaveParseError(path, 'unknown version 20 keys')
+    if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
     return { ...parseSaveV19(value, path), version: 20, expedition: null }
   }
-  const { expedition, ...rest } = object(value, path, Object.keys(value as Obj))
-  const base = parseSaveV19({ ...rest, version: 19 }, path)
-  if (expedition === null) return { ...base, version: 20, expedition: null }
+  const { expedition, combatTraining, ...rest } = object(value, path, Object.keys(value as Obj))
+  const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path)
+  const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}) }
+  if (expedition == null) return { ...base, version: 20, expedition: null }
   const field = path + '.expedition'
   const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions'])
   if (!Array.isArray(data.members) || data.members.length !== EXPEDITION_SQUAD_SIZE) {
@@ -784,6 +790,23 @@ export function parseSave(value: unknown, path = 'save'): Save {
   }
   return { ...base, version: 20, expedition: { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
     fuel: bounded(data.fuel, field + '.fuel', SHIP_CARGO_MAX), provisions: bounded(data.provisions, field + '.provisions', SHIP_CARGO_MAX) } }
+}
+
+function parseCombatTraining(combatTraining: unknown, path: string): Record<string, CombatTraining> {
+  const field = `${path}.combatTraining`
+  const rows = object(combatTraining, field, Object.keys((combatTraining ?? {}) as Obj))
+  if (Object.keys(rows).length > 1000) throw new SaveParseError(field, 'too many training records')
+  return Object.fromEntries(Object.entries(rows).map(([key, value]) => {
+    const here = `${field}.${key}`
+    if (!/^[1-9][0-9]*$/.test(key) || !Number.isSafeInteger(Number(key))) throw new SaveParseError(here, 'expected an outfit id')
+    const row = object(value, here, ['rank', 'subclass'])
+    const rank = bounded(row.rank, here + '.rank', 10)
+    const subclass = row.subclass as CombatSubclass | null
+    if (!rank || (subclass !== null && !COMBAT_SUBCLASSES.includes(subclass))) {
+      throw new SaveParseError(here, 'expected a valid rank and subclass choice')
+    }
+    return [key, { rank, subclass }]
+  }))
 }
 
 function parseSaveV19(value: unknown, path: string): SaveV19 {

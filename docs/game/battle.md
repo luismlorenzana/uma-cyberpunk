@@ -410,6 +410,14 @@ Two findings changed the rules on the way:
 - The Engines' head start decides some maps alone (+35 points on muster-underlevels), whatever its size. So the
   life-aboard profile leaves them off, and the rule stays as the packet words it.
 
+## Rules version 5: campaign specialists
+
+Training's Laser specialist practice and authored early ground encounters deploy a Laser rank and an optional subclass
+from the Hangar. Rank 1 offers the subclass, rank 5 caps early training, and the campaign's authored shift opens
+ranks 6–10 and removes the active subclass. The combined formation has ten squad members, a leader objective and
+prepared enemy attacks that Snipers can interrupt. The [specialist manual](../technical/campaign-combat-specialists.md)
+lists the Laser modes, the issued fittings, and the forecast and deployment rules.
+
 ## The battle screen
 
 The battle as the sandbox (CY8) and the missions (CY10) show it: DOM over the [board](board.md), in `apps/web/src/battle/`.

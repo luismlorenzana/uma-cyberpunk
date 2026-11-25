@@ -1,5 +1,5 @@
 import { capacityOf, hash32, loadOf, type BattleInput } from '@cyber/battle'
-import { applyGroundRules, issuedCampaignRig, loadoutOf, rigProblem, type ExpeditionRun, type GroundRules, type Mission, type Rig, type Save, type StoryPack } from '@cyber/domain'
+import { advanceCombatTraining, applyGroundRules, issuedCampaignRig, loadoutOf, rigProblem, type ExpeditionRun, type GroundRules, type Mission, type Rig, type Save, type StoryPack } from '@cyber/domain'
 import { missionInput, SCENARIOS, type SquadUnit } from '../mission/battleInput'
 import { finishMission } from '../mission/director'
 import { nameOf } from '../story/runner'
@@ -87,5 +87,8 @@ export function groundInput(scenario: string, outfit: number, label: string, mai
 export function settleTraining(save: Save): Save {
   const mission = save.mission
   if (!mission || mission.step !== 'results' || !mission.won) return save
-  return finishMission({ ...save, worlds: { ...save.worlds, missions: [...new Set([...save.worlds.missions, mission.id])] } })
+  const complete = mission.battle?.input as BattleInput | undefined
+  const trained = complete?.rulesVersion === 5 && !save.worlds.missions.includes(mission.id)
+    ? advanceCombatTraining(save, complete.units) : save
+  return finishMission({ ...trained, worlds: { ...save.worlds, missions: [...new Set([...save.worlds.missions, mission.id])] } })
 }

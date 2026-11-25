@@ -1,6 +1,6 @@
 # Four-act authoring and art delivery contract
 
-**Current, D86.** Use the [four-act design](campaign-rework.md), [roadmap](../handoff/four-act-roadmap.md), [approved art direction](art-direction.md), and the existing [Cyberpunk publishing workflow](../technical/campaign-art-publishing.md). Story, General Art, Character Art, Sprite Art and Engineering work against the same private scene, encounter and asset IDs.
+**Current, D87.** Use the [four-act design](campaign-rework.md), [roadmap](../handoff/four-act-roadmap.md), [approved art direction](art-direction.md), and the existing [Cyberpunk publishing workflow](../technical/campaign-art-publishing.md). Story, General Art, Character Art, Sprite Art and Engineering work against the same private scene, encounter and asset IDs.
 
 ## Ownership
 

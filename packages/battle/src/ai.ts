@@ -5,8 +5,9 @@
 // Charge kept for a counter. Ties go to the seeded roll, so a battle always plays the same way. It never idles: with
 // nothing worth doing, it advances. The Steel Muster holds cover and keeps a gun loaded under its volley.
 import { orderError } from './v3'
-import { canAim, counterFor, crossfireFor, mapTarget, objectStrikeOf, strikeOf, tileOf, unitById, type Strike } from './attack'
+import { blastTargets, canAim, counterFor, crossfireFor, mapTarget, objectStrikeOf, strikeOf, tileOf, unitById, type Strike } from './attack'
 import { breaksCollar, v2 } from './harm'
+import { modeCost, quickPatchTargets, suppressionTargets } from './specialists'
 import { attacksFrom, supportFrom } from './legal'
 import { movePoints, reachable, type Reach } from './move'
 import { isMuster } from './muster'
@@ -164,7 +165,7 @@ function actValue(c: Ctx, placed: BattleState, to: Tile, act: Act): number {
     const target = placed.units.find((u) => u.id === act.target)
     if (!target) {
       const thing = mapTarget(placed, act.target)
-      const s = objectStrikeOf(placed, me.id, act.with, act.target, to)
+      const s = objectStrikeOf(placed, me.id, act.with, act.target, to, act.mode)
       if (!thing || !s) return -1
       if (thing.kind === 'barrier') return expected(s) * 0.05
       const area = cross(thing.tile)
@@ -174,9 +175,18 @@ function actValue(c: Ctx, placed: BattleState, to: Tile, act: Act): number {
     }
     const tIn = inputOf(state, target.id)
     const signature = act.signature ? inputOf(state, me.id).signature : undefined
-    const s = strikeOf(placed, me.id, act.with, act.target, to, { aim: act.aim, power: signature?.power })
+    const prepared = me.windup?.target === act.target && me.windup.with === act.with
+    const s = strikeOf(placed, me.id, act.with, act.target, to, { aim: act.aim, mode: act.mode, prepared, power: signature?.power })
     if (!s) return -1
     let v = expected(s)
+    if (act.mode) {
+      v -= reserve(modeCost(act.mode)) + 0.65
+      const chance = s.hit / 100
+      if (act.mode === 'area') v += chance * Math.floor(s.damage / 2) * blastTargets(placed, s, target).length
+      if (act.mode === 'impact' && target.charge > 0) v += chance * (target.charge > 1 ? 6 : 3)
+      if (act.mode === 'suppress') v += chance * suppressionTargets(placed, target).reduce((value, unit) => value + (unit.windup ? 26 : unit.suppressed ? 0 : 4), 0)
+      if (act.mode === 'thermal' && !['wet', 'fire'].includes(state.field?.states[keyOf(target.x, target.y)]?.kind ?? '')) v += chance * 5
+    }
     if (act.aim === 'hold') {
       const p = 1 - (1 - s.hit / 100) ** s.hits
       v = (s.damage >= (target.holdHp ?? 0) ? 30 : 8) * p
@@ -311,7 +321,7 @@ export function chooseTurn(state: BattleState, unitId: string = state.active!): 
     // Aiming at a Hold, for a squad unit that can aim.
     if (v2(state) && me.side === 'squad' && canAim(state, unitId)) {
       for (const a of [...acts]) {
-        if (a.kind !== 'attack' || a.signature) continue
+        if (a.kind !== 'attack' || a.signature || a.mode === 'area' || a.mode === 'suppress') continue
         const target = placed.units.find((u) => u.id === a.target)
         if (target?.holdHp) acts.push({ ...a, aim: 'hold' })
       }
@@ -331,7 +341,13 @@ export function chooseTurn(state: BattleState, unitId: string = state.active!): 
     const closer = candidates.filter((x) => (x.act.kind === 'wait') && distance(x.to, c.goal!) < now && !(c.ranged && c.foes.some((f) => f.x === c.goal![0] && f.y === c.goal![1]) && distance(x.to, c.goal!) < c.preferred))
     if (closer.length > 0 && best.to[0] === me.x && best.to[1] === me.y) best = closer[0]!
   }
-  return { kind: 'turn', unit: unitId, ...(best.to[0] !== me.x || best.to[1] !== me.y ? { to: best.to } : {}), ...(best.dash ? { dash: true } : {}), act: best.act, face: bestFacing(c, best.to) }
+  const windup = me.windup
+  if (windup) best = candidates.find(({ act }) => act.kind === 'attack' && act.target === windup.target && act.with === windup.with) ?? best
+  const selected = best.act
+  const act = selected.kind === 'attack' && !selected.mode && !me.windupUsed && !me.suppressed
+    && inputOf(state, unitId).specialty?.kind === 'windup' && foes.some(({ id }) => id === selected.target)
+    ? { kind: 'prepare' as const, target: selected.target, with: selected.with } : selected
+  return { kind: 'turn', unit: unitId, ...(best.to[0] !== me.x || best.to[1] !== me.y ? { to: best.to } : {}), ...(best.dash ? { dash: true } : {}), act, face: bestFacing(c, best.to) }
 }
 
 /** Ally Auto: the same scorer, for a squad unit. */
@@ -343,6 +359,10 @@ export const autoTurn = (state: BattleState): TurnAction => chooseTurn(state)
  * Auto never calls Resonance: that's the player's moment. Enemies, and battles below version 3, play `chooseTurn`.
  */
 export function chooseAction(state: BattleState): BattleAction {
+  if (state.active) {
+    const target = quickPatchTargets(state, state.active).find((unit) => unit.hp.core <= unit.maxHp.core / 2)
+    if (target) return { kind: 'quickPatch', unit: state.active, target: target.id }
+  }
   const id = state.active!
   const me = unitById(state, id)
   const o = state.input.orders

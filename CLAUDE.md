@@ -4,7 +4,7 @@
   `roadmap.md` and `decisions.md` (also on GitHub at `luismlorenzana/uma-platform`). uma-cyberpunk is uma-platform's
   Phase 10 (P144).
 - **Start with the [handoff](docs/handoff/README.md) and [roadmap](docs/handoff/four-act-roadmap.md).**
-  [D86’s four-act design](docs/design/campaign-rework.md) sets the game direction. Use [the systems plan](docs/technical/four-act-campaign.md),
+  [D87’s four-act design](docs/design/campaign-rework.md) sets the game direction. Use [the systems plan](docs/technical/four-act-campaign.md),
   the active CY packet and the current manual. Earlier TC, BP and SB material supplies implementation history.
 - **Story, General Art, Character Art and Sprite Art have distinct delivery lanes.** Use the
   [authoring contract](docs/design/campaign-art-delivery.md) and current workstream packets. All named Story and art material stays private.

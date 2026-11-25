@@ -1,4 +1,4 @@
-# D86 disposition of the earlier campaign queue
+# D87 disposition of the earlier campaign queue
 
 The packets below left the active queue when the owner chose four acts and fixed duos. Preserve their shipped work, source evidence and approvals. Deliver new work through [CY83–CY96](../four-act-roadmap.md#active-packets-by-workstream). The [previous handoff](previous-queue.md) and the [November 22 queue](2026-11-22-campaign-implementation.md) record the old context.
 

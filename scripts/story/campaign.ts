@@ -127,6 +127,21 @@ function validateGround(book: CampaignBook): void {
         if (!id) continue
         const scenario = byId.get(id)
         if (!scenario) throw new Error(`campaign.json: ${mission.id}: unknown scenario ${id}`)
+        if (ground.combat?.kind === 'combined') {
+          const squad = scenario.input.units.filter(({ side }) => side === 'squad')
+          if (scenario.input.rulesVersion < 5 || squad.length !== 10 || scenario.input.objective.kind !== 'defeatLeader') {
+            throw new Error(`campaign.json: ${mission.id}: combined formation needs ten version 5 squad slots and a leader objective`)
+          }
+          const roles = ['laser', 'wing', 'shield', 'sniper', 'medic'] as const
+          if (roles.some((role) => squad.filter((unit) => unit.specialty?.kind === role).length !== 2)) {
+            throw new Error(`campaign.json: ${mission.id}: ${id} needs two spawn templates per formation role`)
+          }
+          for (const unit of ground.combat.windups) {
+            if (!scenario.input.units.some((row) => row.id === unit && row.side === 'enemy')) {
+              throw new Error(`campaign.json: ${mission.id}: unknown prepared enemy ${unit} in ${id}`)
+            }
+          }
+        }
         const input = applyGroundRules(scenarioInput(scenario, maps[scenario.map]!, 0), ground)
         if (input.objective.kind.toLowerCase() !== mission.objective.kind.replaceAll('-', '')) {
           throw new Error(`campaign.json: ${mission.id}: ${id} uses a different objective`)

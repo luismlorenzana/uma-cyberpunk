@@ -27,6 +27,8 @@ export const isHeroine = (state: Pick<BattleState, 'input'>, id: string): boolea
 export function techError(state: Pick<BattleState, 'input' | 'units'>, unitId: string, tech: TechKind, targetId: string, from: Tile): string | null {
   const u = unitById(state, unitId)
   if (!hasDeck(state, unitId)) return `${unitId} has no Deck`
+  const role = inputOf(state, unitId).specialty
+  if (role?.kind === 'laser' && role.subclass === 'support' && tech !== 'jam') return 'Support training has Jam and terminal access'
   if (armless(u)) return `${unitId} has no arm to work the Deck`
   const t = state.units.find((x) => x.id === targetId)
   if (!t || t.side === u.side || t.status !== 'active') return `${targetId} isn't a standing enemy`

@@ -25,6 +25,7 @@ import type { CampaignSector } from '../campaign-sectors'
 import { parseCampaignSectors } from './campaign-sectors'
 import { BASE_PROJECT_SCENES, type PortProject } from '../campaign-projects'
 import type { CabinEvening } from '../campaign-cabins'
+import { FORMATION_ROLES, type FormationMember, type FormationRole, type GroundCombat } from '../combat-training'
 import { parseCabinEvenings } from './campaign-cabins'
 import type { GroundRules } from './ground-rules'
 import { parseGroundFormation } from './ground-formation'
@@ -76,6 +77,7 @@ export interface CampaignPortraitFace {
 
 export interface CampaignBook {
   fourAct?: FourActCampaign
+  combatShift?: string
   wardrobe?: CampaignWardrobe
   commandCinematics?: CommandCinematics
   management?: CampaignManagement
@@ -106,6 +108,7 @@ export interface CampaignBook {
 }
 
 export interface GroundEncounter extends GroundRules {
+  combat?: GroundCombat
   id: string
   title: string
   alternate?: { flag: string; scenario: string; label: string; closedLabel?: string }
@@ -332,7 +335,8 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct', 'combatShift'], fields)
+  const combatShift = o.combatShift === undefined ? undefined : p.slug(o.combatShift, 'combatShift')
   p.version(o)
   if ((identity === 'four-act' || o.fourAct !== undefined) && o.tiers !== undefined) p.fail('tiers', 'four-act books cannot use tier progression')
   if (identity === 'four-act' && o.draft === false && o.fourAct === undefined) p.fail('fourAct', 'a production four-act book needs a catalog')
@@ -501,7 +505,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     }
   }
   const ground = unique(p, 'ground', o.ground === undefined ? [] : p.list(o.ground, 'ground', (v, path): GroundEncounter => {
-    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win', 'rescue', 'talk', 'formation', 'cues', 'signatures'], ['id', 'title', 'win'])
+    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win', 'rescue', 'talk', 'formation', 'cues', 'signatures', 'combat'], ['id', 'title', 'win'])
     const id = p.slug(g.id, `${path}.id`)
     const mission = encounters.get(id)
     if (!mission?.scenario || mission.scenario === 'training' || commands.has(id) || !quests.some((q) => q.encounter === id)) {
@@ -568,6 +572,8 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     if (formation && !quests.some((q) => q.encounter === id && q.flags?.includes(formation.ally.released))) {
       p.fail(`${path}.formation.ally.released`, 'the quest must require this ally release')
     }
+    const combat = g.combat === undefined ? undefined : parseGroundCombat(p, g.combat, `${path}.combat`, story, combatShift)
+    if (combat?.kind === 'combined' && (kit || expansion)) p.fail(`${path}.combat`, 'combined formation issues its own rigs')
     const w = p.object(g.win, `${path}.win`, ['flag', 'file', 'reward'], [])
     const flag = w.flag === undefined ? undefined : p.slug(w.flag, `${path}.win.flag`)
     if (rescue && !flag) p.fail(`${path}.win.flag`, 'a rescue needs a capture flag')
@@ -580,7 +586,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     const cues = g.cues === undefined ? undefined : parseGroundCues(p, g.cues, `${path}.cues`, scenes, talk ?? [])
     const signatures = g.signatures === undefined ? undefined : parseGroundSignatures(p, g.signatures, `${path}.signatures`)
     return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
-      ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), ...(rescue ? { rescue } : {}), ...(talk ? { talk } : {}),
+      ...(combat ? { combat } : {}), ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), ...(rescue ? { rescue } : {}), ...(talk ? { talk } : {}),
       ...(formation ? { formation } : {}), ...(cues ? { cues } : {}), ...(signatures ? { signatures } : {}), win: { flag, file, reward } }
   }, fourActCatalog ? 512 : 64), (g) => g.id)
   const liberationFlags = new Set([...ground.values()].map(encounter => encounter.win.flag))
@@ -692,6 +698,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
   const management = o.management === undefined ? undefined : parseCampaignManagement(o.management, { quests, projects, scenes, assets, workshop })
   const tiers = o.tiers === undefined ? undefined : parseCampaignTiers(p, o.tiers, byQuest, recruits ?? [], ground, o.draft === true)
   return { opening, draft: o.draft as boolean, ...(fourAct ? { fourAct } : {}), ...(previewEnd ? { previewEnd } : {}), quests, assets, art, story, scenes, commands, ground, pairs,
+    ...(combatShift ? { combatShift } : {}),
     ...(wardrobe ? { wardrobe } : {}),
     ...(tiers ? { tiers } : {}),
     ...(management ? { management } : {}),
@@ -701,6 +708,37 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     ...(cabinEvenings ? { cabinEvenings } : {}),
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
     ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(allies ? { allies } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
+}
+
+export function parseGroundCombat(p: P, value: unknown, path: string, story: StoryPack, shift?: string): GroundCombat {
+  const combat = p.object(value, path, ['kind', 'members', 'windups'], ['kind'])
+  if (combat.kind === 'uma' && combat.members === undefined && combat.windups === undefined) return { kind: 'uma' }
+  if (combat.kind !== 'combined' || !shift) return p.fail(path, 'expected a combined formation with a campaign combatShift flag')
+  const knownOutfits = new Set([...story.casting.crewOrder, ...story.casting.leads.map((lead) => lead.outfit)])
+  const members = p.list(combat.members, `${path}.members`, (raw, here): FormationMember => {
+    const row = p.object(raw, here, ['role', 'outfit', 'heroine', 'requires'], ['role'])
+    const role = row.role as FormationRole
+    if (!FORMATION_ROLES.includes(role)) return p.fail(`${here}.role`, 'unknown formation role')
+    if (row.outfit !== undefined && row.heroine === undefined && role !== 'wing') {
+      const outfit = p.int(row.outfit, `${here}.outfit`, 1, Number.MAX_SAFE_INTEGER)
+      if (!knownOutfits.has(outfit)) return p.fail(`${here}.outfit`, 'unknown crew outfit')
+      const requires = row.requires === undefined ? undefined : p.slug(row.requires, `${here}.requires`)
+      return { role, outfit, ...(requires ? { requires } : {}) }
+    }
+    if (row.heroine !== undefined && row.outfit === undefined && role !== 'laser') {
+      const heroine = p.slug(row.heroine, `${here}.heroine`)
+      if (!story.casting.heroines.some(({ board }) => board === heroine)) return p.fail(`${here}.heroine`, 'unknown heroine')
+      return { role, heroine, requires: p.slug(row.requires, `${here}.requires`) }
+    }
+    return p.fail(here, 'expected a single cast identity compatible with the role')
+  }, 10)
+  unique(p, path + '.members', members, ({ outfit, heroine }) => outfit === undefined ? `heroine:${heroine}` : `uma:${outfit}`)
+  if (FORMATION_ROLES.some((role) => members.filter((member) => member.role === role).length !== 2)) {
+    return p.fail(path + '.members', 'expected two members per role')
+  }
+  const windups = combat.windups === undefined ? [] : p.list(combat.windups, `${path}.windups`, (id, here) => p.slug(id, here), 8)
+  unique(p, path + '.windups', windups, (id) => id)
+  return { kind: 'combined', members, windups }
 }
 
 function parsePortraitFaces(p: P, value: unknown, art: CampaignSceneArt[], asset: (id: unknown, path: string) => string, wardrobe?: CampaignWardrobe): CampaignPortraitFace[] {

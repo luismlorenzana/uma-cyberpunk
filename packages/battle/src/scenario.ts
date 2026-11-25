@@ -42,8 +42,8 @@ export function parseScenario(value: unknown, maps: Record<string, BattleMap>, p
   if (typeof o.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(o.id)) throw new BattleInputError(`${path}.id`, 'expected a lowercase id')
   if (typeof o.title !== 'string' || o.title.length === 0 || o.title.length > 80) throw new BattleInputError(`${path}.title`, 'expected a title')
   if (typeof o.map !== 'string' || !maps[o.map]) throw new BattleInputError(`${path}.map`, `no map ${String(o.map)}`)
-  const map = parseMap(maps[o.map], `maps.${o.map}`)
   const input = object(o.input, `${path}.input`)
+  const map = parseMap(maps[o.map], `maps.${o.map}`, input.rulesVersion === 5 ? 5 : 4)
   if ('seed' in input || 'map' in input) throw new BattleInputError(`${path}.input`, 'the seed and the map come from the scenario')
   const units = input.units as UnitInput[] | undefined
   if (!Array.isArray(units)) throw new BattleInputError(`${path}.input.units`, 'expected units')

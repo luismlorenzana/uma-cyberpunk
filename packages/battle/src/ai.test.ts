@@ -57,9 +57,10 @@ describe('the AI', () => {
 
 describe('the scenarios', () => {
   const { maps, scenarios } = loadScenarios(ROOT)
-  it('there are eight, nameless, on four maps (and the board\'s two)', () => {
-    expect(scenarios.map((s) => s.id).sort()).toEqual(['arena', 'chain', 'free', 'high-ground', 'melee-ranged', 'mirror', 'muster-underlevels', 'sandbox-muster'])
-    expect(Object.keys(maps).sort()).toEqual(['arena', 'flat-14', 'heights-14', 'underlevels', 'underlevels-14', 'yard'])
+  it('loads every checked-in scenario and uses only stand-in identities', () => {
+    expect(scenarios.map((s) => s.id).sort()).toEqual(['arena', 'chain', 'combined-strike', 'free', 'high-ground', 'melee-ranged',
+      'mirror', 'muster-underlevels', 'sandbox-muster', 'specialist-practice'])
+    expect(Object.keys(maps).sort()).toEqual(['arena', 'combined-strike', 'flat-14', 'heights-14', 'specialist-practice', 'underlevels', 'underlevels-14', 'yard'])
     for (const s of scenarios) for (const u of s.input.units) expect(u.ref?.kind ?? 'standin').toBe('standin')
   })
   for (const s of scenarios) {

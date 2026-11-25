@@ -7,7 +7,7 @@ this before changing anything.
 ## Read first
 
 1. [Handoff](docs/handoff/README.md) and the [four-act roadmap](docs/handoff/four-act-roadmap.md). Use the active packet in `docs/handoff/tasks/`.
-2. [Four-act game design](docs/design/campaign-rework.md) and [systems plan](docs/technical/four-act-campaign.md). D86 governs current gameplay and supersedes old tier-based plans.
+2. [Four-act game design](docs/design/campaign-rework.md) and [systems plan](docs/technical/four-act-campaign.md). D87 governs current gameplay and supersedes old tier-based plans.
 3. [Game manual](docs/game/README.md) for rules and screens already built. Use the [archive](docs/handoff/archive/README.md) for old release evidence.
 4. [Decisions](docs/decisions.md), append-only, and the cross-game plan in uma-platform `docs/architecture.md`.
 5. For Story or Art, use the [authoring contract](docs/design/campaign-art-delivery.md), [art direction](docs/design/art-direction.md) and the active authoring packet.

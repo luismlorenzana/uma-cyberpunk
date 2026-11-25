@@ -19,3 +19,4 @@ export { forecast, type Forecast, type StrikeForecast, type PartOdds, type Break
 export { chooseTurn, chooseAction, autoTurn } from './ai'
 export { DUO_TECHS, duoKey, orderError, rankOf, systemOf, partnerOf } from './v3'
 export { parseScenario, scenarioInput, type Scenario } from './scenario'
+export { FIRE_MODE_LABEL, fireModes, modeCost, quickPatchTargets } from './specialists'
