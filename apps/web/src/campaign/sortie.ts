@@ -4,6 +4,7 @@ import { optionalCampaignTraining, personalMissionLead, questAvailable } from '.
 import { campaignCallUp, missionAshore } from './call-up'
 import { expeditionForQuest, expeditionSquad } from './expedition'
 import { groundSquadCapacity } from './training'
+import { finaleRun, recordFinaleOutcome } from './cy90'
 
 function startedExpedition(opening: Save, expedition: Save['expedition']): Save {
   if (!expedition || !opening.mission) return opening
@@ -14,7 +15,8 @@ export function beginCampaignEncounter(save: Save, book: CampaignBook, quest: Ca
   effects: readonly EffectStep[], port?: string): Save {
   if (save.mission || save.pairScene || save.campaignDay.pending || quest.encounter !== mission.id || !questAvailable(save, book, quest, port)) return save
   const next = effects.reduce((state, step) => applyStep(state, book.story, step), save)
-  const opening = startMission({ ...next, story: seeScene(next.story, quest.scene) }, chapter, mission)
+  const opening = startMission(recordFinaleOutcome(save, { ...next, story: seeScene(next.story, quest.scene) }, book, quest), chapter, mission)
+  if (book.fourActFinale?.ground.includes(mission.id)) return startedExpedition(opening, finaleRun(save, book) ?? null)
   const expedition = expeditionForQuest(book, quest.id, save.expedition?.duo)
   if (expedition) {
     return startedExpedition(opening, save.expedition)
@@ -40,7 +42,8 @@ export function beginCampaignEncounter(save: Save, book: CampaignBook, quest: Ca
     return setSquad(started, [lead, ...supports].slice(0, capacity))
   }
   const training = optionalCampaignTraining(book, quest)
-  const candidates = training ? available.slice(0, 1) : started.mission!.squad.filter((outfit) =>
+  const candidates = training ? available.slice(0, 1) : book.fourActFinale?.reports.has(mission.id) && !chapter.leads.length
+    ? available : started.mission!.squad.filter((outfit) =>
     !ashore.has(outfit) && !next.crew.some(member => member.outfit === outfit && member.expeditionOnly) && ((!book.sectors && !quest.callUp && !book.fourAct) || available.includes(outfit) || !!book.fourAct && chapter.leads.includes(outfit)))
   const squad = candidates.length || (!book.sectors && !quest.callUp) ? candidates : available.slice(0, 4)
   if ((quest.callUp || book.fourAct) && mission.scenario) {

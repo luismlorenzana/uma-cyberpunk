@@ -41,9 +41,11 @@ export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, stor
   const opposition = mission.enemies.flatMap(enemy => enemy.slot === 'regular'
     ? Array.from({ length: enemy.count }, () => enemy.faction) : [])
   let sentry = 0
-  return { ...input, units: input.units.map(unit => {
+  const queen = mission.id.startsWith('fa-free-') && mission.id.endsWith('-turn') && input.units.find(unit => unit.leader)
+  return { ...input, ...(queen ? { goalRequired: true as const, protect: [queen.id] } : {}), units: input.units.map(unit => {
     if (unit.side !== 'enemy') return unit
-    const named = unit.leader && target
+    const second = mission.scenario === 'hush-collar' && unit.id === 'chorus-1'
+    const named = unit.leader && target || (second ? 'seraine-seraxis' : undefined)
     const actor = named || opposition[sentry++]
     if (!actor) return unit
     return { ...unit, ref: { kind: 'heroine' as const, id: actor }, label: nameOf(story, actor),

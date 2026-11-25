@@ -11,6 +11,7 @@ import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { CommandCinematic } from './CommandCinematic'
 import { commandContextScene, freezeCommandCast, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
+import { retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { nameOf } from '../story/runner'
 import { CampaignThumbnail } from './CampaignThumbnail'
 
@@ -36,6 +37,9 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const [reinforce, setReinforce] = useState(false)
   const [action, setAction] = useState<CommandAction>({ order: 'fire', shields: 1, guns: 1, fighters: 1 })
   const [context, setContext] = useState<string | null>(null)
+  const reports = loaded.book.fourActFinale?.reports.get(mission.id)
+  const withdrawn = save.finaleProgress?.withdrawn === mission.id
+  const [showRetry, setShowRetry] = useState(false)
   const [error, setError] = useState<string | null>(null)
   useEffect(() => {
     setBackground(null)
@@ -57,6 +61,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const assault = run ? run.input.version !== 1 : !!encounter.assault
   const preparation = reinforce ? finale?.preparation : undefined
   const contextButtons = (['preparation', 'victory', 'withdrawal', 'retry', 'disabled'] as const).flatMap(kind => {
+    if (reports && (kind === 'withdrawal' || kind === 'retry')) return []
     const scene = commandContextScene(save, loaded.book, kind)
     return scene ? [<button key={kind} type="button" className={button} onClick={() => setContext(scene)}>{kind === 'preparation' ? 'Mission context' : kind === 'retry' ? 'Retry briefing' : kind === 'disabled' ? 'Emitter report' : 'Crew report'}</button>] : []
   })
@@ -127,8 +132,17 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         {run?.state.last && <p className="w-full text-sm">{commandFacts(savedCommandEvent(save, run.state.turn)!)}</p>}
         {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{state.won && emitterRoute && ` · ${emitterRoute}`}</p>}
         {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id))}>Debrief</button>
-          : <button type="button" className={primary} onClick={() => void updateSave(retryCommand)}>{assault ? 'Retry approach' : 'Retry defense'}</button>}
+          : <button type="button" className={primary} onClick={() => {
+            if (reports) { setShowRetry(true); setContext(reports.retry) }
+            else void updateSave(retryCommand)
+          }}>{assault ? 'Retry approach' : 'Retry defense'}</button>}
+        {!state.won && reports && <button type="button" className={button}
+          onClick={() => setContext(withdrawn ? reports.withdrawal : reports.failure)}>Crew report</button>}
+        {showRetry && !context && <button type="button" className={primary}
+          onClick={() => { setShowRetry(false); void updateSave(retryCampaignAttempt) }}>Resume with the same crew</button>}
       </div>}
+      {reports && state.step === 'battle' && !save.commandCinema.pending && <button type="button" className={button}
+        onClick={() => void updateSave(s => withdrawCampaignAttempt(s, encounter.id))}>Withdraw</button>}
       <div className="flex flex-wrap gap-2">{contextButtons}</div>
       {!expedition && (state.step !== 'battle' || !run) && !state.won && !save.commandCinema.pending && <button type="button" className={button} onClick={() => void updateSave(finishMission)}>Return to port</button>}
     </div>

@@ -31,6 +31,8 @@ import { chooseDatePath, creditCampaignDates, dateAvailable, dateProgress, dateS
 import { DatePanel } from './DatePanel'
 import { expeditionForQuest, expeditionQuestBlock, expeditionWatchScene } from './expedition'
 import { beginCampaignEncounter } from './sortie'
+import { finaleActivities, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
+  finishFinaleActivity, selectFinaleFormation, selectFinaleVoice, workFinaleRepair } from './cy90'
 import { cabinAvailable, chooseCabinOutcome, finishCabinScene, leaveCabinEarly, startCabinEvening } from './cabins'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
@@ -58,6 +60,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [location, setLocation] = useState<string | null>(null)
   const [reportScene, setReportScene] = useState<string | null>(null)
+  const [finaleScene, setFinaleScene] = useState<string | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [pending, setPending] = useState(true)
@@ -110,11 +113,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const personalLead = loaded && missionQuest ? personalMissionLead(loaded.book, missionQuest) : undefined
   const command = mission && loaded?.book.commands.get(mission.id)
   const ground = mission && loaded?.book.ground.get(mission.id)
+  const hush = loaded && save && ground && loaded.book.fourActFinale?.ground.includes(ground.id) ? finaleRun(save, loaded.book) : undefined
   const trainee = personalLead ?? missionState?.squad[0] ?? missionChapter?.leads[0]
   if (loaded && save && mission && (training || ground) && trainee !== undefined && !sortieAshore?.has(trainee) && !groundPaused) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
       <GroundScreen key={mission.id} loaded={loaded} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
-        expedition={expeditionFight?.expedition?.route?.name} ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
+        expedition={hush ? 'Hush expedition' : expeditionFight?.expedition?.route?.name} formationRun={hush} ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
         combatSprites={loaded.release.combatSprites}
         combatShift={loaded.book.combatShift}
         acceptsFitted={loaded.book.workshop?.missions.includes(mission.id)}
@@ -125,6 +129,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }
   if (loaded && save && mission && command && supply && support) {
     const quest = missionQuest
+    const allocated = command.id === loaded.book.fourActFinale?.hushApproach ? finaleRun(save, loaded.book) : undefined
+    const bridgeAshore = new Set(sortieAshore ?? support.ashore)
+    for (const assigned of allocated?.members ?? []) {
+      const member = save.crew.find(member => assigned.role === 'uma' ? member.outfit === assigned.outfit : member.heroine === assigned.heroine)
+      if (member) bridgeAshore.add(member.outfit)
+    }
     const art = loaded.book.art.find((entry) => entry.scene === quest?.scene)
     const commandArt = loaded.book.commandArt?.get(command.id)
     const backdrop = commandArt?.backdrop ?? art?.backdrop
@@ -154,12 +164,17 @@ function Campaign({ layout }: { layout: StageLayout }) {
         backdrop={backdrop ? loaded.assets.get(backdrop) : undefined}
         objectiveArt={commandArt?.objective ? loaded.assets.get(commandArt.objective) : undefined}
         objectiveLabel={commandArt?.objectiveLabel}
-        ashore={sortieAshore ?? support.ashore} requiredLead={personalLead} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
+        ashore={bridgeAshore} requiredLead={personalLead} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
         portraits={new Map([...portraits, ...profiles])}
         names={new Map(save.crew.filter(({ outfit, heroine, expeditionOnly }) => !expeditionOnly && (personalLead === undefined || !heroine)
-          && !sortieAshore?.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit)).map(member => [member.outfit, nameOf(loaded.book.story, crewSpeaker(member))]))} />
+          && !bridgeAshore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit)).map(member => [member.outfit, nameOf(loaded.book.story, crewSpeaker(member))]))} />
     </Suspense>
+  }
+  if (loaded && save && finaleScene && loaded.book.scenes.has(finaleScene)) {
+    return <CampaignScene key={finaleScene} loaded={loaded} sceneId={finaleScene}
+      fail={message => { setError(message); setFinaleScene(null) }} onExit={() => setFinaleScene(null)} exitLabel="Back"
+      finish={effects => { commitScene(current => finishFinaleActivity(current, loaded.book, finaleScene, effects)); setFinaleScene(null) }} />
   }
   if (loaded && save && reportScene && loaded.book.scenes.has(reportScene)) {
     return <CampaignScene key={reportScene} loaded={loaded} sceneId={reportScene}
@@ -170,8 +185,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
           .finally(() => setReportScene(null))
       }} />
   }
+  const speaker = save?.finaleProgress?.speaker
+  const finalBook = loaded?.book.fourActFinale
   const activeScene = active && save ? questScene(save, active) : undefined
-  if (loaded && active && activeScene) return <CampaignScene key={activeScene} loaded={loaded} sceneId={activeScene}
+  const voice = active && finalBook && active.id === finalBook.speakerAt
+    ? speaker === 'captain' ? finalBook.bridge : speaker === undefined ? undefined : finalBook.speakers.get(speaker) : undefined
+  if (loaded && active && activeScene) return <CampaignScene key={voice ?? activeScene} loaded={loaded} sceneId={voice ?? activeScene}
     squad={save?.expedition?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : [])}
     battle={async (id, effects) => {
       const chapter = Object.values(loaded.book.story.chapters).find((c) => c.scenes.some((scene) => scene.id === active.scene))
@@ -280,6 +299,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const recruits = loaded && save && complete.has(loaded.book.opening) && !night && !pendingPair && !missionState && !eveningOpen && !expedition
     ? loaded.book.recruits ?? [] : []
   const managedQuests = new Set(recruits.flatMap(({ outfit, signOn, story }) => [signOn, ...story, ...rehabilitationQuestIds(catalog?.arcs.get(outfit))]))
+  const readiness = loaded && save && !expedition && !missionState ? finaleReadiness(save, loaded.book) : undefined
+  const finalActivities = loaded && save ? finaleActivities(save, loaded.book) : []
+  const repairs = loaded && save ? finaleRepairOptions(save, loaded.book) : []
   const available = loaded && save ? loaded.book.quests.filter((q) => !managedQuests.has(q.id) && questAvailable(save, loaded.book, q, supply?.port)) : []
   const evening = loaded?.book.evening
   const canRest = !expedition && !!(day && !night && !pendingPair && !missionState && evening && complete.has(evening.after))
@@ -467,6 +489,50 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {loaded && save && port && !night && !pendingPair && !missionState && !eveningOpen && <SectorPanel book={loaded.book} save={save} />}
           {loaded?.book.projects?.length && save && port && !expedition && !night && !pendingPair && !missionState && !eveningOpen
             ? <ProjectsPanel book={loaded.book} save={save} port={port} showReport={setReportScene} /> : null}
+          {loaded && save && readiness && readiness.capitals > 0 && !night && !pendingPair && !eveningOpen &&
+            <section aria-label="Act IV · The final operation" className="space-y-2 rounded-lg border border-white/15 p-3 text-sm">
+              <h2 className="font-semibold">Act IV · The final operation</h2>
+              <p>{readiness.capitals} / 5 capital settlements</p>
+              <ul>{readiness.courts.map(court => <li key={court.name}>
+                {court.name} · {court.witness ? 'Witness ready' : 'Witness needed'}
+                {!court.witness && <ul>{court.witnesses.filter(witness => loaded.book.quests.some(q => q.id === witness.release))
+                  .map(witness => <li key={witness.flag} className="ml-4 text-white/70">
+                    {loaded.book.quests.find(q => q.id === witness.release)?.title}
+                  </li>)}</ul>}
+              </li>)}</ul>
+              {readiness.ready && !save.finaleProgress?.witnesses && <>
+                <p>Select the ten-person ground formation.</p>
+                {finaleFormations(save, loaded.book).map(duo => <button key={duo.id} type="button" className={button}
+                  aria-pressed={save.finaleProgress?.duo === duo.id}
+                  onClick={() => commitScene(s => selectFinaleFormation(s, loaded.book, duo.id))}>
+                  {duo.umas.map(actor => nameOf(loaded.book.story, actor)).join(' and ')}
+                </button>)}
+              </>}
+              {finaleVoices(save, loaded.book).map(({ actor }) => <button key={actor} type="button" className={button}
+                onClick={() => commitScene(s => selectFinaleVoice(s, loaded.book, actor))}>
+                {actor === 'captain' ? 'Speak from the bridge' : 'Ask ' + nameOf(loaded.book.story, actor) + ' to speak'}
+              </button>)}
+            </section>}
+          {loaded && save && repairs.map(({ quest, active, label, reports }) => <section key={quest}
+            aria-label="Civilian repair" className="space-y-2 rounded-lg border border-white/15 p-3 text-sm">
+            <p>{label}</p>
+            <p>{active?.progress ?? 0} / 2 work stages{active?.paused && ' · Paused'}</p>
+            {active?.paused
+              ? <button type="button" className={button} onClick={() => {
+                void updateSave(s => workFinaleRepair(s, loaded.book, quest, 'resume')).then(() => setReportScene(reports.retry))
+              }}>Resume work</button>
+              : <>
+                {(active?.progress ?? 0) < 2 && <button type="button" className={button} disabled={!save.campaignSupply?.provisions}
+                  onClick={() => commitScene(s => workFinaleRepair(s, loaded.book, quest, 'work'))}>Work · 1 provision</button>}
+                {active && active.progress < 2 && <button type="button" className={button} onClick={() => {
+                  void updateSave(s => workFinaleRepair(s, loaded.book, quest, 'pause')).then(() => setReportScene(reports.withdrawal))
+                }}>Pause work</button>}
+              </>}
+          </section>)}
+          {finalActivities.length > 0 && <section aria-label="Visits and homecoming" className="flex flex-wrap gap-2">
+            {finalActivities.map(activity => <button key={activity.scene} type="button" className={button}
+              onClick={() => setFinaleScene(activity.scene)}>{activity.title}</button>)}
+          </section>}
           {loaded?.book.finale && save && supply && !night && !pendingPair && !missionState && !eveningOpen &&
             <FinalePanel book={loaded.book} story={save.story} complete={complete.has(loaded.book.finale.lastWatch ?? loaded.book.finale.ending)} />}
           {datePanel}

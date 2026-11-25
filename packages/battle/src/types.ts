@@ -200,7 +200,7 @@ export type Objective =
   | { kind: 'hold'; rounds: number }
   // Rules version 2 (CY5):
   | { kind: 'escort'; unit: string; tile: Tile }
-  | { kind: 'hack'; count: number }
+  | { kind: 'hack'; count: number; last?: string; protect?: readonly string[] }
   | { kind: 'freeLeader'; collar?: 'rigBreak' }
 
 /** A frozen encounter's named ally and enemy. Talk spends a turn and removes the enemy from the field. */
@@ -224,6 +224,8 @@ export interface BattleInput {
   /** A control point or terminal has to be reached even after the opposition is cleared. */
   goalRequired?: true
   preserve?: string
+  /** Named opponents who must still be on their feet at settlement. */
+  protect?: readonly string[]
   units: readonly UnitInput[]
   // --- Rules version 2 (CY5) ---
   /** The squad's item stock, six at most. */
