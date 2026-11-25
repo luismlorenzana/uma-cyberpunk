@@ -687,3 +687,16 @@ test('canonical album splashes publish privately and bind without the authoring 
   assert((await publishArtCandidate(f.storage, f.selected, art)).promoted)
   assert.equal((await loadSelected(f.storage)).book.art[0].composition.layers[0].asset, 'splash-' + pin.slice(0, 48))
 })
+
+test('a long cloud art batch refreshes an expired access token and retries the guarded write', async () => {
+  let tokens = 0
+  const attempts = []
+  const client = new GcsArtStorage(async (url, options) => {
+    attempts.push([url, options.headers.get('Authorization')])
+    return new Response(null, { status: attempts.length === 1 ? 401 : 200 })
+  }, async () => `token-${++tokens}`)
+  await client.put(PREFIX + 'campaign/four-act.json', Buffer.from('{}'), '123')
+  assert.equal(tokens, 2)
+  assert.deepEqual(attempts.map(row => row[1]), ['Bearer token-1', 'Bearer token-2'])
+  assert(attempts.every(row => row[0].endsWith('ifGenerationMatch=123')))
+})
