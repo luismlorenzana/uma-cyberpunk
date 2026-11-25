@@ -49,7 +49,8 @@ last). The workflow's package token is the run's own `GITHUB_TOKEN`; there are n
 
 ## How a deploy runs
 
-A push to `main` (not docs-only) runs `.github/workflows/deploy.yml`:
+A qualifying push to `main` after a pull request merge runs `.github/workflows/deploy.yml`. Changes limited to
+documentation and this workflow file run pull request checks. They do not redeploy the game.
 
 ```mermaid
 flowchart LR
@@ -62,10 +63,13 @@ flowchart LR
   web --> check2[shell no-cache, health and 401 through the site, uma-rpg still answers]
 ```
 
-The deploy job runs only on `main` and only while `DEPLOY_ENABLED` is `true`, in the `uma-cyberpunk-production`
-concurrency group, which never cancels. The API image is built in GitHub Actions with Docker (the npm token is a build
-secret, never a layer); there's no Cloud Build. `scripts/check-hosting-site.mjs` fails the tests unless `firebase.json`'s
-site, the workflow's `HOSTING_SITE` default and its `--only hosting:uma-cyberpunk` agree.
+The deploy job requires a `push` event on `main`, a successful verify job, and `DEPLOY_ENABLED=true`. Deployments run in
+the `uma-cyberpunk-production` concurrency group. GitHub Actions builds the Docker image using the npm token as a build
+secret. `scripts/check-hosting-site.mjs` checks that `firebase.json` names the same site as the workflow.
+
+If GitHub fails to queue a merge, check Actions and the GitHub incident status. Preserve the live release and report the
+missing run or failed step. The next qualifying merge uses the automatic path. Production releases must go through that
+workflow, including during a GitHub incident.
 
 ## Isolation, checked 2026-11-12 (IN21)
 

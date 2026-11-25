@@ -1,7 +1,6 @@
 name: Verify and deploy production
 
-# Copied from uma-farm's verify job and uma-quest's deploy job (both from uma-rpg's). CY2 adds the deploy job, which runs
-# only on main and only once the repository variable DEPLOY_ENABLED is true.
+# Pull requests verify changes. Qualifying pushes to main deploy after verification.
 
 on:
   push:
@@ -9,8 +8,8 @@ on:
     paths-ignore:
       - 'docs/**'
       - '**/*.md'
+      - '.github/workflows/deploy.yml'
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -70,7 +69,7 @@ jobs:
   deploy:
     name: Deploy API and web
     needs: verify
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && vars.DEPLOY_ENABLED == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
     runs-on: ubuntu-latest
     concurrency:
       group: uma-cyberpunk-production
