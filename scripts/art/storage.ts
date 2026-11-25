@@ -10,6 +10,7 @@ export interface ArtStorage {
 export class GenerationConflict extends Error {}
 export const ART_BUCKET = 'uma-platform-content'
 export const CAMPAIGN_PREFIX = 'campaign/cyberpunk/'
+export const SCENE_SPLASH_PREFIX = 'art/universes/cyberpunk/scene-splashes/'
 export const COMBAT_SPRITE_PREFIX = 'art/universes/cyberpunk/combat-sprites/'
 export const SOURCE_PREFIXES = ['art/universes/cyberpunk/', 'enemy-art/cyberpunk/'] as const
 
@@ -32,17 +33,26 @@ export class GcsArtStorage implements ArtStorage {
     const token = result.stdout.trim()
     if (!token || /\s/.test(token)) throw new Error('No Google Cloud access token')
     return token
-  }, private readonly writePrefix: typeof CAMPAIGN_PREFIX | typeof COMBAT_SPRITE_PREFIX = CAMPAIGN_PREFIX) {}
+  }, private readonly writePrefix: typeof CAMPAIGN_PREFIX | typeof COMBAT_SPRITE_PREFIX | typeof SCENE_SPLASH_PREFIX = CAMPAIGN_PREFIX) {}
 
-  private async headers() {
-    this.token ??= this.accessToken()
-    return { Authorization: `Bearer ${await this.token}` }
+  private async authenticated(url: string, init: RequestInit = {}) {
+    const send = async (token: Promise<string>) => {
+      const headers = new Headers(init.headers)
+      headers.set('Authorization', `Bearer ${await token}`)
+      return this.request(url, { ...init, headers, signal: AbortSignal.timeout(60_000) })
+    }
+    const token = this.token ??= this.accessToken()
+    const first = await send(token)
+    if (first.status !== 401) return first
+    await first.body?.cancel()
+    if (this.token === token) this.token = undefined
+    return send(this.token ??= this.accessToken())
   }
   async read(path: string): Promise<StoredObject | null> {
     safeObject(path)
     if (![CAMPAIGN_PREFIX, ...SOURCE_PREFIXES].some(prefix => path.startsWith(prefix))) throw new Error('Read outside Cyberpunk content')
-    const response = await this.request(`https://storage.googleapis.com/storage/v1/b/${ART_BUCKET}/o/${encodeURIComponent(path)}?alt=media`, {
-      headers: await this.headers(), cache: 'no-store', signal: AbortSignal.timeout(60_000),
+    const response = await this.authenticated(`https://storage.googleapis.com/storage/v1/b/${ART_BUCKET}/o/${encodeURIComponent(path)}?alt=media`, {
+      cache: 'no-store',
     })
     if (response.status === 404) return null
     if (!response.ok) throw new Error(`Read ${path}: HTTP ${response.status}`)
@@ -60,9 +70,9 @@ export class GcsArtStorage implements ArtStorage {
       Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: ${mime}\r\n\r\n`),
       bytes, Buffer.from(`\r\n--${boundary}--\r\n`),
     ])
-    const response = await this.request(`https://storage.googleapis.com/upload/storage/v1/b/${ART_BUCKET}/o?uploadType=multipart&ifGenerationMatch=${generation}`, {
-      method: 'POST', headers: { ...await this.headers(), 'Content-Type': `multipart/related; boundary=${boundary}` },
-      body: Uint8Array.from(body), signal: AbortSignal.timeout(60_000),
+    const response = await this.authenticated(`https://storage.googleapis.com/upload/storage/v1/b/${ART_BUCKET}/o?uploadType=multipart&ifGenerationMatch=${generation}`, {
+      method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body: Uint8Array.from(body),
     })
     if (response.status === 412) throw new GenerationConflict(`${path} changed; rebuild on the new selection`)
     if (!response.ok) throw new Error(`Write ${path}: HTTP ${response.status}`)

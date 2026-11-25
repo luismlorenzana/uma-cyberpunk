@@ -5,7 +5,7 @@ import { newSave, parseSave } from './save'
 const NOW = '2026-11-19T00:00:00Z'
 describe('management save migration and receipts', () => {
   it('preserves v17 story, clock, projects and cabin rotation while adding an empty receipt ledger', () => {
-    const { commandCinema: _cinema1, management: _, ...prior } = newSave('captain', NOW)
+    const { expedition: _expedition, commandCinema: _cinema1, management: _, ...prior } = newSave('captain', NOW)
     const old = { ...prior, version: 17, campaignProjects: { depot: 1 }, cabinVisits: { officer: 3 } }
     const save = parseSave(old)
     expect(save.version).toBe(20)
@@ -32,7 +32,7 @@ describe('management save migration and receipts', () => {
       { ...save.management.receipts[0], sequence: 2 }, { ...save.management.receipts[0], kind: 'free-money' },
     ]) expect(() => parseSave({ ...save, management: { ...save.management, receipts: [receipt] } })).toThrow()
     expect(() => parseSave({ ...save, management: { ...save.management, acknowledged: ['first', 'first'] } })).toThrow()
-    const { commandCinema: _, ...before19 } = save
+    const { expedition: _expedition, commandCinema: _, ...before19 } = save
     expect(() => parseSave({ ...before19, version: 17 })).toThrow('version 18')
   })
 })

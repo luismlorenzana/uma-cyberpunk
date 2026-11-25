@@ -1,5 +1,7 @@
 # The sandbox
 
+> **Built behavior.** For the planned changes to playable campaign milestones and the use of internal fixtures, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY8 (D12), tier 1's Umas (D19).** The second of the three ways the combat is tested (TC54): any skirmish set up and
 > played with the full battle screen, on the phone, at `/sandbox`. The battle screen itself is on
 > [battle.md](battle.md#the-battle-screen).

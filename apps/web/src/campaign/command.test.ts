@@ -16,6 +16,32 @@ const ready = (): Save => ({ ...newSave('captain', '2026-11-17T19:00:00Z'), crew
   mission: { chapter: 'relay', id: encounter.id, step: 'deploy', squad: [outf], battle: null, won: null } })
 
 describe('campaign ship command', () => {
+  it('keeps a released Ally’s board identity in a frozen command and its save replay', () => {
+    const aboard = { ...ready(), crew: [{ ...newMember(outf), heroine: 'gi-10000052' }] }
+    const assigned = assignOfficer(aboard, 'pilot', outf)
+    const speaker = { speaker: 'gi-10000052', name: 'Raiden Shogun' }
+    const deployed = launchCommand(assigned, stock, encounter, { ashore: new Set(), relay: 0,
+      cast: { crew: {}, objective: 'Shuttle', present: [speaker] } })
+    const restored = parseSave(JSON.parse(JSON.stringify(deployed)))
+    expect(restored.crew[0]?.heroine).toBe(speaker.speaker)
+    const run = resumeCommand(restored.mission?.battle?.input, [])
+    expect(run?.input.presentation?.crew.pilot).toEqual(speaker)
+  })
+
+  it('excludes a restricted adviser from a stale station assignment and frozen command cast', () => {
+    const assigned = assignOfficer(ready(), 'pilot', outf)
+    const guest = { ...newMember(outf), heroine: 'adviser', expeditionOnly: true as const }
+    const stale = parseSave({ ...assigned, crew: [guest] })
+    expect(assignOfficer(stale, 'gunnery', outf)).toBe(stale)
+    expect(drillOfficer(stale, 'pilot')).toBe(stale)
+    const battle = launchCommand(stale, stock, encounter)
+    expect(battle.mission?.squad).toEqual([])
+    const run = resumeCommand(battle.mission?.battle?.input, [])
+    expect(run?.input.presentation?.present).toEqual([])
+    expect(run?.input.presentation?.crew.pilot).toBeUndefined()
+    expect(run?.input.officers.pilot).toBe(0)
+  })
+
   it('freezes assigned skills and charges launch only once', () => {
     const assigned = assignOfficer(ready(), 'gunnery', outf)
     const trained = drillOfficer(assigned, 'gunnery')

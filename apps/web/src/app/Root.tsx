@@ -7,10 +7,8 @@ import { BootGates, UpdateNotice } from '@luismlorenzana/uma-kit/places'
 import { useEffect } from 'react'
 import { Outlet } from 'react-router'
 import { loadMaster } from '../master/master'
-import { MasterGate } from '../master/MasterGate'
 import { boot, startSyncTriggers } from '../save/game'
 import { signInEnabled } from './firebase-config'
-import { inCampaign } from './campaign'
 
 async function bootFor({ uid }: { uid: string }): Promise<{ firstLaunch: boolean }> {
   loadMaster()
@@ -28,7 +26,7 @@ export function Root() {
     <>
       <UpdateNotice />
       <BootGates auth={auth} boot={bootFor} words={{ name: 'Uma Cyberpunk', tagline: 'Rigs up. Lights out.' }}>
-        {inCampaign ? <Outlet /> : <MasterGate><Outlet /></MasterGate>}
+        <Outlet />
       </BootGates>
     </>
   )

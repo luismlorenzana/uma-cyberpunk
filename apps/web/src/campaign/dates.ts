@@ -1,4 +1,4 @@
-import { awayMembers, campaignSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
+import { awayMembers, BOND_TUNING, campaignSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
 import { applyBondEffect, giveRapport } from '../bonds/bonds'
 import { applyStep } from '../mission/director'
 import type { BondEffect } from '../story/runner'
@@ -12,6 +12,9 @@ function cleared(save: Save, book: CampaignBook, id: string): boolean {
 export function dateAvailable(save: Save, book: CampaignBook, date: CampaignDate): boolean {
   if (awayMembers(save.operations, save.squads).includes(date.companion)) return false
   if (!cleared(save, book, date.after) || !save.crew.some(({ outfit }) => outfit === date.companion)) return false
+  const ally = book.allies?.find(row => row.member === date.companion)
+  const quarters = ally && book.fourAct?.arcs.get(ally.partner)?.rehabilitation?.quarters
+  if (quarters && !cleared(save, book, quarters)) return false
   if (!campaignSupport(book, save).ashore.has(date.companion)) return true
   const sector = book.sectors?.find(({ officer }) => officer === date.companion)
   return !!sector && sector.port === (save.campaignSupply?.port ?? book.supply?.start)
@@ -45,6 +48,15 @@ export function creditCampaignDates(save: Save, book: CampaignBook): Save {
 
 export function dateScene(date: CampaignDate, scene: string): DateVisit | undefined {
   return [...date.milestones, date.regular].find((visit) => visit.scene === scene || visit.morning === scene)
+}
+
+export function chooseDatePath(save: Save, book: CampaignBook, date: CampaignDate, day: number, scene: string, path: 'trust' | 'heart'): Save {
+  const pending = save.campaignDay.pending
+  if (save.campaignDay.day !== day || pending?.kind !== 'visit' || pending.scene !== scene || pending.companion !== date.companion
+    || pending.pathChoice || !dateAvailable(save, book, date) || path === 'heart' && save.captain.romance === 'friends') return save
+  const ready = dateProgress(save, book, date)
+  if (!ready.milestone || ready.visit !== ready.milestone || ready.visit.scene !== scene || ready.milestone.rank !== BOND_TUNING.pathRank) return save
+  return { ...save, campaignDay: { ...save.campaignDay, pending: { ...pending, pathChoice: path } } }
 }
 
 export function recordDateScene(save: Save, book: CampaignBook, date: CampaignDate, scene: string,

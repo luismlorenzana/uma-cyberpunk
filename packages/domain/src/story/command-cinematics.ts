@@ -67,7 +67,7 @@ export function parseCommandCinematics(value: unknown, book: Pick<CampaignBook, 
     const contexts = Object.fromEntries(['preparation', 'victory', 'withdrawal', 'retry', 'disabled'].flatMap(key => row[key] === undefined ? [] : [[key, scene(row[key], field + '.' + key)]]))
     if (row.disabled !== undefined && !book.commands.get(encounter)?.assault) p.fail(field, 'disabled context needs a real emitter')
     return { encounter, objective: p.text(row.objective, field + '.objective', 80), ...(commander === undefined ? {} : { commander }), ...(enemy ? { enemy } : {}), ...contexts }
-  }, 64), row => row.encounter, 'commandCinematics.encounters')
+  }, Math.max(64, book.commands.size)), row => row.encounter, 'commandCinematics.encounters')
   const stations = unique(p.list(root.stations, 'commandCinematics.stations', (value, field) => {
     const row = p.object(value, field, ['station', 'backdrop']), station = row.station as CommandStation
     if (!COMMAND_STATIONS.includes(station)) p.fail(field, 'unknown station')

@@ -1,7 +1,7 @@
 // The Duties overview (CY16, TC67, TC68): every post aboard with its holder, her aptitude as a three-step mark, her
 // tenure and mastery; a tap assigns; Auto-assign fills every post in one tap; two presets keep arrangements. Loaded on
 // demand from the ship's header.
-import { aptitude, assignPost, MODULES_BY_ID, postKey, POSTS, shipPosts, stars, type Post, type Save } from '@cyber/domain'
+import { aptitude, assignPost, canTakeOrdinaryAssignment, MODULES_BY_ID, postKey, POSTS, shipPosts, stars, type Post, type Save } from '@cyber/domain'
 import { useState } from 'react'
 import type { CrewView } from '../crew/view'
 import { updateSave } from '../save/game'
@@ -17,7 +17,8 @@ export function AptitudeMark({ level }: { level: 1 | 2 | 3 }) {
 export default function DutiesPanel({ save, crew, onClose }: { save: Save; crew: readonly CrewView[]; onClose: () => void }) {
   const [picking, setPicking] = useState<Post | null>(null)
   const posts = shipPosts(save.ship)
-  const holderOf = (p: Post) => crew.find((v) => v.member.post && postKey(v.member.post) === postKey(p))
+  const eligible = crew.filter(view => canTakeOrdinaryAssignment(view.member))
+  const holderOf = (p: Post) => eligible.find((v) => v.member.post && postKey(v.member.post) === postKey(p))
   return (
     <div data-duties className="absolute left-1/2 top-1/2 z-30 max-h-[86%] w-[min(40rem,92%)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-xl bg-[#141827] p-4 ring-1 ring-white/15">
       <div className="flex items-center gap-2">
@@ -50,7 +51,7 @@ export default function DutiesPanel({ save, crew, onClose }: { save: Save; crew:
               {picking && postKey(picking) === postKey(p) && (
                 <div className="mt-1 flex flex-wrap gap-1">
                   {h && <button type="button" className={btn} onClick={() => { void updateSave((s) => assignPost(s, h.outfit, null)); setPicking(null) }}>Off duty</button>}
-                  {crew.map((v) => (
+                  {eligible.map((v) => (
                     <button key={v.outfit} type="button" data-candidate={v.outfit} className={btn} onClick={() => { void updateSave((s) => assignPost(s, v.outfit, p)); setPicking(null) }}>
                       {v.name} <AptitudeMark level={aptitude(p.kind, v.bands)} />
                     </button>

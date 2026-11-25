@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the Story Sandbox
 
+> **Active authoring entry.** Use the private Cyberpunk book in Story Authoring with [CY92](../handoff/tasks/CY92.md). This page records the foundations of local story review.
+
 > **Current setup.** Start the shared app with `pnpm start` in the sibling [uma-story-authoring](https://github.com/luismlorenzana/uma-story-authoring) repo. Use [this book](http://127.0.0.1:4322/cyberpunk/). Its drafts and verdicts are in that repo’s ignored `content/cyberpunk/stories/`. The design notes below describe the original standalone sandbox.
 
 > **Status: 2026-11-14, built (D17); the Bibles page added (D30), the Foes page (D35), Profiles (D36) and Ties (D37).** The owner asked for "a third app" for Uma Cyberpunk, beside the Story Sandboxes

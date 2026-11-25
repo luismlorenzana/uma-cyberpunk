@@ -1,5 +1,7 @@
 # The app as built
 
+> **Built behavior.** For the planned changes to fresh profile, release and device storage, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY3 (D7).** uma-cyberpunk as it runs on https://uma-cyberpunk.web.app: the pages, the save and how
 > it syncs, sign-in, updates, deploys and local setup. Visual page: [previews/architecture.html](previews/architecture.html).
 > There are no game rules yet; the battle rules arrive with CY4 and the board with CY7.

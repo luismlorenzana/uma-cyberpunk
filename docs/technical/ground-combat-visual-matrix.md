@@ -1,7 +1,8 @@
 # Ground combat mechanic-to-visual matrix
 
-Use this contract for campaign Training, boarding and ground missions on battle rules versions 1–5.
-The [specialist contract](campaign-combat-specialists.md) specifies selectable Laser modes and prepared attacks.
+> **Reusable foundation.** This page documents the supported combat cues and shared sprite motion. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
+Use this contract for campaign Training, boarding and ground missions on battle rules versions 1–4.
 The [39-part equipment matrix](../handoff/combat-sprite-coverage.json) specifies which shapes are needed.
 This matrix specifies when those shapes move or change. A single pose or effect can cover several rows.
 [Battle rules](../game/battle.md), [terrain](../game/terrain.md), and the reducer's [cue types](../../packages/battle/src/types.ts) are the gameplay references.
@@ -74,7 +75,7 @@ dedicated pose or effect is unavailable. Some are already on the battle screen a
 | `stunned` | Mark temporary disabled status. Source can be impact, skill, Deck, duo or Order. | Stun badge |
 | `skipped` | Timeline skips a Stun, idle turret or duo-spent turn. Clear temporary marks per state. | Skip reason on timeline |
 | `holdHit` | Place effect at Anchor/Collar and show Hold HP independently of the four rig parts. | Hold damage label and meter |
-| `freed` | End the Hold or Jack-Out presentation and remove the freed unit. | Freed label and figure/timeline removal |
+| `freed` | End the Hold, Jack-Out or authored Collar Rig Break presentation and remove the freed unit. | Freed label and figure/timeline removal |
 | `barrier` | Spawn the world barrier at `at`; play Back deployment only for actual Bulwark use. | Board barrier and tile outline |
 | `barrierHit` | Impact on the barrier prop and remove it at break. | Barrier HP and prop removal |
 | `dash` | Ignite at the Thruster's Back socket before movement and trail along the emitted path. | Dash label with ordinary path motion |
@@ -98,6 +99,9 @@ dedicated pose or effect is unavailable. Some are already on the battle screen a
 | `sweep` | Show the enemy's next moves from ship Sensors support. | Existing intent/forecast overlay |
 | `drone` | Ship repair effect at target part or shared drone prop. Read target HP after repair. | Drone label and part HP gain |
 | `shielded` | Shield Projector energy absorption around the recipient. Fade at zero remaining capacity. | Soak amount and Shield Projector meter |
+| `talked` | Show the resolved conversation and remove its named target. Play any authored dialogue by the encounter outcome. | Talked down label and figure/timeline removal |
+| `signatureWarning` | Name the warned attack and mark its target tile until it resolves or is interrupted. | Danger tile and warning label, no impact animation |
+| `signatureCanceled` | Clear the marker and show that the attack was interrupted. | No attack animation or damage |
 
 ## Shared cues and persistent states
 

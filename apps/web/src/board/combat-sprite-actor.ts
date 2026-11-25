@@ -135,10 +135,18 @@ export function limbPose(look: CombatLook, facing: Dir, pose: CombatPose, action
   if (!clips) return undefined
   const { leftArm, rightArm, legs } = pose.hp
   const allBroken = leftArm <= 0 && rightArm <= 0 && legs <= 0
-  const life = action === 'rig-break' || action === 'down' || action === 'reboot-rise'
+  const life = action === 'rig-break' || action === 'down' || action === 'reboot-rise' || action === 'collar-release'
   const stateClip = life && allBroken ? action + '-damaged' : action === 'idle' && allBroken ? 'post-reboot-damaged' : action
-  if (life || stateClip !== action) return clips[stateClip] ? stateClip : undefined
-  if (leftArm <= 0 && rightArm <= 0 && ['idle', 'walk', 'settle', 'attack'].includes(action)) {
+  if (stateClip !== action && clips[stateClip]) return stateClip
+  if (life) return clips[action] ? action : undefined
+  const bothArmsBroken = leftArm <= 0 && rightArm <= 0
+  const backClip = action + '-both-arms-broken'
+  if (bothArmsBroken && isBackMotion(action) && clips[backClip]) return backClip
+  if (legs <= 0) {
+    const degraded = action === 'settle' ? 'idle-degraded' : action + '-degraded'
+    if (['idle', 'walk', 'settle', 'dash-walk'].includes(action) && clips[degraded]) return degraded
+  }
+  if (bothArmsBroken && ['idle', 'walk', 'settle', 'attack'].includes(action)) {
     if (action === 'attack') return undefined
     if (clips['idle-both-arms-broken']) return 'idle-both-arms-broken'
   }
@@ -153,11 +161,11 @@ export function limbPose(look: CombatLook, facing: Dir, pose: CombatPose, action
 
 function missingLimbArt(name: string, hp: PartHp): string[] {
   if (name.endsWith('-damaged')) return []
-  const bothShown = name === 'idle-both-arms-broken'
+  const bothShown = name.endsWith('-both-arms-broken')
   return [
     ...(hp.leftArm <= 0 && !bothShown && !name.endsWith('-one-right') && !name.endsWith('-shield-arm-broken') ? ['L'] : []),
     ...(hp.rightArm <= 0 && !bothShown && !name.endsWith('-one-left') ? ['R'] : []),
-    ...(hp.legs <= 0 ? ['LEG'] : []),
+    ...(hp.legs <= 0 && !name.endsWith('-degraded') ? ['LEG'] : []),
   ]
 }
 

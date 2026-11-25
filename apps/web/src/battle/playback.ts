@@ -11,7 +11,7 @@ export function cutInSpeed(setting: CutInSetting, seen: ReadonlySet<string>, cue
   if (setting === 'off') return 'off'
   if (setting === 'quick') return 'quick'
   const boss = state.input.units.some((u) => u.leader && (u.id === cue.unit || u.id === cue.target))
-  return boss || !seen.has(`${cue.unit}:${cue.with}`) ? 'full' : 'quick'
+  return cue.signature || boss || !seen.has(`${cue.unit}:${cue.with}`) ? 'full' : 'quick'
 }
 
 export const CUT_IN_MS: Record<CutInSpeed, number> = { full: 1600, quick: 750, off: 0 }
@@ -21,7 +21,7 @@ export function stepMs(cue: Cue): number {
   switch (cue.kind) {
     case 'moved': return 0 // the walk itself takes its time
     case 'hit': case 'miss': case 'burn': return 220
-    case 'rigBreak': case 'freed': case 'extracted': return 500
+    case 'rigBreak': case 'freed': case 'extracted': case 'talked': return 500
     case 'terrain': case 'door': case 'heights': case 'volley': case 'volleySignal': return 400
     default: return 0
   }

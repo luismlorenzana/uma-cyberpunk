@@ -1,5 +1,7 @@
 # The crew
 
+> **Built behavior.** For the planned changes to open recruitment and role availability, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY11 (D15).** Who is aboard and what each Uma is in a fight: her bands from master data's 5★
 > stats (TC4), her role (TC5), her Stride (TC46), her level, and Strain (TC27). Her rig is on [hangar.md](hangar.md).
 > Shown in the **Quarters**: a deck of cabin doors, her cabin with her profile, and who rests next mission (CY14: [cabins.md](cabins.md)).

@@ -1,22 +1,8 @@
 # uma-cyberpunk
 
-A personal, never-distributed sci-fi tactics RPG inspired by *Umamusume: Pretty Derby*, played on the owner's iPhone as
-a Home Screen web app, in landscape (working title). It has:
-- Front Mission-style battles on Triangle Strategy-style HD-2D grid maps: a squad of Umas in combat rigs whose parts
-  break, against heroines and machines from other mobile RPG worlds;
-- an interplanetary story told *Octopath Traveler*'s way: each lead Uma's Chapter 1 plays on her own world, then she
-  joins the ship, the squad's hub, which travels on to the next world; the first world is a neon city on an orbital
-  ring, and the mystery is told in 13 Sentinels' spirit with Star Guardian's colours;
-- eight enemy factions from the platform's franchise boards, whose heroines are freed when beaten, some joining the
-  squad.
+A personal sci-fi tactics RPG for landscape play on the owner’s iPhone Home Screen. The Captain recruits up to 50 Umas, follows their independent stories, liberates five systems, and sends story-defined duos on ten-member expeditions against the Seraine. A final battle and soft ending close the campaign.
 
-The world and the story are written in their own session, from [the story brief](docs/design/story-brief.md); this repo's
-game work starts with the app and the combat testing ([the build plan](docs/design/build-plan.md)).
-
-**Status (2026-11-12):** live at [uma-cyberpunk.web.app](https://uma-cyberpunk.web.app) (CY2), with Google sign-in
-and a synced save (CY3). The battle rules are in (`@cyber/battle`, rules version 2: CY4, CY5), with an enemy AI, seven
-scenarios and a simulator (CY6). Next: the board on uma-stage (CY7), then the sandbox (CY8) and the app on test content
-(CY9–CY12). The packet queue is in [the handoff](docs/handoff/README.md).
+**Current development.** D87 defines the four-act campaign and a fresh profile in the existing app. Read the [game design](docs/design/campaign-rework.md), [production roadmap](docs/handoff/four-act-roadmap.md) and [handoff queue](docs/handoff/README.md). The previous campaign and local pilot supply reusable systems and historical play evidence.
 
 ## Layout
 
@@ -35,12 +21,13 @@ scenarios and a simulator (CY6). Next: the board on uma-stage (CY7), then the sa
 
 | Path | What |
 |---|---|
-| [docs/handoff/README.md](docs/handoff/README.md) | **Start here:** the current phase, its packets and the owner's steps |
-| [docs/design/concept.md](docs/design/concept.md) | The concept: the game, the battle, the cast, the ship, the stack and the phases; calls TC1–TC54 ([page](docs/design/previews/concept.html)) |
-| [docs/design/build-plan.md](docs/design/build-plan.md) | The build plan: what's reused from uma-platform and the siblings, the battle package, combat testing, the app and the packets; calls BP1–BP9 ([page](docs/design/previews/build-plan.html)) |
-| [docs/design/story-brief.md](docs/design/story-brief.md) | The brief for the story session: who owns what, what's fixed, the hooks, Octopath's lessons, the content contract; calls SB1–SB11 ([page](docs/design/previews/story-brief.html)) |
-| [docs/design/world.md](docs/design/world.md) | The world's first pass, now the story session's: the Ring, the truth in layers, the eight factions; calls WD1–WD24 ([page](docs/design/previews/world.html)) |
-| [docs/design/references.md](docs/design/references.md) | The research: 13 Sentinels, Star Guardian, Front Mission, Triangle Strategy, the eight franchises and Octopath Traveler, and what the game takes ([page](docs/design/previews/references.html)) |
+| [Active handoff](docs/handoff/README.md) | Start here for current packets |
+| [Four-act game design](docs/design/campaign-rework.md) | Recruitment, rehabilitation, planetary liberation, expeditions and the finale |
+| [Production roadmap](docs/handoff/four-act-roadmap.md) | Sequenced development, Story, General Art, Character Art, Sprite Art and release work |
+| [Systems plan](docs/technical/four-act-campaign.md) | Graph, eligibility, ship context, ten-unit battles and fresh save |
+| [Authoring and delivery contract](docs/design/campaign-art-delivery.md) | Coverage, assets, Story, review and publishing |
+| [Earlier design and code foundations](docs/design/concept.md) | Historical design and numbered calls |
+| [Visual style](docs/design/art-direction.md) | Approved art treatment and references |
 | [docs/decisions.md](docs/decisions.md) | The decision log, from D1 |
 | [docs/game/](docs/game/README.md) | The manual of the game as built, from CY3 |
 | [AGENTS.md](AGENTS.md), [CLAUDE.md](CLAUDE.md) | How to work here |

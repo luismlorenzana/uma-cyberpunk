@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the references
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **D20 (2026-11-13):** the research for life aboard (ships, crew duties, bonds and quarters) is its own page,
 > [research-life-aboard.md](research-life-aboard.md).
 

@@ -31,7 +31,8 @@ export interface ComposedRig {
 
 export function compositionFor(bundle: SpriteBundle, unit: UnitInput): ComposedRig | undefined {
   const rig = unit.frozenRig
-  if (!bundle.composition || !rig || unit.ref?.kind !== 'uma' || unit.ref.id !== String(bundle.outfit)) return
+  const kind = typeof bundle.outfit === 'number' ? 'uma' : 'heroine'
+  if (!bundle.composition || !rig || unit.ref?.kind !== kind || unit.ref.id !== String(bundle.outfit)) return
   if (Object.keys(RIG_SLOTS).some(key => {
     const id = rig[key as keyof Rig]
     return id !== null && !visualOf(id)

@@ -1,5 +1,7 @@
 # Approved art to Platform and the Cyberpunk campaign
 
+> **Reusable foundation.** This page documents the approved workflows used for compatible Cyberpunk updates. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 `uma-art-authoring` publishes approved Cyberpunk sources to its existing Platform collections, then
 runs this game's `art:publish` CLI. The game builds an art-only candidate from the currently selected
 private campaign. The candidate retains its story, quests, gates, rules and save IDs. No web build
@@ -9,6 +11,10 @@ The source of truth for scenes and layering is the [campaign contract](campaign-
 CY48's optional composition supports room plates/poses and a talking portrait over the illustration.
 The relationship flow and draft overnight scripts are implemented in CY48. Final character poses,
 expressions and Story approval remain in CY49/CY50.
+
+## Four-act destination
+
+Use `--campaign four-act` with `pnpm art:publish` or `pnpm art:sync` to target the four-act game release. The same option scopes an art rollback. Local combat-sprite intake uses `--four-act`. The publisher validates the release identity, stages the art-only manifest under `campaign/releases/four-act/` and advances `campaign/four-act.json` using its expected generation. Platform continues to use the existing Cyberpunk universe collections.
 
 ## Two deliveries and their boundaries
 
@@ -80,11 +86,71 @@ distinct. Multiple source matches fail. Future-tier game assets absent from the 
 are reported as unbound and do not pull their story drafts into a live release. A new scene or action
 must first have an implemented, selected campaign binding before its image can appear.
 
+### Local general-art preflight
+
+`pnpm art:publish --event general --campaign four-act --local-release <release-root> --dry-run` verifies
+owner approval hashes for images bound in a private four-act release. Unbound images are reported
+separately. Choose exact scene states before assigning a former campaign asset to the four-act pack.
+Shared room replacements carry the expected prior backdrop ID. Custom scene compositions and
+on-step cuts keep their own bindings.
+
+The art publisher reads paged Story packs without one request per chapter. It verifies the page
+and every embedded document against its independent source pin. Art-only presentation changes can
+reuse the same story pages and gameplay fingerprint.
+
+### Scene splashes (CY78)
+
+Use the private `content/campaign-art-plan/splash-bindings.json` registry or pass
+`--splash-bindings <file>`. Each row pins the current Story chapter file and SHA-256, exact
+scene ID, place and review status. Its `from` entry names the current Art catalog's manifest path,
+stable asset ID, speaker outfit or heroine ID, role, outfit key, scene variant and
+native image SHA-256. The short album slot is for review. Use the separately recorded `platformId`
+for a hosted staging or publish.
+
+For offline review, run the same compiler against a saved local campaign release and its private
+Art catalogs. This verifies the source PNG and campaign candidate without contacting Platform or
+writing the selected release.
+
+```powershell
+pnpm art:publish --event splashes --local-release <release-root> --only <scene-id> --dry-run
+pnpm art:publish --event splashes --only <scene-id> --dry-run
+pnpm art:publish --event splashes --only <scene-id> --stage-only
+```
+
+The registry uses `schemaVersion: 1`, `campaign: "cyberpunk"` and a `bindings` array. Each binding
+has `scene`, `chapter`, `chapterSha256`, `place`, `review` and `from`. Allowed `review` values are
+`review` for a candidate and `approved` for a confirmed destination. The `from` record uses
+`manifest`, `id`, `actor`, `role`, `outfit`, `variant`, `sha256` and the hosted `platformId`.
+`--only` scopes to a scene, stable image ID, actor ID or exact Platform ID.
+
+A full-scene splash uses the artwork's native ratio and the existing composition reader. The original
+backdrop is available as the layer fallback. Use `portraits: "show"` or `"hide"` as reviewed for the
+scene. A full replacement of an existing layout requires `replacesCompositionSha256`, the SHA-256
+of the parser's normalized composition JSON without extra whitespace. An `at` value binds a backdrop
+cut to a free Story step on a scene without a full composition and retains that scene's overlay.
+
+Publish the current approved Crew and boss albums into Platform with
+`pnpm exec tsx scripts/art/publish-splashes.ts <art-authoring-root>`. The source root is
+Uma Art Authoring’s private `content/authoring` directory. Pass `--dry-run` to check approval,
+dimensions and native image hashes locally. Approved images are immutable under
+`art/universes/cyberpunk/scene-splashes/`. A guarded index holds their source IDs, actor, approved
+role, outfit and variant. Both boss album views may carry the same approved source. They share a
+Platform record when the approved role and bytes match.
+
+New destination records use the approved source ID and its deterministic Platform record, and can
+omit `manifest`. The game publisher reads the exact bytes and snapshot from the Cyberpunk Platform
+splash index. Earlier destination records can still use their original source manifest and Platform
+index. Art-only promotion preserves campaign rules, story, and save scope. Art with an approved
+source and a future destination remains in the Platform catalog until a real scene binding is available.
+
 ### Automatic cast wardrobes (CY70)
 
 `wardrobes` registers exact story speakers, portrait-library character keys and native collection
 identities. These mappings are authored privately once; runtime does not infer a speaker from a name.
 The publisher discovers each registered actor's approved native outfits and available portrait recipes.
+Use `visibleLooks` to list only the approved wardrobe outfits for an identity shared across roles.
+The publisher keeps the other registered looks available to Story scenes. An outfit waiting for its
+published image stays out of the list until a later sync finds it.
 Existing native asset IDs and mechanical crop recipes remain intact. New outfits receive deterministic
 asset IDs. Optional `labels` supply approved display names without renaming source keys.
 

@@ -56,8 +56,8 @@ function LocationArt({ loaded, location, state, props }: { loaded: LoadedCampaig
   </div>
 }
 
-export default function LocationScreen({ save, loaded, location, back, checkRelease, checking, error }: {
-  save: Save; loaded: LoadedCampaign; location: ManagementLocation; back: () => void; checkRelease: () => void; checking: boolean; error: string | null
+export default function LocationScreen({ save, loaded, location, back, error }: {
+  save: Save; loaded: LoadedCampaign; location: ManagementLocation; back: () => void; error: string | null
 }) {
   const [scene, setScene] = useState<{ id: string; key: string } | null>(null)
   const [failure, setFailure] = useState<string | null>(null)
@@ -80,7 +80,6 @@ export default function LocationScreen({ save, loaded, location, back, checkRele
       <header className="flex min-w-0 items-center gap-2">
         <button type="button" className={button} onClick={back}>Campaign</button>
         <h1 className="min-w-0 flex-1 rounded-lg bg-[#0b0d17]/85 px-2 font-display text-lg font-bold">{location.title}</h1>
-        <button type="button" className={button} disabled={checking} onClick={checkRelease}>{checking ? 'Checking…' : 'Check release'}</button>
       </header>
       <div className="grid min-h-0 grid-cols-[0.9fr_1fr] gap-3">
         <section className="flex min-h-0 flex-col items-start justify-between gap-2 overflow-y-auto" aria-label="Location state">

@@ -1,5 +1,7 @@
 # Cabins, decor and visits
 
+> **Built behavior.** For the planned changes to rehabilitation, shared residence and expedition context, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY14 (D25).** Every Uma has a cabin with six decor slots. Furniture comes in six styles, and her
 > cabin's Comfort helps her shed Strain. She reveals her tastes over time, and the captain's **visit** (talk, a gift,
 > decorating together, an invitation out) is the main way rapport rises between battles. The design is

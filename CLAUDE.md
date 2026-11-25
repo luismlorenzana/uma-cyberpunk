@@ -3,16 +3,12 @@
 - Before working here, read the cross-game plan in the sibling repo: `../uma-platform/docs/architecture.md`,
   `roadmap.md` and `decisions.md` (also on GitHub at `luismlorenzana/uma-platform`). uma-cyberpunk is uma-platform's
   Phase 10 (P144).
-- **Start with [docs/handoff/README.md](docs/handoff/README.md):** the current phase, the packet queue and the owner's
-  steps. The concept is [docs/design/concept.md](docs/design/concept.md) ([page](docs/design/previews/concept.html));
-  its calls are TC1–TC54. The build plan is [docs/design/build-plan.md](docs/design/build-plan.md) (BP1–BP9): what's
-  reused and how the packets build it. The research is [docs/design/references.md](docs/design/references.md). New
-  decisions go in `docs/decisions.md` from D6 (fetch `main` first). Packets are CY-numbered from CY1.
-- **The story has its own session (D4).** It writes the world and the story from
-  [docs/design/story-brief.md](docs/design/story-brief.md) (SB1–SB11); [docs/design/world.md](docs/design/world.md)
-  (WD1–WD24) is its first pass. This session builds the game, keeps the brief current when a hook changes, and answers
-  the handoff's story requests. It reads `../uma-story-authoring/content/cyberpunk/stories/` on disk and never commits it.
-- **`docs/game/` is the manual of the game as built.** It starts with CY3. Every rule change keeps it in step.
+- **Start with the [handoff](docs/handoff/README.md) and [roadmap](docs/handoff/four-act-roadmap.md).**
+  [D87’s four-act design](docs/design/campaign-rework.md) sets the game direction. Use [the systems plan](docs/technical/four-act-campaign.md),
+  the active CY packet and the current manual. Earlier TC, BP and SB material supplies implementation history.
+- **Story, General Art, Character Art and Sprite Art have distinct delivery lanes.** Use the
+  [authoring contract](docs/design/campaign-art-delivery.md) and current workstream packets. All named Story and art material stays private.
+- **The [game manual](docs/game/README.md) records actual behavior.** Update it when a packet ships.
 - **This game stands alone:** its own save, rules and economy (uma-platform P2, P3). It reads master data from
   uma-platform by stable IDs only, and never imports from uma-rpg, uma-racer, uma-quest or uma-farm at runtime.
 - Shared changes (master data schema, shared packages such as `uma-kit` and `uma-stage`, original art) happen in a
@@ -25,21 +21,13 @@
   - Uma sprites derive from original art, so they're private too: they live in master data's private release, never in
     uma-art or git. Guest heroines from other franchises follow the same rule (TC7).
   - Check `git status` before every commit. `scripts/check-private-content.test.mjs` runs in CI.
-- **Claude commits and pushes to `main`** in Conventional Commits style. Delegated agents use a branch and a pull
-  request. When Claude reviews a ChatGPT pull request, it sends back only must-fixes (a broken rule, original-game
-  content, a failing check, a real bug).
-- **Art is split by kind (uma-platform P126, amended by P147):** **ChatGPT draws character art only,** end to end (Uma
-  sprites and keys, guest heroines, enemies, busts and any portrait), starting from the Character Art Studio's "Uma
-  Cyberpunk: Combat Adult Character" category (P143), and publishes those releases. **Claude draws everything else in
-  code** and publishes those uma-art releases in a uma-platform session: the pixel art (`scripts/pixel-art`: items, UI
-  marks, crests, emblems, tile marks), the full-colour HD-2D map kits (`scripts/kit-art`) and the art tools. The
-  uma-cyberpunk packet that first uses the art pins it.
+- **Deliver through a branch and PR.** Use Conventional Commits and verify CI. Prior role-specific push and art assignment notes are superseded by the [repo instructions](AGENTS.md) and four-act contracts.
 
 ## Autonomy: what you do without asking
 
 The owner gave every session full autonomy to commit, publish and deploy (2026-11-08). Do the work end to end:
-- **Commit and push to `main`** (Conventional Commits; `git status` first). Watch CI with
-  `gh run watch <id> -R luismlorenzana/uma-cyberpunk --exit-status` and fix forward if it fails.
+- **Commit on the approved branch and open a pull request** (Conventional Commits). Watch CI with
+  `gh run watch <id> -R luismlorenzana/uma-cyberpunk --exit-status` and fix failing verification on the branch.
 - **Write packets ahead:** a phase's packets before it starts, from the concept. Then work them in order, flag each done
   (delete it, add a Done row) and log its D-decision.
 - **Merge your own pull requests,** and review ChatGPT's with must-fixes only. Take a ChatGPT code packet that blocks you.

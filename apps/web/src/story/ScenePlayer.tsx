@@ -52,7 +52,7 @@ export function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentati
     onError={() => setFailed(true)} data-scene-layer={layer.asset} />
 }
 
-export interface SceneDecision { selected?: number; commit: (index: number) => Promise<void> }
+export interface SceneDecision { kind?: 'choice' | 'path'; selected?: number; commit: (index: number) => Promise<void> }
 
 export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit, exitLabel, lookContext }: {
   pack: StoryPack
@@ -100,6 +100,26 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
     setLocation(presentation?.location)
     const cuts = new Map(presentation?.backdropCues?.map(cue => [cue.step, cue]))
     const ask = (p: Prompt) => new Promise<number>((r) => { if (!live) return; resolve.current = r; setPrompt(p) })
+    const choose = async (kind: 'choice' | 'path', prompt: Prompt) => {
+      const decision = () => {
+        const current = decisionRef.current
+        return current && (current.kind ?? 'choice') === kind ? current : undefined
+      }
+      const saved = decision()?.selected
+      if (saved !== undefined) return saved
+      while (live) {
+        const index = await ask(prompt)
+        if (!live) return index
+        try {
+          setSavingChoice(true)
+          await decision()?.commit(index)
+          setChoiceError(null)
+          return index
+        } catch (error) { setChoiceError(error instanceof Error ? error.message : 'Could not save. Try again.') }
+        finally { if (live) setSavingChoice(false) }
+      }
+      return 0
+    }
     const ui: SceneUi = {
       beforeStep: (step) => {
         const cue = cuts.get(step)
@@ -120,28 +140,12 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       },
       illustration: (asset) => { if (live) setIllustration(asset) },
       wait: async (ms) => { await new Promise((r) => setTimeout(r, Math.min(ms, 2000))) },
-      choose: async (options) => {
-        const saved = decisionRef.current?.selected
-        if (saved !== undefined) return saved
-        while (live) {
-          const index = await ask({ kind: 'choice', options })
-          if (!live) return index
-          try {
-            setSavingChoice(true)
-            await decisionRef.current?.commit(index)
-            setChoiceError(null)
-            return index
-          } catch (error) {
-            setChoiceError(error instanceof Error ? error.message : 'Could not save. Try again.')
-          } finally { if (live) setSavingChoice(false) }
-        }
-        return 0
-      },
+      choose: (options) => choose('choice', { kind: 'choice', options }),
       call: (call) => ask({ kind: 'call', call }),
       battle: async (mission) => { await ask({ kind: 'battle', mission }); await onBattle(mission) },
       effect: (step) => { if (live) onEffect(step) },
       captain: (options) => ask({ kind: 'captain', options }),
-      path: async () => ((await ask({ kind: 'path' })) === 1 ? 'heart' : 'trust') as BondPath,
+      path: async () => ((await choose('path', { kind: 'path' })) === 1 ? 'heart' : 'trust') as BondPath,
       bond: (e) => { if (live) onBond?.(e) },
     }
     void playScene(scene, ui, { pack, squad, skipping: () => skipping.current, stopSkipping: () => { skipping.current = false }, romance: captain.romance }).then(() => { if (live) onDone() })
@@ -222,10 +226,11 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
           {saidLine}
           <div className="font-display text-[16px] font-bold">What do you answer?</div>
           <div className="grid grid-cols-2 gap-2">
-            <button type="button" data-choose="trust" onClick={() => advance(0)} className="min-h-14 rounded-md bg-[#2ee6ff] px-3 text-left font-bold text-[#0b0d17]">Trust<span className="block text-[12px] font-normal">Partners in arms: friendship, all the way</span></button>
-            <button type="button" data-choose="heart" onClick={() => advance(1)} className="min-h-14 rounded-md bg-[#ff3dc8] px-3 text-left font-bold text-[#0b0d17]">Heart<span className="block text-[12px] font-normal">Something more: a light romance</span></button>
+            <button type="button" disabled={savingChoice} data-choose="trust" onClick={() => advance(0)} className="min-h-14 rounded-md bg-[#2ee6ff] px-3 text-left font-bold text-[#0b0d17]">Trust<span className="block text-[12px] font-normal">Partners in arms: friendship, all the way</span></button>
+            <button type="button" disabled={savingChoice} data-choose="heart" onClick={() => advance(1)} className="min-h-14 rounded-md bg-[#ff3dc8] px-3 text-left font-bold text-[#0b0d17]">Heart<span className="block text-[12px] font-normal">Something more: a light romance</span></button>
           </div>
           <div className="text-[12px] text-white/50">{pathFooter ?? 'Both are equal in battle, and a later scene can change it.'}</div>
+          {choiceError && <p role="alert" className="text-sm text-red-200">{choiceError}</p>}
         </div>
       )}
       {showLog && (

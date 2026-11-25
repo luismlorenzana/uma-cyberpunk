@@ -1,5 +1,7 @@
 # The board
 
+> **Built behavior.** For the planned changes to ten-member layout, touch selection and iPhone performance, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY7 (D11), the post layer tuned (D18).** The battle board as `apps/web/src/board/` draws it, on
 > uma-stage 0.5.0's parts, and its test bench at `/board`. The sandbox (CY8) plays battles on it. The kit is uma-stage's stand-in forest under a night
 > grade until the first world's kit (Phase 4).

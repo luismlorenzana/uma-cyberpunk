@@ -1,5 +1,7 @@
 # The ship and the worlds
 
+> **Built behavior.** For the planned changes to the Homestretch, liberated bases and expedition ships, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY10 (D14), CY12 (D16).** The hub every session starts and ends in (TC9, TC49), the Bridge's star map and a
 > world's map (TC50), with their locks and keys (TC34). Played on the stand-in story until the story session's first
 > world lands. The mission flow is on [missions.md](missions.md).

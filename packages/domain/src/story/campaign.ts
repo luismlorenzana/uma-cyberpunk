@@ -1,3 +1,4 @@
+import type { HeroineSpriteRole, TalkContact } from '@cyber/battle'
 import type { CampaignWardrobe } from '../campaign-wardrobe'
 import { parseCampaignWardrobe } from './campaign-wardrobe'
 import { parseComposition } from './composition'
@@ -22,17 +23,29 @@ import type { CampaignWorkshop } from '../campaign-gear'
 import { parseCampaignRecruits, type CampaignRecruit } from './campaign-recruits'
 import type { CampaignSector } from '../campaign-sectors'
 import { parseCampaignSectors } from './campaign-sectors'
-import type { PortProject } from '../campaign-projects'
+import { BASE_PROJECT_SCENES, type PortProject } from '../campaign-projects'
 import type { CabinEvening } from '../campaign-cabins'
 import { FORMATION_ROLES, type FormationMember, type FormationRole, type GroundCombat } from '../combat-training'
 import { parseCabinEvenings } from './campaign-cabins'
+import type { GroundRules } from './ground-rules'
+import { parseGroundFormation } from './ground-formation'
+import { parseCampaignAllies, type CampaignAlly } from './campaign-allies'
+import { parseGroundCues, type GroundCues } from './ground-cues'
+import { parseGroundSignatures } from './ground-rules'
+import { parseCampaignTiers, type CampaignTier } from './campaign-tiers'
+import { parseFourActCampaign, type FourActCampaign } from './four-act'
 
 export interface CampaignQuest {
+  /** Uma partners whose released, resettled pair may join this named sortie. */
+  callUp?: number[]
   id: string
   title: string
   scene: string
+  sceneWhen?: { scene: string; flag: string; earlier?: readonly [string, string] }
   after?: string
   requires?: string[]
+  /** One completed quest is sufficient for this additional prerequisite. */
+  requiresAny?: string[]
   flags?: string[]
   encounter?: string
   port?: string
@@ -63,12 +76,14 @@ export interface CampaignPortraitFace {
 }
 
 export interface CampaignBook {
+  fourAct?: FourActCampaign
   combatShift?: string
   wardrobe?: CampaignWardrobe
   commandCinematics?: CommandCinematics
   management?: CampaignManagement
   opening: string
   draft: boolean
+  previewEnd?: string
   quests: CampaignQuest[]
   assets: { id: string; file: string }[]
   art: CampaignSceneArt[]
@@ -76,6 +91,8 @@ export interface CampaignBook {
   story: StoryPack
   scenes: ReadonlyMap<string, Scene>
   recruits?: CampaignRecruit[]
+  allies?: CampaignAlly[]
+  tiers?: CampaignTier[]
   sectors?: CampaignSector[]
   projects?: PortProject[]
   evening?: { after: string; visits: { companion: number; scene: string; morning: string | null }[] }
@@ -90,7 +107,7 @@ export interface CampaignBook {
   finale?: CampaignFinale
 }
 
-export interface GroundEncounter {
+export interface GroundEncounter extends GroundRules {
   combat?: GroundCombat
   id: string
   title: string
@@ -98,6 +115,7 @@ export interface GroundEncounter {
   expansion?: string
   kit?: { weapons: string[]; expansions: string[] }
   boss?: { unit: string; name: string; portrait: string }
+  cues?: GroundCues
   win: { flag?: string; file?: string; reward?: Wallet }
 }
 
@@ -107,18 +125,66 @@ export interface CampaignReleaseFile {
   bytes: number
 }
 
+export type CombatSpriteIdentity = { outfit: number; form?: never; roles?: never }
+  | { outfit: string; form: string; roles: HeroineSpriteRole[] }
+
+const heroineSpriteRoles: readonly HeroineSpriteRole[] = ['boss-enemy', 'boss-ally', 'sub-boss']
+
+export type CampaignCombatSprite = CombatSpriteIdentity & {
+  manifest: CampaignReleaseFile
+  placements: CampaignReleaseFile
+  pages: (CampaignReleaseFile & { file: string })[]
+}
+
+export function combatSpriteKey(identity: Pick<CombatSpriteIdentity, 'outfit' | 'form'>): string {
+  return typeof identity.outfit === 'number' ? String(identity.outfit) : `heroine/${identity.outfit}/${identity.form}`
+}
+
+export function parseCombatSpriteIdentity(p: P, row: Record<string, unknown>, path: string): CombatSpriteIdentity {
+  if (typeof row.outfit !== 'string') {
+    if (row.form !== undefined || row.roles !== undefined) p.fail(path, 'crew sprite has no heroine form or role')
+    return { outfit: p.int(row.outfit, path + '.outfit', 1, Number.MAX_SAFE_INTEGER) }
+  }
+  const roles = p.list(row.roles, path + '.roles', (raw, field) =>
+    heroineSpriteRoles.find(role => role === raw) ?? p.fail(field, 'unknown heroine sprite role'), heroineSpriteRoles.length)
+  if (!roles.length || new Set(roles).size !== roles.length || (roles.includes('sub-boss') && roles.length > 1)) {
+    p.fail(path + '.roles', 'expected distinct boss roles or a sub-boss role')
+  }
+  return { outfit: p.slug(row.outfit, path + '.outfit'), form: p.slug(row.form, path + '.form'),
+    roles: heroineSpriteRoles.filter(role => roles.includes(role)) }
+}
+
+/** A transport batch preserves the individual story-document pins used by publishers. */
+export interface CampaignStoryPage extends CampaignReleaseFile {
+  sources: readonly string[]
+}
+
 export interface CampaignRelease {
   schemaVersion: 1
   release: string
+  campaign?: 'four-act'
   files: (CampaignReleaseFile & { source: string })[]
   assets: (CampaignReleaseFile & { id: string })[]
-  combatSprites?: { outfit: number; manifest: CampaignReleaseFile; placements: CampaignReleaseFile;
-    pages: (CampaignReleaseFile & { file: string })[] }[]
+  combatSprites?: CampaignCombatSprite[]
+  storyPages?: CampaignStoryPage[]
 }
 
 export const CAMPAIGN_PREVIEW_INDEX = 'campaign/preview.json'
-export const campaignReleasePath = (release: string): string => `campaign/releases/${release}.json`
-export const CAMPAIGN_RELEASE_PATH = /^campaign\/releases\/[a-z0-9][a-z0-9-]{0,63}\.json$/
+export const PILOT_PREVIEW_INDEX = 'campaign/pilot.json'
+export const FOUR_ACT_PREVIEW_INDEX = 'campaign/four-act.json'
+export type CampaignIdentity = 'current' | 'pilot' | 'four-act'
+export type CampaignSaveScope = 'legacy' | CampaignIdentity
+const previewIndexes: Record<CampaignIdentity, string> = {
+  current: CAMPAIGN_PREVIEW_INDEX,
+  pilot: PILOT_PREVIEW_INDEX,
+  'four-act': FOUR_ACT_PREVIEW_INDEX,
+}
+export const campaignPreviewIndex = (identity: CampaignIdentity): string => previewIndexes[identity]
+export function campaignReleasePath(release: string, identity: CampaignIdentity = 'current'): string {
+  if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(release)) throw new Error('Release must be a lowercase slug')
+  return `campaign/releases/${identity === 'current' ? '' : `${identity}/`}${release}.json`
+}
+export const CAMPAIGN_RELEASE_PATH = /^campaign\/releases\/(?:(?:pilot|four-act)\/)?[a-z0-9][a-z0-9-]{0,63}\.json$/
 export const CAMPAIGN_FILE_PATH = /^campaign\/files\/pack\.[a-f0-9]{64}\.(json|png|webp)$/
 const ART_FILE = /^[a-z0-9][a-z0-9-]{0,63}\.(png|webp)$/
 const STORY_FILE = /^(campaign\.json|casting\.json|(?:worlds|chapters|log|calls|bonds|events)\/[a-z0-9][a-z0-9-]{0,63}\.json)$/
@@ -140,7 +206,7 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
   const start = p.slug(map.start, 'supply.start')
   const ports = p.list(map.ports, 'supply.ports', (value, path) => {
     const fields = ['id', 'name', 'scene', 'stock', 'produces', 'upkeep', 'reserve']
-    const port = p.object(value, path, [...fields, 'liberation'], fields)
+    const port = p.object(value, path, [...fields, 'liberation', 'liberations'], fields)
     const id = p.slug(port.id, `${path}.id`)
     const scene = p.slug(port.scene, `${path}.scene`)
     const entry = Object.values(story.chapters).filter((chapter) => chapter.world === id).flatMap((chapter) => chapter.scenes).find((s) => s.id === scene)
@@ -152,12 +218,15 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
       return { fuel: p.int(o.fuel, `${field}.fuel`, 0, PORT_STOCK_MAX), provisions: p.int(o.provisions, `${field}.provisions`, 0, PORT_STOCK_MAX),
         alloy: p.int(o.alloy, `${field}.alloy`, 0, PORT_STOCK_MAX) }
     }
-    const liberation = port.liberation === undefined ? undefined : (() => {
-      const x = p.object(port.liberation, `${path}.liberation`, ['flag', 'alloy'])
-      return { flag: p.slug(x.flag, `${path}.liberation.flag`), alloy: p.int(x.alloy, `${path}.liberation.alloy`, 1, 99) }
-    })()
+    const benefit = (raw: unknown, field: string) => {
+      const x = p.object(raw, field, ['flag', 'alloy'])
+      return { flag: p.slug(x.flag, field + '.flag'), alloy: p.int(x.alloy, field + '.alloy', 1, 99) }
+    }
+    const liberation = port.liberation === undefined ? undefined : benefit(port.liberation, path + '.liberation')
+    const liberations = port.liberations === undefined ? undefined : p.list(port.liberations, path + '.liberations', benefit, 12)
+    unique(p, path + '.liberations', [...(liberation ? [liberation] : []), ...(liberations ?? [])], row => row.flag)
     return { id, name: p.text(port.name, `${path}.name`, 48), scene, stock: amounts('stock'), produces: amounts('produces'),
-      upkeep: amounts('upkeep'), reserve: amounts('reserve'), ...(liberation ? { liberation } : {}) }
+      upkeep: amounts('upkeep'), reserve: amounts('reserve'), ...(liberation ? { liberation } : {}), ...(liberations ? { liberations } : {}) }
   }, 24)
   const known = unique(p, 'supply.ports', ports, (port) => port.id)
   if (!known.has(start)) p.fail('supply.start', `unknown port ${start}`)
@@ -187,7 +256,7 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
 export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_INDEX): CampaignRelease {
   const p = new P(file)
   const fields = ['schemaVersion', 'release', 'files', 'assets']
-  const index = p.object(value, 'release', [...fields, 'combatSprites'], fields)
+  const index = p.object(value, 'release', [...fields, 'combatSprites', 'campaign', 'storyPages'], fields)
   p.version(index)
   function entry(o: Record<string, unknown>, path: string, art: boolean): CampaignReleaseFile {
     const sha256 = p.text(o.sha256, `${path}.sha256`, 64)
@@ -203,15 +272,32 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     const source = p.text(o.source, `${path}.source`, 100)
     if (!STORY_FILE.test(source)) p.fail(`${path}.source`, 'expected a campaign or story source file')
     return { source, ...entry(o, path, false) }
-  }, 1024)
+  }, index.campaign === 'four-act' ? 2048 : 1024)
   const assets = p.list(index.assets, 'assets', (v, path) => {
     const o = p.object(v, path, ['id', 'path', 'sha256', 'bytes'])
     return { id: p.slug(o.id, `${path}.id`), ...entry(o, path, true) }
   }, 4096)
   if (!unique(p, 'files', files, (f) => f.source).has('campaign.json')) p.fail('files', 'campaign.json is missing')
   unique(p, 'assets', assets, (a) => a.id)
+  const storyPages = index.storyPages === undefined ? undefined : (() => {
+    if (index.campaign !== 'four-act') p.fail('storyPages', 'expected the four-act release')
+    const remaining = new Set(files.map(file => file.source))
+    remaining.delete('campaign.json')
+    const pages = p.list(index.storyPages, 'storyPages', (raw, path): CampaignStoryPage => {
+      const o = p.object(raw, path, ['path', 'sha256', 'bytes', 'sources'])
+      const sources = p.list(o.sources, path + '.sources', (value, field) => {
+        const source = p.text(value, field, 100)
+        if (!remaining.delete(source)) p.fail(field, 'expected one unique pinned story document')
+        return source
+      }, 40)
+      if (!sources.length) p.fail(path, 'expected story documents')
+      return { ...entry(o, path, false), sources }
+    }, 64)
+    if (!pages.length || remaining.size) p.fail('storyPages', 'expected complete story coverage')
+    return pages
+  })()
   const combatSprites = index.combatSprites === undefined ? undefined : p.list(index.combatSprites, 'combatSprites', (value, path) => {
-    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages'])
+    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages', 'form', 'roles'], ['outfit', 'manifest', 'placements', 'pages'])
     const reference = (key: 'manifest' | 'placements') => entry(p.object(row[key], path + '.' + key, ['path', 'sha256', 'bytes']), path + '.' + key, false)
     const pages = p.list(row.pages, path + '.pages', (value, field) => {
       const page = p.object(value, field, ['file', 'path', 'sha256', 'bytes'])
@@ -223,21 +309,40 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     }, 96)
     if (!pages.length) p.fail(path + '.pages', 'expected at least one page')
     unique(p, path + '.pages', pages, page => page.file)
-    return { outfit: p.int(row.outfit, path + '.outfit', 1, Number.MAX_SAFE_INTEGER),
+    return { ...parseCombatSpriteIdentity(p, row, path),
       manifest: reference('manifest'), placements: reference('placements'), pages }
   }, 100)
-  if (combatSprites) unique(p, 'combatSprites', combatSprites, sprite => String(sprite.outfit))
-  return { schemaVersion: 1, release: p.slug(index.release, 'release'), files, assets, ...(combatSprites ? { combatSprites } : {}) }
+  if (combatSprites) unique(p, 'combatSprites', combatSprites, combatSpriteKey)
+  const campaign = index.campaign
+  if (campaign !== undefined && campaign !== 'four-act') return p.fail('release.campaign', 'unknown campaign identity')
+  return { schemaVersion: 1, release: p.slug(index.release, 'release'), ...(campaign ? { campaign } : {}),
+    files, assets, ...(storyPages ? { storyPages } : {}), ...(combatSprites ? { combatSprites } : {}) }
 }
 
-export function parseCampaignBook(files: Record<string, unknown>): CampaignBook {
+export function documentsInStoryPage(page: CampaignStoryPage, payload: unknown): Record<string, unknown> {
+  return new P(page.path).object(payload, 'stories', page.sources)
+}
+
+/** Older manifests predate the identity field. The new campaign must carry it in every release. */
+export function requireCampaignIdentity(release: CampaignRelease, identity: CampaignIdentity): CampaignRelease {
+  if ((release.campaign === 'four-act') !== (identity === 'four-act')) {
+    throw new Error(`Release ${release.release} does not belong to the ${identity} campaign`)
+  }
+  return release
+}
+
+export function parseCampaignBook(files: Record<string, unknown>, identity?: CampaignIdentity): CampaignBook {
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'combatShift'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct', 'combatShift'], fields)
   const combatShift = o.combatShift === undefined ? undefined : p.slug(o.combatShift, 'combatShift')
   p.version(o)
+  if ((identity === 'four-act' || o.fourAct !== undefined) && o.tiers !== undefined) p.fail('tiers', 'four-act books cannot use tier progression')
+  if (identity === 'four-act' && o.draft === false && o.fourAct === undefined) p.fail('fourAct', 'a production four-act book needs a catalog')
+  if (identity && identity !== 'four-act' && o.fourAct !== undefined) p.fail('fourAct', 'expected the four-act release identity')
   if (typeof o.draft !== 'boolean') p.fail('draft', 'expected a boolean')
+  const fourActCatalog = o.fourAct !== undefined
   const parsed = parsePack(storyFiles)
   const story = parsed.pack
   if (parsed.errors.length) throw parsed.errors[0]
@@ -248,7 +353,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
   const scenes = unique(p, 'chapter scenes', chapters.flatMap((c) => c.scenes), (s) => s.id)
   const encounters = unique(p, 'chapter missions', chapters.flatMap((c) => c.missions), (m) => m.id)
   const quests = p.list(o.quests, 'quests', (v, path) => {
-    const q = p.object(v, path, ['id', 'title', 'scene', 'after', 'encounter', 'port', 'requires', 'flags'], ['id', 'title', 'scene'])
+    const q = p.object(v, path, ['id', 'title', 'scene', 'sceneWhen', 'after', 'encounter', 'port', 'requires', 'requiresAny', 'flags', 'callUp'], ['id', 'title', 'scene'])
     const scene = p.slug(q.scene, `${path}.scene`)
     const declared = scenes.get(scene)
     if (!declared) return p.fail(`${path}.scene`, `unknown scene ${scene}`)
@@ -259,23 +364,49 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     if (encounter ? battles.length !== 1 || terminal?.kind !== 'battle' || terminal.mission !== encounter : battles.length > 0) {
       p.fail(`${path}.encounter`, 'a battle quest must finish with its declared encounter')
     }
+    const sceneWhen = q.sceneWhen === undefined ? undefined : (() => {
+      const field = `${path}.sceneWhen`
+      const alt = p.object(q.sceneWhen, field, ['flag', 'earlier', 'scene'], ['flag', 'scene'])
+      const next = p.slug(alt.scene, `${field}.scene`)
+      const variant = scenes.get(next)
+      if (!variant || encounter || [...walkSteps(variant.steps, '')].some(({ step }) => step.kind === 'battle')) {
+        p.fail(`${field}.scene`, 'expected a dialogue variant in a dialogue quest')
+      }
+      const flag = p.slug(alt.flag, field + '.flag')
+      if (alt.earlier !== undefined) {
+        const prior = p.list(alt.earlier, field + '.earlier', (id, item) => p.slug(id, item), 2)
+        if (prior.length !== 2 || prior[0] === prior[1]) p.fail(field, 'expected two distinct prior scene ids')
+        if (prior.some(id => !scenes.has(id) || id === scene || id === next)) p.fail(field + '.earlier', 'expected existing upstream scenes')
+        return { earlier: [prior[0]!, prior[1]!] as const, flag, scene: next }
+      }
+      return { flag, scene: next }
+    })()
+    const alternatives = q.requiresAny === undefined ? undefined : p.list(q.requiresAny, path + '.requiresAny', (id, field) => p.slug(id, field), 25)
+    if (alternatives && (!alternatives.length || (identity !== 'four-act' && o.fourAct === undefined))) {
+      p.fail(path + '.requiresAny', 'expected one or more alternative prerequisites in a four-act quest')
+    }
     return { id: p.slug(q.id, `${path}.id`), title: p.text(q.title, `${path}.title`, 80), scene,
+      ...(sceneWhen ? { sceneWhen } : {}),
       ...(q.after === undefined ? {} : { after: p.slug(q.after, `${path}.after`) }), ...(encounter ? { encounter } : {}),
       ...(q.requires === undefined ? {} : { requires: p.list(q.requires, `${path}.requires`, (id, field) => p.slug(id, field), 24) }),
+      ...(alternatives ? { requiresAny: alternatives } : {}),
       ...(q.flags === undefined ? {} : { flags: p.list(q.flags, `${path}.flags`, (id, field) => p.slug(id, field), 12) }),
+      ...(q.callUp === undefined ? {} : { callUp: p.list(q.callUp, path + '.callUp', (outfit, field) => p.outfit(outfit, field), 50) }),
       ...(q.port === undefined ? {} : { port: p.slug(q.port, `${path}.port`) }) }
-  }, 1024)
+  }, fourActCatalog ? 4096 : 1024)
   const byQuest = unique(p, 'quests', quests, (q) => q.id)
-  unique(p, 'quest scenes', quests, (q) => q.scene)
+  unique(p, 'quest scenes', quests.flatMap(q => q.sceneWhen ? [q.scene, q.sceneWhen.scene] : [q.scene]), scene => scene)
   const opening = p.slug(o.opening, 'opening')
   if (!byQuest.has(opening)) p.fail('opening', `unknown quest ${opening}`)
+  const previewEnd = o.previewEnd === undefined ? undefined : p.slug(o.previewEnd, 'previewEnd')
+  if (previewEnd && (!o.draft || !byQuest.has(previewEnd))) p.fail('previewEnd', 'expected a quest in a draft campaign')
   const checked = new Set<string>(), visiting = new Set<string>()
   function validateQuest(q: CampaignQuest) {
     if (checked.has(q.id)) return
     const path = `quests.${q.id}`
     if (visiting.has(q.id)) p.fail(path, 'quest prerequisites form a cycle')
-    if (q.id === opening ? q.after !== undefined || q.requires?.length || q.flags?.length : q.after === undefined) p.fail(path, 'only the opening quest starts without a prerequisite')
-    const dependencies = [...(q.after ? [q.after] : []), ...(q.requires ?? [])]
+    if (q.id === opening ? q.after !== undefined || q.requires?.length || q.requiresAny?.length || q.flags?.length : q.after === undefined) p.fail(path, 'only the opening quest starts without a prerequisite')
+    const dependencies = [...(q.after ? [q.after] : []), ...(q.requires ?? []), ...(q.requiresAny ?? [])]
     if (new Set(dependencies).size !== dependencies.length) p.fail(path, 'duplicate quest prerequisite')
     visiting.add(q.id)
     for (const id of dependencies) validateQuest(byQuest.get(id) ?? p.fail(path, `unknown quest ${id}`))
@@ -358,7 +489,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     if (quest.port && !supply?.ports.some((port) => port.id === quest.port)) p.fail('quests', `${quest.id} uses unknown port ${quest.port}`)
   }
   const recruits = o.recruits === undefined ? undefined : parseCampaignRecruits(p, o.recruits, { opening, byQuest, scenes, story, supply })
-  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), 64), (c) => c.id)
+  const commands = unique(p, 'commands', o.commands === undefined ? [] : p.list(o.commands, 'commands', (v, path) => parseCommandEncounter(p, v, path), fourActCatalog ? 256 : 64), (c) => c.id)
   const commandArt = o.commandArt === undefined ? undefined : unique(p, 'commandArt', p.list(o.commandArt, 'commandArt', (v, path) => {
     const row = p.object(v, path, ['encounter', 'backdrop', 'objective', 'objectiveLabel'], ['encounter'])
     const encounter = p.slug(row.encounter, `${path}.encounter`)
@@ -374,7 +505,7 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     }
   }
   const ground = unique(p, 'ground', o.ground === undefined ? [] : p.list(o.ground, 'ground', (v, path): GroundEncounter => {
-    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win', 'combat'], ['id', 'title', 'win'])
+    const g = p.object(v, path, ['id', 'title', 'alternate', 'expansion', 'kit', 'boss', 'win', 'rescue', 'talk', 'formation', 'cues', 'signatures', 'combat'], ['id', 'title', 'win'])
     const id = p.slug(g.id, `${path}.id`)
     const mission = encounters.get(id)
     if (!mission?.scenario || mission.scenario === 'training' || commands.has(id) || !quests.some((q) => q.encounter === id)) {
@@ -411,23 +542,66 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
       const b = p.object(g.boss, `${path}.boss`, ['unit', 'name', 'portrait'])
       return { unit: p.slug(b.unit, `${path}.boss.unit`), name: p.text(b.name, `${path}.boss.name`, 48), portrait: asset(b.portrait, `${path}.boss.portrait`) }
     })()
+    const rescue = g.rescue === undefined ? undefined : (() => {
+      const field = `${path}.rescue`
+      const r = p.object(g.rescue, field, ['unit', 'heroine', 'label', 'jackOutFlag', 'alternateSpawn', 'spriteForm'], ['unit', 'heroine', 'label'])
+      const unit = p.slug(r.unit, `${field}.unit`), heroine = p.slug(r.heroine, `${field}.heroine`)
+      if (mission?.objective.kind !== 'free-leader' || !mission.enemies.some((e) => e.slot === 'boss' && e.pool.includes(heroine))) {
+        p.fail(field, 'expected the authored boss of a free-leader mission')
+      }
+      if (boss && boss.unit !== unit) p.fail(`${field}.unit`, 'must match the named boss slot')
+      const entry = r.alternateSpawn === undefined ? undefined : {
+        flag: alternate?.flag ?? p.fail(field, 'an alternate spawn needs an approach flag'),
+        spawn: p.int(r.alternateSpawn, `${field}.alternateSpawn`, 1, 13),
+      }
+      return { unit, heroine, label: p.text(r.label, `${field}.label`, 48),
+        ...(r.spriteForm === undefined ? {} : { spriteForm: p.slug(r.spriteForm, `${field}.spriteForm`) }),
+        ...(entry ? { entry } : {}),
+        ...(r.jackOutFlag === undefined ? {} : { jackOutFlag: p.slug(r.jackOutFlag, `${field}.jackOutFlag`) }) }
+    })()
+    const talk = g.talk === undefined ? undefined : p.list<TalkContact>(g.talk, `${path}.talk`, (raw, field) => {
+      const contact = p.object(raw, field, ['actor', 'target', 'requires', 'hint', 'outcome', 'brokenOutcome'], ['actor', 'target', 'requires', 'hint', 'outcome'])
+      if (contact.requires !== 'active' && contact.requires !== 'actorHit') return p.fail(`${field}.requires`, 'expected active or actorHit')
+      return { actor: p.slug(contact.actor, `${field}.actor`), target: p.slug(contact.target, `${field}.target`),
+        requires: contact.requires, hint: p.text(contact.hint, `${field}.hint`, 160), outcome: p.slug(contact.outcome, `${field}.outcome`),
+        ...(contact.brokenOutcome === undefined ? {} : { brokenOutcome: p.slug(contact.brokenOutcome, `${field}.brokenOutcome`) }) }
+    }, 8)
+    const formation = g.formation === undefined ? undefined : parseGroundFormation(p, g.formation, `${path}.formation`, story.casting,
+      mission?.fixedSquad?.[0] ?? chapters.find((chapter) => chapter.missions.some((m) => m.id === id))?.leads[0])
+    if (formation && o.fourAct !== undefined && !formation.advisory) p.fail(`${path}.formation`, 'four-act Boss Allies advise during planetary battles')
+    if (formation && !quests.some((q) => q.encounter === id && q.flags?.includes(formation.ally.released))) {
+      p.fail(`${path}.formation.ally.released`, 'the quest must require this ally release')
+    }
     const combat = g.combat === undefined ? undefined : parseGroundCombat(p, g.combat, `${path}.combat`, story, combatShift)
     if (combat?.kind === 'combined' && (kit || expansion)) p.fail(`${path}.combat`, 'combined formation issues its own rigs')
     const w = p.object(g.win, `${path}.win`, ['flag', 'file', 'reward'], [])
     const flag = w.flag === undefined ? undefined : p.slug(w.flag, `${path}.win.flag`)
+    if (rescue && !flag) p.fail(`${path}.win.flag`, 'a rescue needs a capture flag')
     const file = w.file === undefined ? undefined : p.slug(w.file, `${path}.win.file`)
     if (file && !Object.hasOwn(story.files, file)) p.fail(`${path}.win.file`, `unknown file ${file}`)
     const reward = w.reward === undefined ? undefined : (() => {
       const r = p.object(w.reward, `${path}.win.reward`, ['credits', 'alloy', 'data'])
       return { credits: p.int(r.credits, `${path}.win.reward.credits`, 0, 9999), alloy: p.int(r.alloy, `${path}.win.reward.alloy`, 0, 999), data: p.int(r.data, `${path}.win.reward.data`, 0, 999) }
     })()
+    const cues = g.cues === undefined ? undefined : parseGroundCues(p, g.cues, `${path}.cues`, scenes, talk ?? [])
+    const signatures = g.signatures === undefined ? undefined : parseGroundSignatures(p, g.signatures, `${path}.signatures`)
     return { id, title: p.text(g.title, `${path}.title`, 64), ...(alternate ? { alternate } : {}), ...(expansion ? { expansion } : {}),
-      ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), ...(combat ? { combat } : {}), win: { flag, file, reward } }
-  }, 64), (g) => g.id)
-  for (const port of supply?.ports ?? []) {
-    if (port.liberation && ![...ground.values()].some((g) => g.win.flag === port.liberation?.flag)) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
+      ...(combat ? { combat } : {}), ...(boss ? { boss } : {}), ...(kit ? { kit } : {}), ...(rescue ? { rescue } : {}), ...(talk ? { talk } : {}),
+      ...(formation ? { formation } : {}), ...(cues ? { cues } : {}), ...(signatures ? { signatures } : {}), win: { flag, file, reward } }
+  }, fourActCatalog ? 512 : 64), (g) => g.id)
+  const liberationFlags = new Set([...ground.values()].map(encounter => encounter.win.flag))
+  if (o.fourAct !== undefined) {
+    for (const quest of quests) {
+      if (!quest.encounter) for (const step of scenes.get(quest.scene)!.steps) {
+        if (step.kind === 'flag' && step.set) liberationFlags.add(step.flag)
+      }
+    }
   }
-  const reserved = new Set([...quests.map((q) => q.scene), ...(supply?.ports.map((port) => port.scene) ?? []),
+  for (const port of supply?.ports ?? []) {
+    const benefits = [...(port.liberation ? [port.liberation] : []), ...(port.liberations ?? [])]
+    if (benefits.some(({ flag }) => !liberationFlags.has(flag))) p.fail('supply.ports', `unknown liberation outcome for ${port.id}`)
+  }
+  const reserved = new Set([...quests.flatMap(q => q.sceneWhen ? [q.scene, q.sceneWhen.scene] : [q.scene]), ...(supply?.ports.map((port) => port.scene) ?? []),
     ...(evening?.visits.flatMap((visit) => visit.morning ? [visit.scene, visit.morning] : [visit.scene]) ?? [])])
   const captureFlags = new Set([...ground.values()].flatMap((g) => g.win.flag ? [g.win.flag] : []))
   const pairs = parseCampaignPairs(o.pairs, story, scenes, { quests: byQuest, reserved, captureFlags, supply, commands })
@@ -438,13 +612,21 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     const shared = pair.sharedEvenings ? Object.values(pair.sharedEvenings).flatMap((route) => route.flatMap(({ visit, morning }) => [visit, morning])) : []
     for (const id of [...pair.recovery, pair.release, pair.bond.scene, pair.residency.scene, ...rooms, ...shared, ...home]) if (id) reserved.add(id)
   }
+  const allies = o.allies === undefined ? undefined : parseCampaignAllies(p, o.allies, story, scenes, byQuest, o.fourAct !== undefined)
+  for (const q of quests) if (q.callUp) {
+    const path = `quests.${q.id}.callUp`
+    if (!q.encounter || !q.callUp.length || q.callUp.some(outfit => !allies?.some(ally => ally.partner === outfit))) {
+      p.fail(path, 'expected an encounter and registered resettled pairs')
+    }
+    unique(p, path, q.callUp, String)
+  }
   const dates = o.dates === undefined ? undefined : parseCampaignDates(o.dates, story, scenes, new Set(byQuest.keys()), reserved,
-    new Set(evening?.visits.map(({ companion }) => companion)), new Set(supply?.ports.map(port => port.id)))
+    new Set(evening?.visits.map(({ companion }) => companion)), new Set(supply?.ports.map(port => port.id)), allies)
   if (dates?.length && !evening) p.fail('dates', 'relationships need an evening schedule')
   const workshop = o.workshop === undefined ? undefined : (() => {
     const w = p.object(o.workshop, 'workshop', ['after', 'missions', 'recipes'])
     const after = p.slug(w.after, 'workshop.after'), quest = byQuest.get(after)
-    const port = quest?.port
+    const port = quest?.port ?? (after === opening ? supply?.start : undefined)
     if (!port || quest?.encounter) return p.fail('workshop.after', 'expected a local workshop conversation')
     const missions = p.list(w.missions, 'workshop.missions', (value, path) => {
       const id = p.slug(value, path)
@@ -468,34 +650,64 @@ export function parseCampaignBook(files: Record<string, unknown>): CampaignBook 
     .flatMap(({ scene, morning }) => morning ? [scene, morning] : [scene])) ?? [])])
   const sectors = o.sectors === undefined ? undefined : parseCampaignSectors(o.sectors, byQuest, recruits ?? [], supply, story, scenes, sectorReserved)
   if (sectors?.some((sector) => sector.shared && pairs.some((pair) => pair.id === `sector-${sector.id}`))) p.fail('sectors', 'duplicate saved night id')
+  const fourAct = o.fourAct === undefined ? undefined : parseFourActCampaign(p, o.fourAct,
+    { opening, draft: o.draft === true, quests, scenes, story, recruits, ground, commands, supply, allies })
   const projects = o.projects === undefined ? undefined : p.list(o.projects, 'projects', (value, path) => {
-    const row = p.object(value, path, ['id', 'title', 'sector', 'alloy', 'days', 'production', 'upkeep'])
-    const sector = p.slug(row.sector, `${path}.sector`)
-    if (!sectors?.some(({ id }) => id === sector)) p.fail(`${path}.sector`, 'expected a sector command')
-    const supply = (key: 'production' | 'upkeep'): Supplies => {
+    const terms = ['id', 'title', 'alloy', 'days', 'production', 'upkeep']
+    const row = p.object(value, path, [...terms, 'sector', 'base'], terms)
+    let location: Pick<PortProject, 'sector' | 'base'>
+    if (row.base !== undefined && row.sector === undefined && fourActCatalog) {
+      const rule = p.object(row.base, path + '.base', ['quest', 'port', 'scenes'])
+      const quest = p.slug(rule.quest, path + '.base.quest'), port = p.slug(rule.port, path + '.base.port')
+      const prerequisite = byQuest.get(quest)
+      if (!prerequisite || prerequisite.encounter || (prerequisite.port && prerequisite.port !== port)
+        || !supply?.ports.some(row => row.id === port) || ![...fourAct?.duos.values() ?? []].some(duo => duo.local?.base === quest)) {
+        p.fail(path + '.base', 'expected a local base quest and supply port')
+      }
+      const notes = p.object(rule.scenes, path + '.base.scenes', BASE_PROJECT_SCENES)
+      const reports = Object.fromEntries(BASE_PROJECT_SCENES.map(key => {
+        const field = path + '.base.scenes.' + key, id = p.slug(notes[key], field)
+        const scene = scenes.get(id)
+        if (!scene || [...walkSteps(scene.steps, '')].some(({ step }) =>
+          !['line', 'thought', 'narrate', 'emote', 'wait', 'choice', 'captain', 'slot', 'illustration'].includes(step.kind)
+            || step.kind === 'captain' && step.options.some(option => option.rapport))) {
+          p.fail(field, 'project reports are dialogue without gameplay effects')
+        }
+        return [key, id]
+      })) as NonNullable<PortProject['base']>['scenes']
+      location = { base: { quest, port, scenes: reports } }
+    } else {
+      if (row.base !== undefined) p.fail(path + '.base', 'expected a four-act base without a legacy sector')
+      const sector = p.slug(row.sector, path + '.sector')
+      if (!sectors?.some(({ id }) => id === sector)) p.fail(path + '.sector', 'expected a sector command')
+      location = { sector }
+    }
+    const projectSupplies = (key: 'production' | 'upkeep'): Supplies => {
       const values = p.object(row[key], `${path}.${key}`, SUPPLY_KINDS)
       return { fuel: p.int(values.fuel, `${path}.${key}.fuel`, 0, 10), provisions: p.int(values.provisions, `${path}.${key}.provisions`, 0, 10),
         alloy: p.int(values.alloy, `${path}.${key}.alloy`, 0, 10) }
     }
-    return { id: p.slug(row.id, `${path}.id`), title: p.text(row.title, `${path}.title`, 56), sector,
-      alloy: p.int(row.alloy, `${path}.alloy`, 1, 99), days: p.int(row.days, `${path}.days`, 1, 30), production: supply('production'), upkeep: supply('upkeep') }
-  }, 48)
+    return { id: p.slug(row.id, `${path}.id`), title: p.text(row.title, `${path}.title`, 56), ...location,
+      alloy: p.int(row.alloy, `${path}.alloy`, 1, 99), days: p.int(row.days, `${path}.days`, 1, 30), production: projectSupplies('production'), upkeep: projectSupplies('upkeep') }
+  }, 48) as PortProject[]
   if (projects) unique(p, 'projects', projects, ({ id }) => id)
   const finale = o.finale === undefined ? undefined : parseFinale(p, o.finale, byQuest, pairs, sectors ?? [], story, commands, ground)
-  const cabinEvenings = o.cabinEvenings === undefined ? undefined : parseCabinEvenings(o.cabinEvenings, { dates, pairs, sectors, scenes },
+  const cabinEvenings = o.cabinEvenings === undefined ? undefined : parseCabinEvenings(o.cabinEvenings, { dates, pairs, sectors, scenes, allies },
     new Set([...sectorReserved, ...(sectors?.flatMap(s => s.shared ? [s.shared.visit, s.shared.morning] : []) ?? [])]))
   const commandCinematics = o.commandCinematics === undefined ? undefined : parseCommandCinematics(o.commandCinematics, { assets, commands, scenes, story })
   const management = o.management === undefined ? undefined : parseCampaignManagement(o.management, { quests, projects, scenes, assets, workshop })
-  return { opening, draft: o.draft as boolean, quests, assets, art, story, scenes, commands, ground, pairs,
+  const tiers = o.tiers === undefined ? undefined : parseCampaignTiers(p, o.tiers, byQuest, recruits ?? [], ground, o.draft === true)
+  return { opening, draft: o.draft as boolean, ...(fourAct ? { fourAct } : {}), ...(previewEnd ? { previewEnd } : {}), quests, assets, art, story, scenes, commands, ground, pairs,
     ...(combatShift ? { combatShift } : {}),
     ...(wardrobe ? { wardrobe } : {}),
+    ...(tiers ? { tiers } : {}),
     ...(management ? { management } : {}),
     ...(commandCinematics ? { commandCinematics } : {}),
     ...(commandArt ? { commandArt } : {}),
     ...(portraitFaces ? { portraitFaces } : {}),
     ...(cabinEvenings ? { cabinEvenings } : {}),
     ...(evening ? { evening } : {}), ...(supply ? { supply } : {}), ...(finale ? { finale } : {}), ...(dates ? { dates } : {}),
-    ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
+    ...(workshop ? { workshop } : {}), ...(recruits ? { recruits } : {}), ...(allies ? { allies } : {}), ...(sectors ? { sectors } : {}), ...(projects ? { projects } : {}) }
 }
 
 export function parseGroundCombat(p: P, value: unknown, path: string, story: StoryPack, shift?: string): GroundCombat {

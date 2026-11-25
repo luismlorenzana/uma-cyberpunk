@@ -1,4 +1,4 @@
-import { BOND_TUNING, type CampaignBook, type CampaignDate, type Save } from '@cyber/domain'
+import { BOND_TUNING, campaignSpeaker, type CampaignBook, type CampaignDate, type Save } from '@cyber/domain'
 import { nameOf } from '../story/runner'
 import { dateProgress } from './dates'
 
@@ -9,7 +9,7 @@ export function DatePanel({ save, book, dates }: { save: Save; book: CampaignBoo
       {dates.map((date) => {
         const { bond, milestone, visit } = dateProgress(save, book, date)
         const threshold = BOND_TUNING.toRank[bond.rank + 1]
-        const label = nameOf(book.story, date.companion)
+        const label = nameOf(book.story, campaignSpeaker(book.allies, date.companion))
         return <li key={date.companion} className="space-y-1 rounded-lg bg-black/20 p-2 text-sm">
           <p className="font-semibold">{label} · Rank {bond.rank}</p>
           <p>{bond.path === 'heart' ? 'Dating' : bond.path === 'trust' ? 'Friends' : bond.rank > 1 ? 'Building trust' : 'Teammates'}</p>

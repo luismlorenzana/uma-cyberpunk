@@ -1,5 +1,7 @@
 # The battle
 
+> **Built behavior.** For the planned changes to ten-unit Act III formations and action readability, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY8 (D12).** The rules as `@cyber/battle` plays them, **rules version 2**: CY4's core and CY5's
 > roles, Tech, chance skills, items, Stride, the bench call and three more objectives, with CY6's first balance pass
 > (see [Balance](#balance)); how enemies choose is on [enemy-ai.md](enemy-ai.md). Terrain, props and terminals are
@@ -155,6 +157,13 @@ else, diagonals included, the **side**.
    behind.
 
 **A Long weapon** uses one ammo a shot, and is never countered and never counters.
+
+### Signature attacks
+
+When an encounter equips a signature, select the named action beside the normal attack.
+The forecast shows its Charge cost and strike. The action is available once per battle.
+A boss signature marks the target's tile first. The boss can fire after the targeted unit
+gets a turn. Move off the tile, break the weapon, or stun the boss to interrupt it.
 
 ### The exchange, in order
 

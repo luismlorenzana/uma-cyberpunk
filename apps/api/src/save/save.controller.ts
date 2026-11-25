@@ -1,7 +1,7 @@
-import { BadRequestException, Body, ConflictException, Controller, Get, Inject, Logger, Put } from '@nestjs/common'
+import { BadRequestException, Body, ConflictException, Controller, ForbiddenException, Get, Inject, Logger, Put } from '@nestjs/common'
 import { CurrentUid } from '@luismlorenzana/uma-server/auth'
 import { parseSavePut, SaveParseError, type SaveEnvelope } from '@cyber/domain'
-import { CAMPAIGN_SAVE_REPOSITORY, RevisionConflict, SAVE_REPOSITORY, type SaveRepository } from './save.repository'
+import { CAMPAIGN_SAVE_REPOSITORY, FOUR_ACT_SAVE_REPOSITORY, PILOT_SAVE_REPOSITORY, RevisionConflict, SAVE_REPOSITORY, type SaveRepository } from './save.repository'
 
 // GET and PUT /api/save behind the owner guard (copied from uma-rpg at 30a322a). The server stores what the device sends
 // and never writes into a save itself (the production-save rules).
@@ -27,6 +27,7 @@ export class SaveController {
       if (err instanceof SaveParseError) throw new BadRequestException(err.message)
       throw err
     }
+    if (request.save.account.uid !== uid) throw new ForbiddenException('Save belongs to a different account')
     try {
       return await this.saves.put(uid, request.baseRevision, request.save, request.sentVersion)
     } catch (err) {
@@ -52,6 +53,20 @@ export class SaveController {
 @Controller('campaign/save')
 export class CampaignSaveController extends SaveController {
   constructor(@Inject(CAMPAIGN_SAVE_REPOSITORY) saves: SaveRepository) {
+    super(saves)
+  }
+}
+
+@Controller('campaign/pilot/save')
+export class PilotSaveController extends SaveController {
+  constructor(@Inject(PILOT_SAVE_REPOSITORY) saves: SaveRepository) {
+    super(saves)
+  }
+}
+
+@Controller('campaign/four-act/save')
+export class FourActSaveController extends SaveController {
+  constructor(@Inject(FOUR_ACT_SAVE_REPOSITORY) saves: SaveRepository) {
     super(saves)
   }
 }

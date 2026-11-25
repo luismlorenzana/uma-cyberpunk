@@ -16,9 +16,10 @@ const durability = (p: P, value: unknown, field: string) => p.int(value, field, 
 
 function parseAssault(p: P, value: unknown, path: string, authored: boolean) {
   const fields = ['emitter', 'disabledFlag']
-  const a = p.object(value, path, authored ? [...fields, 'call', 'fighterTarget'] : fields, authored ? [...fields, 'call'] : fields)
+  const a = p.object(value, path, authored ? [...fields, 'call', 'fighterTarget', 'emitterRequired'] : [...fields, 'emitterRequired'], authored ? [...fields, 'call'] : fields)
   if (a.fighterTarget !== undefined && a.fighterTarget !== true) p.fail(`${path}.fighterTarget`, 'expected true')
-  return { emitter: durability(p, a.emitter, `${path}.emitter`), disabledFlag: p.slug(a.disabledFlag, `${path}.disabledFlag`),
+  if (a.emitterRequired !== undefined && a.emitterRequired !== true) p.fail(path + '.emitterRequired', 'expected true')
+  return { ...(a.emitterRequired === true ? { emitterRequired: true as const } : {}), emitter: durability(p, a.emitter, `${path}.emitter`), disabledFlag: p.slug(a.disabledFlag, `${path}.disabledFlag`),
     ...(authored ? { call: p.text(a.call, `${path}.call`), ...(a.fighterTarget ? { fighterTarget: true } : {}) } : {}) }
 }
 
@@ -56,7 +57,7 @@ export function resumeCommand(value: unknown, actions: readonly unknown[]) {
       if (new Set(present.map(x => x.speaker)).size !== present.length) p.fail('presentation.present', 'duplicate participant')
       const parsed = Object.fromEntries(Object.entries(crew).map(([station, actor]) => [station, participant(actor, 'presentation.crew.' + station)]))
       const ids = Object.values(parsed).map(x => x.speaker)
-      if (new Set(ids).size !== ids.length || ids.some(id => typeof id !== 'number' || !present.some(x => x.speaker === id))) p.fail('presentation.crew', 'crew must be distinct present officers')
+      if (new Set(ids).size !== ids.length || ids.some(id => !present.some(x => x.speaker === id))) p.fail('presentation.crew', 'crew must be distinct present officers')
       return { crew: parsed, present, objective: p.text(row.objective, 'presentation.objective', 80),
         ...(row.commander === undefined ? {} : { commander: participant(row.commander, 'presentation.commander') }) }
     })()

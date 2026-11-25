@@ -7,6 +7,7 @@ export const TRAINING_REVIEWS = [
   'shield-front', 'shield-side', 'shield-rear', 'shield-disabled', 'shield-miss', 'shield-cover', 'shield-attack',
   'bulwark', 'bench', 'barrier-break', 'mend', 'patch', 'break', 'break-intact', 'med-reboot', 'order-reboot', 'med-reboot-intact', 'expiry',
   'mixed-left', 'mixed-right', 'mixed-back',
+  'reverse-left', 'reverse-right', 'rifle-dash', 'greatblade-stun', 'rifle-launcher',
   'mixed-dash', 'mixed-stun', 'mixed-jam', 'mixed-hack', 'mixed-legs', 'mixed-reboot', 'blade-survive-left', 'blade-survive-right',
 ] as const
 export type TrainingReview = typeof TRAINING_REVIEWS[number]
@@ -27,9 +28,10 @@ export interface TrainingReplay {
 const mixedStarts: Record<Dir, Tile> = { N: [2, 5], S: [2, 1], W: [3, 4], E: [1, 4] }
 
 /** Replay each prior attack on the same frozen fitting, using the deck's actual terrain and ranges. */
-function mixedReview(outfit: number, mount: Mount, face: Dir): TrainingReplay {
-  const main = 'hand-blade', expansion = 'back-missiles'
-  const rig = { ...issuedCampaignRig(main, expansion), leftHand: 'hand-pistol' }
+function mixedReview(outfit: number, mount: Mount, face: Dir, reverse = false, rifle = false): TrainingReplay {
+  const main = rifle ? 'hand-rifle' : reverse ? 'hand-pistol' : 'hand-blade'
+  const expansion = 'back-missiles'
+  const rig = { ...issuedCampaignRig(main, expansion), leftHand: rifle ? null : reverse ? 'hand-blade' : 'hand-pistol' }
   const base = groundInput('training', outfit, 'Trainee', main, expansion, undefined, [], rig)
   const start = mixedStarts[face]
   const middle = add(start, step[face]), near = add(middle, step[face]), target = add(near, step[face])
@@ -46,7 +48,9 @@ function mixedReview(outfit: number, mount: Mount, face: Dir): TrainingReplay {
   }
   let state = startBattle(input).state
   const prefix: BattleAction[] = []
-  for (const [withMount, to] of [['left', middle], ['right', near], ['back', start]] as const) {
+  const attacks: readonly (readonly [Mount, Tile])[] = rifle ? [['back', start]]
+    : [[reverse ? 'right' : 'left', middle], [reverse ? 'left' : 'right', near], ['back', start]]
+  for (const [withMount, to] of attacks) {
     if (state.active === drone) {
       const wait: BattleAction = { kind: 'turn', unit: drone, act: { kind: 'none' }, face: rotate(face, 2) }
       const turn = applyBattleAction(state, wait)
@@ -69,8 +73,11 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
   const med = issuedCampaignRig('hand-rifle', 'back-med')
   const mixed = review.startsWith('mixed-')
   const twoHandMelee = review.startsWith('blade-survive')
-  const main = review === 'issued-blade' || twoHandMelee ? 'hand-greatblade' : review.startsWith('shield') || mixed ? 'hand-blade' : 'hand-rifle'
-  const back = review === 'mixed-dash' ? 'back-thruster' : ['mixed-stun', 'mixed-jam', 'mixed-hack'].includes(review) ? 'back-deck'
+  const dashReview = review === 'mixed-dash' || review === 'rifle-dash'
+  const techReview = ['mixed-stun', 'mixed-jam', 'mixed-hack', 'greatblade-stun'].includes(review)
+  const main = review === 'issued-blade' || review === 'greatblade-stun' || twoHandMelee ? 'hand-greatblade'
+    : review.startsWith('shield') || mixed ? 'hand-blade' : 'hand-rifle'
+  const back = dashReview ? 'back-thruster' : techReview ? 'back-deck'
     : ['issued-med', 'mend', 'patch'].includes(review) ? 'back-med' : 'back-bulwark'
   const rig = { ...issuedCampaignRig(main, back), leftHand: review.startsWith('shield') ? 'hand-tower' : mixed ? 'hand-pistol' : null }
   const base = groundInput('training', outfit, 'Trainee', main, back, undefined, [], rig)
@@ -136,9 +143,9 @@ function attempt(outfit: number, review: TrainingReview, face: Dir, seed: number
     if (!align(trainee)) return null
     return finish(turn(trainee, { kind: 'none' }), (_, error) => !error)
   }
-  if (review === 'mixed-dash' || review === 'mixed-stun' || review === 'mixed-jam' || review === 'mixed-hack') {
+  if (dashReview || techReview) {
     if (!align(trainee) || !addAction(turn(trainee, { kind: 'wait' })) || !align(trainee)) return null
-    if (review === 'mixed-dash') {
+    if (dashReview) {
       const move = turn(trainee, { kind: 'none' }, stepAhead(center))
       if (move.kind !== 'turn') return null
       return finish({ ...move, dash: true }, (cues, error) => !error && cues.some(c => c.kind === 'dash'))
@@ -228,6 +235,8 @@ export function trainingReview(outfit: number, review: TrainingReview, facing: D
   if (review === 'mixed-left' || review === 'mixed-right' || review === 'mixed-back') {
     return mixedReview(outfit, review === 'mixed-left' ? 'left' : review === 'mixed-right' ? 'right' : 'back', facing)
   }
+  if (review === 'reverse-left' || review === 'reverse-right') return mixedReview(outfit, review === 'reverse-left' ? 'left' : 'right', facing, true)
+  if (review === 'rifle-launcher') return mixedReview(outfit, 'back', facing, false, true)
   for (let seed = 1; seed <= 100; seed++) {
     const fixture = attempt(outfit, review, facing, seed)
     if (fixture) return fixture

@@ -2,12 +2,35 @@
 // support call and the Steel Muster's volley; and Charge spent with its cue.
 import { inputOf } from './timeline'
 import { TUNING } from './tuning'
-import type { BattleState, ChargeWhy, Cue, PartId, Tile, UnitState } from './types'
+import type { BattleState, ChargeWhy, Cue, FreeMethod, PartId, Tile, UnitState } from './types'
 import { answer, endure, shielded } from './v3'
 
 export const unitById = (state: Pick<BattleState, 'units'>, id: string): UnitState => state.units.find((u) => u.id === id)!
 export const tileOf = (u: Pick<UnitState, 'x' | 'y'>): Tile => [u.x, u.y]
 export const v2 = (state: Pick<BattleState, 'input'>): boolean => state.input.rulesVersion >= 2
+
+/** Frees a heroine: she leaves the field and counts as beaten. */
+export function free(state: Pick<BattleState, 'input'>, target: UnitState, by: FreeMethod, cues: Cue[]): void {
+  target.status = 'freed'
+  delete target.stunned
+  if (state.input.rulesVersion >= 5) {
+    target.freedBy = by
+    if (target.holdHp !== undefined) target.holdHp = 0
+  }
+  cues.push({ kind: 'freed', unit: target.id, by })
+}
+
+export function hitForTalk(state: Pick<BattleState, 'input'>, source: string, target: UnitState): void {
+  if (state.input.talk?.some((c) => c.requires === 'actorHit' && c.actor === source && c.target === target.id)) target.talkHit = true
+}
+
+/** Only an encounter with the new Collar policy frees its leader on Rig Break. */
+export function breaksCollar(state: Pick<BattleState, 'input'>, id: string): boolean {
+  const objective = state.input.objective
+  if (state.input.rulesVersion < 5 || objective.kind !== 'freeLeader' || objective.collar !== 'rigBreak') return false
+  const unit = inputOf(state, id)
+  return unit.side === 'enemy' && !!unit.leader && unit.hold === 'collar'
+}
 
 /** Damage to a part: the cue `say` makes comes first (with whether the part broke), then Hold on, the broken part and
  * Rig Break. A Core-breaking hit leaves a Guts 4+ unit at Core 1, once a battle. */
@@ -26,7 +49,9 @@ export function harm(state: BattleState, target: UnitState, part: PartId, amount
   if (part === 'core' && before > 0 && state.v3) after = endure(state, target, after, held, cues)
   target.hp[part] = after
   const broke = before > 0 && after === 0
-  cues.push(say(broke))
+  const cue = say(broke)
+  cues.push(cue)
+  if (cue.kind === 'hit' && amount > 0) hitForTalk(state, cue.unit, target)
   if (held) cues.push({ kind: 'holdOn', unit: target.id })
   if (broke) {
     cues.push({ kind: 'partBroke', unit: target.id, part })
@@ -36,6 +61,7 @@ export function harm(state: BattleState, target: UnitState, part: PartId, amount
       delete target.windup
       cues.push({ kind: 'rigBreak', unit: target.id })
       if (state.v3) answer(state, target, cues)
+      if (breaksCollar(state, target.id)) free(state, target, 'rigBreak', cues)
     }
   }
 }

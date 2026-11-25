@@ -90,6 +90,14 @@ export class CombatVisualPlayback {
     this.guarding.clear()
   }
 
+  async beforeRemoval(cue: Extract<Cue, { kind: 'freed' | 'extracted' | 'talked' }>): Promise<void> {
+    const id = cue.kind === 'talked' ? cue.target : cue.unit
+    if (!this.before.input.units.find(unit => unit.id === id)?.sprite) return
+    const clip = cue.kind === 'freed' ? 'collar-release' : cue.kind === 'talked' ? 'talk-exit' : 'withdraw'
+    const { ends } = this.play(this.unit(id), clip, cue.kind)
+    if (!this.scene.stillCombat) await wait(ends)
+  }
+
   async afterCue(cue: Cue, index: number): Promise<void> {
     if (this.skipped()) return
     const actor = 'unit' in cue ? this.unit(cue.unit) : undefined

@@ -2,7 +2,7 @@ export const CABIN_STAGES = ['acquaintance', 'friend', 'partner'] as const
 export type CabinStage = typeof CABIN_STAGES[number]
 export interface CabinEvening {
   id: string
-  source: { companion: number } | { sector: string } | { pair: string }
+  source: { companion: number } | { sector: string } | { pair: string } | { trio: string }
   chatRapport: number
   chats: Record<CabinStage, string[]>
   invitation: { scene: string; stay: number; leave: number; wait?: number; decline?: number }

@@ -1,5 +1,7 @@
 # The Holds and the factions
 
+> **Built behavior.** For the planned changes to Palinode, returned lieutenants and Seraine, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY5 (D9).** Rules version 2. How heroines are freed, never killed (TC26, WD9), and the first
 > faction's mechanic, the Steel Muster's (WD11). Each world brings at most two new mechanics; the others arrive with
 > their worlds. The world and the cast are the story session's ([the story brief](../design/story-brief.md)); this page
@@ -8,8 +10,8 @@
 ## The short answer
 
 - **A heroine is never killed.** She carries a Hold: an **Anchor**, a **Collar**, or **none**.
-- **Freeing her** (breaking her Anchor or Collar, or a Jack-Out) takes her off the field and counts as beating her.
-  **Rig Break** beats her without freeing her.
+- **Freeing her** takes her off the field and counts as beating her. Break her Anchor or Collar, or use Jack-Out.
+- **Rig Break** beats her. In a Collar rescue that calls for it, breaking the leader's rig also breaks her Collar.
 - **The Steel Muster** fights from cover, reloads after it fires, builds a shared volley it signals a round ahead, and
   pins arms.
 
@@ -31,7 +33,13 @@ A heroine unit has `hold: "anchor" | "collar" | "none"` in her input.
 - **Broken (Rig Break):** beaten, not freed; only her unbroken parts are salvage, and she won't join as a guest.
 
 The battle's result lists each enemy as `freed`, `broken` or `standing`, with her salvage, so the app can open guests
-and Files later. **Free the leader** is lost if the leader is broken instead.
+and Files later. **Free the leader** needs a freed leader to win. The encounter states whether Rig Break frees her.
+
+## Talk
+
+On encounters with Talk, inspect a target for the contact hint. Move the named ally to an adjacent tile and spend her
+turn on **Talk**. Some targets only listen after a hit from that ally. A successful Talk takes the target off the field.
+Breaking the target's rig can lead to a different outcome. Both carry over after the battle is won and debriefed.
 
 ## The Steel Muster
 

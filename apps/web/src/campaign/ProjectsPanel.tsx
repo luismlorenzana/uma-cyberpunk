@@ -1,19 +1,21 @@
-import { observeManagement, assignPost, campaignSupport, freePlace, fundPortProject, installedSystems, moduleAt, MODULES_BY_ID, placeModule, placeProblem, powerChoice,
-  sectorAppointed, shipPosts, startSupply, SUPPLY_KINDS, upgradeModule, upgradeProblem, type CampaignBook, type Save, type SupplyPort } from '@cyber/domain'
+import { observeManagement, assignPost, awayMembers, campaignSupport, freePlace, fundPortProject, installedSystems, moduleAt, MODULES_BY_ID, placeModule, placeProblem, powerChoice,
+  portProjectOpen, shipPosts, startSupply, SUPPLY_KINDS, upgradeModule, upgradeProblem, type CampaignBook, type Save, type SupplyPort } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm disabled:opacity-50'
 const refits = ['engines', 'engineering', 'hangar', 'quarters'] as const
 
-export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly }: { book: CampaignBook; save: Save; port: SupplyPort; onlyProject?: string; refitsOnly?: boolean }) {
-  const projects = book.projects?.filter(({ id, sector }) => !refitsOnly && (!onlyProject || onlyProject === id) && book.sectors?.some((row) => row.id === sector && row.port === port.id && sectorAppointed(book, save.story, row))) ?? []
-  const crew = save.crew.filter(({ outfit }) => !campaignSupport(book, save).ashore.has(outfit))
+export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly, showReport }: { book: CampaignBook; save: Save; port: SupplyPort; onlyProject?: string; refitsOnly?: boolean; showReport?: (scene: string) => void }) {
+  const projects = book.projects?.filter(project => !refitsOnly && (!onlyProject || onlyProject === project.id)
+    && portProjectOpen(book, save, project, port.id)) ?? []
+  const crew = save.crew.filter(({ outfit, expeditionOnly }) => !expeditionOnly && !campaignSupport(book, save).ashore.has(outfit))
+  const away = new Set(awayMembers(save.operations, save.squads))
   const posts = shipPosts(save.ship).filter(({ module }) => module === 'engineering' || module === 'hangar' || module === 'log')
   function change(change: (save: Save) => Save) {
     void updateSave((current) => {
       const stock = current.campaignSupply ?? (book.supply ? startSupply(book.supply) : undefined)
-      if (!stock || stock.port !== port.id || current.mission || current.pairScene || current.campaignDay.pending) return current
+      if (!stock || stock.port !== port.id || current.expedition || current.mission || current.pairScene || current.campaignDay.pending) return current
       const selected = change(current)
       return selected === current ? current : observeManagement(current, { ...selected, campaignSupply: selected.campaignSupply ?? stock })
     })
@@ -23,11 +25,17 @@ export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly }: { b
       <h2 className="font-display text-lg font-bold">Port projects</h2>
       {projects.map((project) => {
         const left = save.campaignProjects[project.id]
+        const report = project.base?.scenes[left === 0 ? (save.story.seen.includes(project.base.scenes.open) ? 'visit' : 'open')
+          : left === project.days ? 'funded' : left === undefined ? (save.wallet.alloy < project.alloy ? 'shortfall' : 'look') : 'funded']
+        const canHear = report && (left === undefined || left === 0 || left === project.days)
+          && book.scenes.get(report)?.cast.every(({ outfit }) => outfit === undefined
+            || crew.some(member => member.outfit === outfit) && !away.has(outfit))
         return <div key={project.id} className="space-y-1 text-sm">
           <p className="font-semibold">{project.title}</p>
           <p>{SUPPLY_KINDS.flatMap((kind) => project.production[kind] || project.upkeep[kind]
             ? [`${kind} +${project.production[kind]} · upkeep ${project.upkeep[kind]}`] : []).join(' / ')} per night</p>
-          <p>{book.sectors?.find(({ id }) => id === project.sector)?.title} crew</p>
+          {project.sector && <p>{book.sectors?.find(({ id }) => id === project.sector)?.title} crew</p>}
+          {report && canHear && showReport && <button type="button" className={button} onClick={() => showReport(report)}>Project report</button>}
           {left === undefined ? <button type="button" className={button} disabled={save.wallet.alloy < project.alloy}
             onClick={() => change((current) => fundPortProject(current, book, project))}>Fund · {project.alloy} Alloy · {project.days} nights</button>
             : <p>{left ? `${left} nights left` : 'Operating'}</p>}

@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createRequire } from 'node:module'
+import { createHash } from 'node:crypto'
 import { png } from '../make-icons.mjs'
 
 const root = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
@@ -62,10 +63,10 @@ test('campaign publication replaces files under stable IDs, rejects damage and r
       assets: [{ id: 'portrait', file: 'portrait.png' }],
       art: [{ scene: 'arrival', portraits: [{ speaker: 9000999, asset: 'portrait' }] }] }
     write('campaign.json', campaign)
-    const run = (task, release) => spawnSync(process.execPath,
-      [tsx, join(root, 'scripts/story/campaign.ts'), task, release, '--dir', source, '--out', out], { encoding: 'utf8' })
-    const succeed = (task, release) => {
-      const result = run(task, release)
+    const run = (task, release, ...args) => spawnSync(process.execPath,
+      [tsx, join(root, 'scripts/story/campaign.ts'), task, release, '--dir', source, '--out', out, ...args], { encoding: 'utf8' })
+    const succeed = (task, release, ...args) => {
+      const result = run(task, release, ...args)
       assert.equal(result.status, 0, result.stderr)
     }
     const index = () => JSON.parse(readFileSync(join(out, 'campaign/preview.json'), 'utf8'))
@@ -76,6 +77,19 @@ test('campaign publication replaces files under stable IDs, rejects damage and r
     const first = index()
     scene('Updated line.')
     writeFileSync(join(source, 'art/portrait.png'), png(20))
+    const pinsPath = join(dir, 'pins.json')
+    const sources = ['casting.json', 'campaign.json', 'worlds/demo.json', 'chapters/demo.json', 'art/portrait.png']
+    writeFileSync(pinsPath, JSON.stringify(Object.fromEntries(sources.map(file => [file,
+      createHash('sha256').update(readFileSync(join(source, file))).digest('hex')]))))
+    assert.match(run('pack', 'v1', '--pilot').stderr, /requires source pins/)
+    succeed('pack', 'v1', '--pilot', '--pins', pinsPath)
+    succeed('select', 'v1', '--pilot')
+    const pilot = JSON.parse(readFileSync(join(out, 'campaign/pilot.json'), 'utf8'))
+    assert.deepEqual(index(), first)
+    assert.notEqual(pilot.assets[0].sha256, first.assets[0].sha256)
+    scene('Unpinned line.')
+    assert.match(run('pack', 'v2', '--pilot', '--pins', pinsPath).stderr, /chapters\/demo.json: missing or mismatched source pin/)
+    scene('Updated line.')
     succeed('pack', 'v2')
     assert.equal(run('pack', 'v1').status, 1)
     succeed('select', 'v2')
@@ -85,6 +99,17 @@ test('campaign publication replaces files under stable IDs, rejects damage and r
     const chapterHash = (release) => release.files.find((file) => file.source === 'chapters/demo.json').sha256
     assert.notEqual(chapterHash(second), chapterHash(first))
     succeed('select', 'v1')
+    const secondPath = join(out, 'campaign/releases/v2.json')
+    const validManifest = readFileSync(secondPath)
+    const invalid = Buffer.from(JSON.stringify({ ...campaign, opening: 'not-a-quest' }))
+    const invalidHash = createHash('sha256').update(invalid).digest('hex')
+    const invalidPath = `campaign/files/pack.${invalidHash}.json`
+    writeFileSync(join(out, invalidPath), invalid)
+    writeFileSync(secondPath, JSON.stringify({ ...second, files: second.files.map(ref => ref.source === 'campaign.json'
+      ? { ...ref, path: invalidPath, sha256: invalidHash, bytes: invalid.length } : ref) }))
+    assert.match(run('select', 'v2').stderr, /unknown quest not-a-quest/)
+    assert.deepEqual(index(), first)
+    writeFileSync(secondPath, validManifest)
     writeFileSync(join(out, second.assets[0].path), 'corrupt')
     assert.match(run('select', 'v2').stderr, /failed integrity check/)
     assert.deepEqual(index(), first)

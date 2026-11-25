@@ -32,10 +32,15 @@ export function locationAvailable(save: Save, book: CampaignBook, location: Mana
   }
   if (entry.kind === 'custody') return sectors.some(sector => ['In local custody', 'Awaiting review'].includes(formerDisposition(book, save.story, sector) ?? ''))
     || book.pairs.some(pair => pair.home?.port === at.port.id && save.story.flags.includes(pair.capture) && !pairProgress(pair, save.story).released)
-  if (entry.kind === 'shared') return (book.sectors ?? []).some(sector => !!sector.shared && !!sector.former && save.story.seen.includes(sector.shared.visit)
-    && save.story.flags.includes(sector.former.aboard) && save.crew.some(member => member.outfit === sector.officer)
-    && !campaignSupport(book, save).ashore.has(sector.officer) && !awayMembers(save.operations, save.squads).includes(sector.officer)) || book.pairs.some(pair => pairProgress(pair, save.story).residency === 'shared'
-    && pair.members.every(({ outfit }) => save.crew.some(member => member.outfit === outfit) && !campaignSupport(book, save).ashore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit)))
+  if (entry.kind === 'shared') {
+    const ashore = campaignSupport(book, save).ashore, away = awayMembers(save.operations, save.squads)
+    if (book.allies?.some(ally => ally.pairFlag && save.story.flags.includes(ally.pairFlag) && [ally.partner, ally.member].every(member =>
+      save.crew.some(row => row.outfit === member) && !ashore.has(member) && !away.includes(member)))) return true
+    return (book.sectors ?? []).some(sector => !!sector.shared && !!sector.former && save.story.seen.includes(sector.shared.visit)
+      && save.story.flags.includes(sector.former.aboard) && save.crew.some(member => member.outfit === sector.officer)
+      && !ashore.has(sector.officer) && !away.includes(sector.officer)) || book.pairs.some(pair => pairProgress(pair, save.story).residency === 'shared'
+      && pair.members.every(({ outfit }) => save.crew.some(member => member.outfit === outfit) && !ashore.has(outfit) && !away.includes(outfit)))
+  }
   return true
 }
 
@@ -62,7 +67,7 @@ export function locationState(save: Save, book: CampaignBook, location: Manageme
 
 export function fittedMembers(save: Save, book: CampaignBook) {
   const ashore = campaignSupport(book, save).ashore, away = awayMembers(save.operations, save.squads)
-  return save.crew.filter(member => !ashore.has(member.outfit) && !away.includes(member.outfit)
+  return save.crew.filter(member => !member.expeditionOnly && !ashore.has(member.outfit) && !away.includes(member.outfit)
     && member.rig && Object.values(member.rig).some(part => part && save.campaignGear.parts.includes(part)))
 }
 

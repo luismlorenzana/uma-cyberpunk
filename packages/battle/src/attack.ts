@@ -3,7 +3,7 @@
 // can't disagree. Resolution then rolls each hit with the seeded roll. Rules version 2 adds cover, Smoke, the lights and
 // pinning fire to hit %; aiming at a Hold; barrels, pipes and barriers as targets; the five chance skills; an impact hit
 // that Stuns; Fire from F hits; and the Steel Muster's reload and meter.
-import { harm, spendCharge, tileOf, unitById, v2 } from './harm'
+import { free, harm, hitForTalk, spendCharge, tileOf, unitById, v2 } from './harm'
 import { afterMusterAttack, pin } from './muster'
 import { armed, evasionOf, guardOf, MOUNTS } from './rig'
 import { roll } from './rng'
@@ -14,7 +14,7 @@ import { TUNING } from './tuning'
 import { applyModeEffect, modeWeapon } from './specialists'
 import type { FireMode } from './types'
 import { cohesionReach, freeCover, freeJoin, mealOf, rankOf, useFreeCover } from './v3'
-import type { V3State, AimAt, AttackRole, BattleState, ChanceSkill, Cue, Facing, Mount, PartId, Prop, Tile, UnitState, Weapon } from './types'
+import type { V3State, AimAt, AttackRole, BattleState, ChanceSkill, Cue, Facing, Mount, PartId, Prop, Signature, Tile, UnitState, Weapon } from './types'
 import { PARTS } from './types'
 
 export { spendCharge, tileOf, unitById }
@@ -89,7 +89,7 @@ function rangedPenalty(state: Pick<BattleState, 'input' | 'field' | 'time' | 'un
  * A strike's numbers: `attacker` firing `mount` from `from` at `target` where she stands. `facing` overrides where it
  * lands (Cover steps in to take it from the front). Null when the mount can't fire.
  */
-export function strikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 'time'>, attackerId: string, mount: Mount, targetId: string, from: Tile, opts: { aim?: AimAt; facing?: Facing; mode?: FireMode; prepared?: boolean } = {}): Strike | null {
+export function strikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 'time'>, attackerId: string, mount: Mount, targetId: string, from: Tile, opts: { aim?: AimAt; facing?: Facing; power?: number; mode?: FireMode; prepared?: boolean } = {}): Strike | null {
   const attacker = unitById(state, attackerId), target = unitById(state, targetId)
   const aIn = inputOf(state, attackerId), tIn = inputOf(state, targetId)
   const arm = armed(aIn, attacker, mount)
@@ -108,7 +108,7 @@ export function strikeOf(state: Pick<BattleState, 'input' | 'units' | 'field' | 
   const hit = (state as { v3?: V3State }).v3?.sure === attackerId ? 100 : rolled
   const guard = facing === 'back' ? 0 : guardOf(tIn, target)
   const numbers = {
-    power: weapon.power,
+    power: weapon.power + (opts.power ?? 0),
     meleeBonus: weapon.band === 'melee' ? TUNING.meleePowerPerBand * aIn.bands.power + (meal?.melee ?? 0) : 0,
     facing,
     heightDiff: board.height(from[0], from[1]) - board.height(target.x, target.y),
@@ -267,14 +267,8 @@ export function harmHold(state: BattleState, attackerId: string, target: UnitSta
   const after = Math.max(0, target.holdHp - amount)
   target.holdHp = after
   cues.push({ kind: 'holdHit', unit: attackerId, target: target.id, amount, broke: after === 0 })
-  if (after === 0) free(target, 'hold', cues)
-}
-
-/** Frees a heroine: she leaves the field and counts as beaten. */
-export function free(target: UnitState, by: 'hold' | 'jackout', cues: Cue[]): void {
-  target.status = 'freed'
-  delete target.stunned
-  cues.push({ kind: 'freed', unit: target.id, by })
+  if (amount > 0) hitForTalk(state, attackerId, target)
+  if (after === 0) free(state, target, 'hold', cues)
 }
 
 /** Rolls a strike's hits on the live state: hit, crit, part, damage, broken parts, Hold on and Rig Break; rules version 2
@@ -382,7 +376,7 @@ function counterStrike(state: BattleState, defenderId: string, mount: Mount, att
 /** The whole exchange of an attack on the live state: the attacker turns to her target, Cover may step in, a defender's
  * First may counter before it, the strike rolls (Burst adds rounds; then Double, Switch or Stun, one chain at most),
  * allies join (Crossfire), and the defender counters. A thing on the map just takes the strike. */
-export function resolveAttack(state: BattleState, attackerId: string, mount: Mount, targetId: string, aim: AimAt | undefined, cues: Cue[], mode?: FireMode): void {
+export function resolveAttack(state: BattleState, attackerId: string, mount: Mount, targetId: string, aim: AimAt | undefined, cues: Cue[], signature?: Signature, mode?: FireMode): void {
   const attacker = unitById(state, attackerId)
   const from = tileOf(attacker)
   const prepared = attacker.windup?.target === targetId && attacker.windup.with === mount
@@ -397,7 +391,8 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
   const target = unitById(state, targetId)
   const landed = facingOf(tileOf(target), target.facing, from)
   attacker.facing = dirTo(from, tileOf(target))
-  const main = strikeOf(state, attackerId, mount, targetId, from, { aim, mode, prepared })!
+  const power = signature?.power
+  const main = strikeOf(state, attackerId, mount, targetId, from, { aim, power, mode, prepared })!
   const coverer = coverFor(state, targetId, landed)
   let countered = false
   if (!coverer && v2(state)) {
@@ -411,12 +406,13 @@ export function resolveAttack(state: BattleState, attackerId: string, mount: Mou
   }
   const burst = v2(state) && !mode && !prepared && main.weapon.band === 'short' && fires(state, attackerId, 'burst')
   // Cover takes the strike on her own rig: an aim at the target's Hold has nothing to land on, so it comes in unaimed.
-  const strike = coverer ? strikeOf(state, attackerId, mount, coverer, from, { aim: aim === 'hold' ? undefined : aim, facing: 'front', mode, prepared })! : main
+  const strike = coverer ? strikeOf(state, attackerId, mount, coverer, from, { aim: aim === 'hold' ? undefined : aim, facing: 'front', power, mode, prepared })! : main
   if (burst) {
     cues.push({ kind: 'skill', unit: attackerId, skill: 'burst' })
     strike.hits += TUNING.skills.burstRounds
   }
-  cues.push(attackCue(strike, 'main', coverer ?? targetId, mode))
+  cues.push({ ...attackCue(strike, 'main', coverer ?? targetId, mode),
+    ...(signature ? { signature: { id: signature.id, label: signature.label } } : {}) })
   if (coverer) {
     const free = unitById(state, coverer).charge < TUNING.charge.cover || rankOf(state, coverer) >= TUNING.bond.steadfast ? freeCover(state, coverer, targetId) : null
     if (free) useFreeCover(state, coverer, free, cues)

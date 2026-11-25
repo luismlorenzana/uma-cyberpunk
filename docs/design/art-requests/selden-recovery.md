@@ -1,5 +1,7 @@
 # Selden recovery and quarters art
 
+> **Earlier release brief.** Reuse approved sources in the corresponding [four-act asset slot](../campaign-art-delivery.md). Current scene and encounter needs come from that release register.
+
 The art-authoring session owns the approved looks and follows the project's character, enemy and environment style guides. The private recovery preview reuses the existing temporary art. Use the [campaign content guide](../../technical/campaign-content.md#recovery-and-quarters) to replace the images under their stable asset IDs.
 
 | Asset ID | Scenes | What the player needs to read |

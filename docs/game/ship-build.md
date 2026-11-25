@@ -1,5 +1,7 @@
 # The ship as a build
 
+> **Built behavior.** For the planned changes to base improvements and expedition prep, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY15 (D26).** The ship is built by the player: decks of module slots, rooms and battle systems with
 > three levels each, building over watches, a wallet that missions pay into, the reactor's pips and the battle systems
 > powered before each sortie, and the Lab's research. Duties at the rooms' posts come in CY16; the battle systems'

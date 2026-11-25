@@ -1,0 +1,26 @@
+import { awayMembers, campaignSupport, resting, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
+
+/** Only that operation borrows both members of an available, released home pair. */
+export function campaignCallUp(book: CampaignBook, save: Save, quest: CampaignQuest): number[] {
+  const away = new Set(awayMembers(save.operations, save.squads))
+  const crews = new Map(save.crew.map(member => [member.outfit, member]))
+  const flags = new Set(save.story.flags)
+  return (book.allies ?? []).flatMap(ally => {
+    if (book.fourAct || !ally.home || !quest.callUp?.includes(ally.partner) || !flags.has(ally.release.flag) || !flags.has(ally.home.flag)) return []
+    const members = [ally.partner, ally.member]
+    return members.every(outfit => {
+      const member = crews.get(outfit)
+      return member && !away.has(outfit) && !resting(member)
+    }) && crews.get(ally.member)?.heroine === ally.heroine ? members : []
+  })
+}
+
+export function missionAshore(book: CampaignBook, save: Save): ReadonlySet<number> {
+  const ashore = campaignSupport(book, save).ashore
+  if (save.mission?.callUp) {
+    const quest = book.quests.find(row => row.encounter === save.mission!.id)
+    const admitted = new Set(quest ? campaignCallUp(book, save, quest) : [])
+    for (const outfit of save.mission.callUp.members) if (admitted.has(outfit)) ashore.delete(outfit)
+  }
+  return ashore
+}

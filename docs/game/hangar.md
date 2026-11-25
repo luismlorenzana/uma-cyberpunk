@@ -1,5 +1,7 @@
 # The Hangar
 
+> **Built behavior.** For the planned changes to the early issued fits and expedition role families, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY11 (D15).** Where each Uma's rig is built (TC17, TC18): eight slots and a Coat, the Capacity
 > bar against the total Load, every part's numbers before a swap, three saved loadouts, and "best for her role". The
 > rules are the battle package's; the Hangar reads Load, Capacity and Move from it and never recomputes them.

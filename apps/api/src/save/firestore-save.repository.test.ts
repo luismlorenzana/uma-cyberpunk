@@ -79,18 +79,20 @@ describe('the Firestore save store', () => {
     expect(store.get('saveRescues/u')).toEqual({ upload: JSON.stringify({ second: true }), reason: 'two', rescuedAt: SERVER_TIME })
   })
 
-  it('isolates campaign saves, backups and rescues for the same uid', async () => {
+  it.each([['current', 'campaign'], ['pilot', 'pilot'], ['four-act', 'fourAct']] as const)('isolates %s saves, backups and rescues for the same uid', async (scope, prefix) => {
     const original = new FirestoreSaveRepository('cyber')
-    const campaign = new FirestoreSaveRepository('cyber', true)
+    const campaign = new FirestoreSaveRepository('cyber', scope)
+    const other = new FirestoreSaveRepository('cyber', scope === 'pilot' ? 'current' : 'pilot')
     await original.put('u', 0, newSave('u', T0), SAVE_VERSION)
     expect(await campaign.load('u')).toEqual({ revision: 0, save: null })
     const older = { version: 1, account: newSave('u', T0).account }
-    store.set('campaignSaves/u', { revision: 1, save: JSON.stringify(older) })
+    store.set(`${prefix}Saves/u`, { revision: 1, save: JSON.stringify(older) })
     await campaign.put('u', 1, newSave('u', T1), SAVE_VERSION)
     await campaign.rescue('u', { draft: true }, 'invalid upload')
     expect(await original.load('u')).toEqual({ revision: 1, save: newSave('u', T0) })
-    expect(store.get('campaignSaveBackups/u-v1')?.save).toBe(JSON.stringify(older))
-    expect(store.has('campaignSaveRescues/u')).toBe(true)
+    expect(await other.load('u')).toEqual({ revision: 0, save: null })
+    expect(store.get(`${prefix}SaveBackups/u-v1`)?.save).toBe(JSON.stringify(older))
+    expect(store.has(`${prefix}SaveRescues/u`)).toBe(true)
     expect(store.has('saveBackups/u-v1')).toBe(false)
     expect(store.has('saveRescues/u')).toBe(false)
   })

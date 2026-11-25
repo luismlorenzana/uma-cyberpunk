@@ -28,6 +28,7 @@ const INITIAL: GameState = { uid: null, status: 'idle', save: null, revision: 0,
 export const useGame = create<GameState>(() => INITIAL)
 
 const nowIso = () => new Date().toISOString()
+let session = 0
 
 function persist(): Promise<void> {
   const { uid, save, revision, dirty, lastSyncedAt } = useGame.getState()
@@ -42,8 +43,10 @@ function persist(): Promise<void> {
 export async function boot(uid: string): Promise<void> {
   const state = useGame.getState()
   if (state.uid === uid && state.status !== 'idle') return
+  const generation = ++session
   useGame.setState({ ...INITIAL, uid, status: 'booting' })
   const row = await readSaveRow(uid)
+  if (generation !== session) return
   if (row) {
     useGame.setState({ status: 'ready', save: row.save, revision: row.revision, dirty: row.dirty, lastSyncedAt: row.lastSyncedAt })
     void syncNow()
@@ -51,7 +54,8 @@ export async function boot(uid: string): Promise<void> {
   }
   try {
     const remote = await saveApi.load()
-    if (remote.save) {
+    if (generation !== session) return
+    if (remote.save?.account.uid === uid) {
       useGame.setState({ status: 'ready', save: remote.save, revision: remote.revision, dirty: false, sync: 'synced', lastSyncedAt: nowIso() })
       await persist()
       return
@@ -59,11 +63,13 @@ export async function boot(uid: string): Promise<void> {
   } catch {
     // Offline on a fresh device: start the account here; sync adopts the server's if it turns out to hold one (D11).
   }
+  if (generation !== session) return
   useGame.setState({ status: 'ready' })
   await commit(newSave(uid, nowIso()))
 }
 
 export function resetGame(): void {
+  session++
   useGame.setState(INITIAL)
 }
 
@@ -108,10 +114,13 @@ export function syncNow(): Promise<void> {
 async function syncPass(): Promise<void> {
   const start = useGame.getState()
   if (!start.uid || !start.save) return
+  const generation = session
   useGame.setState({ sync: 'syncing' })
   try {
     let remote = await saveApi.load()
     for (let attempt = 0; attempt < 3; attempt++) {
+      if (generation !== session) return
+      if (remote.save && remote.save.account.uid !== start.uid) throw new Error('Save belongs to a different account')
       const local = useGame.getState()
       const step = reconcile(local, remote)
       if (step.kind === 'none') break
@@ -123,6 +132,7 @@ async function syncPass(): Promise<void> {
         // Unsynced changes are never replaced without a copy: no copy, no adopt.
         if (step.replacesUnsynced && local.save) {
           const kept = await addSafetyCopy({ uid: start.uid, reason: 'replaced', at: nowIso(), revision: local.revision, save: local.save })
+          if (generation !== session) return
           if (!kept) throw new Error('no safety copy')
           if (useGame.getState().save !== local.save) {
             again = true
@@ -135,6 +145,7 @@ async function syncPass(): Promise<void> {
       }
       try {
         const stored = await saveApi.put(step.baseRevision, step.save)
+        if (generation !== session) return
         const changedSince = useGame.getState().save !== step.save
         useGame.setState({ revision: stored.revision, dirty: changedSince })
         await persist()
@@ -146,12 +157,13 @@ async function syncPass(): Promise<void> {
         remote = current // another device wrote first: reconcile against what's stored now
       }
     }
+    if (generation !== session) return
     const { dirty } = useGame.getState()
     if (dirty && !again) throw new Error('changes left unsent')
     useGame.setState({ sync: 'synced', ...(dirty ? {} : { lastSyncedAt: nowIso() }) })
     if (!dirty) await persist()
   } catch {
-    useGame.setState({ sync: typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error' })
+    if (generation === session) useGame.setState({ sync: typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : 'error' })
   }
 }
 
@@ -184,8 +196,9 @@ export async function updateStory(change: (story: StoryState) => StoryState): Pr
 export async function restoreSafetyCopy(id: number): Promise<boolean> {
   const { uid, save, revision } = useGame.getState()
   if (!uid || !save) return false
+  const generation = session
   const copy = await readSafetyCopy(id)
-  if (copy?.uid !== uid) return false
+  if (copy?.uid !== uid || generation !== session) return false
   let restored: Save
   try {
     restored = parseSave(copy.save)
@@ -193,9 +206,10 @@ export async function restoreSafetyCopy(id: number): Promise<boolean> {
     return false
   }
   if (!(await addSafetyCopy({ uid, reason: 'restore', at: nowIso(), revision, save }))) return false
-  await removeSafetyCopy(id)
+  if (generation !== session) return false
   useGame.setState({ replacedAt: null })
   await commit(touched(restored, nowIso()))
+  await removeSafetyCopy(id)
   return true
 }
 

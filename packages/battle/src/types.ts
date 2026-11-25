@@ -18,9 +18,9 @@ export type Facing = 'front' | 'side' | 'back'
 
 // --- The map --------------------------------------------------------------------------------------------------------
 
-/** A battle map (schema 1). Heights are digit rows like uma-stage's room format, so the board builds them as they are. */
+/** A battle map. Schema 2 defines ten expedition spawns. Both schemas use digit rows for heights. */
 export interface BattleMap {
-  schemaVersion: 1
+  schemaVersion: 1 | 2
   id: string
   width: number
   depth: number
@@ -29,7 +29,7 @@ export interface BattleMap {
   /** One char a tile: "." floor, "#" solid (no standing, blocks sight), "=" grating, "c" cover (CY5 gives these two their
    * rules; until then they're floor). */
   tiles: readonly string[]
-  /** Five squad tiles (four and a guest) and one to eight enemy tiles. */
+  /** Five squad tiles in schema 1 or ten in schema 2, and one to eight enemy tiles. */
   spawns: { squad: readonly Tile[]; enemy: readonly Tile[] }
   /** Things on the map (CY5, rules version 2). */
   props?: readonly Prop[]
@@ -131,8 +131,26 @@ export type Specialty =
   | { kind: 'laser'; rank: number; subclass?: CombatSubclass }
   | { kind: 'wing' | 'shield' | 'sniper' | 'medic' | 'windup' }
 
+export type HeroineSpriteRole = 'boss-enemy' | 'boss-ally' | 'sub-boss'
+
+export interface HeroineSprite {
+  role: HeroineSpriteRole
+  form: string
+  /** An authored scenario fitting for fixed opponents. Playable allies use their frozen rig. */
+  fitting?: string
+}
+
+export interface Signature {
+  id: string
+  label: string
+  mount: Mount
+  charge: number
+  power: number
+}
+
 export interface UnitInput {
-  /** Version 5, resolved at deployment from campaign progression and the authored formation. */
+  sprite?: HeroineSprite
+  signature?: Signature
   specialty?: Specialty
   /** Optional frozen equipment identities for presentation. The reducer uses loadout. */
   frozenRig?: Record<'core' | 'leftArm' | 'rightArm' | 'legs' | 'visor', string>
@@ -183,7 +201,19 @@ export type Objective =
   // Rules version 2 (CY5):
   | { kind: 'escort'; unit: string; tile: Tile }
   | { kind: 'hack'; count: number }
-  | { kind: 'freeLeader' }
+  | { kind: 'freeLeader'; collar?: 'rigBreak' }
+
+/** A frozen encounter's named ally and enemy. Talk spends a turn and removes the enemy from the field. */
+export interface TalkContact {
+  actor: string
+  target: string
+  requires: 'active' | 'actorHit'
+  hint: string
+  /** The campaign's key for the settled outcome. */
+  outcome: string
+  /** A different campaign outcome if the target's rig breaks first. */
+  brokenOutcome?: string
+}
 
 /** Everything a battle starts from, frozen: a battle is this plus its actions (BP4). */
 export interface BattleInput {
@@ -191,6 +221,9 @@ export interface BattleInput {
   seed: string
   map: BattleMap
   objective: Objective
+  /** A control point or terminal has to be reached even after the opposition is cleared. */
+  goalRequired?: true
+  preserve?: string
   units: readonly UnitInput[]
   // --- Rules version 2 (CY5) ---
   /** The squad's item stock, six at most. */
@@ -210,11 +243,13 @@ export interface BattleInput {
   cohesion?: { level: number; leader: string; members: readonly string[] }
   /** A finale's harsh conditions for each unmet readiness need (CY18): fog, hull-breach hazards, no reinforcements. */
   conditions?: readonly ('fog' | 'hazards' | 'no-reinforcements')[]
+  /** Rules version 5: which named ally can Talk to each target. */
+  talk?: readonly TalkContact[]
 }
 
 // --- The state ------------------------------------------------------------------------------------------------------
 
-/** Down: Rig Break, kneeling. Out: extracted. Freed: a heroine freed by her Hold or a Jack-Out, gone from the field. */
+/** Down: Rig Break, kneeling. Out: extracted. Freed: released and removed from the field. */
 export type UnitStatus = 'active' | 'down' | 'out' | 'freed'
 
 export interface PartHp {
@@ -246,6 +281,8 @@ export interface UnitState {
   /** The Launcher's shots left. */
   ammo: number
   turns: number
+  signatureUsed?: true
+  signatureMark?: { target: string; tile: Tile; targetTurn: number }
   // --- Rules version 2 (CY5): present only once they apply, so a version-1 state is CY4's exactly ---
   /** An Anchor's or Collar's HP. */
   holdHp?: number
@@ -257,6 +294,12 @@ export interface UnitState {
   pinned?: boolean
   /** Her last turn was a Wait (for Surge). */
   waited?: boolean
+  /** Rules version 5: the authored Talk actor has landed a hit on this target. */
+  talkHit?: true
+  /** Rules version 5: the resolved, encounter-authored Talk outcome. */
+  talked?: string
+  /** Rules version 5: how this unit was actually released from a Hold. */
+  freedBy?: FreeMethod
 }
 
 export type TileStateKind = 'wet' | 'oil' | 'fire' | 'smoke'
@@ -288,7 +331,8 @@ export interface FieldState {
 }
 
 export type Fate = 'freed' | 'broken' | 'standing'
-export interface EnemyOutcome { id: string; fate: Fate; salvage: PartId[] }
+export type FreeMethod = 'hold' | 'jackout' | 'rigBreak'
+export interface EnemyOutcome { id: string; fate: Fate; salvage: PartId[]; talk?: string; home?: string; freedBy?: FreeMethod }
 
 export interface BattleResult {
   winner: Side
@@ -341,7 +385,7 @@ export type AimAt = PartId | 'hold'
 export type TechKind = 'stun' | 'jam' | 'jackout'
 
 export type Act =
-  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt; mode?: FireMode }
+  | { kind: 'attack'; with: Mount; target: string; aim?: AimAt; signature?: true; mode?: FireMode }
   | { kind: 'prepare'; with: Mount; target: string }
   | { kind: 'wait' }
   | { kind: 'none' }
@@ -352,6 +396,8 @@ export type Act =
   | { kind: 'mend'; target: string; part: PartId }
   | { kind: 'reboot'; target: string }
   | { kind: 'item'; item: ItemKind; target?: string; part?: PartId; at?: Tile }
+  // Rules version 5 (CY74):
+  | { kind: 'talk'; target: string }
 
 /** A whole turn: the move (optional), one action, then the facing. The UI holds the two-tap move and its undo locally and
  * sends the turn whole, so an autosave after every action is exact (TC29). */
@@ -403,7 +449,7 @@ export type BattleAction = TurnAction | LinkAction | BenchAction | OrderAction |
 
 // --- Cues: what the board and the cut-in play; the scene decides nothing ----------------------------------------------
 
-export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo' | 'mode' | 'patch'
+export type ChargeWhy = 'turn' | 'wait' | 'counter' | 'crossfire' | 'cover' | 'tech' | 'hack' | 'barrier' | 'dash' | 'mend' | 'reboot' | 'item' | 'jam' | 'ready' | 'answer' | 'meal' | 'resonance' | 'duo' | 'signature' | 'mode' | 'patch'
 export type AttackRole = 'main' | 'crossfire' | 'counter'
 
 export type Cue =
@@ -413,7 +459,9 @@ export type Cue =
   | { kind: 'faced'; unit: string; facing: Dir }
   | { kind: 'waited'; unit: string }
   | { kind: 'linked'; unit: string; on: boolean }
-  | { kind: 'attack'; unit: string; target: string; with: Mount; band: Exclude<WeaponBand, 'tech'>; role: AttackRole; facing: Facing; aim?: PartId; mode?: FireMode }
+  | { kind: 'attack'; unit: string; target: string; with: Mount; band: Exclude<WeaponBand, 'tech'>; role: AttackRole; facing: Facing; aim?: PartId; mode?: FireMode; signature?: { id: string; label: string } }
+  | { kind: 'signatureWarning'; unit: string; tile: Tile; label: string }
+  | { kind: 'signatureCanceled'; unit: string }
   | { kind: 'prepared'; unit: string; target: string }
   | { kind: 'suppressed'; unit: string; target: string; interrupted: boolean }
   | { kind: 'cover'; unit: string; for: string; attacker: string }
@@ -441,7 +489,7 @@ export type Cue =
   | { kind: 'stunned'; unit: string }
   | { kind: 'skipped'; unit: string; why: 'stunned' | 'idle' | 'duo' }
   | { kind: 'holdHit'; unit: string; target: string; amount: number; broke: boolean }
-  | { kind: 'freed'; unit: string; by: 'hold' | 'jackout' }
+  | { kind: 'freed'; unit: string; by: FreeMethod }
   | { kind: 'barrier'; unit: string; id: string; at: Tile }
   | { kind: 'barrierHit'; unit: string; id: string; amount: number; broke: boolean }
   | { kind: 'dash'; unit: string }
@@ -466,6 +514,8 @@ export type Cue =
   | { kind: 'sweep'; unit: string }
   | { kind: 'drone'; unit: string; target: string; part: PartId; hp: number }
   | { kind: 'shielded'; unit: string; absorbed: number; left: number }
+  // Rules version 5 (CY74):
+  | { kind: 'talked'; unit: string; target: string; outcome: string }
 
 export interface ActionResult {
   state: BattleState

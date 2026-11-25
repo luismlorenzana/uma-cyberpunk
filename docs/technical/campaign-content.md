@@ -1,5 +1,7 @@
 # Campaign content and preview releases
 
+> **Reusable foundation.** This page documents the older story parser, campaign packs and scripted mission contracts. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 The campaign preview runs at `/campaign`. It uses the regular owner sign-in in a production build and its own save
 under the same account. Local development serves the selected release from the ignored `content/campaign-release/`
 directory. Set `CAMPAIGN_PACK_DIR` before starting the API to serve a different local output directory. For hosted
@@ -232,6 +234,9 @@ applies the scene effects and advances the day once, with the morning pending un
 
 ## Ports and supply
 
+Use `liberations` for a port with several independent home operations. Each row names a ground
+win flag and its own nightly Alloy contribution. Existing books may still use the singular field.
+
 The optional `supply` block opens after the quest in `after`. `start` and each port `id` name a story world. A port's
 `name` labels it on the star map and its `scene` plays the first time the player lands. Set the world's `x` and `y`
 to position the port. Each `stock`, `produces`, `upkeep` and `reserve` record gives amounts for `fuel`, `provisions`
@@ -243,6 +248,14 @@ Provisions pay the ship's nightly bill. Alloy goes into the ship wallet, where t
 20 Alloy and 10 Data. It takes two nights. Each night produces and pays local upkeep, spends up to two ship provisions,
 and advances ship builds and duties. The tender restores up to three fuel and two provisions once per day when the ship
 is short. Loading supplies and jumping both write the cargo and the source or destination together.
+
+## Resettled pair call-ups
+
+Add lead outfit IDs to `callUp` on a quest with an encounter. Each ID must identify a registered
+Boss Ally pair. The player can assign both crew members to that operation after release and
+resettlement while both are available. The mission save records the admitted IDs and temporary
+stations. Deployment records the selected cast and equipment with the battle as usual. Free
+retry uses the recorded battle and finishing the mission removes those temporary assignments.
 
 ## Ship command
 
@@ -270,6 +283,11 @@ a title and a `win` block. An `alternate` names a ship outcome flag, alternate `
 binds a scenario's enemy leader `unit` to a `name` and a declared portrait asset. `expansion` forces a mounted back unit.
 Set `back-deck` for a hack objective. The campaign freezes the selected map and loadout at deployment. Loss offers a
 retry with that input and without another launch fee.
+
+An encounter can give a unit a `signature` through the `signatures` list. Each row names the
+scenario unit, stable action ID, player label, mount, Charge cost and additional weapon power.
+The mounted action is once per battle. On the squad side it is selectable and forecasted.
+An enemy warns the marked tile. The frozen battle and replay keep the same target and rule version.
 
 On victory, `win.flag`, `win.file` and `win.reward` grant a story flag, the referenced Log File and wallet amounts
 once. Selden's boarding clear records custody. The station console opens the civilian exit and grants the manifest and
@@ -542,3 +560,29 @@ The optional `management` contract binds existing campaign rooms, live stock, pr
 ## Resolved ship cinematics (CY54)
 
 The additive `commandCinematics` format binds actual frozen station participants, enemy communications, read-only encounter contexts and outcome-selected art/FX. Save v19 resumes the committed playback beat. See the [complete contract and verification](command-cinematics.md) and [player guide](../game/ship-command.md). Existing command rules versions and the combined campaign save are preserved.
+
+## Story pilot (CY72)
+
+Open `/campaign/pilot` from the **Story pilot** link in the current campaign. The switch loads a new document. The pilot
+reads `campaign/pilot.json`, syncs through `/api/campaign/pilot/save`, and keeps a separate downloaded release pointer,
+IndexedDB save and safety copies. The current campaign retains its historical URLs and storage keys.
+
+Use `pnpm campaign check --pilot --dir <source> --pins <pins.json>` to verify an explicit source snapshot. The pins map
+each Story file, `campaign.json`, source art file and optional portrait crop plan to its raw SHA256. Pack that snapshot
+with `pnpm campaign pack <release> --pilot --dir <source> --pins <pins.json>` and select it locally with
+`pnpm campaign select <release> --pilot`. Pilot indexes live under `campaign/releases/pilot/`. Both campaigns use
+hash-named immutable payloads. A draft can name a `previewEnd` quest to show where the playable story stops.
+
+### Tier captures
+
+An optional `tiers` block registers each participating recruit's rescue encounter. Each
+registration names the outfit and the ground encounter. The packer resolves the unique boss and
+the ground win flag, and requires the encounter to belong to that recruit's journey. The campaign
+counts a capture only when both the win flag and the cleared mission are in the save. The count
+can be rebuilt from the save after a retry, reload, or a content revision.
+
+The tier's `signal` names the five-capture dialogue quest. Its authored prerequisites still apply.
+The optional `core` names the ten-capture opening quest and the final settlement quest through
+`after` and `settles`. The next tier's sign-ons require that settlement. A draft can include an
+incomplete cohort and its signal while its Core is in authoring. A complete tier requires ten
+registered captures and an executable Core chain.

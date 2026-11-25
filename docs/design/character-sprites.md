@@ -1,9 +1,11 @@
 # Character sprites: full-proportion cel-shaded renders
 
-**Current direction · 2026-11-20 (D77).** Author full-proportion editable 3D characters and equipment,
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
+**Earlier 3D source direction · 2026-11-20 (D77).** Author full-proportion editable 3D characters and equipment,
 then render clean cel-shaded 2D sprites. Start with the [first-character brief](combat-sprites-request.md).
-[CY59](../handoff/tasks/CY59.md) owns crew sources, [CY58](../handoff/tasks/CY58.md) equipment,
-[CY60](../handoff/tasks/CY60.md) opponents and [CY57](../handoff/tasks/CY57.md) game integration.
+[CY59](../handoff/archive/CY59.md) owns crew sources, [CY58](../handoff/archive/CY58.md) equipment,
+[CY60](../handoff/archive/CY60.md) opponents and [CY57](../handoff/archive/CY57.md) game integration.
 
 ## Design and presentation
 

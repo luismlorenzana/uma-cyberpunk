@@ -1,5 +1,7 @@
 # Approved strike and first environment cohort (CY68 / CY69)
 
+> **Reusable foundation.** This page documents the earlier release approval and registration evidence. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 The first-cohort figures below are historical. The [complete CY69 delivery](campaign-environments.md)
 replaces all remaining review backdrops, integrates 64 approved sources and resolves seven setting
 holds through four precise milestone ports and two script-driven background cue lists (D74).

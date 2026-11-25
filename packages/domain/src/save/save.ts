@@ -5,8 +5,9 @@ import type { CommandCinemaState } from '../ship/command-cinema'
 // takes any version this game ever wrote and returns the current one, and never moves `account.updatedAt`.
 
 import { MANAGEMENT_EVENTS, type CampaignManagementState, type ManagementReceipt } from '../campaign-management'
+import { EXPEDITION_RULES_VERSION, EXPEDITION_SQUAD_SIZE, type BattleInput, type Role } from '@cyber/battle'
 import { COMBAT_SUBCLASSES, type CombatTraining } from '../combat-training'
-import type { CombatSubclass, Role } from '@cyber/battle'
+import type { CombatSubclass } from '@cyber/battle'
 import { CAPTAIN_NAME_MAX, DEFAULT_CAPTAIN, PRONOUNS, ROMANCE, type Captain, type Pronouns, type Romance } from '../captain'
 import { BOND_MAX, BOND_PATHS, BOND_TUNING, newBond, type Bond, type BondPath } from '../crew/bonds'
 import { emptyCabin, ITEMS_BY_ID, LINE_SLOTS, placeable, SLOTS, STARTER_STOCK, TOPICS, type Cabin, type Reveal, type Slot } from '../cabins/items'
@@ -20,13 +21,14 @@ import { HULL_TUNING, shipWith, type PlacedModule, type Ship, type Wallet } from
 import type { ShipLog } from '../ship/watch'
 import { MODULE_IDS, MODULES_BY_ID, PROJECTS_BY_ID, SYSTEM_IDS, type ModuleId, type SystemId } from '../ship/modules'
 import { OPEN_FROM_START, ROOM_IDS, type RoomId } from '../ship/rooms'
+import type { ExpeditionMember } from '../story/four-act'
 import { emptyStory, type StoryState } from '../story/state'
 import { firstCampaignDay, type CampaignDay, type SoloNight } from '../campaign-day'
 import { parseCabinNight } from '../story/campaign-cabins'
 import type { PendingPairScene } from '../campaign-pair'
 import { CAMPAIGN_WORKSHOP_ALLOY_MAX, emptyCampaignGear, type CampaignGear } from '../campaign-gear'
 import { PORT_STOCK_MAX, SHIP_CARGO_MAX, SUPPLY_KINDS, type CampaignSupply } from '../campaign-supply'
-import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } from '../ship/command'
+import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandStation, type CommandTraining } from '../ship/command'
 
 /** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
  * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
@@ -36,7 +38,7 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandTraining } 
  * 14 saved pair scenes (CY26); 15 the campaign workshop (CY30); 16 port projects and officer specialties (CY32–CY33);
  * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
  * 18 management receipts and independent first-use/report acknowledgements (CY51);
- * 19 saved command cinematic position and fast-playback preference (CY54). */
+ * 19 saved command cinematic position and fast-playback preference (CY54); 20 the active expedition (CY87). */
 export const SAVE_VERSION = 20
 
 export interface Account {
@@ -70,6 +72,7 @@ export interface MissionState {
   chapter: string
   step: MissionStep
   squad: number[]
+  callUp?: { members: number[]; stations?: Partial<Record<CommandStation, number | null>> }
   battle: { input: unknown; actions: unknown[] } | null
   /** At results: won or lost. */
   won: boolean | null
@@ -208,8 +211,17 @@ export interface SaveV19 extends Omit<SaveV18, 'version'> {
   commandCinema: CommandCinemaState
 }
 
+export interface ExpeditionRun {
+  duo: string
+  ship: string
+  members: readonly ExpeditionMember[]
+  fuel: number
+  provisions: number
+}
+
 export interface SaveV20 extends Omit<SaveV19, 'version'> {
   version: 20
+  expedition: ExpeditionRun | null
   combatTraining?: Record<string, CombatTraining>
 }
 
@@ -242,10 +254,10 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return migrateV19(migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))))
+  return { ...migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))), version: 20, expedition: null }
 }
 
-export const migrateV19 = (save: SaveV19): SaveV20 => ({ ...save, version: 20 })
+export const migrateV19 = (save: SaveV19): SaveV20 => ({ ...save, version: 20, expedition: null })
 
 export const migrateV18 = (save: SaveV18): SaveV19 => ({ ...save, version: 19, commandCinema: { fast: false, retries: 0, pending: null } })
 
@@ -631,21 +643,28 @@ function parseCrew(value: unknown, path: string, version: 6): CrewMemberV6[]
 function parseCrew(value: unknown, path: string, version: 5): CrewMemberV5[]
 function parseCrew(value: unknown, path: string, version: 4): CrewMemberV4[]
 function parseCrew(value: unknown, path: string, version: 4 | 5 | 6 | 8): (CrewMember | CrewMemberV6 | CrewMemberV5 | CrewMemberV4)[] {
-  const keys = ['outfit', 'xp', 'role', 'rig', 'presets', 'strain', ...(version >= 5 ? ['bond'] : []), ...(version >= 6 ? ['cabin'] : []), ...(version >= 8 ? ['post'] : [])]
+  const keys = ['outfit', 'xp', 'role', 'rig', 'presets', 'strain', ...(version >= 5 ? ['bond'] : []), ...(version >= 6 ? ['cabin'] : []), ...(version >= 8 ? ['post', 'heroine', 'expeditionOnly'] : [])]
   if (!Array.isArray(value) || value.length > 300) throw new SaveParseError(path, 'expected a list of crew members')
   const seen = new Set<number>()
+  const heroines = new Set<string>()
   return value.map((v, i) => {
     const p = `${path}[${i}]`
     const o = object(v, p, keys)
     const [outfit] = outfits([o.outfit], `${p}.outfit`)
     if (seen.has(outfit!)) throw new SaveParseError(`${p}.outfit`, 'already aboard')
     seen.add(outfit!)
+    const heroine = o.heroine === undefined ? undefined : id(o.heroine, `${p}.heroine`)
+    if (heroine !== undefined) {
+      if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(heroine) || heroines.has(heroine)) throw new SaveParseError(`${p}.heroine`, 'expected a unique heroine board id')
+      heroines.add(heroine)
+    }
+    if (o.expeditionOnly !== undefined && (o.expeditionOnly !== true || !heroine)) throw new SaveParseError(p + '.expeditionOnly', 'expected a restricted heroine')
     if (o.role !== null && !ROLES.includes(o.role as Role)) throw new SaveParseError(`${p}.role`, `expected one of ${ROLES.join(', ')} or null`)
     if (!Array.isArray(o.presets) || o.presets.length > MAX_PRESETS) throw new SaveParseError(`${p}.presets`, `expected at most ${MAX_PRESETS}`)
     const strain = count(o.strain, `${p}.strain`)
     if (strain > STRAIN_REST) throw new SaveParseError(`${p}.strain`, `expected 0–${STRAIN_REST}`)
     return {
-      outfit: outfit!, xp: count(o.xp, `${p}.xp`), role: o.role as Role | null, rig: o.rig === null ? null : parseRig(o.rig, `${p}.rig`),
+      outfit: outfit!, ...(heroine ? { heroine } : {}), ...(o.expeditionOnly === true ? { expeditionOnly: true as const } : {}), xp: count(o.xp, `${p}.xp`), role: o.role as Role | null, rig: o.rig === null ? null : parseRig(o.rig, `${p}.rig`),
       presets: o.presets.map((x, j) => {
         const q = object(x, `${p}.presets[${j}]`, ['name', 'rig'])
         const name = id(q.name, `${p}.presets[${j}].name`)
@@ -662,17 +681,46 @@ function parseCrew(value: unknown, path: string, version: 4 | 5 | 6 | 8): (CrewM
 
 function parseMission(value: unknown, path: string): MissionState | null {
   if (value === null) return null
-  const o = object(value, path, ['id', 'chapter', 'step', 'squad', 'battle', 'won'])
+  const o = object(value, path, ['id', 'chapter', 'step', 'squad', 'battle', 'won', 'callUp'])
   if (!MISSION_STEPS.includes(o.step as MissionStep)) throw new SaveParseError(`${path}.step`, `expected one of ${MISSION_STEPS.join(', ')}`)
+  const squad = outfits(o.squad, `${path}.squad`)
   let battle: MissionState['battle'] = null
   if (o.battle !== null) {
     const b = object(o.battle, `${path}.battle`, ['input', 'actions'])
     if (typeof b.input !== 'object' || b.input === null || Array.isArray(b.input)) throw new SaveParseError(`${path}.battle.input`, 'expected an object')
     if (!Array.isArray(b.actions) || b.actions.length > 2000) throw new SaveParseError(`${path}.battle.actions`, 'expected a list')
+    const input = b.input as Partial<BattleInput> | null
+    if (input?.rulesVersion === EXPEDITION_RULES_VERSION || input?.map?.schemaVersion === 2) {
+      const allies = Array.isArray(input.units) ? input.units.filter(unit => unit?.side === 'squad') : []
+      const spawns = new Set(allies.map(unit => unit.spawn))
+      if (input.rulesVersion !== EXPEDITION_RULES_VERSION || input.map?.schemaVersion !== 2
+        || !Array.isArray(input.map.spawns?.squad) || input.map.spawns.squad.length !== EXPEDITION_SQUAD_SIZE
+        || allies.length !== EXPEDITION_SQUAD_SIZE || new Set(allies.map(unit => unit.id)).size !== EXPEDITION_SQUAD_SIZE
+        || spawns.size !== EXPEDITION_SQUAD_SIZE || allies.some(unit => !Number.isInteger(unit.spawn) || unit.spawn < 0 || unit.spawn >= EXPEDITION_SQUAD_SIZE)
+        || squad.length !== EXPEDITION_SQUAD_SIZE || new Set(squad).size !== EXPEDITION_SQUAD_SIZE) {
+        throw new SaveParseError(`${path}.battle.input`, 'expected ten distinct expedition members and deployment slots')
+      }
+      // Rigs, map geometry and recorded actions are validated by the versioned reducer on resume.
+    }
     battle = { input: b.input, actions: b.actions }
   }
   if (o.won !== null && typeof o.won !== 'boolean') throw new SaveParseError(`${path}.won`, 'expected true, false or null')
-  return { id: id(o.id, `${path}.id`), chapter: id(o.chapter, `${path}.chapter`), step: o.step as MissionStep, squad: outfits(o.squad, `${path}.squad`), battle, won: o.won as boolean | null }
+  let callUp: MissionState['callUp']
+  if (o.callUp !== undefined) {
+    const field = path + '.callUp'
+    const row = object(o.callUp, field, ['members', 'stations'])
+    const members = outfits(row.members, field + '.members')
+    if (!members.length || new Set(members).size !== members.length) throw new SaveParseError(field, 'expected distinct call-up members')
+    const stations = row.stations === undefined ? undefined : Object.fromEntries(
+      Object.entries(object(row.stations, field + '.stations', COMMAND_STATIONS)).map(([station, member]) =>
+        [station, member === null ? null : outfits([member], field + '.stations.' + station)[0]!]),
+    )
+    const assigned = Object.values(stations ?? {}).filter(member => member !== null)
+    if (new Set(assigned).size !== assigned.length) throw new SaveParseError(field, 'duplicate temporary station officer')
+    callUp = { members, ...(stations ? { stations } : {}) }
+  }
+  return { id: id(o.id, `${path}.id`), chapter: id(o.chapter, `${path}.chapter`), step: o.step as MissionStep,
+    squad, battle, won: o.won as boolean | null, ...(callUp ? { callUp } : {}) }
 }
 
 function parseWorlds(value: unknown, path: string): SaveV3['worlds'] {
@@ -704,14 +752,51 @@ export function versionOf(value: unknown): number {
 export function parseSave(value: unknown, path = 'save'): Save {
   const version = versionOf(value)
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
-  if (version < 20) return migrateV19(parseSaveV19(value, path))
-  const { combatTraining, ...older } = object(value, path, Object.keys(value as Obj))
-  const base = migrateV19(parseSaveV19({ ...older, version: 19 }, path))
-  if (combatTraining === undefined) return base
+  if (version < 20) {
+    if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
+    return { ...parseSaveV19(value, path), version: 20, expedition: null }
+  }
+  const { expedition, combatTraining, ...rest } = object(value, path, Object.keys(value as Obj))
+  const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path)
+  const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}) }
+  if (expedition == null) return { ...base, version: 20, expedition: null }
+  const field = path + '.expedition'
+  const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions'])
+  if (!Array.isArray(data.members) || data.members.length !== EXPEDITION_SQUAD_SIZE) {
+    throw new SaveParseError(field + '.members', 'expected ten expedition members')
+  }
+  const members: ExpeditionMember[] = data.members.map((raw, index): ExpeditionMember => {
+    const item = field + '.members[' + index + ']'
+    if ((raw as { role?: unknown } | null)?.role === 'uma') {
+      const row = object(raw, item, ['role', 'outfit'])
+      const outfit = count(row.outfit, item + '.outfit')
+      if (!base.crew.some(member => member.outfit === outfit && !member.heroine)) throw new SaveParseError(item, 'expected a recruited Uma')
+      return { role: 'uma', outfit }
+    }
+    const row = object(raw, item, ['role', 'heroine'])
+    const role = row.role
+    if (role !== 'boss-ally' && role !== 'melee-shield' && role !== 'ranged-medic' && role !== 'long-range') {
+      throw new SaveParseError(item, 'invalid expedition role')
+    }
+    const heroine = id(row.heroine, item + '.heroine')
+    if (role === 'boss-ally' && !base.crew.some(member => member.heroine === heroine && member.expeditionOnly)) {
+      throw new SaveParseError(item, 'expected a resident Boss Ally')
+    }
+    return { role, heroine }
+  })
+  if (new Set(members.map(member => member.role === 'uma' ? member.outfit : member.heroine)).size !== EXPEDITION_SQUAD_SIZE
+    || ['uma', 'boss-ally', 'melee-shield', 'ranged-medic', 'long-range'].some(role => members.filter(member => member.role === role).length !== 2)) {
+    throw new SaveParseError(field + '.members', 'expected two distinct members in each role')
+  }
+  return { ...base, version: 20, expedition: { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
+    fuel: bounded(data.fuel, field + '.fuel', SHIP_CARGO_MAX), provisions: bounded(data.provisions, field + '.provisions', SHIP_CARGO_MAX) } }
+}
+
+function parseCombatTraining(combatTraining: unknown, path: string): Record<string, CombatTraining> {
   const field = `${path}.combatTraining`
   const rows = object(combatTraining, field, Object.keys((combatTraining ?? {}) as Obj))
   if (Object.keys(rows).length > 1000) throw new SaveParseError(field, 'too many training records')
-  return { ...base, combatTraining: Object.fromEntries(Object.entries(rows).map(([key, value]) => {
+  return Object.fromEntries(Object.entries(rows).map(([key, value]) => {
     const here = `${field}.${key}`
     if (!/^[1-9][0-9]*$/.test(key) || !Number.isSafeInteger(Number(key))) throw new SaveParseError(here, 'expected an outfit id')
     const row = object(value, here, ['rank', 'subclass'])
@@ -721,7 +806,7 @@ export function parseSave(value: unknown, path = 'save'): Save {
       throw new SaveParseError(here, 'expected a valid rank and subclass choice')
     }
     return [key, { rank, subclass }]
-  })) }
+  }))
 }
 
 function parseSaveV19(value: unknown, path: string): SaveV19 {
@@ -908,12 +993,14 @@ function parseCampaignDay(value: unknown, path: string, allowPair = false): Camp
       : { kind, pair, scene, morning: p.morning === null ? null : id(p.morning, `${pendingPath}.morning`) } }
   }
   if (kind !== 'visit' && kind !== 'morning') throw new SaveParseError(`${pendingPath}.kind`, 'expected visit or morning')
-  const p = object(o.pending, pendingPath, kind === 'visit' ? ['kind', 'companion', 'scene', 'morning'] : ['kind', 'companion', 'scene'])
+  const p = object(o.pending, pendingPath, kind === 'visit' ? ['kind', 'companion', 'scene', 'morning', 'pathChoice'] : ['kind', 'companion', 'scene'])
   const companion = count(p.companion, `${pendingPath}.companion`)
   if (companion === 0) throw new SaveParseError(`${pendingPath}.companion`, 'expected an outfit id')
   const scene = id(p.scene, `${pendingPath}.scene`)
+  const pathChoice = p.pathChoice
+  if (pathChoice !== undefined && pathChoice !== 'heart' && pathChoice !== 'trust') throw new SaveParseError(`${pendingPath}.pathChoice`, 'expected Heart or Trust')
   return { day, pending: kind === 'morning' ? { kind, companion, scene }
-    : { kind, companion, scene, morning: p.morning === null ? null : id(p.morning, `${pendingPath}.morning`) } }
+    : { kind, companion, scene, morning: p.morning === null ? null : id(p.morning, `${pendingPath}.morning`), ...(pathChoice ? { pathChoice } : {}) } }
 }
 
 function parseV10(value: unknown, path: string): SaveV10 {

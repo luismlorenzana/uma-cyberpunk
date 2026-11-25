@@ -1,5 +1,7 @@
 # The story: its format, its check and the player
 
+> **Built behavior.** For the planned changes to individual, duo, capital, expedition and finale gates, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY9 (D13), CY12 (D16).** Where the story session's files plug in (TC53): the format and its strict parser in
 > `packages/domain/src/story/`, `pnpm story:check` and `pnpm story:pack`, the delivery, the runner and the scene player.
 > The story itself is the story session's, written from [the story brief](../design/story-brief.md) in the ignored

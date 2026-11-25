@@ -1,220 +1,63 @@
-# Four-pillar campaign art and story delivery
+# Four-act authoring and art delivery contract
 
-The owner set this delivery direction on 2026-11-18 (D64). Build on the combined Tier 1–5 campaign,
-its save and its existing recruitment, service and relationship gates. The first delivery is a real
-recruit's meeting, confession, seated cabin conversation and stay overnight. The remaining pillars
-extend that same campaign. The [queue](../handoff/README.md#four-pillar-art-and-story-queue) contains
-separate development, art-authoring and story-authoring packets.
+**Current, D87.** Use the [four-act design](campaign-rework.md), [roadmap](../handoff/four-act-roadmap.md), [approved art direction](art-direction.md), and the existing [Cyberpunk publishing workflow](../technical/campaign-art-publishing.md). Story, General Art, Character Art, Sprite Art and Engineering work against the same private scene, encounter and asset IDs.
 
-Use the [approved art and visual world direction](art-direction.md) for character/environment style,
-color, lived-in room dressing and reference review. The owner approved that direction and the private
-general-art source set on 2026-11-19 (D66).
+## Ownership
 
-This is an implementation plan. Fields and actions described here become supported contracts only
-when their development packet implements, documents and checks them. Existing rules are recorded in
-the [game manual](../game/README.md) and [campaign format](../technical/campaign-content.md).
+| Lane | Deliverables | Handoff |
+| --- | --- | --- |
+| Story | Casting and role states, fixed duos, each scene and beat, places, location states, objectives, character variants, outcome triggers, continuity and directives for intended artwork | Story Authoring's Cyberpunk workspace. Approved script and routing export to game intake. [CY92](../handoff/tasks/CY92.md) |
+| General Art | Locations, backgrounds, scenery, shared props, ship hulls and interiors, maps and tiles, civic changes, battle FX, and UI art where required | Game general-art review lane and the existing shared or Platform scope where appropriate. Pin source and destination for each asset before promotion. [CY93](../handoff/tasks/CY93.md) |
+| Character Art | Canonical character sources, outfit and role variants, dialogue portraits and crops, required expressions, dedicated poses and scene or attack splashes | Cyberpunk in Art Authoring. Verify approved sources and exact compositions through Platform and the game. [CY94](../handoff/tasks/CY94.md) |
+| Sprite Art | Compact game figures, reusable body and equipment layers, fitting, authored motion, clips and battle visual effects tied to a unit or item | Combat Sprites album, exact bundle lock and approval, guarded publishing into the campaign. [CY95](../handoff/tasks/CY95.md) |
+| Engineering | Playable route and state contracts, UI, input/outputs, approved fallbacks, validation, assembly, staged campaign, playthrough and publishing | Game repo, ignored release receipts and preview. [CY96](../handoff/tasks/CY96.md) |
 
-## Scope and current foundations
-
-| Pillar | Delivery | Existing foundation | Work still required |
-|---|---|---|---|
-| 1 · Relationships | Meeting, confession, seated chat and overnight compositions | Fifty sign-ons, fifty Captain arcs, repeatable visits, Trust/Heart, pair visits, face-crop renderer and illustration cues | Layered splash presentation, cabin staging, explicit stay/leave flow and all corresponding authoring |
-| 2 · Ship, planet and resources | Consistent rooms and visible civilian production, shipments and ship improvements | Port ledger, projects, refits, upkeep, workshop and ship views | Campaign room/state bindings and coordinated location, equipment and prop art |
-| 3 · Ship combat | Pilot-suit action splash, talking profile, ship effects and outcome playback | Officer assignments, training, frozen orders, results, objective images and a response thumbnail | Saved-result cinematic playback, character/boss splash bindings and authored response sequences |
-| 4 · Tactics | Equipment art, composed armored sprites, larger boss visuals and illustrated special attacks | Loadouts, thirty-nine catalog entries, sprite/standee renderer, normal cut-ins, chance skills and duo techniques | Equipment attachment contract, armor/weapon layers, guest sprite loading, signature actions and matching attack art |
-
-The private roster and latest approvals are live inputs. Recheck the authoring manifests before each
-batch; an inventory snapshot is evidence of its date rather than a permanent pending-work count.
-Keep the original campaign and its save scope available. Later-tier sign-on prerequisites and roster
-stories continue to work when earlier scenes receive new art.
+A weapon's identity and common silhouette have one approved source. Character Art can use it in illustrations and Sprite Art applies actual gear layers. General Art owns standalone prop and shared effect exports. Art volumes count distinct deliverables and approved reuse, including when a single layout serves many scenes. The existing Cyberpunk wardrobe, expression and captured-role contracts apply to approved reusable sources.
 
 ## Shared delivery record
 
-Keep the working record in ignored `content/campaign-art-plan/`. Names, scripts, reference images,
-spoilers, owner verdicts and screenshots remain private. The committed packets use numeric outfit IDs
-or generic roles. Each record binds the following information across all three workstreams.
+Maintain a private register per milestone and per playable route with these fields.
 
-The initial snapshot is `content/campaign-art-plan/initial-plan.json`. It contains all sixteen packet
-references, fifty solo arcs with their four scene families, ten existing paired visits, seventeen
-proposed room families, 56 ship encounters, 39 equipment entries and 63 ground encounters. Existing
-scene references were checked against the combined source. Room reachability and new art/action
-bindings remain explicitly pending. Copy the snapshot to a working register before recording progress;
-preserve the initial evidence and later work instead of regenerating over it. Every count is a
-coverage record, not an approved image budget.
+- Delivery ID, packet, act, system, duo, originating story export revision, scene or encounter ID, branch and outcome step.
+- Cast with stable actor IDs, role, state, outfit, per-speaker expression cues, specific position, move, camera and who must physically be present.
+- Encounter input, role and fitting IDs, legal weapon mounts, objective, enemy/spawn roles, battle events, technical constraints and expected result.
+- Individual element ID, family, lane, source path and hash, source approval, whether it is new, reused or temporary, and any approved fallback.
+- Destination path, asset slot, role and output type with export spec, composed layers, release scope, release pin, results and rollback reference.
+- Status per row. Requested, ready to author, draft, source approved, export validated, destination approved, staged, verified in game, selected. Note the reason and next action for held rows.
 
-| Field | Required information |
-|---|---|
-| Identity | Pillar, cohort, packet IDs, outfit or private guest ID and role |
-| Campaign binding | Existing quest, scene and encounter IDs; branch and eligibility prerequisites; explicit new IDs where needed |
-| Player behavior | Entry point, choice, costs, availability, saved effects, finish/retry rules and the next campaign state |
-| Story | Source file, scene/cue, script revision, speaker and expression tags; staging and branch notes |
-| Art | Logical asset ID, approved base/look, composition, source version, file path, native dimensions, alpha, SHA-256 and exact approval scope |
-| Composition | Backdrop, pose, props, effects, portrait policy, anchor/order, safe-area preview and optional crop placements |
-| Runtime contract | Implemented schema/fixture revision and an explicit list of requested unsupported fields |
-| Review | Draft/approved/integrated state for code, story and art separately; playable review save, pack ID, findings and remaining work |
-| Release | Content manifest, compatibility statement, selected predecessor and tested recovery/rollback path |
+Story drafts can first use a neutral fallback when the approved reference matches. Keep expression, background and pose slots stable between a working chapter and final delivery. The release register reports coverage by story route, cast, scene family, environment, ship, loadout and battle cue. If Story replaces a branch, revalidate all its asset and combat bindings. If an art treatment changes a mission silhouette or physical action, update the shared beat and executable input together.
 
-Art approval does not establish gameplay integration. A published album does not establish a selected
-campaign release. Record those states separately. A missing asset uses a named draft fallback and is
-listed in the cohort's outstanding work.
+## Art coverage by act and pillar
 
-The scene inventory at `content/campaign-notes/pillar-one-splash-scenes.json` maps all fifty solo
-arcs: 150 existing scene bindings and fifty proposed overnight beats. Validate it against the current
-source before copying its entries into the working record. `plannedArtSlot` is a proposed logical ID,
-not a claim that the image or runtime scene exists. Paired visits need their own records.
-
-## Working together
-
-1. Development and Story open the shared record against the actual campaign save and script. Art reads
-   the same staging, current approved looks and script branches. Any prerequisite or mechanic change
-   is written down before final composition work starts.
-2. Development supplies an executable baseline contract, short draft script and declared placeholder
-   assets through the normal campaign pack. Art and Story can begin their references and drafts while
-   that contract is being implemented.
-3. Integrate one representative real scene or encounter, then return its phone-size evidence to all
-   three workstreams. A composition change updates placements; a story rule change updates code,
-   fixtures and the shared record. Preserve completed quest and relationship IDs wherever possible.
-4. Expand the reviewed pattern by recruitment tier. Return paired or unusual scenes to review rather
-   than silently forcing a single-character layout onto them. Update the common contract once and
-   identify every affected binding.
-5. Pack the cohort under a fresh private release ID. Exercise current and preceding campaign saves,
-   pending scenes/orders, missing-art fallback, interruption and resumption. Then record approved
-   integration in CY36 and installed-device findings in CY37.
-
-Every implementation packet includes usable draft story and placeholder art if final authoring is
-pending. Art uses the existing owner-review workflow and hash-bound approvals. Development records
-its completed behavior; the cohort remains open until its Story and Art acceptance also passes.
-Never mark authoring approved because a placeholder played successfully.
-
-Use `uma-story-authoring/content/cyberpunk/stories/` for authored scripts and verdicts. Use
-`uma-art-authoring/content/authoring/character-universes/cyberpunk/` for reusable cast art and its
-albums. Campaign-local room plates, props and integration copies may live under this game's ignored
-`content/`. The handoff identifies which copy is authoritative and hashes every exported file.
-
-Campaign-local art ships through the private campaign pack. Reusable universe art follows its existing
-authoring publication path, then is bound into the campaign release. Request a scoped shared-package
-change only if that package must understand a new format. The game can implement a local adapter;
-other games' data and release channels are outside this queue.
-
-The [approved-art publisher](../technical/campaign-art-publishing.md) implements the scoped delivery
-step. The private `art-publish.json` registry binds published Cyberpunk sources to current game slots;
-its receipts identify source hashes, unchanged gameplay and selected release. New art-only candidates
-start from the selected story, not a working story draft. CY48's layer contract and reserved evening/stay/leave/morning flow are implemented.
-The scoped draft scripts and approved rooms/neutral art are integrated; final authoring acceptance stays in CY49/CY50.
+| Act | General art | Character art | Combat sprites |
+| --- | --- | --- | --- |
+| I | Homestretch welcome and rooms, civilian port/route plates, origins, operational props, general ships, enemy flagships, boarding and ground arenas, approach and capture FX | Origin, meeting, quarters, confession, sitting, bed and morning per actual scene. Uma operational outfits and pilot/armor variants. General hostile, Collar and captured presentation. Three hostile lieutenants per route where staged. | Reuse approved Uma armor bundles and fitting families. General and lieutenant enemy roles where deployed, Rig Break, Collar, withdrawal and captured outcome. |
+| II | Medbay and care staging, shared quarters, investigations, workplaces, base before/open/working/liberated, capital approaches, teams' common base and operations, Seraine evidence props and visuals | General in care, allied resident, romance and prepared clearance looks. Elf lieutenants in hostile and returned appearances. Planned joint compositions for both Umas, both Boss Allies and six lieutenants as the script needs them. | Active Umas and actual opposition in operations. Produce cleared Boss Ally and lieutenant fittings for Act III while the narrative-based role gate is verified. |
+| III | Homestretch launch bay, reusable small-ship exterior and interiors, return states, Seraine routes, arena layers, props, attack/movement telegraphs, prison or release effects | Mission-specific command, combat, and debrief staging. Named Heralds and Echoes with court palette and silhouette, joined and liberated looks. Keep the Queens for Act IV story appearance. | Ten friendly sprites together, all specified hand and Back families, real Seraine opponent profiles and visuals, targeted nonlethal release and withdrawal. |
+| IV | Final approach, capital or court geography as approved, Queen encounter environments, shared outcome states and civilian epilogue | Five Queens from their approved designs, actual role and outcome cues, finale reactions, optional paths and soft-ending scenes | Size and movement for actual Queen encounters, telegraphs and results. Extra phases apply when the final rules provide their own cues and selections. |
 
 ## Pillar 1 scene and composition contract
 
-| Family | Required staging | Existing binding | Behavior to preserve or add |
-|---|---|---|---|
-| Meeting | Shared Homestretch welcome/briefing area, consistent desk and Captain-facing camera; approved pilot suit | Each recruit's existing sign-on quest and scene | Joining occurs once; personal story stays separately launchable; tier prerequisites remain intact |
-| Confession | Evening private cabin, Quarters look, reciprocal expression and clear Captain choice | Each Captain arc's relationship-choice milestone | Captain can initiate the confession; mutual Heart or respectful Trust; retain independent concurrent relationships |
-| Seated chat | Same cabin family; character seated at a table or beside the bed | Each Captain arc's repeatable visit and compatible seated milestone scenes | Authored rotating conversation; a saved evening reservation; keep availability and appointment/resettlement rules |
-| Overnight | Same cabin and bed; character lying down; Captain remains the viewpoint | New beat attached to the existing evening flow | Explicit mutual choice to stay, an alternative to leave, one day/upkeep transition and resumable morning |
+Cover the four key families and morning where authored. Meeting has its defined location or approved variation. Confession gets the relevant stance and selectable branch. Seated cabin chat uses seated composition. Staying the night shows the actual occupants lying down with correct framing. Morning previews the settled stay or leave outcome. Use an approved room plate with reusable character layers when it supports the blocking. For intimate or shared scenes, define physical positions, orientation, hand/contact points, and stop or exit variants from the actual script. An approved general cabin can serve across many variants.
 
-The shared meeting setting is a presentation location aboard the ship. Preserve the surrounding
-planetary service context and gate; moving the illustration must not move the officer to a different
-port in the simulation. Story revises physical references to make the staging coherent.
-
-Chat followed by staying is one evening. Both leave and stay resolve that reserved evening once.
-Overnight eligibility is authored and mutual; no romance choice becomes a combat or campaign gate.
-Completed pre-update visits must not replay costs or force a new relationship decision. An unavailable
-officer is not physically shown aboard because a generic cabin asset exists.
-
-Shared Uma/former-commander visits use paired seated and bed variants within the same families.
-Keep release, residence and individual consent independent. Inventory existing paired scenes first;
-add an explicit new beat where no matching script exists. This does not create fifty new solo boss
-dating arcs or reopen retired rear-view authoring.
-
-Use a shared room plate plus transparent character pose where practical. A flattened approved CG is
-also valid when its framing needs it. The runtime must declare whether talking portraits are shown
-or hidden over an illustration, rather than inferring that from the presence of the image. Reuse
-approved Uma-Farm-style face crops on their matching portrait bases; a new splash pose does not
-require a full set of independently painted expressions. Crop placement is reviewed per base.
-
-The baseline check is First Watch, a real sign-on, optional Training, the character's real service
-prerequisites, confession, seated visit and both stay/leave outcomes. Use a second actual recruit to
-prove concurrent relationships and reuse. Then expand the registry through all five tiers. These are
-campaign review checkpoints, with disposable save copies for repeatable checks.
+An actor role determines the eligible outfit and default dialogue base. Keep general capture, rehab, resident, cleared ally, and returned lieutenant roles explicit. Use the [wardrobe contract](../technical/campaign-wardrobe.md) for native art and separate dialogue/profile crop paths. Use one required expression inventory per outfit based on scene cues. The approved neutral serves as a fallback. Each needed expression can reuse the same crop in compatible scenes. Confirm native framing, eyes, alpha, hair/ear placement and pixel alignment before accepting. Large group scenes use actual composition and speaker order, with fewer alternate assets when profiles and shared positions express the scene.
 
 ## Pillars 2 and 3 contracts
 
-Pillar 2 shares its cabin geometry with Pillar 1. Each room or base state has a real reachable entry
-and a saved-state predicate. A project under construction differs from a completed project; a local
-export remains subject to reserves and upkeep. Separate visual decoration from a mechanic that has
-not been implemented. Supply an optional quiet room view for a meaningful state change without
-turning routine transactions into mandatory scenes.
+General art follows reachable location and gameplay state. Author place keys, day/night where required, interactive prop states and upgrade/outcome visuals. Each capital, base and launch destination needs readable approach, interactable, mission and resolution staging. Use approved assets for unchanged ship room families. When a project completes or a yard is restored, visibly change the part of the scene the mission affected. Ground boards need terrain height, target selection and cover compatibility independent from decorative plates.
 
-Pillar 3 presents an already-resolved order. Its playback uses frozen officer assignments, target,
-result and authored cues. Reload, fast mode or skipping must never issue another order. A character's
-pilot-suit operating pose and matching talking profile share the scene with reusable bridge plates
-and effects. Boss communications use the same likeness across enemy and ally roles. Portrait face
-crops remain bound to the approved portrait, not projected onto an unrelated splash pose.
+For ship combat, define operator, order, target, affected side, current ship, pre-order pose and actual outcome. Use the frozen officer and committed result to pick a suitable pilot-suit composition with a profile. Bind emitter enabled/disabled, defended hull, impact, withdrawal, retry and result. Reusable bridge and ship assets can serve multiple charts. Script and Art record when a named actor requires an exact authored image. Fast playback and available fallbacks follow the same result.
 
-Use the First Watch escort and the first occupied approach as initial coverage. Later cohorts include
-local defense, fleet contributions and both later-tier protected civilian craft. Keep controls and
-objective meters readable; results remain comprehensible with cinematics skipped.
+## Pillar 4 contracts
 
-## Pillar 4 contracts and decisions to resolve
+Retain the approved [combat sprite format](../technical/combat-sprite-bundles.md), [ground cue matrix](../technical/ground-combat-visual-matrix.md), and shared [equipment coverage](../handoff/combat-sprite-coverage.json). Use approved compact helmeted 2D sources for humanoid deployments where called for. Use actual Seraine silhouettes, body features and equipment for their forms. Validate all four cardinal facings and relative scale, feet, shadow, sockets, occlusion, palette, mounts and draw order. Review each family with all game cues supported by the associated fitting, including damaged states, battle result and exit. Mark any new clip as an explicit dependency of its committed cue.
 
-**D73 direction (2026-11-20).** Use shared fictional energy equipment and helmeted armored bodies
-first. The existing mid-range `hand-rifle` becomes a two-handed Laser rifle; Long weapons stay on
-the Back slot. CY58/CY59 replace the earlier per-item/per-outfit production approach with canonical
-equipment, compatible family poses, reusable masks and an initial actual-campaign cohort. CY60
-applies the same method to enemies; CY63 reconciles grips, terminology and helmet staging.
+Keep Seraine court colors, silhouette, markings, glyph and individual rhythm independently authored where required. Shared forms and palettes can cover exact approved groups, including Echo variants where the art matches the Story registry. Motion families can be reused across compatible individuals. An appearance change or larger creature must preserve tile anchors, readable selecting and state markers. The first ten-member deployment must show the real mix of armor, humanoid and Seraine figures at its intended phone board size.
 
-**D77 source/export method (2026-11-20).** The [first-character brief](combat-sprites-request.md)
-starts one helmeted recruit with the existing rifle/Bulwark Training rig. Reusable 3D character,
-rig and equipment sources now use full adult proportions and clean cel shading. Review model
-quality against approved references, then four standing directions from one fixed orthographic
-setup. Begin with antialiased 512-pixel masters; compare clean runtime derivatives and approximately
-80/100 CSS-pixel board figures, keeping image resolution separate from display scale. Short motion
-and action samples follow the standing checkpoint.
-CY57 integrates an exact equipped atlas in real Training and boarding before generalizing
-supported variants or reusable render passes. Keep body and equipment reusable at source, with
-bounded export/cache coverage. The game keeps its 2D renderer, 35-degree camera and battle rules.
-The clean sampling/alpha/scale adapter remains CY57 work. Model/export approval remains separate
-from source design, publication and campaign acceptance.
-The approved shield and compact normal-shoulder pod keep their exact scopes for later fittings.
+Only commission a named special attack splash for a confirmed action. Tie the overhead warning, pose or name to the actual trigger and forecast. Keep normal fire, guard, movement, failed or canceled actions, and hero/lieutenant release readable with shared effects.
 
-The current part catalog is the authority for equipment IDs and legal combinations. Publish designs
-and small icons for every entry; coatings may use material swatches. Shared designs carry palette
-masks and character adaptation notes. Attachment positions, facing and depth order belong to the
-sprite frame contract. Different weapon families need compatible arm poses, including two-handed
-grips. Empty-hand bodies alone do not establish usable attack animation.
+## Publication and acceptance
 
-CY57 resolves the scoped attachment/composition format and performance approach after the first
-exact equipped atlas. Compare source-generated reusable passes/layers with supported rendered
-variants and composing/caching, exporting actual cohort needs. Keep accurate missing-layer and
-unsupported-rig fallbacks. Any new shared sprite format needs a
-versioned platform request and a compatible local adapter. Preserve recorded battle inputs/replays.
+Validate draft paths locally and approve exact source and derived bytes. Platform registers canonical character Art and sprite payloads where used by the pipeline. The game integration receipt records the Story route, released image hashes, scope and approved bindings for the selected pack. Keep general-source references in the agreed ownership lane, with exact game destinations. Use stage, readback, private visual review, conditional selection and rollback. Campaign gameplay and saves use their own release mechanism.
 
-Boss art may be visually larger while using the existing single-tile combat rules. Literal creatures,
-new transformations and multi-tile occupancy require an authored campaign requirement and a separate
-rules decision. Record the requested silhouette, anchor and extent before commissioning sheets.
-
-Normal cut-ins, mounted actions, chance skills and duos exist. Character-specific selectable
-signatures and boss signatures require CY61. That packet specifies cost, cadence, targeting,
-forecast, counterplay, AI and replay behavior before final attack splashes are authored. Story and
-Art name an approved action key and trigger; images never determine damage or targeting.
-
-## Checkpoints and completion
-
-| Checkpoint | Required campaign evidence | Packets |
-|---|---|---|
-| P1 first arc | Four scenes, Trust/Heart, stay/leave, interruption and next morning, coherent approved staging | CY48–CY50 |
-| P1 full roster | Every sign-on and Captain arc mapped, paired variants reconciled, later-tier gates retained | CY48–CY50 |
-| P2 civilian supply | Reachable ship rooms, one shipment funding gear/refit, project states and nightly reconciliation | CY51–CY53 |
-| P3 command | Escort and approach, real order playback, loss/free retry/resume, correct officer/boss/profile | CY54–CY56 |
-| P4 equipment and figures | Fitted weapons visible in the real boarding mission, broken-part states, enemy identities and device performance | CY57–CY60, CY63 |
-| P4 signatures | Selectable hero action and warned boss action, forecast/AI/retry, illustrated playback and roster rollout | CY61–CY63 |
-| Combined release | Same campaign through all five tiers, art/source/release audit, owner-only hosting and installed-device review | CY36–CY37 |
-
-Art production and story drafting for later pillars can proceed once their required format and scene
-brief are concrete. Their implementation starts after the first P1 checkpoint; the P1 full-roster
-rollout can continue alongside it. CY57's equipment format can be designed before CY54 finishes,
-but its in-game acceptance uses the same evolving campaign. Packet numbers identify work; the queue
-dependencies define execution order.
-
-Do not finish CY36/CY37 merely because these packets exist. Physical iPhone observations remain
-distinct from landscape browser emulation. A finished packet is removed with its Done row, and its
-delivered contract replaces proposal language in the technical documentation.
+Review scripted and combat evidence in the real campaign at each [roadmap milestone](../handoff/four-act-roadmap.md#milestone-sequence). Include landscape viewport, touch interaction, reduced motion, cleanup, loss/retry, actual consequence and resumed playback. Preserve Story and Art source pins across results. Batch equivalents use shared automated checks. Open specialized visual issues by family or in the exact authored encounter.

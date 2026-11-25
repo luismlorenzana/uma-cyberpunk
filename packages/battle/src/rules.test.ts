@@ -1,12 +1,13 @@
 // The bands, the map format, the rig and its loadout, and the timeline (CY4). Invented stand-ins only.
 import { describe, expect, it } from 'vitest'
-import { applyBattleAction, createBattle, startBattle } from './battle'
+import { applyBattleAction, createBattle, replayBattle, startBattle } from './battle'
 import { battle, OPEN, RIG, S, unit, W, YARD } from './fixtures'
 import { BattleInputError, parseMap } from './map'
 import { armed, capacityOf, isLight, loadOf, maxHpOf, moveOf } from './rig'
 import { timeline, upcomingAfter } from './timeline'
 import { bandOf, TUNING } from './tuning'
-import type { BattleState, UnitInput } from './types'
+import type { BattleAction, BattleMap, BattleState, UnitInput } from './types'
+import { EXPEDITION_RULES_VERSION } from './version'
 
 const errorPath = (fn: () => unknown): string => {
   try {
@@ -82,10 +83,58 @@ describe('the rig and its loadout', () => {
 describe('the battle input', () => {
   it('refuses an unknown rules version, a bad objective and a doubled spawn', () => {
     const units = [unit('a', 'squad', 0), unit('e', 'enemy', 0)]
-    expect(errorPath(() => createBattle({ ...battle(units), rulesVersion: 6 }))).toBe("rulesVersion")
+    expect(errorPath(() => createBattle({ ...battle(units), rulesVersion: Number.MAX_SAFE_INTEGER }))).toBe('rulesVersion')
     expect(errorPath(() => createBattle(battle(units, { objective: { kind: 'defeatLeader' } })))).toBe('objective')
     expect(errorPath(() => createBattle(battle(units, { objective: { kind: 'reach', tile: [9, 9] } })))).toBe('objective.tile')
     expect(errorPath(() => createBattle(battle([...units, unit('b', 'squad', 0)])))).toBe('units[2].spawn')
+  })
+})
+
+describe('expedition rules', () => {
+  const map: BattleMap = { ...OPEN, schemaVersion: 2, spawns: { ...OPEN.spawns,
+    squad: [...OPEN.spawns.squad, [5, 7], [6, 7], [7, 7], [0, 6], [1, 6]] } }
+  const squad = map.spawns.squad.map((_, slot) => unit('member-' + slot, 'squad', slot))
+  const input = battle([...squad, ...map.spawns.enemy.map((_, slot) => unit('opponent-' + slot, 'enemy', slot))],
+    { map, version: EXPEDITION_RULES_VERSION })
+
+  it('requires the ten unique friendly slots and leaves existing maps on their own version', () => {
+    expect(parseMap(map)).toEqual(map)
+    expect(errorPath(() => createBattle({ ...input, rulesVersion: 6 }))).toBe('map.schemaVersion')
+    expect(errorPath(() => createBattle({ ...input, map: OPEN }))).toBe('map.schemaVersion')
+    expect(errorPath(() => createBattle({ ...input, units: input.units.slice(1) }))).toBe('units')
+    expect(errorPath(() => createBattle({ ...input, bench: ['medic'] }))).toBe('bench')
+    expect(errorPath(() => createBattle({ ...input, units: [...input.units, unit('extra', 'squad', 9)] }))).toBe('units[18].spawn')
+  })
+
+  it('fails a reach operation if its protected opponent is downed', () => {
+    const protectedInput = { ...input, objective: { kind: 'reach', tile: [0, 0] },
+      preserve: 'opponent-0', goalRequired: true } as const
+    expect(errorPath(() => createBattle({ ...protectedInput, preserve: 'member-0' }))).toBe('preserve')
+    const state = createBattle(protectedInput)
+    const units = state.units.map(unit => unit.id === protectedInput.preserve
+      ? { ...unit, status: 'down' as const, hp: { ...unit.hp, core: 0 } } : unit)
+    const result = applyBattleAction({ ...state, units, active: 'member-0' },
+      { kind: 'turn', unit: 'member-0', act: { kind: 'wait' }, face: 'N' })
+    expect(result.error).toBeNull()
+    expect(result.state.result?.winner).toBe('enemy')
+  })
+
+  it('gives each member legal turns and resumes an eighteen-unit replay exactly', () => {
+    let state = createBattle(input)
+    const acted = new Set<string>(), actions: BattleAction[] = []
+    for (let index = 0; index < 36; index++) {
+      const active = state.active!
+      const action: BattleAction = { kind: 'turn', unit: active, act: { kind: 'wait' }, face: 'N' }
+      const next = applyBattleAction(state, action)
+      expect(next.error).toBeNull()
+      acted.add(active)
+      actions.push(action)
+      state = next.state
+    }
+    expect(squad.every(unit => acted.has(unit.id))).toBe(true)
+    const replay = replayBattle(JSON.parse(JSON.stringify(input)), actions)
+    expect(replay.error).toBeNull()
+    expect(replay.state).toEqual(state)
   })
 })
 

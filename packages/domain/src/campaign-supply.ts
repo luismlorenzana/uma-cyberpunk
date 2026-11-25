@@ -11,6 +11,7 @@ export interface SupplyPort {
   upkeep: Supplies
   reserve: Supplies
   liberation?: { flag: string; alloy: number }
+  liberations?: { flag: string; alloy: number }[]
 }
 
 export interface SupplyRoute {
@@ -101,7 +102,8 @@ export function supplyNight(supply: CampaignSupply, network: SupplyNetwork, flag
   for (const port of network.ports) {
     const stock = storesAt(supply, port)
     const next = { ...stock }
-    const liberation = port.liberation && flags.includes(port.liberation.flag) ? port.liberation.alloy : 0
+    const liberation = (port.liberations ?? []).reduce((alloy, bonus) => alloy + (flags.includes(bonus.flag) ? bonus.alloy : 0),
+      port.liberation && flags.includes(port.liberation.flag) ? port.liberation.alloy : 0)
     const extraAlloy = liberation + (support?.localAlloy.get(port.id) ?? 0)
     for (const kind of SUPPLY_KINDS) {
       const produced = port.produces[kind] + (kind === 'alloy' ? extraAlloy : 0)

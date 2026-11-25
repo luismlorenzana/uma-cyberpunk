@@ -1,5 +1,7 @@
 # Complete campaign environments (CY69)
 
+> **Reusable foundation.** This page documents the approved environment coverage for the earlier release. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 CY69 integrates the approved complete environment delivery on the existing Tier 1–5 campaign.
 Sixty-four approved source images cover 889 reviewed scene mappings: nine were already current,
 880 backdrop fields change and 47 image references are added. All 868 remaining four-review-plate

@@ -1,4 +1,4 @@
-import { awayMembers, issuedCampaignRig, PARTS_BY_ID, shipmentAt, SLOT_NAME, storesAt, type CampaignReleaseFile, type Save } from '@cyber/domain'
+import { awayMembers, crewSpeaker, issuedCampaignRig, PARTS_BY_ID, shipmentAt, SLOT_NAME, storesAt, type CampaignReleaseFile, type Save } from '@cyber/domain'
 import { useEffect, useState } from 'react'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
@@ -28,7 +28,7 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
   const [busy, setBusy] = useState(false)
   const at = workshopAt(save, loaded.book)
   if (!at) return null
-  const crew = save.crew.filter(({ outfit }) => !ashore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit))
+  const crew = save.crew.filter(({ outfit, expeditionOnly }) => !expeditionOnly && !ashore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit))
   const member = crew.find(({ outfit }) => outfit === selection) ?? crew[0]
   const rig = member?.rig ?? issuedCampaignRig()
   const gear = save.campaignGear
@@ -47,7 +47,7 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
     {member && <label className="flex flex-wrap items-center gap-2 text-sm">
       Crew
       <select className="min-h-11 rounded-lg bg-[#182238] px-2" value={member.outfit} onChange={(event) => setSelection(Number(event.currentTarget.value))}>
-        {crew.map(({ outfit }) => <option key={outfit} value={outfit}>{nameOf(loaded.book.story, outfit)}</option>)}
+        {crew.map(member => <option key={member.outfit} value={member.outfit}>{nameOf(loaded.book.story, crewSpeaker(member))}</option>)}
       </select>
       <span>{fittedSummary(rig)}</span>
     </label>}

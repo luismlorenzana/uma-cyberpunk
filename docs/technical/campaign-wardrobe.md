@@ -1,5 +1,7 @@
 # Six-look campaign wardrobe (CY65–CY67)
 
+> **Reusable foundation.** This page documents the existing role, outfit, crop and expression readers. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 The combined Tier 1–5 campaign uses all fifty officers' six approved neutral looks. The wardrobe is
 presentation data in the private campaign book. Viewing it changes no save; save v19 and all existing
 quest, recruitment, relationship, inventory and battle inputs remain compatible.
@@ -92,6 +94,11 @@ Crew Stories offers a released ally's wardrobe after the configured scene has be
 buttons show approved names and only the expressions actually published for the selected outfit.
 Viewing these changes no save, relationship or unlock. Source registration, updates, pending states
 and recovery follow the [publishing runbook](campaign-art-publishing.md#automatic-cast-wardrobes-cy70).
+
+An optional `visibleLooks` list controls which registered outfits appear in the wardrobe. Use the
+reviewed Boss Ally catalog to populate it. A scene can still explicitly select a registered
+look outside that list, such as an enemy's armor in a boarding encounter. Omit the list to
+browse every registered look. The existing scene and outcome gates still control wardrobe access.
 
 ## Publication and replacement
 

@@ -6,15 +6,11 @@ this before changing anything.
 
 ## Read first
 
-1. `docs/handoff/README.md`: the current phase and its queue. Your task is a packet in `docs/handoff/tasks/`.
-2. `docs/design/concept.md`: the concept and its calls (TC1–TC54), the starting point every design builds on;
-   `docs/design/build-plan.md` (BP1–BP9) says what's reused and how the packets build it. The story is its own
-   session's: `docs/design/story-brief.md` (SB1–SB11) is its brief, `docs/design/world.md` (WD1–WD24) its first pass,
-   and the research behind all of them is `docs/design/references.md`.
-3. `docs/game/`: the manual of the game as built. It is empty until the hello app (CY3); after that, look up any rule or
-   screen there first.
-4. `docs/decisions.md` (append-only, from D1), and the cross-game plan in uma-platform `docs/architecture.md`.
-5. For art work, `docs/design/art-direction.md`: the approved rendering, visual world and reference-review standard.
+1. [Handoff](docs/handoff/README.md) and the [four-act roadmap](docs/handoff/four-act-roadmap.md). Use the active packet in `docs/handoff/tasks/`.
+2. [Four-act game design](docs/design/campaign-rework.md) and [systems plan](docs/technical/four-act-campaign.md). D87 governs current gameplay and supersedes old tier-based plans.
+3. [Game manual](docs/game/README.md) for rules and screens already built. Use the [archive](docs/handoff/archive/README.md) for old release evidence.
+4. [Decisions](docs/decisions.md), append-only, and the cross-game plan in uma-platform `docs/architecture.md`.
+5. For Story or Art, use the [authoring contract](docs/design/campaign-art-delivery.md), [art direction](docs/design/art-direction.md) and the active authoring packet.
 
 ## Hard rules
 

@@ -8,6 +8,7 @@ import { armed, MOUNTS } from './rig'
 import { DIRS, inReach, sameTile, STEP } from './sight'
 import { barrierError, dashError, itemError, mendError, rebootError } from './support'
 import { hackError, techError } from './tech'
+import { talkError } from './talk'
 import { boardOf } from './terrain'
 import { inputOf } from './timeline'
 import { fireModes, modeCost, modeWeapon } from './specialists'
@@ -59,7 +60,13 @@ export function supportFrom(state: BattleState, unitId: string, from: Tile): Act
   const placed = at(state, unitId, from)
   const out: Act[] = []
   const u = unitById(state, unitId)
+  const input = inputOf(state, unitId), signature = input.signature
+  const signatureArm = signature && !u.signatureUsed && u.charge >= signature.charge ? armed(input, u, signature.mount) : null
+  for (const { target, actor } of state.input.talk ?? [])
+    if (actor === unitId && !talkError(placed, unitId, target, from)) out.push({ kind: 'talk', target })
   for (const t of state.units) {
+    if (signature && signatureArm && t.side !== u.side && t.status === 'active' && inReach(boardOf(placed), signatureArm.weapon, from, tileOf(t)))
+      out.push({ kind: 'attack', with: signature.mount, target: t.id, signature: true })
     for (const tech of ['stun', 'jam', 'jackout'] as const) if (!techError(placed, unitId, tech, t.id, from)) out.push({ kind: 'tech', tech, target: t.id })
     for (const part of PARTS) if (!mendError(placed, unitId, t.id, part, from)) out.push({ kind: 'mend', target: t.id, part })
     if (!rebootError(placed, unitId, t.id, from)) out.push({ kind: 'reboot', target: t.id })
@@ -126,6 +133,12 @@ export function checkTurn(state: BattleState, action: TurnAction): { reach: Reac
   }
   const act = declared.kind === 'prepare' ? { ...declared, kind: 'attack' as const, aim: undefined, mode: undefined } : declared
   if (act.kind === 'attack') {
+    if (act.signature && act.mode) return { error: 'Choose a signature or a firing mode' }
+    const signature = inputOf(state, action.unit).signature
+    if (act.signature !== undefined && (act.signature !== true || !signature || signature.mount !== act.with || u.signatureUsed
+      || unitById(placed, u.id).charge < signature.charge || act.aim || !state.units.some(t => t.id === act.target))) {
+      return { error: 'Signature unavailable' }
+    }
     const arm = armed(inputOf(state, action.unit), u, act.with)
     if (!arm) return { error: `${action.unit} can't fire ${act.with}` }
     const weapon = modeWeapon(state, action.unit, act.with, arm.weapon, act.mode)
@@ -161,6 +174,7 @@ export function checkTurn(state: BattleState, action: TurnAction): { reach: Reac
           : act.kind === 'mend' ? mendError(placed, action.unit, act.target, act.part, to)
             : act.kind === 'reboot' ? rebootError(placed, action.unit, act.target, to)
               : act.kind === 'item' ? itemError(placed, action.unit, act, to)
-                : 'unknown action'
+                : act.kind === 'talk' && placed.input.rulesVersion >= 5 ? talkError(placed, action.unit, act.target, to)
+                  : 'unknown action'
   return error ? { error } : { reach }
 }

@@ -87,7 +87,7 @@ function CommandEffects({ event, animate }: { event: ResolvedCommand; animate: b
   </svg>
 }
 
-export function CommandCinematic({ event, loaded, encounter, beat, fast, checkRelease }: { event: ResolvedCommand; loaded: LoadedCampaign; encounter: string; beat: number; fast: boolean; checkRelease: () => void }) {
+export function CommandCinematic({ event, loaded, encounter, beat, fast }: { event: ResolvedCommand; loaded: LoadedCampaign; encounter: string; beat: number; fast: boolean }) {
   const [error, setError] = useState<string | null>(null), [busy, setBusy] = useState(false)
   const binding = loaded.book.commandCinematics?.encounters.find(row => row.encounter === encounter)
   const crew = event.actor && loaded.book.commandCinematics?.actors.find(actor => actor.speaker === event.actor!.speaker && actor.role === 'crew')
@@ -131,7 +131,6 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast, checkRe
       <div className="mt-2 flex gap-2">
         <button type="button" className={button} disabled={busy} onClick={() => advance(beat < 3)}>{beat < 3 ? 'Skip to result' : 'Continue'}</button>
         <button type="button" className={button} aria-pressed={fast} onClick={() => void updateSave(save => ({ ...save, commandCinema: { ...save.commandCinema, fast: !save.commandCinema.fast, pending: !save.commandCinema.fast && save.commandCinema.pending ? { ...save.commandCinema.pending, beat: 3 } : save.commandCinema.pending } }))}>Fast orders</button>
-        <button type="button" className={button} onClick={checkRelease}>Check release</button>
         {beat < 3 && <button type="button" className={button} disabled={busy} onClick={() => advance()}>Next</button>}
       </div>
     </div>

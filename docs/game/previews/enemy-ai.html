@@ -46,6 +46,7 @@
 <nav class="toc"><a href="#top"><b>How enemies choose</b></a><a class="h2" href="#the-short-answer">The short answer</a><a class="h2" href="#where-she-stands">Where she stands</a><a class="h2" href="#what-she-does">What she does</a></nav>
 <main id="top">
 <h1 id="how-enemies-choose">How enemies choose</h1>
+<blockquote><p><b>Built behavior.</b> For the planned changes to range, reactions and turn pacing at expedition size, see the <a href="campaign.html">four-act campaign guide</a> and <a href="../../handoff/four-act-roadmap.md">roadmap</a>.</p></blockquote>
 <blockquote><p><b>Status: 2026-11-12, CY6 (D10).</b> The enemy AI and ally Auto as <code>packages/battle/src/ai.ts</code> plays them: one scorer for both sides. The simulator plays both sides with it; the app may offer ally Auto later.</p></blockquote>
 <h2 id="the-short-answer">The short answer</h2>
 <ul><li><b>On her turn, an enemy scores every sensible turn</b> (where to stand, what to do there, which way to face) with the same numbers the forecast card shows, and takes the best.</li><li><b>She never idles</b> (TC30): with nothing worth doing, she closes on the nearest foe or the objective.</li><li><b>The same battle always plays the same way:</b> ties go to the seeded roll.</li><li><b>A decision takes well under a millisecond</b> on a laptop (the phone's budget is 50 ms; CI holds it to 5 ms).</li></ul>

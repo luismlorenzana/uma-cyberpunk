@@ -1,3 +1,7 @@
-/** A campaign switch is a document navigation so each store and its pending sync stay in their own save scope. */
+import type { CampaignSaveScope } from '@cyber/domain'
+
 export const CAMPAIGN_ENTRY = '/campaign'
-export const inCampaign = typeof window !== 'undefined' && /^\/campaign(?:\/|$)/.test(window.location.pathname)
+export const campaignEntry = CAMPAIGN_ENTRY
+export const campaignAccount = `${campaignEntry}/account`
+export const campaignIdentity = 'four-act' as const
+export const saveScope: CampaignSaveScope = campaignIdentity

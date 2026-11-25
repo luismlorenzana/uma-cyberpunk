@@ -35,7 +35,7 @@ export function settleBonds(save: Save, pack: StoryPack | null): Save {
  * messages in the inbox. */
 export function afterBattleBonds(save: Save, pack: StoryPack | null, gains: ReadonlyMap<number, number> | null): Save {
   if (!gains) return save
-  const aboard = new Set(save.crew.map((m) => m.outfit))
+  const aboard = new Set(save.crew.filter(member => !member.expeditionOnly).map((m) => m.outfit))
   let next = save
   for (const [outfit, amount] of gains) if (aboard.has(outfit)) next = giveRapport(next, pack, outfit, amount)
   return { ...next, inbox: [...gains.keys()].filter((o) => aboard.has(o)) }

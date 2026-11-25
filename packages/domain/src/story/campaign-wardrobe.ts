@@ -8,7 +8,7 @@ export function parseCampaignWardrobe(value: unknown, book: Pick<CampaignBook, '
   const assets = new Set(book.assets.map(row => row.id)), cast = new Set<number | string>([...book.story.casting.crewOrder, ...book.story.casting.leads.map(row => row.outfit), ...book.story.casting.heroines.map(row => row.board)])
   const asset = (value: unknown, field: string) => { const id = p.slug(value, field); if (!assets.has(id)) p.fail(field, 'unknown image'); return id }
   const members = p.list(root.members, 'wardrobe.members', (value, field) => {
-    const row = p.object(value, field, ['speaker', 'looks', 'default', 'after', 'requiresFlag'], ['speaker', 'looks']), speaker = p.speaker(row.speaker, field + '.speaker')
+    const row = p.object(value, field, ['speaker', 'looks', 'default', 'after', 'requiresFlag', 'visibleLooks'], ['speaker', 'looks']), speaker = p.speaker(row.speaker, field + '.speaker')
     if (!cast.has(speaker)) p.fail(field, 'unknown cast identity')
     const looks = p.object(row.looks, field + '.looks', Object.keys((row.looks ?? {}) as object), typeof speaker === 'number' ? [...LOOKS] : [])
     if (!Object.keys(looks).length || Object.keys(looks).length > 32) p.fail(field, 'expected 1–32 outfits')
@@ -17,7 +17,14 @@ export function parseCampaignWardrobe(value: unknown, book: Pick<CampaignBook, '
     const after = row.after === undefined ? undefined : p.slug(row.after, field + '.after')
     if (after && !book.scenes.has(after)) p.fail(field, 'unknown wardrobe access scene')
     const requiresFlag = row.requiresFlag === undefined ? undefined : p.slug(row.requiresFlag, field + '.requiresFlag')
-    return { speaker, ...(fallback ? { default: fallback } : {}), ...(after ? { after } : {}), ...(requiresFlag ? { requiresFlag } : {}), looks: Object.fromEntries(Object.keys(looks).map(role => {
+    const visibleLooks = row.visibleLooks === undefined ? undefined : p.list(row.visibleLooks, field + '.visibleLooks', (value, path) => {
+      const look = p.slug(value, path)
+      if (!Object.hasOwn(looks, look)) p.fail(path, 'visible look must be registered')
+      return look
+    }, 32)
+    if (visibleLooks && new Set(visibleLooks).size !== visibleLooks.length) p.fail(field + '.visibleLooks', 'duplicate visible look')
+    return { speaker, ...(fallback ? { default: fallback } : {}), ...(after ? { after } : {}), ...(requiresFlag ? { requiresFlag } : {}),
+      ...(visibleLooks ? { visibleLooks } : {}), looks: Object.fromEntries(Object.keys(looks).map(role => {
       p.slug(role, field + '.look')
       const look = p.object(looks[role], field + '.' + role, ['asset', 'dialogue', 'profile', 'portrait', 'label'], ['asset'])
       return [role, { asset: asset(look.asset, field), ...Object.fromEntries(['dialogue', 'profile', 'portrait'].flatMap(key => look[key] === undefined ? [] : [[key, asset(look[key], field)]])),

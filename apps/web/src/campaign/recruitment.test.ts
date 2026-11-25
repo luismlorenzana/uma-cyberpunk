@@ -1,6 +1,6 @@
 import { newMember, newSave, parseCampaignBook, parseSave, STAND_IN_FILES } from '@cyber/domain'
 import { expect, it } from 'vitest'
-import { finishCampaignDialogue, questAvailable, recruitOnBoard, recruitProgress } from './quests'
+import { finishCampaignDialogue, questAvailable, questScene, recruitOnBoard, recruitProgress } from './quests'
 
 const stock = { fuel: 3, provisions: 2, alloy: 1 }
 const chapterFile = 'chapters/sw1-ch1.json'
@@ -36,4 +36,40 @@ it('reveals a later recruit on Last Watch completion without restarting the camp
   expect(recruitProgress(next, book, recruit)).toMatchObject({ joined: true, started: false, next: firstStory })
   expect(questAvailable(next, book, firstStory, 'sw1')).toBe(true)
   expect(finishCampaignDialogue(next, book, signOn, [], 'sw1')).toBe(next)
+})
+
+it('records the dialogue selected by a settled outcome and unlocks its following quest after reload', () => {
+  const branch = { ...ending, sceneWhen: { flag: 'crew-used-alternate', scene: firstStory.scene } }
+  const follow = { id: 'after-debrief', title: 'Sign on', scene: signOn.scene, after: branch.id }
+  const book = parseCampaignBook({ ...STAND_IN_FILES, [chapterFile]: { ...chapter,
+    scenes: [...chapter.scenes.slice(0, -1), ...scenes, chapter.scenes.at(-1)] },
+    'campaign.json': { schemaVersion: 1, draft: true, opening: opening.id, quests: [opening, branch, follow], assets: [], art: [] } })
+  const initial = finishCampaignDialogue(newSave('test', '2026-11-18T00:00:00Z'), book, opening, [])
+  expect(questScene(initial, branch)).toBe(ending.scene)
+  const alternate = { ...initial, story: { ...initial.story, flags: ['crew-used-alternate'] } }
+  expect(questScene(alternate, branch)).toBe(firstStory.scene)
+  const settled = parseSave(JSON.parse(JSON.stringify(finishCampaignDialogue(alternate, book, branch, []))))
+  expect(settled.story.seen).toContain(firstStory.scene)
+  expect(settled.story.seen).not.toContain(ending.scene)
+  expect(questAvailable(settled, book, follow)).toBe(true)
+})
+
+it('opens one shared capital from either saved proof and rejects a cyclic alternative', () => {
+  const first = { ...ending, after: opening.id }
+  const second = { ...firstStory, after: opening.id, port: undefined }
+  const capital = { ...signOn, port: undefined, after: opening.id, requiresAny: [first.id, second.id] }
+  const bookWith = (alternatives: string[] = capital.requiresAny) => parseCampaignBook({
+    ...STAND_IN_FILES, [chapterFile]: { ...chapter, scenes: [...chapter.scenes.slice(0, -1), ...scenes, chapter.scenes.at(-1)] },
+    'campaign.json': { schemaVersion: 1, draft: true, opening: opening.id, assets: [], art: [],
+      quests: [opening, first, second, { ...capital, requiresAny: alternatives }] },
+  }, 'four-act')
+  const book = bookWith()
+  const initial = finishCampaignDialogue(newSave('test', '2026-11-18T00:00:00Z'), book, opening, [])
+  expect(questAvailable(initial, book, capital)).toBe(false)
+  for (const proof of [first, second]) {
+    const restored = parseSave(JSON.parse(JSON.stringify(finishCampaignDialogue(initial, book, proof, []))))
+    expect(questAvailable(restored, book, capital)).toBe(true)
+  }
+  expect(() => bookWith([first.id, capital.id])).toThrow(/cycle/)
+  expect(() => bookWith([first.id, 'missing-proof'])).toThrow(/unknown quest missing-proof/)
 })

@@ -1,5 +1,7 @@
 # Campaign locations and management receipts (CY51)
 
+> **Reusable foundation.** This page documents the implemented location and management behaviors. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 The combined campaign exposes **Ship and port** after its existing supply/opening quest. A location
 inspects the same save and opens the existing supply, project, duty or Hangar controls. It never
 creates another resource ledger. Packs without `management` retain the earlier campaign interface.

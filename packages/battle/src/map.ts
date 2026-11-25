@@ -1,6 +1,7 @@
 // The map format (schema 1, CY4) and its parser. Heights stay digit rows, the same as uma-stage's room format, so the
 // board (CY7) builds them with no translation. `parseMap` checks every rule and names the path of any error.
 import { TUNING } from './tuning'
+import { EXPEDITION_SQUAD_SIZE } from './version'
 import type { BattleMap, Prop, Tile } from './types'
 
 export class BattleInputError extends Error {
@@ -49,9 +50,10 @@ function tiles(value: unknown, path: string, map: { width: number; depth: number
 /** Parses a map, checking every rule. */
 export function parseMap(value: unknown, path = 'map', rulesVersion = 4): BattleMap {
   const o = object(value, path)
-  if (o.schemaVersion !== 1) throw new BattleInputError(`${path}.schemaVersion`, 'expected 1')
+  if (o.schemaVersion !== 1 && o.schemaVersion !== 2) throw new BattleInputError(`${path}.schemaVersion`, 'expected 1 or 2')
   if (typeof o.id !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(o.id)) throw new BattleInputError(`${path}.id`, 'expected a lowercase id')
-  const { minSize, maxSize, maxHeight, squad, maxEnemies } = TUNING.map
+  const { minSize, maxSize, maxHeight, maxEnemies } = TUNING.map
+  const squad = o.schemaVersion === 2 ? EXPEDITION_SQUAD_SIZE : TUNING.map.squad
   const width = int(o.width, `${path}.width`, minSize, maxSize)
   const depth = int(o.depth, `${path}.depth`, minSize, maxSize)
   const heights = rows(o.heights, `${path}.heights`, width, depth, (c) => c >= '0' && c <= String(maxHeight), `a digit 0–${maxHeight}`)
@@ -68,7 +70,7 @@ export function parseMap(value: unknown, path = 'map', rulesVersion = 4): Battle
   }
   const extra = Object.keys(o).filter((k) => !['schemaVersion', 'id', 'width', 'depth', 'heights', 'tiles', 'spawns', 'props', 'states'].includes(k))
   if (extra.length > 0) throw new BattleInputError(path, `unknown keys ${extra.join(', ')}`)
-  const map: BattleMap = { schemaVersion: 1, id: o.id, width, depth, heights, tiles: tileRows, spawns: { squad: squadTiles, enemy: enemyTiles } }
+  const map: BattleMap = { schemaVersion: o.schemaVersion, id: o.id, width, depth, heights, tiles: tileRows, spawns: { squad: squadTiles, enemy: enemyTiles } }
   if (o.props !== undefined) map.props = props(o.props, `${path}.props`, map, seen)
   if (o.states !== undefined) {
     const st = object(o.states, `${path}.states`)

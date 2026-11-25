@@ -1,5 +1,7 @@
 # Ship combat in the campaign
 
+> **Built behavior.** For the planned changes to the acting ship, frozen officers and result presentation, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 Prepare the four stations, allocate reactor power and choose an order. Launch pays its displayed
 cargo cost once. The ship then resolves each order before showing its cinematic.
 

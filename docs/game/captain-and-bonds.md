@@ -1,5 +1,7 @@
 # The captain and bonds
 
+> **Built behavior.** For the planned changes to relationships across all acts and independent clearance, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-13, CY13 (D22).** The player as the ship's captain (TC55), the watch every life-aboard budget counts
 > by, and a bond with every Uma from rank 1 to 10 (TC56, TC57): rapport from battles, messages and bond scenes, the
 > story's gates, the catch-up, and the Trust or Heart choice at rank 8. Cabins and visits came with CY14 ([cabins.md](cabins.md)); the bonds' perks

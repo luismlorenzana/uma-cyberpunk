@@ -41,6 +41,7 @@ export interface StrikeForecast {
 }
 
 export interface Forecast {
+  signature?: string
   attack: StrikeForecast | null
   /** Who steps in to take the main attack. */
   cover: string | null
@@ -113,6 +114,11 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   if (act.kind === 'reboot') add(turn.unit, TUNING.back.reboot)
   if (act.kind === 'item' && act.item === 'cell') add(act.target ?? turn.unit, -TUNING.items.cell)
   if (act.kind !== 'attack') return { ...empty, charge, timeline: upcomingAfter(state, 0) }
+  const signature = act.signature ? state.input.units.find((unit) => unit.id === turn.unit)!.signature : undefined
+  if (signature) {
+    add(turn.unit, signature.charge)
+    if (unitById(state, turn.unit).side === 'enemy') return { ...empty, signature: signature.label, charge, timeline: upcomingAfter(state, 0) }
+  }
   if (act.mode) add(turn.unit, modeCost(act.mode))
   if (!state.units.some((u) => u.id === act.target)) {
     const s = objectStrikeOf(placed, turn.unit, act.with, act.target, to, act.mode)!
@@ -122,10 +128,10 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   const landed = facingOf(tileOf(target), target.facing, to)
   const windup = unitById(state, turn.unit).windup
   const prepared = windup?.target === act.target && windup.with === act.with
-  const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim, mode: act.mode, prepared })!
+  const main = strikeOf(placed, turn.unit, act.with, act.target, to, { aim: act.aim, mode: act.mode, prepared, power: signature?.power })!
   const cover = coverFor(placed, act.target, landed)
   const actual = cover ? strikeOf(placed, turn.unit, act.with, cover, to,
-    { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front', mode: act.mode, prepared })! : main
+    { aim: act.aim === 'hold' ? undefined : act.aim, facing: 'front', mode: act.mode, prepared, power: signature?.power })! : main
   const recipient = cover ? unitById(placed, cover) : target
   const attack = view(actual, recipient)
   const targets = blastTargets(placed, actual, recipient).map(({ id }) => id)
@@ -157,6 +163,7 @@ export function forecast(state: BattleState, turn: TurnAction): Forecast | { err
   }
   const suppressed = act.mode === 'suppress' ? suppressionTargets(placed, recipient) : []
   return { attack, cover, crossfire, counter, skills, tech: null, volley, charge, timeline: upcomingAfter(state, 0),
+    ...(signature ? { signature: signature.label } : {}),
     ...(suppressed.length ? { suppression: { targets: suppressed.map((u) => u.id), interrupts: suppressed.filter((u) => u.windup).map((u) => u.id) } } : {}),
     ...(targets.length ? { splash: { targets, damage: Math.max(1, Math.floor(actual.damage / 2)) } } : {}) }
 }

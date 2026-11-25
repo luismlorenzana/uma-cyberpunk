@@ -1,7 +1,7 @@
 // Tech and the Holds (TC19, TC26, WD9; CY5, rules version 2): the Deck's Stun, Jam and Jack-Out on Wit against Guts;
 // hacking terminals (doors, turrets, lifts, the lights); and each enemy's fate at the end, with her salvage.
-import { free, harmHold, stun } from './attack'
-import { spendCharge, tileOf, unitById } from './harm'
+import { harmHold, stun } from './attack'
+import { free, spendCharge, tileOf, unitById } from './harm'
 import { armless } from './rig'
 import { roll } from './rng'
 import { distance } from './sight'
@@ -50,7 +50,7 @@ export function resolveTech(state: BattleState, unitId: string, tech: TechKind, 
   const landed = roll(state.input.seed, state.turn, unitId, `tech:${tech}:${targetId}`) * 100 < techChance(state, unitId, targetId)
   cues.push({ kind: 'tech', unit: unitId, target: targetId, tech, landed })
   if (!landed) return
-  if (tech === 'jackout') return free(t, 'jackout', cues)
+  if (tech === 'jackout') return free(state, t, 'jackout', cues)
   if (tech === 'stun') stun(state, t, cues)
   else if (t.charge > 0) spendCharge(t, 1, 'jam', cues)
   if (t.holdHp) harmHold(state, unitId, t, TUNING.tech.holdDamage, cues)
@@ -120,6 +120,9 @@ export function outcomes(state: Pick<BattleState, 'input' | 'units'>): EnemyOutc
   return input.filter((i) => i.side === 'enemy').map((i) => {
     const u: UnitState = state.units.find((x) => x.id === i.id)!
     const fate = u.status === 'freed' ? 'freed' : u.status === 'active' ? 'standing' : 'broken'
-    return { id: u.id, fate, salvage: fate === 'standing' ? [] : PARTS.filter((p) => u.hp[p] > 0) }
+    if (u.talked) return { id: u.id, fate, salvage: [], talk: u.talked }
+    const home = fate === 'broken' ? state.input.talk?.find((c) => c.target === u.id)?.brokenOutcome : undefined
+    return { id: u.id, fate, salvage: fate === 'standing' ? [] : PARTS.filter((p) => u.hp[p] > 0),
+      ...(home ? { home } : {}), ...(u.freedBy ? { freedBy: u.freedBy } : {}) }
   })
 }

@@ -2,6 +2,7 @@ import { CABIN_STAGES, type CabinEvening, type CabinNight } from '../campaign-ca
 import type { CampaignBook } from './campaign'
 import { walkSteps } from './check'
 import { P } from './parse'
+import { campaignSpeaker } from './campaign-allies'
 
 function invitation(p: P, value: unknown, field: string): CabinEvening['invitation'] {
   const row = p.object(value, field, ['scene', 'stay', 'leave', 'wait', 'decline'], ['scene', 'stay', 'leave'])
@@ -13,7 +14,7 @@ function invitation(p: P, value: unknown, field: string): CabinEvening['invitati
   return result
 }
 
-export function parseCabinEvenings(value: unknown, book: Pick<CampaignBook, 'dates' | 'pairs' | 'sectors' | 'scenes'>,
+export function parseCabinEvenings(value: unknown, book: Pick<CampaignBook, 'dates' | 'pairs' | 'sectors' | 'scenes' | 'allies'>,
   reserved: ReadonlySet<string>): CabinEvening[] {
   const p = new P('campaign.json'), used = new Set(reserved), ids = new Set<string>(), sources = new Set<string>()
   return p.list(value, 'cabinEvenings', (value, field) => {
@@ -21,16 +22,19 @@ export function parseCabinEvenings(value: unknown, book: Pick<CampaignBook, 'dat
     const id = p.slug(row.id, `${field}.id`)
     if (ids.has(id)) p.fail(field, 'duplicate cabin identity')
     ids.add(id)
-    const src = p.object(row.source, `${field}.source`, ['companion', 'sector', 'pair'], [])
-    if (Object.keys(src).length !== 1) p.fail(field, 'expected one companion, sector or pair')
-    const source: CabinEvening['source'] = src.companion !== undefined ? { companion: p.outfit(src.companion, `${field}.source.companion`) }
-      : src.sector !== undefined ? { sector: p.slug(src.sector, `${field}.source.sector`) } : { pair: p.slug(src.pair, `${field}.source.pair`) }
+    const src = p.object(row.source, `${field}.source`, ['companion', 'sector', 'pair', 'trio'], [])
+    if (Object.keys(src).length !== 1) p.fail(field, 'expected one companion, sector, pair or trio')
+    const ally = book.allies?.find(row => row.heroine === src.companion || row.heroine === src.trio)
+    const source: CabinEvening['source'] = src.companion !== undefined ? { companion: ally?.member ?? p.outfit(src.companion, `${field}.source.companion`) }
+      : src.sector !== undefined ? { sector: p.slug(src.sector, `${field}.source.sector`) }
+      : src.trio !== undefined ? { trio: p.slug(src.trio, `${field}.source.trio`) } : { pair: p.slug(src.pair, `${field}.source.pair`) }
     const key = JSON.stringify(source)
     if (sources.has(key)) p.fail(field, 'duplicate cabin source')
     sources.add(key)
     const sector = 'sector' in source ? book.sectors?.find(s => s.id === source.sector) : undefined
     const pair = 'pair' in source ? book.pairs.find(s => s.id === source.pair) : undefined
-    const actors = 'companion' in source ? [source.companion] : sector?.former && sector.shared ? [sector.officer, sector.former.speaker]
+    const actors = 'companion' in source ? [campaignSpeaker(book.allies, source.companion)] : 'trio' in source && ally ? [ally.partner, ally.heroine]
+      : sector?.former && sector.shared ? [sector.officer, sector.former.speaker]
       : pair ? pair.members.map(m => m.outfit) : []
     if (!actors.length || 'companion' in source && !book.dates?.some(d => d.companion === source.companion)) p.fail(field, 'unknown cabin source')
     const own = new Set<string>()

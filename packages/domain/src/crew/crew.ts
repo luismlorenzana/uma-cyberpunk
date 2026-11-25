@@ -59,6 +59,10 @@ export interface Preset { name: string; rig: Rig }
  * from v5 her bond, and from v6 her cabin. */
 export interface CrewMember {
   outfit: number
+  /** A released heroine keeps her board identity. Outfit remains the stable crew record key. */
+  heroine?: string
+  /** This resident deploys only on her assigned expedition. */
+  expeditionOnly?: true
   xp: number
   /** Null: her default role (`defaultRole`). */
   role: Role | null
@@ -81,6 +85,8 @@ export const STRAIN_REST = 3
 export const PRESET_NAME_MAX = 24
 
 export const newMember = (outfit: number): CrewMember => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: newBond(), cabin: emptyCabin(), post: null })
+export const canTakeOrdinaryAssignment = (member: CrewMember | undefined): boolean => !!member && !member.expeditionOnly
+export const crewSpeaker = (member: Pick<CrewMember, 'outfit' | 'heroine'>): number | string => member.heroine ?? member.outfit
 
 /** Her level: 1 + one a hundred XP, to 50. A placeholder curve until Phase 5's economy; levels change no numbers yet. */
 export const levelOf = (xp: number): number => Math.min(50, 1 + Math.floor(xp / 100))
@@ -111,9 +117,11 @@ export const wearPreset = (m: CrewMember, index: number): CrewMember => (m.prese
  * XP, and her Strain after resting: by default a rest clears Strain 3; the cabins' Comfort sheds more (CY14's
  * `restedStrain`, passed in by the caller so this module needn't know cabins). */
 export function afterMission(crew: readonly CrewMember[], squad: readonly number[], xp: number, rest: (m: CrewMember) => number = (m) => (resting(m) ? 0 : m.strain)): CrewMember[] {
-  return crew.map((m) => squad.includes(m.outfit)
-    ? { ...m, xp: m.xp + xp, strain: Math.min(STRAIN_REST, m.strain + 1) }
-    : { ...m, xp: m.xp + Math.floor(xp / 2), strain: rest(m) })
+  return crew.map((member) => {
+    if (member.expeditionOnly) return member
+    if (squad.includes(member.outfit)) return { ...member, xp: member.xp + xp, strain: Math.min(STRAIN_REST, member.strain + 1) }
+    return { ...member, xp: member.xp + Math.floor(xp / 2), strain: rest(member) }
+  })
 }
 
 // --- The rig's numbers -------------------------------------------------------------------------------------------------

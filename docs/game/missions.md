@@ -1,5 +1,7 @@
 # The mission flow
 
+> **Built behavior.** For the planned changes to named personal leads, capital commits and expedition snapshots, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY10 (D14).** From a mission's briefing to the scene aboard (TC32, TC42), each step held in the
 > save so the app reopens wherever it was. The rules between the screens and the save are the **director**
 > (`apps/web/src/mission/director.ts`), pure and tested headless.
@@ -37,6 +39,12 @@ stateDiagram-v2
 
 **A battle step is its scene's last step** (the story check refuses one in the middle): the scene is marked seen as the
 mission starts, and what follows goes in a scene triggered `after` the mission.
+
+## Campaign call-up
+
+Some campaign missions can call a released pair back from home. Both members must be available.
+They can take squad slots or bridge stations for that sortie while keeping their home assignments.
+Retry uses the same deployment. Debriefing or returning to port ends the call-up.
 
 ## Resume
 

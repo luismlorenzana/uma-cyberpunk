@@ -1,5 +1,7 @@
 # Life aboard: the research
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-13 (D20).** Three research passes ran in parallel for the owner's new direction
 > ([life-aboard.md](life-aboard.md)): **how games build and live on a ship or mobile base**, **how games assign named
 > characters to duties**, and **how games do relationships, light romance, decorated quarters and bond-driven combat**.

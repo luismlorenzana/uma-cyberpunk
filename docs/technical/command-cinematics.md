@@ -1,5 +1,7 @@
 # Campaign ship cinematics (CY54)
 
+> **Reusable foundation.** This page documents the existing command staging and committed outcome playback. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+
 A cinematic presents an already committed ship order. The numeric command reducer and its v1/v2/v3
 win conditions are unchanged. This lives in the real combined campaign, including both occupied
 entries, local defenses, fleet contributions, the works ferry and the hired tender.

@@ -3,7 +3,7 @@
 // forecast card for an attack, and the facing, all sent as one turn. Enemy turns play at double speed, with Skip. Every
 // committed action is handed to `onCommit` (the sandbox's autosave); the board follows the cues, then the state.
 import {
-  boardOf, canAim, chooseAction, dirTo, orderError, partnerOf, type OrderKind, forecast, liveTiles, targetTile, supportFrom, terrainCard, timeline, type Act, type BattleAction, type BattleState,
+  boardOf, canAim, chooseAction, dirTo, EXPEDITION_RULES_VERSION, orderError, partnerOf, type OrderKind, forecast, liveTiles, targetTile, supportFrom, talkContact, terrainCard, timeline, type Act, type BattleAction, type BattleState,
   FIRE_MODE_LABEL, fireModes, modeCost, quickPatchTargets,
   type Cue, type Dir, type Forecast, type Reach, type Role, type TerrainCard, type Tile, type TurnAction,
 } from '@cyber/battle'
@@ -73,6 +73,7 @@ function actWords(state: BattleState, a: Act): string {
   if (a.kind === 'barrier') return `Barrier ${a.at[0]},${a.at[1]}`
   if (a.kind === 'mend') return `Mend ${labelOf(state, a.target)} ${a.part}`
   if (a.kind === 'reboot') return `Reboot ${labelOf(state, a.target)}`
+  if (a.kind === 'talk') return `Talk to ${labelOf(state, a.target)}`
   if (a.kind === 'item') return `${a.item}${a.target ? ` ${labelOf(state, a.target)}` : ''}${a.part ? ` ${a.part}` : ''}${a.at ? ` ${a.at[0]},${a.at[1]}` : ''}`
   if (a.kind === 'attack') return `Attack ${labelOf(state, a.target)}`
   return a.kind
@@ -89,6 +90,8 @@ export interface BattleViewProps {
   standInKit?: 'biome' | 'town'
   combatSprites?: CampaignRelease['combatSprites']
   onCommit: (s: Session) => void
+  onStoryCues?: (cues: readonly Cue[]) => Promise<void>
+  onTalkReply?: (target: string, reason: 'refused' | 'notYet') => void
   onEnd: (s: Session) => void
   onQuit: () => void
 }
@@ -127,7 +130,7 @@ export function BattleView(props: BattleViewProps) {
   return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, onCommit, onEnd, onQuit, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, onCommit, onEnd, onQuit, onStoryCues, onTalkReply, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -213,6 +216,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
     }
     // Rules version 3: the orbital strike's marked tiles until it lands.
     for (const t of s.v3?.strike?.tiles ?? []) over.push({ tile: t, kind: 'danger' })
+    for (const unit of s.units) if (unit.status === 'active' && unit.signatureMark) over.push({ tile: unit.signatureMark.tile, kind: 'danger' })
     for (const unit of s.units) {
       if (!unit.windup || unit.status !== 'active') continue
       const tile = targetTile(s, unit.windup.target)
@@ -259,19 +263,29 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
         const sp = cutInSpeed(settingRef.current, seen.current, c, after)
         seen.current.add(`${c.unit}:${c.with}`)
         if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
-        current = sp === 'off' ? null : { attacker: c.unit, target: c.target, band: c.band, role: c.role, speed: sp, numbers: [], key: Math.random() }
+        current = sp === 'off' ? null : { attacker: c.unit, target: c.target, band: c.band, role: c.role, signature: c.signature?.label, speed: sp, numbers: [], key: Math.random() }
         setCutIn(current)
         if (current) await wait(CUT_IN_MS[sp] / speed / 2)
+      } else if (c.kind === 'signatureWarning' || c.kind === 'signatureCanceled') {
+        popDoll(after, c.unit, c.kind === 'signatureWarning' ? c.label : 'Attack interrupted')
       } else if (c.kind === 'hit' || c.kind === 'miss' || c.kind === 'burn' || c.kind === 'holdHit' || c.kind === 'barrierHit') {
         const text = c.kind === 'miss' ? 'Miss' : `${c.amount}${'crit' in c && c.crit ? '!' : ''}`
         if (current) { const shown: CutInView = { ...(current as CutInView), numbers: [...(current as CutInView).numbers, text] }; current = shown; setCutIn(shown) }
         const target = c.kind === 'burn' ? c.unit : c.kind === 'barrierHit' ? null : c.target
         if (target) popDoll(after, target, text)
-      } else if (c.kind === 'prepared') popDoll(after, c.unit, `Preparing · ${labelOf(after, c.target)}`)
+      } else if (c.kind === 'rigBreak') sc.setDown(c.unit, true)
+      else if (c.kind === 'extracted' || c.kind === 'freed') {
+        await visual?.beforeRemoval(c)
+        if (!interrupted()) sc.removeFigure(c.unit)
+      }
+      else if (c.kind === 'talked') {
+        popDoll(after, c.target, 'Talked down')
+        await visual?.beforeRemoval(c)
+        if (!interrupted()) sc.removeFigure(c.target)
+      }
+      else if (c.kind === 'prepared') popDoll(after, c.unit, `Preparing · ${labelOf(after, c.target)}`)
       else if (c.kind === 'suppressed') popDoll(after, c.target, c.interrupted ? 'Interrupted' : 'Suppressed')
       else if (c.kind === 'mended' && action.kind === 'quickPatch') popDoll(after, c.target, 'Emergency patch')
-      else if (c.kind === 'rigBreak') sc.setDown(c.unit, true)
-      else if (c.kind === 'extracted' || c.kind === 'freed') sc.removeFigure(c.unit)
       else if (c.kind === 'faced') sc.face(c.unit, c.facing)
       else if (c.kind === 'terrain' || c.kind === 'door' || c.kind === 'heights' || c.kind === 'burst') {
         if (visual) syncTerrain(after)
@@ -306,6 +320,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
     await play(action, r.cues, before, r.session.state, side)
     if (!skipping.current) sync(r.session.state)
     setState(r.session.state)
+    if (onStoryCues) await onStoryCues(r.cues)
     busy.current = false
     playingSide.current = null
     next()
@@ -529,6 +544,8 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
 
   const me = state.units.find((u) => u.id === state.active)
   const playerTurn = !!me && ui.phase !== 'watch'
+  const expedition = state.input.rulesVersion === EXPEDITION_RULES_VERSION
+  const scrollActions = expedition && ui.phase === 'more'
   const btn = (label: string, onClick: () => void, primary = false, key = label) => (
     <button key={key} type="button" onClick={onClick}
       className={`pointer-events-auto min-h-11 min-w-24 rounded-full px-4 font-display text-[14px] font-bold shadow ${primary ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-[#141827]/90 text-[#e8ebf5] ring-1 ring-white/15'}`}>
@@ -574,17 +591,35 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       if (targets.length > 0) arc.push(btn('Attack', () => show({ phase: 'target', reach: ui.reach, dash: ui.dash, aim: false }), ui.phase !== 'target'))
       const canAimHold = targets.some((t) => state.units.find((u) => u.id === t.target)?.holdHp)
       if (canAimHold) arc.push(btn('Aim at Hold', () => show({ phase: 'target', reach: ui.reach, dash: ui.dash, aim: true })))
-      const placed = { ...state, units: state.units.map((u) => (u.id === me.id ? { ...u, x: ui.reach.to[0], y: ui.reach.to[1] } : u)) }
-      if (supportFrom(placed, me.id, ui.reach.to).length > 0) arc.push(btn('More', () => show({ phase: 'more', reach: ui.reach, dash: ui.dash })))
+      const placed = ui.dash ? { ...state, units: state.units.map(unit => unit.id === me.id ? { ...unit, charge: unit.charge - 1 } : unit) } : state
+      const support = supportFrom(placed, me.id, ui.reach.to)
+      const signature = state.input.units.find(unit => unit.id === me.id)?.signature
+      for (const act of support) if (act.kind === 'attack' && act.signature && signature) {
+        arc.push(btn(`${signature.label} · ${labelOf(state, act.target)}`,
+          () => previewAction(ui.reach, ui.dash, act), false, `signature-${act.target}`))
+      }
+      for (const act of support) if (act.kind === 'talk') {
+        arc.push(btn(actWords(state, act), () => {
+          lastTarget.current = targetTile(state, act.target)
+          previewAction(ui.reach, ui.dash, act)
+        }, false, `talk-${act.target}`))
+      }
+      if (onTalkReply) for (const contact of state.input.talk ?? []) {
+        const target = state.units.find(u => u.id === contact.target && u.status === 'active')
+        if (!target || Math.abs(target.x - ui.reach.to[0]) + Math.abs(target.y - ui.reach.to[1]) !== 1) continue
+        const reason = contact.actor !== me.id ? 'refused' : contact.requires === 'actorHit' && !target.talkHit ? 'notYet' : undefined
+        if (reason) arc.push(btn(`Speak to ${labelOf(state, target.id)}`, () => onTalkReply(target.id, reason), false, `reply-${target.id}`))
+      }
+      if (support.some((act) => act.kind !== 'talk' && act.kind !== 'attack')) arc.push(btn('More', () => show({ phase: 'more', reach: ui.reach, dash: ui.dash })))
       arc.push(btn('Wait', () => toFace(ui.reach, ui.dash, { kind: 'wait' })))
       arc.push(btn('Done', () => toFace(ui.reach, ui.dash, { kind: 'none' })))
       arc.push(btn('Undo', undo))
     } else if (ui.phase === 'more') {
       const placed = { ...state, units: state.units.map((u) => (u.id === me.id ? { ...u, x: ui.reach.to[0], y: ui.reach.to[1] } : u)) }
-      const choices = supportFrom(placed, me.id, ui.reach.to)
-      arc.push(<div className="pointer-events-auto flex max-h-[37dvh] flex-wrap gap-2 overflow-y-auto" key="support-actions">
-        {choices.map((a, i) => btn(actWords(state, a), () => previewAction(ui.reach, ui.dash, a), false, `more-${i}`))}
-      </div>)
+      const actions = supportFrom(placed, me.id, ui.reach.to).filter((act) => act.kind !== 'talk' && act.kind !== 'attack')
+      const shown = expedition ? actions : actions.slice(0, 8)
+      shown.forEach((a, i) => arc.push(btn(actWords(state, a),
+        () => previewAction(ui.reach, ui.dash, a), false, `more-${i}`)))
       arc.push(btn('Back', () => show({ phase: 'act', reach: ui.reach, dash: ui.dash })))
     } else if (ui.phase === 'face') {
       arc.push(
@@ -621,10 +656,11 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
   const timelineIds = timeline(state)
   const ghost = ui.phase === 'forecast' ? ui.f.timeline : null
   const inspected = inspect ? state.units.find((u) => u.id === inspect) : null
-  const shot = ui.phase === 'forecast' && ui.act.kind === 'attack' ? ui.act : null
+  const shot = ui.phase === 'forecast' && ui.act.kind === 'attack' && !ui.act.signature ? ui.act : null
+  const conversation = ui.phase === 'forecast' && ui.act.kind === 'talk' ? talkContact(state, ui.act.target) : null
   const shooter = state.input.units.find(({ id }) => id === me?.id)
   const modes = shot && shooter ? fireModes(shooter, shot.with, state.input.rulesVersion) : []
-  const aimTarget = (training || state.input.rulesVersion >= 5) && shot && me && canAim(state, me.id) && shot.mode !== 'area' && shot.mode !== 'suppress'
+  const aimTarget = (training || !!modes.length) && shot && me && canAim(state, me.id) && shot.mode !== 'area' && shot.mode !== 'suppress'
     ? state.units.find((unit) => unit.id === shot.target) : null
   return (
     <div className="absolute inset-0 select-none overflow-hidden">
@@ -642,13 +678,25 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       <div className="pointer-events-none absolute inset-x-0 flex justify-center" style={{ top: 'calc(var(--inset-top) + 6px)' }}>
         <Timeline state={state} ids={timelineIds} ghost={ghost} onInspect={setInspect} />
       </div>
-      {objectiveLabel && <p className="pointer-events-none absolute rounded bg-black/75 px-2 py-1 text-xs font-semibold text-white"
-        style={{ top: 'calc(var(--inset-top) + 55px)', right: 'calc(var(--inset-right) + 6px)' }}>{objectiveLabel}</p>}
+      <div className="pointer-events-none absolute flex flex-col items-end gap-1 text-xs font-semibold text-white"
+        style={{ top: 'calc(var(--inset-top) + 55px)', right: 'calc(var(--inset-right) + 6px)' }}>
+        {objectiveLabel && <p className="rounded bg-black/75 px-2 py-1">{objectiveLabel}</p>}
+        {!state.result && state.units.filter(unit => unit.status === 'active' && unit.signatureMark).map(unit =>
+          <p key={unit.id} className="rounded bg-[#58263d] px-2 py-1">
+            {state.input.units.find(input => input.id === unit.id)?.signature?.label} · Tile marked
+          </p>)}
+      </div>
       <div className="pointer-events-none absolute flex flex-col gap-2" style={{ top: 'calc(var(--inset-top) + 6px)', left: 'calc(var(--inset-left) + 6px)' }}>
         <button type="button" onClick={onQuit} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Setup</button>
         <button type="button" onClick={() => setReachAll((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Reach {reachAll ? 'on' : 'off'}</button>
         <button type="button" onClick={() => setCutInSetting((v) => (v === 'auto' ? 'quick' : v === 'quick' ? 'off' : 'auto'))} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Cut-in {cutInSetting}</button>
         <button type="button" onClick={() => setSaver((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Saver {saver ? 'on' : 'off'}</button>
+        {expedition && <select aria-label="Inspect squad member" value={inspected?.side === 'squad' ? inspected.id : ''}
+          onChange={event => setInspect(event.currentTarget.value || null)}
+          className="pointer-events-auto min-h-11 max-w-44 rounded-md bg-[#141827] px-2 text-[13px] font-semibold text-white ring-1 ring-white/15">
+          <option value="">Squad · 10</option>
+          {state.units.filter(unit => unit.side === 'squad').map(unit => <option key={unit.id} value={unit.id}>{labelOf(state, unit.id)}</option>)}
+        </select>}
         {expanded && <button type="button" onClick={() => setQuickTurns(!quickTurns)} aria-pressed={quickTurns}
           className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Auto face {quickTurns ? 'on' : 'off'}</button>}
         {inspected && <UnitCard state={state} unit={inspected} onClose={() => setInspect(null)} />}
@@ -657,8 +705,9 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       {me && !isPlayer(state) && !state.result && (
         <div className="absolute" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>{btn('Skip', skip, true)}</div>
       )}
-      <div className="pointer-events-none absolute flex max-w-[46%] flex-wrap items-end justify-end gap-2" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
+      <div className={`absolute flex max-w-[46%] flex-wrap items-end justify-end gap-2 ${scrollActions ? 'pointer-events-auto max-h-[66%] overflow-y-auto overscroll-contain p-1' : 'pointer-events-none'}`} style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
         {ui.phase === 'forecast' && <ForecastCard state={state} f={ui.f} onCancel={() => show({ phase: 'act', reach: ui.reach, dash: ui.dash })} onConfirm={() => toFace(ui.reach, ui.dash, ui.act)}>
+          {conversation && <p className="mt-2 text-[13px] text-white/80">{conversation.hint}</p>}
           {shot && me && modes.length > 0 && <div className="mt-2 grid grid-cols-2 gap-1" aria-label="Firing mode">
             {([undefined, ...modes] as const).map((mode) => {
               const act = { ...shot, mode, aim: mode === 'area' || mode === 'suppress' ? undefined : shot.aim }

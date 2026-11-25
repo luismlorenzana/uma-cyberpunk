@@ -1,5 +1,7 @@
 # Terrain, props and terminals
 
+> **Built behavior.** For the planned changes to layout, entry, cover and objective placement at expedition size, see the [four-act campaign guide](campaign.md) and [roadmap](../handoff/four-act-roadmap.md).
+
 > **Status: 2026-11-12, CY5 (D9).** Rules version 2. How the board itself changes in a battle: the five tile states,
 > the props that make them, cover and grating, the terminals, and the terrain card. The numbers are in
 > [battle.md's tuning table](battle.md#rules-version-2), rendered from `packages/battle/src/tuning.ts`.

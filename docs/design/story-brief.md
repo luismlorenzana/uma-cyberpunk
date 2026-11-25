@@ -1,5 +1,7 @@
 # Uma Cyberpunk: the story brief
 
+> **Historical foundation.** The [four-act design](campaign-rework.md) and [active roadmap](../handoff/four-act-roadmap.md) govern future campaign work. Earlier calls and trials remain here as evidence.
+
 > **Status: 2026-11-12 (D4).** From the game session to the story session. The owner split the work: a separate
 > session authors the world and the story, and this repo's game session builds the app and the combat. This brief is
 > what the story session needs to start: the owner's direction, what the game and the platform fix, what's free, the
@@ -332,7 +334,7 @@ world's kit and maps can be drawn.
   the story's commits are `docs(story): …`.
 - **Decisions** go in [decisions.md](../decisions.md) with the next free D-number, from either session.
 - **A story request** (a new mechanic, hook, room, talent or Hold) is a row in the handoff's "Story requests" table
-  ([handoff](../handoff/README.md)). The game session answers it in its next packet or says why not.
+  ([handoff](../handoff/archive/previous-queue.md)). The game session answers it in its next packet or says why not.
 - **This brief** is the game session's. When the game changes a hook, it updates the brief and logs a D-decision.
 - **Each doc keeps a desktop HTML page** in `docs/design/previews/`, as the owner asks of every doc.
 - **The game session reads `content/` on disk** to build maps and test chapters, and never commits it.

@@ -45,7 +45,7 @@ describe('two-handed Laser rifle save compatibility', () => {
       crew: [{ ...newMember(9000001), rig: { ...issuedCampaignRig(), leftHand: 'hand-buckler' } }],
       mission: { id: 'boarding', chapter: 'campaign', step: 'battle', squad: [9000001], battle: { input, actions: [action] }, won: null },
     }
-    const { commandCinema: _cinema, management: _management, cabinVisits: _visits, ...v16 } = source
+    const { expedition: _expedition, commandCinema: _cinema, management: _management, cabinVisits: _visits, ...v16 } = source
     for (const saved of [source, { ...v16, version: 16 }]) {
       const parsed = parseSave(JSON.parse(JSON.stringify(saved)))
       expect(parsed.crew[0]?.rig?.leftHand).toBeNull()
