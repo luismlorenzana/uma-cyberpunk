@@ -57,7 +57,8 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
       })) : undefined,
       art?.backdropCues ? Promise.all(art.backdropCues.map(async cue => {
         const step = sceneSteps.get(cue.at)!
-        try { return { step, url: await read(cue.asset), location: cue.location } } catch { return { step, location: cue.location } }
+        if (cue.asset === null) return { step }
+        try { return { step, url: await read(cue.asset), location: cue.location, portraits: cue.portraits } } catch { return { step } }
       })) : undefined,
     ]).then(([backdrop, portraits, illustrations, layers, backdropCues]) => {
       if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations),

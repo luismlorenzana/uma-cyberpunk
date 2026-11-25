@@ -5,13 +5,12 @@ import { sha, type ResolvedArt } from './model'
 import type { SelectedCampaign } from './publish'
 import { image } from './sources'
 import { concurrent } from './concurrent'
-import { parseSplashIndex, splashPlatformId, splashSourceId, SPLASH_INDEX, type PublishedSplash } from './splash-platform'
+import { parseSplashIndex, splashPlatformId, splashSourceId, SPLASH_INDEX, SPLASH_ROLES, type PublishedSplash } from './splash-platform'
 import { CAMPAIGN_PREFIX, SCENE_SPLASH_PREFIX, safeObject, type ArtStorage } from './storage'
 
 const hash = /^[a-f0-9]{64}$/
 const json = (bytes: Buffer): unknown => JSON.parse(bytes.toString('utf8'))
 const stableBytes = (value: unknown) => Buffer.from(JSON.stringify(value))
-const roles = ['crew', 'boss-ally', 'boss-enemy'] as const
 type Row = Record<string, unknown>
 
 function list(value: unknown, field: string): Row[] {
@@ -50,17 +49,20 @@ export async function resolveSplashBindings(file: string, selected: SelectedCamp
   }
   const bindings = p.list(root.bindings, 'bindings', (value, field) => {
     const fields = ['scene', 'chapter', 'chapterSha256', 'place', 'review', 'from']
-    const row = p.object(value, field, [...fields, 'at', 'portraits', 'replacesCompositionSha256'], fields)
+    const row = p.object(value, field, [...fields, 'at', 'returnAt', 'portraits', 'replacesCompositionSha256', 'with'], fields)
     const from = p.object(row.from, field + '.from', ['manifest', 'id', 'platformId', 'actor', 'role', 'outfit', 'variant', 'sha256'],
       ['id', 'actor', 'role', 'outfit', 'variant', 'sha256'])
-    const role = choice(from.role, field + '.role', roles)
+    const role = choice(from.role, field + '.role', SPLASH_ROLES)
     const actor = role === 'crew' ? p.outfit(from.actor, field + '.actor') : p.slug(from.actor, field + '.actor')
     const portraits = row.portraits === undefined ? 'show' : choice(row.portraits, field + '.portraits', ['show', 'hide'] as const)
     const at = row.at === undefined ? undefined : p.text(row.at, field + '.at', 256)
-    if (at && portraits === 'hide') p.fail(field, 'script cuts retain the existing portrait overlay')
-    return { scene: p.slug(row.scene, field + '.scene'), chapter: safeObject(p.text(row.chapter, field + '.chapter', 180)),
+    const returnAt = row.returnAt === undefined ? undefined : p.text(row.returnAt, field + '.returnAt', 256)
+    if (returnAt && !at) p.fail(field, 'returnAt requires a timed splash')
+    const withActors = row.with === undefined ? [] : p.list(row.with, field + '.with', (value, where) => p.speaker(value, where), 12)
+    if (withActors.includes(actor) || new Set(withActors).size !== withActors.length) p.fail(field + '.with', 'expected distinct supporting participants')
+    return { withActors, scene: p.slug(row.scene, field + '.scene'), chapter: safeObject(p.text(row.chapter, field + '.chapter', 180)),
       chapterSha256: digest(row.chapterSha256, field + '.chapterSha256'), place: p.slug(row.place, field + '.place'),
-      review: choice(row.review, field + '.review', ['review', 'approved'] as const), at, portraits,
+      review: choice(row.review, field + '.review', ['review', 'approved'] as const), at, returnAt, portraits,
       replacesCompositionSha256: row.replacesCompositionSha256 === undefined ? undefined : digest(row.replacesCompositionSha256, field + '.replacesCompositionSha256'),
       actor, role, id: splashSourceId(p, from.id, field + '.id'), outfit: p.slug(from.outfit, field + '.outfit'), variant: p.slug(from.variant, field + '.variant'),
       platformId: from.platformId === undefined ? undefined : p.slug(from.platformId, field + '.platformId'),
@@ -71,9 +73,11 @@ export async function resolveSplashBindings(file: string, selected: SelectedCamp
   const scoped = bindings.filter(row => !options.only.length || options.only.some(selector => matches(row, selector)))
   if (!scoped.length) throw new Error('No reviewed splash bindings in scope')
   const fullScenes = new Set(scoped.filter(row => !row.at).map(row => row.scene))
-  if (new Set(scoped.map(row => row.scene + ':' + (row.at ?? ''))).size !== scoped.length ||
+  const destinations = scoped.flatMap(row => [row.scene + ':' + (row.at ?? ''), ...(row.returnAt ? [row.scene + ':' + row.returnAt] : [])])
+  if (new Set(destinations).size !== destinations.length ||
     scoped.some(row => row.at && fullScenes.has(row.scene))) throw new Error('Conflicting splash scene destinations')
 
+  const lieutenants = new Set([...selected.book.fourAct?.duos.values() ?? []].flatMap(duo => duo.returns.map(row => row.heroine)))
   const result: ResolvedArt = { images: [], newAssets: [], portraits: [], skipped: [], sceneSplashes: [],
     sourceChecks: [async () => { if (!(await readFile(file)).equals(registry)) throw new Error('Splash binding registry changed during publication') }],
     sources: [{ path: file, sha256: sha(registry), generation: 'local' }] }
@@ -92,7 +96,7 @@ export async function resolveSplashBindings(file: string, selected: SelectedCamp
   const register = (row: typeof bindings[number], replacement: Awaited<ReturnType<typeof image>>) => {
     result.images.push(replacement)
     result.newAssets!.push(replacement.asset)
-    result.sceneSplashes!.push({ scene: row.scene, asset: replacement.asset, at: row.at,
+    result.sceneSplashes!.push({ scene: row.scene, asset: replacement.asset, at: row.at, returnAt: row.returnAt,
       width: replacement.width, height: replacement.height, portraits: row.portraits })
   }
   await concurrent(scoped, async row => {
@@ -103,14 +107,33 @@ export async function resolveSplashBindings(file: string, selected: SelectedCamp
     if (!story || story.sha256 !== row.chapterSha256 || !chapter?.scenes?.some(scene => scene.id === row.scene) || scene?.place !== row.place) {
       throw new Error(row.scene + ': Story source or setting differs from the reviewed binding')
     }
-    if (!scene.cast.some(member => (member.outfit ?? member.heroine) === row.actor)) throw new Error(row.scene + ': splash actor is not in this Story scene')
+    const cast = new Set(scene.cast.map(member => member.outfit ?? member.heroine ?? member.minor))
+    if (!cast.has(row.actor)) throw new Error(row.scene + ': splash actor is not in this Story scene')
+    if (row.withActors.some(actor => !cast.has(actor))) throw new Error(row.scene + ': a supporting splash actor is not in this Story scene')
 
+    if (row.role === 'lieutenant') {
+      if (!lieutenants.has(String(row.actor))) throw new Error(row.scene + ': splash actor is not a four-act Lieutenant')
+      if ((row.variant === 'city-motorcycle-tandem' || row.variant.startsWith('shared-quarters-')) && !row.withActors.length) {
+        throw new Error(row.scene + ': paired Lieutenant splash requires its supporting cast')
+      }
+    }
     const asset = 'splash-' + row.sha256.slice(0, 48)
     const current = selected.book.art.find(art => art.scene === row.scene)
     if (row.at) {
-      if (current?.composition || ![...walkSteps(scene.steps, 'steps')].some(step => step.path === row.at)) throw new Error(row.scene + ': splash cut requires a valid step without a full composition')
+      const order = [...walkSteps(scene.steps, 'steps')].map(step => step.path)
+      const first = order.indexOf(row.at)
+      if (first < 0 || (current?.composition && sha(stableBytes(current.composition)) !== row.replacesCompositionSha256)) {
+        throw new Error(row.scene + ': splash cut requires a valid step and the exact existing layout hash for a full composition')
+      }
       const prior = current?.backdropCues?.find(cue => cue.at === row.at)
-      if (prior && prior.asset !== asset) throw new Error(row.scene + ': splash cut would replace an existing visual cue')
+      if (prior && (prior.asset !== asset || (prior.portraits ?? 'show') !== row.portraits)) throw new Error(row.scene + ': splash cut would replace an existing visual cue')
+      if (row.returnAt) {
+        const scope = row.returnAt.slice(0, row.returnAt.lastIndexOf('['))
+        const restore = current?.backdropCues?.find(cue => cue.at === row.returnAt)
+        if (order.indexOf(row.returnAt) <= first || !row.at.startsWith(scope + '[') || (restore && restore.asset !== null)) {
+          throw new Error(row.scene + ': splash return must be later in the same branch or an enclosing branch')
+        }
+      }
     } else if (current?.composition && !(current.composition.layers.length === 1 && current.composition.layers[0]?.asset === asset) &&
       sha(stableBytes(current.composition)) !== row.replacesCompositionSha256) {
       throw new Error(row.scene + ': replacing a composition requires its existing layout hash')
@@ -143,7 +166,7 @@ export async function resolveSplashBindings(file: string, selected: SelectedCamp
     const actor = row.role === 'crew' ? source?.outfitId : source?.unitId
     if (matches.length !== 1 || actor !== row.actor || source?.outfit !== row.outfit || source?.scene !== row.variant ||
       (row.role !== 'crew' && source?.role !== row.role) || source?.sha256 !== row.sha256 || approved?.status !== 'approved' ||
-      approved.by !== 'owner' || approved.imageSha256 !== row.sha256) throw new Error(row.id + ': approved source identity, outfit, variant or hash disagrees')
+      approved.by !== 'owner' || (approved.imageSha256 ?? (row.role === 'lieutenant' ? approved.sha256 : undefined)) !== row.sha256 || (row.role === 'lieutenant' && approved.sha256 !== undefined && approved.sha256 !== row.sha256)) throw new Error(row.id + ': approved source identity, outfit, variant or hash disagrees')
 
     let bytes: Buffer
     if (options.localAssets) {
@@ -154,6 +177,7 @@ export async function resolveSplashBindings(file: string, selected: SelectedCamp
       if (!path || isAbsolute(path) || path === '..' || /^\.\.[\\/]/.test(path)) throw new Error('Splash image outside its catalog')
       bytes = await readFile(absolute)
     } else {
+      if (row.role === 'lieutenant') throw new Error('Lieutenant destinations require the canonical Platform splash index')
       const prefix = row.role === 'crew' ? 'art/universes/cyberpunk/' : 'enemy-art/cyberpunk/'
       const path = prefix + 'index.json'
       let published = platformRows.get(path)

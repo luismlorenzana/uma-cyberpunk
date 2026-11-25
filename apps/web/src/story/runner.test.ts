@@ -66,6 +66,20 @@ describe('the runner', () => {
     expect(log).toContain('effect:flag')
     expect(log).toContain('effect:lead')
   })
+  it('visits splash steps in scene order and skips the unused choice branch', async () => {
+    const { ui } = fake([1])
+    const opening: Step = { kind: 'narrate', text: 'Arrive' }
+    const branchA: Step = { kind: 'narrate', text: 'Wait' }
+    const branchB: Step = { kind: 'narrate', text: 'Depart' }
+    const back: Step = { kind: 'narrate', text: 'Return' }
+    const cuts = new Map<Step, string>([[branchA, 'unselected'], [back, 'room'], [opening, 'arrival'], [branchB, 'departure']])
+    const frames: string[] = []
+    ui.beforeStep = step => { const cue = cuts.get(step); if (cue) frames.push(cue) }
+    let skipping = true
+    await playSteps([opening, { kind: 'choice', options: [{ text: 'Wait', then: [branchA] }, { text: 'Leave', then: [branchB] }] }, back],
+      ui, { pack, squad: [], skipping: () => skipping, stopSkipping: () => { skipping = false } })
+    expect(frames).toEqual(['arrival', 'departure', 'room'])
+  })
   it('names a speaker from the casting’s stand-in labels', () => {
     expect(nameOf(pack, 9000001)).toBe('Lead A')
     expect(nameOf(pack, 'sw1-dockhand')).toBe('Dockhand')

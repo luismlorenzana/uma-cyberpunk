@@ -7,7 +7,7 @@ import { immutable } from './publish'
 import { image } from './sources'
 import { SCENE_SPLASH_PREFIX, type ArtStorage } from './storage'
 
-export const SPLASH_ROLES = ['crew', 'boss-ally', 'boss-enemy'] as const
+export const SPLASH_ROLES = ['crew', 'boss-ally', 'boss-enemy', 'lieutenant'] as const
 export type SplashRole = typeof SPLASH_ROLES[number]
 export const SPLASH_INDEX = SCENE_SPLASH_PREFIX + 'index.json'
 export const splashPlatformId = (role: SplashRole, id: string) => 'sp-' + sha(Buffer.from(JSON.stringify([role, id]))).slice(0, 40)
@@ -55,26 +55,39 @@ export function parseSplashIndex(value: unknown): PublishedSplash[] {
   return assets
 }
 
-export async function readSplashAlbums(authoringRoot: string) {
+export async function readSplashAlbums(authoringRoot: string, onlyRole?: SplashRole) {
   const root = await realpath(authoringRoot)
   const universe = join(root, 'character-universes/cyberpunk')
-  const manifests = [join(universe, 'splash-art/manifest.json'), join(universe, 'enemies/casual/splash-art/manifest.json'),
-    join(universe, 'enemies/splash-art/manifest.json')]
+  const manifests = [
+    { file: 'splash-art/manifest.json', roles: ['crew'] },
+    { file: 'enemies/casual/splash-art/manifest.json', roles: ['boss-ally', 'boss-enemy'] },
+    { file: 'enemies/splash-art/manifest.json', roles: ['boss-ally', 'boss-enemy'] },
+    { file: 'enemies/lieutenants/splash-art/manifest.json', roles: ['lieutenant'] },
+  ]
   const hashes = new Map<string, string>(), sources = new Map<string, Source>()
-  for (const [index, path] of manifests.entries()) {
-    const bytes = await readFile(path)
+  for (const album of manifests) {
+    if (onlyRole && !album.roles.includes(onlyRole)) continue
+    const path = join(universe, album.file)
+    const bytes = await readFile(path).catch((error: NodeJS.ErrnoException) => {
+      if (!onlyRole && album.roles.includes('lieutenant') && error.code === 'ENOENT') return null
+      throw error
+    })
+    if (!bytes) continue
     const p = new P(path), data = decode(bytes) as { assets?: unknown[] }
     const manifestSha256 = sha(bytes)
     hashes.set(path, manifestSha256)
     if (!Array.isArray(data.assets)) p.fail('assets', 'expected an approved album')
     for (const raw of data.assets ?? []) {
       const row = raw as Record<string, unknown>
-      const approval = row.approval as { status?: unknown; by?: unknown; imageSha256?: unknown } | undefined
+      const approval = row.approval as { status?: unknown; by?: unknown; imageSha256?: unknown; sha256?: unknown } | undefined
       if (approval?.status !== 'approved') continue
-      const role: SplashRole = index === 0 && (row.role === undefined || row.role === 'crew') ? 'crew'
-        : index !== 0 && (row.role === 'boss-ally' || row.role === 'boss-enemy') ? row.role : p.fail('asset.role', 'splash lacks its authored role')
+      const declared = row.role ?? (album.roles.includes('crew') ? 'crew' : undefined)
+      const role = SPLASH_ROLES.find(value => value === declared && album.roles.includes(value))
+      if (!role) return p.fail('asset.role', 'splash lacks its authored role')
+      if (onlyRole && role !== onlyRole) continue
       const sourceId = splashSourceId(p, row.id, 'asset.id'), sha256 = digest(p, row.sha256, 'asset.sha256')
-      if (approval.by !== 'owner' || approval.imageSha256 !== sha256) p.fail(sourceId, 'approved source identity or image pin disagrees')
+      const approvedHash = role === 'lieutenant' ? approval.imageSha256 ?? approval.sha256 : approval.imageSha256
+      if (approval.by !== 'owner' || approvedHash !== sha256 || (role === 'lieutenant' && approval.sha256 !== undefined && approval.sha256 !== sha256)) p.fail(sourceId, 'approved source identity or image pin disagrees')
       const actor = role === 'crew' ? p.outfit(row.outfitId, sourceId + '.outfitId') : p.slug(row.unitId, sourceId + '.unitId')
       const file = join(dirname(path), p.text(row.image, sourceId + '.image', 300))
       const id = splashPlatformId(role, sourceId)
@@ -88,6 +101,7 @@ export async function readSplashAlbums(authoringRoot: string) {
       } else sources.set(id, entry)
     }
   }
+  if (onlyRole && !sources.size) throw new Error('No owner-approved splashes for ' + onlyRole)
   return { sources: [...sources.values()].sort((a, b) => a.id.localeCompare(b.id)), async check() {
     await concurrent([...hashes], async ([path, expected]) => {
       if (sha(await readFile(path)) !== expected) throw new Error('Album changed during splash publication')

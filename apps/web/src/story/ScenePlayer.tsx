@@ -39,7 +39,7 @@ function Bust({ pack, speaker }: { pack: StoryPack; speaker: Speaker }) {
 export interface ScenePresentation {
   location?: string
   backdrop?: string
-  backdropCues?: { step: Step; url?: string; location?: string }[]
+  backdropCues?: { step: Step; url?: string; location?: string; portraits?: 'show' | 'hide' }[]
   portraits: ScenePortraitImage[]
   illustrations?: Record<string, string>
   composition?: Omit<CampaignComposition, 'layers'> & { layers: (CampaignComposition['layers'][number] & { url: string })[] }
@@ -75,8 +75,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   const [prompt, setPrompt] = useState<Prompt | null>(null)
   const [expressions, setExpressions] = useState<Partial<Record<Speaker, string>>>({})
   const [illustration, setIllustration] = useState<string | null>(null)
-  const [backdrop, setBackdrop] = useState(presentation?.backdrop)
-  const [location, setLocation] = useState(presentation?.location)
+  const [splash, setSplash] = useState<NonNullable<ScenePresentation['backdropCues']>[number]>()
   const [log, setLog] = useState<{ actor: Speaker | null; speaker: string; text: string }[]>([])
   /** Her last line stays above a choice, so the player answers what was said. */
   const said = log[log.length - 1]
@@ -96,8 +95,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
 
   useEffect(() => {
     let live = true
-    setBackdrop(presentation?.backdrop)
-    setLocation(presentation?.location)
+    setSplash(undefined)
     const cuts = new Map(presentation?.backdropCues?.map(cue => [cue.step, cue]))
     const ask = (p: Prompt) => new Promise<number>((r) => { if (!live) return; resolve.current = r; setPrompt(p) })
     const choose = async (kind: 'choice' | 'path', prompt: Prompt) => {
@@ -123,7 +121,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
     const ui: SceneUi = {
       beforeStep: (step) => {
         const cue = cuts.get(step)
-        if (live && cue) { setBackdrop(cue.url); setLocation(cue.location ?? presentation?.location) }
+        if (live && cue) setSplash(cue.url ? cue : undefined)
       },
       line: async (speaker, text, style) => {
         // React's development double-mount starts a second run; only the live one writes the Log.
@@ -159,17 +157,19 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   const image = illustration && presentation?.illustrations?.[illustration]
   const portrait = speaker === null || !presentation ? null : selectScenePortrait(presentation.portraits, speaker, expressions[speaker])
   const composition = presentation?.composition
-  const showPortrait = composition ? composition.portraits === 'show' : !image
+  const showPortrait = splash && !image ? splash.portraits !== 'hide' : composition ? composition.portraits === 'show' : !image
   const promptInsets = { marginBottom: 'var(--inset-bottom)', marginLeft: 'var(--inset-left)', marginRight: 'var(--inset-right)' }
   return (
     <div data-scene={scene.id} className="absolute inset-0 select-none bg-gradient-to-b from-[#141827] via-[#0e1222] to-[#05060c] text-[#e8ebf5]">
       {image ? <img alt="" src={image} className="absolute inset-0 size-full object-cover" data-scene-illustration />
-        : backdrop && <img alt="" src={backdrop} className="absolute inset-0 size-full object-cover opacity-70" data-scene-backdrop />}
-      {!image && composition && <svg aria-hidden className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${composition.width} ${composition.height}`}
+        : splash?.url ? <img key={splash.url} alt="" src={splash.url} className="absolute inset-0 size-full object-contain" data-scene-timed-splash
+          onError={() => setSplash(current => current === splash ? undefined : current)} />
+        : presentation?.backdrop && <img alt="" src={presentation.backdrop} className="absolute inset-0 size-full object-cover opacity-70" data-scene-backdrop />}
+      {!image && !splash && composition && <svg aria-hidden className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${composition.width} ${composition.height}`}
         preserveAspectRatio="xMidYMid meet" data-scene-composition>
         {composition.layers.map((layer) => <CompositionLayer key={layer.url + ':' + layer.asset} layer={layer} />)}
       </svg>}
-      <div data-scene-location className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{location ?? scene.place}</div>
+      <div data-scene-location className="absolute left-4 top-3 text-[12px] uppercase tracking-widest text-white/50" style={{ marginTop: 'var(--inset-top)', marginLeft: 'var(--inset-left)' }}>{splash?.location ?? presentation?.location ?? scene.place}</div>
       <div className="absolute right-3 top-3 flex gap-2" style={{ marginTop: 'var(--inset-top)', marginRight: 'var(--inset-right)' }}>
         {onExit && <button type="button" onClick={onExit} className="min-h-11 rounded-md bg-white/10 px-3 text-[13px] font-bold">{exitLabel ?? 'Leave tonight'}</button>}
         <button type="button" onClick={() => setAuto((a) => !a)} className={`min-h-11 rounded-md px-3 text-[13px] font-bold ${auto ? 'bg-[#2ee6ff] text-[#0b0d17]' : 'bg-white/10'}`}>Auto</button>

@@ -21,7 +21,12 @@ describe('campaign scene composition', () => {
       ...value, art: [{ ...value.art[0], backdropCues }],
     } })
     expect(parseCues([{ at: 'steps[0]', asset: 'pose' }]).art[0]?.backdropCues).toEqual([{ at: 'steps[0]', asset: 'pose' }])
+    expect(parseCues([{ at: 'steps[0]', asset: 'pose', portraits: 'hide' },
+      { at: 'steps[1]', asset: null }]).art[0]?.backdropCues).toEqual([
+      { at: 'steps[0]', asset: 'pose', portraits: 'hide' }, { at: 'steps[1]', asset: null },
+    ])
     for (const invalid of [
+      [{ at: 'steps[0]', asset: null, portraits: 'show' }], [{ at: 'steps[0]', asset: 'pose', portraits: 'always' }],
       [{ at: 'steps[999]', asset: 'pose' }], [{ at: 'steps[0]', asset: 'missing' }],
       [{ at: 'steps[0]', asset: 'pose' }, { at: 'steps[0]', asset: 'plate' }],
     ]) expect(() => parseCues(invalid)).toThrow()
