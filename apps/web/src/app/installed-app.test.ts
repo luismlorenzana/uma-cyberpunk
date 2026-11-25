@@ -12,7 +12,7 @@ describe('the installed iOS app', () => {
   })
   it('installs as a Home Screen app with its icon', () => {
     expect(meta('apple-mobile-web-app-capable')).toBe('yes')
-    expect(html).toContain('href="/icons/apple-touch-icon.png"')
+    expect(html).toContain('href="/icons/uma-cyberpunk-v1-touch-180.png"')
   })
   it('ships the production sign-in config', () => {
     const env = readFileSync(resolve(process.cwd(), '.env.production'), 'utf8')
