@@ -307,12 +307,14 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     }
     return { path: name, sha256, bytes: p.int(o.bytes, `${path}.bytes`, 1, 20 * 1024 * 1024) }
   }
+  const pageSize = 40, pageLimit = 64
+  const fileLimit = index.campaign === 'four-act' ? (index.storyPages === undefined ? 2048 : pageSize * pageLimit + 1) : 1024
   const files = p.list(index.files, 'files', (v, path) => {
     const o = p.object(v, path, ['source', 'path', 'sha256', 'bytes'])
     const source = p.text(o.source, `${path}.source`, 100)
     if (!STORY_FILE.test(source)) p.fail(`${path}.source`, 'expected a campaign or story source file')
     return { source, ...entry(o, path, false) }
-  }, index.campaign === 'four-act' ? 2048 : 1024)
+  }, fileLimit)
   const assets = p.list(index.assets, 'assets', (v, path) => {
     const o = p.object(v, path, ['id', 'path', 'sha256', 'bytes'])
     return { id: p.slug(o.id, `${path}.id`), ...entry(o, path, true) }
@@ -329,10 +331,10 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
         const source = p.text(value, field, 100)
         if (!remaining.delete(source)) p.fail(field, 'expected one unique pinned story document')
         return source
-      }, 40)
+      }, pageSize)
       if (!sources.length) p.fail(path, 'expected story documents')
       return { ...entry(o, path, false), sources }
-    }, 64)
+    }, pageLimit)
     if (!pages.length || remaining.size) p.fail('storyPages', 'expected complete story coverage')
     return pages
   })()

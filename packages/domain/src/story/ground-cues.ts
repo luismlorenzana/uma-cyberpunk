@@ -1,4 +1,4 @@
-import type { Cue, TalkContact } from '@cyber/battle'
+import type { BattleInput, Cue, TalkContact } from '@cyber/battle'
 import { walkSteps } from './check'
 import type { P } from './parse'
 import type { Scene } from './types'
@@ -11,12 +11,13 @@ export interface GroundCues {
   refusal?: { target: string; scene: string }
   talk?: { target: string; attempt: string; yes: string; refused: string; broken: string; notYet?: string }[]
   duo?: { unit: string; scene: string }[]
+  opponents?: { actor: string; warning: string; disrupted: string; released: string }[]
 }
 
 export function parseGroundCues(p: P, value: unknown, field: string, scenes: ReadonlyMap<string, Scene>,
   contacts: readonly TalkContact[]): GroundCues {
   const contexts = ['preparation', 'victory', 'withdrawal', 'retry'] as const
-  const row = p.object(value, field, [...contexts, 'talk', 'duo', 'refusal'], [])
+  const row = p.object(value, field, [...contexts, 'talk', 'duo', 'refusal', 'opponents'], [])
   const scene = (raw: unknown, path: string) => {
     const id = p.slug(raw, path), record = scenes.get(id)
     if (!record || [...walkSteps(record.steps, '')].some(({ step }) => !['line','thought','narrate','emote','wait','illustration','slot','choice'].includes(step.kind)))
@@ -48,15 +49,40 @@ export function parseGroundCues(p: P, value: unknown, field: string, scenes: Rea
     if (!contacts.some(contact => contact.target === target)) p.fail(path, 'expected a Talk contact')
     return { target, scene: scene(value.scene, path + '.scene') }
   })()
+  const actors = new Set<string>()
+  const opponents = row.opponents === undefined ? undefined : p.list(row.opponents, field + '.opponents', (raw, path) => {
+    const phases = ['warning', 'disrupted', 'released']
+    const entry = p.object(raw, path, ['actor', ...phases])
+    const actor = p.slug(entry.actor, path + '.actor')
+    if (actors.has(actor)) p.fail(path, 'expected one cue bank per opponent')
+    actors.add(actor)
+    const warning = scene(entry.warning, path + '.warning')
+    const disrupted = scene(entry.disrupted, path + '.disrupted')
+    const released = scene(entry.released, path + '.released')
+    if (new Set([warning, disrupted, released]).size !== 3 || ![warning, disrupted, released].every(id =>
+      scenes.get(id)?.cast.some(member => member.heroine === actor || member.minor === actor))) {
+      p.fail(path, 'each cue needs a distinct scene with the named opponent')
+    }
+    return { actor, warning, disrupted, released }
+  }, 8)
   return { ...(talk ? { talk } : {}), ...(refusal ? { refusal } : {}), ...(duo ? { duo } : {}),
+    ...(opponents ? { opponents } : {}),
     ...Object.fromEntries(contexts.flatMap(key => row[key] === undefined ? [] : [[key, scene(row[key], `${field}.${key}`)]])) }
 }
 
-export function groundCueScenes(binding: GroundCues, cues: readonly Cue[]): string[] {
-  return [...new Set(cues.flatMap((cue) => {
+export function groundOpponentScenes(binding: GroundCues, input: BattleInput, phase: 'warning' | 'disrupted' | 'released'): string[] {
+  return (binding.opponents ?? []).filter(({ actor }) => input.units.some(unit =>
+    unit.side === 'enemy' && unit.ref?.kind === 'heroine' && unit.ref.id === actor)).map(row => row[phase])
+}
+
+export function groundCueScenes(binding: GroundCues, cues: readonly Cue[], input?: BattleInput): string[] {
+  const disrupted = input && cues.some(cue => cue.kind === 'ended' && cue.winner === 'squad')
+    && cues.some(cue => cue.kind === 'objective' && cue.objective === input.objective.kind && cue.value >= cue.of)
+    ? groundOpponentScenes(binding, input, 'disrupted') : []
+  return [...new Set([...disrupted, ...cues.flatMap((cue) => {
     if (cue.kind === 'duo') return [cue.unit, cue.partner].flatMap(unit => binding.duo?.find(row => row.unit === unit)?.scene ?? [])
     if (cue.kind !== 'rigBreak' && cue.kind !== 'talked') return []
     const talk = binding.talk?.find(row => row.target === (cue.kind === 'talked' ? cue.target : cue.unit))
     return talk ? cue.kind === 'talked' ? [talk.attempt, talk.yes] : [talk.broken] : []
-  }))]
+  })])]
 }

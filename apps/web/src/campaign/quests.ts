@@ -41,7 +41,8 @@ export function questComplete(save: Save, quest: CampaignQuest, book?: CampaignB
     && captureGate(save, book, quest)
 }
 
-export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQuest, port?: string): boolean {
+export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQuest, port?: string, context?: 'quarters'): boolean {
+  if (context !== 'quarters' && book.allies?.some(row => row.pairConsent === quest.id)) return false
   if ((quest.port && quest.port !== port) || quest.flags?.some(flag => !save.story.flags.includes(flag))
     || questComplete(save, quest, book) || !homeQuestReady(save, book, quest.id) || !finaleQuestReady(save, book, quest)) return false
   const expedition = expeditionForQuest(book, quest.id, save.expedition?.duo)

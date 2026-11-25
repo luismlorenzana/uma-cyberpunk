@@ -13,6 +13,7 @@ export interface CampaignAlly {
   partner: number
   release: { quest: string; flag: string }
   pairFlag?: string
+  pairConsent?: string
   home?: { quest: string; flag: string }
   role: Role
   rig: NonNullable<CrewMember['rig']>
@@ -24,11 +25,11 @@ export const campaignSpeaker = (allies: readonly CampaignAlly[] | undefined, mem
 export function parseCampaignAllies(p: P, value: unknown, story: StoryPack, scenes: ReadonlyMap<string, Scene>,
   quests: ReadonlyMap<string, CampaignQuest>, fourAct = false): CampaignAlly[] {
   const outfits = new Set([...story.casting.crewOrder, ...story.casting.leads.map(lead => lead.outfit)])
-  const members = new Set(outfits), heroines = new Set<string>()
+  const members = new Set(outfits), heroines = new Set<string>(), consentQuests = new Set<string>()
   const checkFlag = (quest: CampaignQuest, flag: string) => scenes.get(quest.scene)?.steps.some(step => step.kind === 'flag' && step.flag === flag && step.set)
   return p.list(value, 'allies', (raw, field) => {
     const required = ['heroine', 'member', 'partner', 'release', 'role', 'main', 'back']
-    const row = p.object(raw, field, [...required, 'pairFlag', 'home'], fourAct ? required : [...required, 'pairFlag', 'home'])
+    const row = p.object(raw, field, [...required, 'pairFlag', 'pairConsent', 'home'], fourAct ? required : [...required, 'pairFlag', 'home'])
     const heroine = p.slug(row.heroine, `${field}.heroine`), member = p.outfit(row.member, `${field}.member`)
     if (!story.casting.heroines.some(entry => entry.board === heroine) || heroines.has(heroine)) p.fail(field, 'expected a unique heroine in casting')
     if (members.has(member)) p.fail(field, 'expected a distinct permanent crew record key')
@@ -45,7 +46,21 @@ export function parseCampaignAllies(p: P, value: unknown, story: StoryPack, scen
     }
     const release = milestone('release'), home = row.home === undefined ? undefined : milestone('home')
     const pairFlag = row.pairFlag === undefined ? undefined : p.slug(row.pairFlag, `${field}.pairFlag`)
-    if (pairFlag && ![...quests.values()].some(q => [...walkSteps(scenes.get(q.scene)!.steps, '')].some(({ step }) =>
+    const pairConsent = row.pairConsent === undefined ? undefined : p.slug(row.pairConsent, field + '.pairConsent')
+    if (pairConsent) {
+      const quest = quests.get(pairConsent), scene = quest && scenes.get(quest.scene)
+      const options = scene?.steps.filter(step => step.kind === 'choice')
+      const accepted = options?.[0]?.options[0]?.then.find(step => step.kind === 'flag')
+      const effects = scene && [...walkSteps(scene.steps, '')].filter(({ step }) =>
+        !['line', 'narrate', 'thought', 'emote', 'wait', 'choice', 'illustration'].includes(step.kind))
+      if (!fourAct || !pairFlag || !quest?.after || quest.encounter || quest.sceneWhen || consentQuests.has(pairConsent)
+        || !scene?.cast.some(actor => actor.outfit === partner) || !scene.cast.some(actor => actor.heroine === heroine)
+        || options?.length !== 1 || options[0]?.options.length !== 2 || effects?.length !== 1
+        || !accepted?.set || accepted.flag !== pairFlag) {
+        p.fail(field + '.pairConsent', 'expected one consent choice with an accepted pair flag and a reversible deferral')
+      }
+      consentQuests.add(pairConsent)
+    } else if (pairFlag && ![...quests.values()].some(q => [...walkSteps(scenes.get(q.scene)!.steps, '')].some(({ step }) =>
       step.kind === 'flag' && step.set && step.flag === pairFlag))) p.fail(field, 'expected an authored pair flag')
     const role = row.role as Role
     if (!ROLES.includes(role)) p.fail(`${field}.role`, 'expected a crew role')
@@ -53,6 +68,6 @@ export function parseCampaignAllies(p: P, value: unknown, story: StoryPack, scen
     if (PARTS_BY_ID.get(main)?.slot !== 'hand' || PARTS_BY_ID.get(back)?.slot !== 'back') p.fail(field, 'expected hand and Back equipment')
     const rig = issuedCampaignRig(main, back), loadout = loadoutOf(rig)
     if (loadOf(loadout) > capacityOf({ loadout, bands: STAND_IN_BANDS })) p.fail(field, 'the issued rig exceeds capacity')
-    return { heroine, member, partner, release, role, rig, ...(home ? { home } : {}), ...(pairFlag ? { pairFlag } : {}) }
+    return { heroine, member, partner, release, role, rig, ...(home ? { home } : {}), ...(pairFlag ? { pairFlag } : {}), ...(pairConsent ? { pairConsent } : {}) }
   }, 60)
 }
