@@ -14,7 +14,7 @@ expressions and Story approval remain in CY49/CY50.
 
 ## Four-act destination
 
-Use `--campaign four-act` with `pnpm art:publish` or `pnpm art:sync` to target the four-act game release. The same option scopes an art rollback. Local combat-sprite intake uses `--four-act`. The publisher validates the release identity, stages the art-only manifest under `campaign/releases/four-act/` and advances `campaign/four-act.json` using its expected generation. Platform continues to use the existing Cyberpunk universe collections.
+Use `--campaign four-act` with `pnpm art:publish` or `pnpm art:sync` to target the four-act game release. The same option scopes an art rollback. Local combat-sprite intake uses `--four-act`. The publisher validates the release identity, stages the art-only manifest under `campaign/releases/four-act/` and advances `campaign/four-act.json` using its expected generation. Platform continues to use the existing Cyberpunk universe collections. The Art Authoring hook passes the four-act target explicitly. The live game reads `content/campaign-art-plan/four-act-art-publish.json` by default. That private registry binds Lieutenant outfits and approved expressions by canonical board identity. Wardrobe access follows each Lieutenant’s return settlement, and scene outfit overrides use the exact authored look.
 
 ## Two deliveries and their boundaries
 

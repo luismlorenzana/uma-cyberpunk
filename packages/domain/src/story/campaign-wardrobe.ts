@@ -30,7 +30,7 @@ export function parseCampaignWardrobe(value: unknown, book: Pick<CampaignBook, '
       return [role, { asset: asset(look.asset, field), ...Object.fromEntries(['dialogue', 'profile', 'portrait'].flatMap(key => look[key] === undefined ? [] : [[key, asset(look[key], field)]])),
         ...(look.label === undefined ? {} : { label: p.text(look.label, field + '.label', 64) }) }]
     })) as Record<string, WardrobeLook> }
-  }, 200)
+  }, 512)
   if (new Set(members.map(row => row.speaker)).size !== members.length) p.fail('wardrobe.members', 'duplicate identity')
   const scenes = p.list(root.scenes, 'wardrobe.scenes', (value, field) => {
     const row = p.object(value, field, ['scene', 'context', 'outfits'], ['scene', 'context']), scene = p.slug(row.scene, field), context = row.context as LookContext
