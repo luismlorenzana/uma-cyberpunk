@@ -64,7 +64,8 @@ flowchart LR
 ```
 
 The deploy job requires a `push` event on `main`, a successful verify job, and `DEPLOY_ENABLED=true`. Deployments run in
-the `uma-cyberpunk-production` concurrency group. GitHub Actions builds the Docker image using the npm token as a build
+the `uma-cyberpunk-production` concurrency group. The Cloud Run action routes traffic to the latest revision. The
+readiness step waits for that exact commit to answer before hosting deploys. GitHub Actions builds the Docker image using the npm token as a build
 secret. `scripts/check-hosting-site.mjs` checks that `firebase.json` names the same site as the workflow.
 
 If GitHub fails to queue a merge, check Actions and the GitHub incident status. Preserve the live release and report the

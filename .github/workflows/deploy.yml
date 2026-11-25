@@ -122,6 +122,7 @@ jobs:
           region: ${{ env.GCP_REGION }}
           service: ${{ env.CLOUD_RUN_SERVICE }}
           image: ${{ env.API_IMAGE }}
+          revision_traffic: 'LATEST=100'
           labels: app=cyber
           # App-level auth (Firebase ID token + owner allowlist) guards every route but /api/health.
           flags: >-
@@ -144,8 +145,18 @@ jobs:
 
       - name: Verify API readiness and auth guard
         run: |
-          curl --fail --silent --show-error --retry 10 --retry-delay 3 "${{ steps.deploy-api.outputs.url }}/api/health" > /dev/null
-          test "$(curl --silent "${{ steps.deploy-api.outputs.url }}/api/health" | python3 -c 'import json,sys; print(json.load(sys.stdin)["build"])')" = "${GITHUB_SHA}"
+          url="${{ steps.deploy-api.outputs.url }}"
+          observed=''
+          for attempt in {1..12}; do
+            observed="$(curl --fail --silent --show-error --max-time 5 "${url}/api/health" |
+              python3 -c 'import json,sys; print(json.load(sys.stdin)["build"])' 2>/dev/null)" || observed=''
+            if [ "${observed}" = "${GITHUB_SHA}" ]; then break; fi
+            sleep 3
+          done
+          if [ "${observed}" != "${GITHUB_SHA}" ]; then
+            echo "::error::Expected API build ${GITHUB_SHA}, received ${observed:-no healthy build}"
+            exit 1
+          fi
           test "$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "${{ steps.deploy-api.outputs.url }}/api/save")" = "401"
 
       - name: Build web application
