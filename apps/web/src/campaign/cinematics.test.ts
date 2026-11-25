@@ -21,7 +21,7 @@ const mechanical = (save: Save) => ({ mission: save.mission, stock: save.campaig
 
 describe('committed ship order cinematics', () => {
   it('uses the recorded officer’s station art and keeps the enemy role separate', () => {
-    const book = {
+    const book: Pick<CampaignBook, 'commandCinematics' | 'wardrobe'> = {
       commandCinematics: { actors: [
         { speaker: first, role: 'crew', base: 'crew-art', poseSlot: 'station' },
         { speaker: 'commander', role: 'enemy', base: 'enemy-art', poseSlot: 'station' },
@@ -30,7 +30,7 @@ describe('committed ship order cinematics', () => {
         { speaker: 'commander', looks: { 'combat-station': { asset: 'ally-art', profile: 'ally-profile' } } },
         { speaker: second, looks: { street: { asset: 'street-art' } } },
       ], scenes: [], crops: [] },
-    } satisfies Pick<CampaignBook, 'commandCinematics' | 'wardrobe'>
+    }
     expect(commandStationArt(book, savedCommandEvent(issueCommand(launched(), 'escort', 0, fire))!.actor!.speaker))
       .toMatchObject({ actor: { base: 'crew-art' } })
     expect(commandStationArt(book, 'commander')).toMatchObject({ actor: { role: 'ally', base: 'ally-art', profile: 'ally-profile' }, portraitOnly: true })
