@@ -82,3 +82,19 @@ it('accepts the larger four-act Story manifest when its pages cover every pin', 
   expect(() => parseCampaignRelease({ ...base, storyPages: storyPages.slice(1) })).toThrow(/complete story coverage/)
   expect(() => parseCampaignRelease(base)).toThrow(/2048/)
 })
+
+it('reads a full four-act expression library while retaining the image budget for other packs', () => {
+  const assets = Array.from({ length: 6500 }, (_, i) => ({ id: `art-${i}`, file: `art-${i}.png` }))
+  const config = { schemaVersion: 1, opening: 'opening', draft: true,
+    quests: [{ id: 'opening', title: 'Opening', scene: 'sw1-ch1-s1' }], assets, art: [] }
+  const book = { ...STAND_IN_FILES, 'campaign.json': config }
+  expect(parseCampaignBook(book, 'four-act').assets).toHaveLength(6500)
+  expect(() => parseCampaignBook(book, 'pilot')).toThrow(/4096/)
+
+  const sha256 = '1'.repeat(64)
+  const release = { schemaVersion: 1, release: 'expression-library', files: [
+    { source: 'campaign.json', sha256, path: `campaign/files/pack.${sha256}.json`, bytes: 100 },
+  ], assets: assets.map(({ id }) => ({ id, sha256, path: `campaign/files/pack.${sha256}.png`, bytes: 100 })) }
+  expect(parseCampaignRelease({ ...release, campaign: 'four-act' }).assets).toHaveLength(6500)
+  expect(() => parseCampaignRelease({ ...release, campaign: 'pilot' })).toThrow(/4096/)
+})
