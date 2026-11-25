@@ -48,8 +48,12 @@ export function campaignUpkeep(book: CampaignBook, save: Save, ashore: ReadonlyS
 export function developedPort(book: CampaignBook, save: Pick<Save, 'campaignProjects'>, port: SupplyPort): SupplyPort {
   const projects = book.projects?.filter((project) => save.campaignProjects[project.id] === 0
     && projectPort(book, project) === port.id) ?? []
-  if (!projects.length) return port
+  if (!projects.length && !book.fourAct) return port
   const produces = { ...port.produces }, upkeep = { ...port.upkeep }
+  if (book.fourAct) {
+    produces.fuel = Math.max(produces.fuel, upkeep.fuel + 3)
+    produces.provisions = Math.max(produces.provisions, upkeep.provisions + 4)
+  }
   for (const project of projects) for (const kind of ['fuel', 'provisions', 'alloy'] as const) {
     produces[kind] += project.production[kind]
     upkeep[kind] += project.upkeep[kind]

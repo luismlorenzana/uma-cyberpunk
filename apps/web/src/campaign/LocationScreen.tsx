@@ -39,7 +39,7 @@ function LocationArt({ loaded, location, state, props }: { loaded: LoadedCampaig
       if (live) urls.push(url); else URL.revokeObjectURL(url)
       return url
     }
-    const plate = visual.asset ? read(visual.asset).catch(() => read(visual.fallback)) : read(visual.fallback)
+    const plate = visual.asset ? read(visual.asset).catch(() => read(visual.fallback)) : visual.fallback ? read(visual.fallback) : Promise.resolve(undefined)
     void Promise.all([plate.catch(() => undefined), Promise.all(props.map(async prop => {
       try { return [[prop.asset, await read(prop.asset)]] as [string, string][] } catch { return [] }
     }))]).then(([plate, props]) => { if (live) setImages({ plate, props: Object.fromEntries(props.flat()) }) })
@@ -65,7 +65,7 @@ export default function LocationScreen({ save, loaded, location, back, error }: 
   const state = locationState(save, loaded.book, location)
   const reports = managementReports(save, loaded.book, location)
   const entry = location.entry
-  const cargo = ['cargo-hold', 'airlock', 'bridge'].includes(location.id)
+  const cargo = entry.kind === 'port' || ['cargo-hold', 'airlock', 'bridge'].includes(location.id)
   const contextScene = locationContext(save, loaded.book, location)
   const context = `location:${contextScene}`
   // A pack swap may retire a context scene. Its read-only conversation can always be left.
@@ -85,9 +85,9 @@ export default function LocationScreen({ save, loaded, location, back, error }: 
         <section className="flex min-h-0 flex-col items-start justify-between gap-2 overflow-y-auto" aria-label="Location state">
           <div className="space-y-2">
             <p className="inline-block rounded-lg bg-[#0b0d17]/95 px-3 py-2 text-sm font-bold" data-location-state={state}>{states[state]}</p>
-            <button type="button" className={`${button} block`} onClick={() => setScene({ id: contextScene, key: context })}>
+            {loaded.book.scenes.has(contextScene) && <button type="button" className={`${button} block`} onClick={() => setScene({ id: contextScene, key: context })}>
               {save.management.acknowledged.includes(context) ? 'Look around again' : 'Look around'}
-            </button>
+            </button>}
             {reports.map(report => <button key={report.key} type="button" className={`${button} block text-left`} onClick={() => setScene({ id: report.scene, key: report.key })}>
               {reportNames[report.event.kind]} · {receiptSubject(report.event, loaded)}
             </button>)}
@@ -99,12 +99,13 @@ export default function LocationScreen({ save, loaded, location, back, error }: 
           </div>
         </section>
         <div className="min-h-0 space-y-2 overflow-y-auto rounded-xl bg-[#0b0d17]/95 p-2" aria-label="Location controls">
-          {cargo && <SupplyPanel save={save} network={loaded.book.supply!} supply={at.supply} port={at.port} worlds={loaded.book.story.worlds}
+          {cargo && <SupplyPanel save={save} network={loaded.book.supply!} supply={at.supply} port={at.port} worlds={loaded.book.story.worlds} book={loaded.book} assets={loaded.assets}
             upkeep={campaignUpkeep(loaded.book, save, campaignSupport(loaded.book, save).ashore)} />}
           {entry.kind === 'workshop' && <WorkshopPanel save={save} loaded={loaded} ashore={campaignSupport(loaded.book, save).ashore} />}
           {(entry.kind === 'project' || entry.kind === 'command' || (entry.kind === 'module' && entry.module === 'engineering')) &&
             <ProjectsPanel book={loaded.book} save={save} port={at.port} onlyProject={entry.kind === 'project' ? entry.project : undefined}
               refitsOnly={entry.kind === 'module'} />}
+          {entry.kind === 'port' && <ProjectsPanel book={loaded.book} save={save} port={at.port} />}
           {(entry.kind === 'command' || entry.kind === 'custody') && <SectorPanel book={loaded.book} save={save} />}
           {!cargo && entry.kind !== 'workshop' && <p className="text-sm">Ship cargo · {at.supply.fuel} Fuel · {at.supply.provisions} Provisions · {save.wallet.alloy} Alloy</p>}
           <section aria-label="Recent management receipts" className="space-y-2 text-sm">

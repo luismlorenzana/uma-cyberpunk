@@ -31,7 +31,8 @@ import { SupplyPanel } from './SupplyPanel'
 import { settleCampaignDay } from './watch'
 import { chooseDatePath, creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
 import { DatePanel } from './DatePanel'
-import { expeditionForQuest, expeditionQuestBlock, expeditionWatchScene } from './expedition'
+import { ExpeditionPanel } from './ExpeditionPanel'
+import { expeditionForQuest, expeditionPlan, expeditionQuestBlock } from './expedition'
 import { beginCampaignEncounter } from './sortie'
 import { finaleActivities, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
   finishFinaleActivity, selectFinaleFormation, selectFinaleVoice, workFinaleRepair } from './cy90'
@@ -75,6 +76,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [groundPaused, setGroundPaused] = useState(false)
   const [savingScene, setSavingScene] = useState(false)
   const [view, setView] = useState<CampaignView>('Home')
+  const [portTarget, setPortTarget] = useState<string>()
   const [homeArea, setHomeArea] = useState<HomeArea>('Bridge')
   const [rosterBrowse, setRosterBrowse] = useState<RosterBrowse>({ kind: 'Uma', search: '', page: 0 })
   const [operationBrowse, setOperationBrowse] = useState<OperationBrowse>({ type: 'All', act: 'All acts', state: 'Ready', search: '', page: 0 })
@@ -139,7 +141,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
         expedition={hush ? 'Hush expedition' : expeditionFight?.expedition?.route?.name} formationRun={hush} ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
         combatSprites={loaded.release.combatSprites}
         combatShift={loaded.book.combatShift}
-        acceptsFitted={loaded.book.workshop?.missions.includes(mission.id)}
+        acceptsFitted={!!ground && !ground.combat && !expeditionFight && !hush && (!!loaded.book.fourAct || loaded.book.workshop?.missions.includes(mission.id))}
         ashore={sortieAshore} requiredLead={personalLead}
         editableSquad={!!ground && (!!loaded.book.sectors?.length || !!missionState?.callUp || personalLead !== undefined)}
         close={() => setGroundPaused(true)} />
@@ -317,7 +319,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const opened = !!loaded && complete.has(loaded.book.opening)
   const menuReady = opened && !night && !pendingPair
   const currentView = menuReady && !missionState ? view : 'Home'
-  const bridge = currentView === 'Home' && (!menuReady || homeArea === 'Bridge' || !!missionState || !!expedition)
+  const bridge = currentView === 'Home' && (!menuReady || homeArea === 'Bridge' || !!missionState)
   const systems = currentView === 'Home' && !bridge && homeArea === 'Ship systems'
   const quarters = currentView === 'Home' && !bridge && homeArea === 'Quarters'
   const showOperationsProgress = (bridge || currentView === 'Operations') && !missionState
@@ -330,9 +332,15 @@ function Campaign({ layout }: { layout: StageLayout }) {
     ? loaded.book.quests.filter(q => !managedQuests.has(q.id) && questAvailable(save, loaded.book, q, supply?.port)).slice(0, 3) : []
   const evening = loaded?.book.evening
   const canRest = !expedition && !!(day && !night && !pendingPair && !missionState && evening && complete.has(evening.after))
+  function openNavigation(destination?: string) {
+    setPortTarget(destination)
+    selectView('Home', 'Navigation')
+  }
   const supplyPanel = !expedition && loaded && save && supply && network && port && support && !night && !pendingPair && !missionState && !eveningOpen
     ? <SupplyPanel save={save} network={network} supply={supply} port={developedPort(loaded.book, save, port)} worlds={loaded.book.story.worlds}
-      upkeep={campaignUpkeep(loaded.book, save, support.ashore)} /> : null
+      upkeep={campaignUpkeep(loaded.book, save, support.ashore)} book={loaded.book} assets={loaded.assets}
+      open={id => { const quest = navigation?.quests.get(id); if (quest && questAvailable(save, loaded.book, quest, port.id)) setActive(quest); else selectView('Operations') }}
+      locate={() => setLocation(port.id)} destination={portTarget} watch={canRest ? () => chooseEvening(null) : undefined} /> : null
   const basePanels = !expedition && loaded && save && port && !night && !pendingPair && !missionState && !eveningOpen ? pairs.flatMap((pair) => {
     const home = pair.home
     if (!home || home.port !== port.id || !complete.has(home.base)) return []
@@ -411,7 +419,13 @@ function Campaign({ layout }: { layout: StageLayout }) {
     const option = dateOptions.find(({ visit }) => visit.companion === date.companion)
     if (option) option.cabin ? chooseCabin(option.cabin) : chooseEvening(option.visit)
   }
-  const activeShip = expedition ? catalog?.duos.get(expedition.duo)?.expedition?.route?.name ?? expedition.ship : 'Homestretch'
+  function sharedFromRoster(actor: Speaker) {
+    const ally = loaded?.book.allies?.find(row => row.heroine === actor || row.partner === actor)
+    const cabin = ally && sharedCabins.find(row => 'trio' in row.source && row.source.trio === ally.heroine)
+    return cabin ? () => chooseCabin(cabin) : undefined
+  }
+  const activePlan = loaded && save ? expeditionPlan(save, loaded.book, complete) : null
+  const activeShip = expedition && !expedition.berthed ? catalog?.duos.get(expedition.duo)?.expedition?.route?.name ?? expedition.ship : 'Homestretch'
 
   return (
     <main ref={screen} className={viewport} style={insets} data-campaign data-campaign-release={loaded?.release.release}>
@@ -424,25 +438,26 @@ function Campaign({ layout }: { layout: StageLayout }) {
           </nav>
           <Link to={campaignAccount} className={campaignControl}>Account</Link>
         </header>
-        {menuReady && currentView === 'Home' && !expedition && !missionState && <nav aria-label="Ship areas" className="flex flex-wrap gap-2">
-          {homeAreas.map(area => <button key={area} type="button" className={campaignControl + ' aria-pressed:border-cyan-200/80'}
-            aria-pressed={area === homeArea} onClick={() => selectView('Home', area)}>{area}</button>)}
+        {menuReady && currentView === 'Home' && !missionState && <nav aria-label="Ship areas" className="flex flex-wrap gap-2">
+          {homeAreas.filter(area => !expedition || area !== 'Quarters').map(area => <button key={area} type="button" className={campaignControl + ' aria-pressed:border-cyan-200/80'}
+            aria-pressed={area === homeArea} onClick={() => area === 'Navigation' ? openNavigation() : selectView('Home', area)}>{area}</button>)}
         </nav>}
         {bridge && loaded && save && <ShipHome ship={activeShip}
-          location={expedition ? 'Expedition underway' : port?.name} day={day?.day}
-          cargo={expedition ?? (supply && { fuel: supply.fuel, provisions: supply.provisions, alloy: save.wallet.alloy })}
-          backdrop={expedition ? undefined : loaded.assets.get('homestretch-bridge')}
+          location={expedition?.berthed ? 'Expedition at launch berth' : expedition ? activePlan?.current?.title ?? 'Expedition underway' : port?.name} day={day?.day}
+          cargo={(expedition && !expedition.berthed ? expedition : undefined) ?? (supply && { fuel: supply.fuel, provisions: supply.provisions, alloy: save.wallet.alloy })}
+          backdrop={expedition && !expedition.berthed ? undefined : loaded.assets.get('homestretch-bridge')}
           ready={available} open={setActive}
           roster={menuReady && !missionState ? () => selectView('Roster') : undefined}
           operations={menuReady && !missionState ? () => selectView('Operations') : undefined} />}
         {currentView === 'Roster' && navigation && loaded && save && <Suspense fallback={<p role="status">Opening roster…</p>}>
           <RosterScreen book={loaded.book} save={save} assets={loaded.assets} complete={complete} navigation={navigation}
-            port={port?.id} open={setActive} travel={() => selectView('Home', 'Navigation')} evening={canRest ? visitFromRoster : undefined}
+            port={port?.id} open={setActive} travel={openNavigation} evening={canRest ? visitFromRoster : undefined}
+            shared={sharedFromRoster} report={setReportScene}
             browse={rosterBrowse} onBrowse={setRosterBrowse} />
         </Suspense>}
         {currentView === 'Operations' && navigation && loaded && save && <Suspense fallback={<p role="status">Opening operations…</p>}>
           <OperationsScreen book={loaded.book} save={save} port={port?.id} complete={complete} navigation={navigation}
-            open={setActive} travel={() => selectView('Home', 'Navigation')} browse={operationBrowse} onBrowse={setOperationBrowse} />
+            open={setActive} travel={openNavigation} browse={operationBrowse} onBrowse={setOperationBrowse} />
         </Suspense>}
         <div className="space-y-3">
           {error && !pending && <button type="button" className={button} onClick={() => setCheck(n => n + 1)}>Try again</button>}
@@ -456,15 +471,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
               {tier.core && <p className="text-white/75">{complete.has(tier.core.settles) ? 'Core cleared' : `Core at ${CORE_CAPTURES} captures`}</p>}
             </section>
           })}
-          {bridge && expedition && loaded && <section aria-label="Active expedition" className="flex items-center gap-3 rounded-lg border border-white/15 p-2 text-sm">
-            <p>{expedition.members.length} crew aboard</p>
-            {save && (() => {
-              const watch = expeditionWatchScene(save, loaded.book, complete)
-              return watch && <button type="button" className={button} onClick={() => setReportScene(watch.scene)}>
-                {watch.shortfall ? 'Supply report' : 'Off duty'}
-              </button>
-            })()}
-          </section>}
+          {expedition && loaded && save && navigation && !missionState && currentView !== 'Roster' && <ExpeditionPanel
+            book={loaded.book} save={save} port={port?.id} complete={complete} navigation={navigation} open={setActive}
+            report={setReportScene} travel={openNavigation} systems={systems} />}
           {currentView === 'Operations' && loaded && expeditions && expeditions.length > 0 && complete.has(loaded.book.opening) && <details
             className="space-y-2 rounded-lg border border-white/15 p-2 text-sm" aria-label="Expedition readiness">
             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Expedition readiness</summary>

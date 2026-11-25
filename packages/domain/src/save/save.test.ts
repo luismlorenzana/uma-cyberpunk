@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { newMember } from '../crew/crew'
 import { STARTER_STOCK } from '../cabins/items'
 import { HULL_TUNING, shipWith } from '../ship/hull'
 import { newSave, parseSave, parseSaveEnvelope, parseSavePut, resolveConflict, SAVE_VERSION, SaveParseError, touched, versionOf } from './save'
@@ -19,7 +20,24 @@ const BOND = { rank: 1, rapport: 0, path: null, seen: [] }
 const CABIN = { slots: { bed: null, desk: null, wall: null, floor: null, light: null, keepsake: null }, revealed: [], request: null }
 
 describe('the save', () => {
-  it('is version 20', () => expect(SAVE_VERSION).toBe(20))
+  it('is version 21', () => expect(SAVE_VERSION).toBe(21))
+
+  it('retains a version 20 expedition and validates tender preparation on the same route', () => {
+    const base = newSave('captain', T0)
+    const rows = (['boss-ally', 'melee-shield', 'ranged-medic', 'long-range'] as const)
+      .flatMap(role => [0, 1].map(i => ({ role, heroine: role + '-' + i })))
+    const crew = [newMember(9000001), newMember(9000002), ...rows.filter(row => row.role === 'boss-ally').map((row, i) =>
+      ({ ...newMember(9000003 + i), heroine: row.heroine, expeditionOnly: true }))]
+    const expedition = { duo: 'duo-test', ship: 'tender', fuel: 3, provisions: 5, members: [
+      { role: 'uma' as const, outfit: 9000001 }, { role: 'uma' as const, outfit: 9000002 }, ...rows,
+    ] }
+    const migrated = parseSave({ ...base, version: 20, crew, expedition })
+    expect(migrated.expedition).toEqual(expedition)
+    const prepared = { ...expedition, berthed: true, reinforced: true, stations: { pilot: 0, shields: 4, gunnery: 8, engineering: 6 } }
+    expect(parseSave({ ...migrated, expedition: prepared }).expedition).toEqual(prepared)
+    const bad = { ...prepared, stations: { ...prepared.stations, shields: 0 } }
+    expect(() => parseSave({ ...migrated, expedition: bad })).toThrow('each station needs a different crew member')
+  })
 
   it('migrates assigned drills without losing the earlier campaign clock or rig inventory', () => {
     const { expedition: _expedition, commandCinema: _cinema1, management: _management1, cabinVisits: _cabinVisits, campaignProjects: _projects, commandTraining: _training, ...older } = newSave('u1', T1)
@@ -127,7 +145,7 @@ describe('the save', () => {
     const crew = [9000001, 9000002, 9000003, 9000004, 9000005].map((outfit) => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: BOND, cabin: CABIN, post: null }))
     const v9 = { ...base, crew, version: 9, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
     expect(parseSave(JSON.parse(JSON.stringify(v9)))).toMatchObject({
-      version: 20, account: { updatedAt: T1 }, operations: [], operationsWon: [], standing: {},
+      version: 21, account: { updatedAt: T1 }, operations: [], operationsWon: [], standing: {},
       squads: [{ id: 'squad-1', name: 'First Squad', leader: 9000001, members: [9000001, 9000002, 9000003, 9000004], cohesion: 0 }],
     })
   })

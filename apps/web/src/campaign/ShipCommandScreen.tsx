@@ -13,6 +13,8 @@ import { CommandCinematic } from './CommandCinematic'
 import { commandContextScene, freezeCommandCast, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
 import { retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { nameOf } from '../story/runner'
+import { expeditionOfficer, expeditionStations, setExpeditionOfficer } from './expedition'
+import { campaignCommandFront, tuneCampaignCommand } from './command-tuning'
 import { CampaignThumbnail } from './CampaignThumbnail'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm font-semibold text-white disabled:opacity-50'
@@ -56,6 +58,8 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const state = save.mission
   if (!state) return null
   const expedition = save.expedition
+  const fourAct = loaded.book.fourAct
+  const prepared = fourAct ? tuneCampaignCommand(encounter, campaignCommandFront(loaded.book, save, encounter.id)) : encounter
   const cargo = expedition ? { ...supply, fuel: expedition.fuel, provisions: expedition.provisions } : supply
   const run = state.battle ? resumeCommand(state.battle.input, state.battle.actions) : null
   const assault = run ? run.input.version !== 1 : !!encounter.assault
@@ -81,6 +85,15 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         <button type="button" className={primary} onClick={() => void updateSave(toDeploy)}>Prepare ship</button>
       </>}
       {state.step === 'deploy' && <>
+        {expedition && <div className="grid gap-2 sm:grid-cols-2" aria-label="Expedition bridge stations">
+          {COMMAND_STATIONS.map(station => <label key={station} className="flex items-center justify-between gap-2 font-semibold">{stations[station]}
+            <select className="min-h-11 rounded-lg bg-[#182238] px-2 text-sm" value={expeditionStations(expedition)[station]}
+              onChange={event => { const member = Number(event.currentTarget.value); void updateSave(s => setExpeditionOfficer(s, station, member)) }}>
+              {expedition.members.map((member, i) => <option key={i} value={i}>{nameOf(loaded.book.story, member.role === 'uma' ? member.outfit : member.heroine)}</option>)}
+            </select><span className="text-sm">Drill {expeditionOfficer(expedition, station).drills}</span>
+          </label>)}
+          {expedition.reinforced && <p className="text-sm text-cyan-200">Escort refit · +1 integrity</p>}
+        </div>}
         {!expedition && <div className="grid gap-2 sm:grid-cols-2">
           {COMMAND_STATIONS.map((station) => {
             const officer = missionOfficer(save, station)
@@ -101,6 +114,9 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
           })}
         </div>}
         <p className="text-sm">Cargo {cargo.fuel} fuel · {cargo.provisions} provisions</p>
+        <details className="text-sm"><summary className="min-h-11 cursor-pointer py-2">Threat forecast · {prepared.threats.length} waves</summary>
+          <ol className="list-decimal space-y-1 pl-5">{prepared.threats.map((wave, i) => <li key={i}>{wave.section === 'fore' ? 'Fore' : 'Aft'} · {wave.power} incoming power · {wave.fighters} fighters</li>)}</ol>
+        </details>
         {!!homeDefense?.relay && <p className="text-sm text-cyan-200">Local shield bank · +{homeDefense.relay} relay integrity</p>}
         {!!finale?.allies && <p className="text-sm text-cyan-200">Homeworld escort · +{finale.allies} shuttle integrity</p>}
         {!!finale?.contributions?.length && <details className="text-sm"><summary className="min-h-11 cursor-pointer py-2">Fleet contributions · {finale.contributions.length}</summary>
@@ -112,13 +128,14 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         </button>}
         <button type="button" className={primary} disabled={!canLaunch(cargo, encounter) || save.wallet.alloy < (preparation?.alloy ?? 0)
           || (requiredLead !== undefined && (!names.has(requiredLead) || state.squad[0] !== requiredLead))}
-          onClick={() => void updateSave((s) => launchCommand(s, s.expedition ? { ...supply, fuel: s.expedition.fuel, provisions: s.expedition.provisions } : s.campaignSupply ?? supply, encounter,
+          onClick={() => void updateSave((s) => launchCommand(s, s.expedition ? { ...supply, fuel: s.expedition.fuel, provisions: s.expedition.provisions } : s.campaignSupply ?? supply, prepared,
             { ashore: missionAshore(loaded.book, s), relay: homeDefense?.relay ?? finale?.allies ?? 0, preparation, qualifications, requiredLead, contributions: finale?.contributions, cast: s.expedition ? (() => {
                 const present = s.expedition.members.map(member => {
                   const speaker = member.role === 'uma' ? member.outfit : member.heroine
                   return { speaker, name: nameOf(loaded.book.story, speaker) }
                 })
-                return { present, crew: { pilot: present[0], shields: present[1], gunnery: present[2], engineering: present[3] },
+                const crew = Object.fromEntries(COMMAND_STATIONS.map(station => [station, present[expeditionStations(s.expedition!)[station]]]))
+                return { present, crew,
                   objective: objectiveLabel ?? 'Expedition escort' }
               })() : freezeCommandCast(s, loaded.book, encounter.id, objectiveLabel ?? (encounter.assault ? 'Boarding shuttle' : homeDefense ? 'Relay integrity' : 'Transport')) }))}>
           Launch · {encounter.cost.fuel} fuel · {encounter.cost.provisions} provisions

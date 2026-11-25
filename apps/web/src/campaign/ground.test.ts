@@ -1,4 +1,4 @@
-import { chooseAction, legalTurns, type TurnAction } from '@cyber/battle'
+import { chooseAction, legalTurns, maxHpOf, type TurnAction } from '@cyber/battle'
 import {
   newMember, newSave, parseSave, startSupply, storesAt, supplyNight,
   type CommandAction, type CommandEncounter, type GroundEncounter, type Save, type StoryPack, type SupplyNetwork,
@@ -8,7 +8,19 @@ import { act, resume, startSession } from '../battle/session'
 import { deploy, finishBattle, recordAction, retry } from '../mission/director'
 import { issueCommand, launchCommand, settleCommand } from './command'
 import { settleGround } from './ground'
+import { campaignBattleProgression } from './progression'
 import { groundInput } from './training'
+
+it('freezes bounded veteran armor in a new campaign deployment', () => {
+  const input = groundInput('training', 9000771, 'Lead', 'hand-rifle', 'back-bulwark')
+  const incoming = input.units.find(unit => unit.side === 'squad')!
+  const save = { ...ready('training'), crew: [{ ...newMember(9000771), xp: 5000 }] }
+  const prepared = campaignBattleProgression(input, save)
+  expect(maxHpOf(prepared.units.find(unit => unit.id === incoming.id)!).core).toBe(maxHpOf(incoming).core + 3)
+  expect(prepared.units.find(unit => unit.side === 'enemy')).toBe(input.units.find(unit => unit.side === 'enemy'))
+  const retry = parseSave(JSON.parse(JSON.stringify(deploy(save, prepared))))
+  expect(retry.mission?.battle?.input).toEqual(prepared)
+})
 
 const assault: CommandEncounter = {
   id: 'approach', cost: { fuel: 1, provisions: 2 }, transport: 7, enemy: 8,

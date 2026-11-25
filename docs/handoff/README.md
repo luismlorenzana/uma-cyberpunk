@@ -19,7 +19,7 @@ CY97 delivered CY83–CY90 through the existing game link. CY91 records the host
 
 ## Active interaction and systems work
 
-Start with [Ship Home](tasks/CY98.md), [Roster and character chapters](tasks/CY99.md), and [Operations](tasks/CY100.md), then deliver [advancement and equipment](tasks/CY101.md), [battle balance](tasks/CY102.md), and [resource balance](tasks/CY103.md). [Interactive systems and locations](tasks/CY104.md) and [expedition operations](tasks/CY105.md) extend Home and Operations. [Individual relationships](tasks/CY106.md) extends the roster. The roadmap tracks dependencies and checks.
+The campaign menus, advancement, supply forecasts and tender operations are implemented. The [combat balance pass](tasks/CY102.md) and [resource balance pass](tasks/CY103.md) record scripted results and the phone play checks. [System locations](tasks/CY104.md), [expedition operations](tasks/CY105.md) and [individual interactions](tasks/CY106.md) track exact Art and Story follow-through.
 
 ## Four-pillar implementation record
 
@@ -46,6 +46,8 @@ Keep the packet's implementation, script, art, release IDs and acceptance aligne
 
 | Delivery | Date | Result |
 | --- | --- | --- |
+| CY98–CY100 · Home, Roster and Operations | 2026-11-25 | Open and resume from the real ship, browse all 250 roster entries, and find authored chapters, objectives, operation costs and status by act. |
+| CY101 · Advancement and equipment | 2026-11-25 | New formations use earned armor reinforcement. Hangar slot comparisons and effective equipment are visible on real sortie preparation. |
 | [CY97 · Four-act release](tasks/CY97.md) | 2026-11-25 | All four acts, both endings and return to play are live. The exact combined Story and Art catalog is active at the existing link. |
 
 The [historical Done ledger](archive/previous-queue.md#done) records shipped work through D86. The [D87 disposition matrix](archive/four-act-disposition.md) records retired requirements and the active successor for each earlier open packet. The archive preserves the previous pilot and historical decisions for evidence and regression.

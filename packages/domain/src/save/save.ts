@@ -39,7 +39,7 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandStation, ty
  * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
  * 18 management receipts and independent first-use/report acknowledgements (CY51);
  * 19 saved command cinematic position and fast-playback preference (CY54); 20 the active expedition (CY87). */
-export const SAVE_VERSION = 20
+export const SAVE_VERSION = 21
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -211,12 +211,19 @@ export interface SaveV19 extends Omit<SaveV18, 'version'> {
   commandCinema: CommandCinemaState
 }
 
-export interface ExpeditionRun {
+interface ExpeditionV20 {
   duo: string
   ship: string
   members: readonly ExpeditionMember[]
   fuel: number
   provisions: number
+}
+
+export interface ExpeditionRun extends ExpeditionV20 {
+  berthed?: true
+  towFuelDue?: true
+  reinforced?: true
+  stations?: Record<CommandStation, number>
 }
 
 export interface FinaleProgress {
@@ -231,11 +238,16 @@ export interface FinaleProgress {
 export interface SaveV20 extends Omit<SaveV19, 'version'> {
   finaleProgress?: FinaleProgress
   version: 20
-  expedition: ExpeditionRun | null
+  expedition: ExpeditionV20 | null
   combatTraining?: Record<string, CombatTraining>
 }
 
-export type Save = SaveV20
+export interface SaveV21 extends Omit<SaveV20, 'version' | 'expedition'> {
+  version: 21
+  expedition: ExpeditionRun | null
+}
+
+export type Save = SaveV21
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -264,7 +276,7 @@ export class SaveParseError extends Error {
 export function newSave(uid: string, now: string): Save {
   const v2: SaveV2 = { version: 2, account: { uid, createdAt: now, updatedAt: now }, story: emptyStory() }
   const v10 = migrateV9(migrateV8(migrateV7(migrateV6(migrateV5(migrateV4(migrateV3(migrateV2(v2))))))))
-  return { ...migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))), version: 20, expedition: null }
+  return { ...migrateV18(migrateV17(migrateV16(migrateV15(migrateV14(migrateV13(migrateV12(migrateV11(migrateV10(v10))))))))), version: SAVE_VERSION, expedition: null }
 }
 
 export const migrateV19 = (save: SaveV19): SaveV20 => ({ ...save, version: 20, expedition: null })
@@ -764,16 +776,16 @@ export function parseSave(value: unknown, path = 'save'): Save {
   if (version > SAVE_VERSION) throw new SaveParseError(`${path}.version`, `version ${version} is newer than this app (${SAVE_VERSION})`)
   if (version < 20) {
     if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
-    return { ...parseSaveV19(value, path), version: 20, expedition: null }
+    return { ...parseSaveV19(value, path), version: SAVE_VERSION, expedition: null }
   }
   const { expedition, combatTraining, finaleProgress, ...rest } = object(value, path, Object.keys(value as Obj))
   const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path)
   const finale = finaleProgress === undefined ? undefined : parseFinaleProgress(finaleProgress, path + '.finaleProgress')
   const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}),
     ...(finale ? { finaleProgress: finale } : {}) }
-  if (expedition == null) return { ...base, version: 20, expedition: null }
+  if (expedition == null) return { ...base, version: SAVE_VERSION, expedition: null }
   const field = path + '.expedition'
-  const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions'])
+  const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions', ...(version >= 21 ? ['berthed', 'towFuelDue', 'reinforced', 'stations'] : [])])
   if (!Array.isArray(data.members) || data.members.length !== EXPEDITION_SQUAD_SIZE) {
     throw new SaveParseError(field + '.members', 'expected ten expedition members')
   }
@@ -800,8 +812,19 @@ export function parseSave(value: unknown, path = 'save'): Save {
     || ['uma', 'boss-ally', 'melee-shield', 'ranged-medic', 'long-range'].some(role => members.filter(member => member.role === role).length !== 2)) {
     throw new SaveParseError(field + '.members', 'expected two distinct members in each role')
   }
-  return { ...base, version: 20, expedition: { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
-    fuel: bounded(data.fuel, field + '.fuel', SHIP_CARGO_MAX), provisions: bounded(data.provisions, field + '.provisions', SHIP_CARGO_MAX) } }
+  for (const key of ['berthed', 'towFuelDue', 'reinforced'] as const) {
+    if (data[key] !== undefined && data[key] !== true) throw new SaveParseError(field + '.' + key, 'expected true')
+  }
+  if (data.towFuelDue && !data.berthed) throw new SaveParseError(field + '.towFuelDue', 'tow fuel is due only at berth')
+  const stations = data.stations === undefined ? undefined : (() => {
+    const raw = object(data.stations, field + '.stations', COMMAND_STATIONS)
+    const entries = COMMAND_STATIONS.map(station => [station, bounded(raw[station], field + '.stations.' + station, members.length - 1)] as const)
+    if (new Set(entries.map(([, index]) => index)).size !== entries.length) throw new SaveParseError(field + '.stations', 'each station needs a different crew member')
+    return Object.fromEntries(entries) as ExpeditionRun['stations']
+  })()
+  return { ...base, version: SAVE_VERSION, expedition: { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
+    fuel: bounded(data.fuel, field + '.fuel', SHIP_CARGO_MAX), provisions: bounded(data.provisions, field + '.provisions', SHIP_CARGO_MAX),
+    ...(data.berthed === true ? { berthed: true } : {}), ...(data.towFuelDue === true ? { towFuelDue: true } : {}), ...(data.reinforced === true ? { reinforced: true } : {}), ...(stations ? { stations } : {}) } }
 }
 
 function parseFinaleProgress(raw: unknown, path: string): FinaleProgress {
