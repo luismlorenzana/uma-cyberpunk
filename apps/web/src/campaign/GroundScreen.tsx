@@ -77,9 +77,6 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
     const ally = formationMember(s)
     return !!ally && (formation.advisory || eligible(s, ally.outfit)) && s.mission?.squad[0] === formation.lead.outfit && s.story.flags.includes(formation.ally.released)
   }
-  const fitted = acceptsFitted && scenario
-    ? fittedGroundRig(save.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario, ground?.expansion) : null
-  const approach = ground?.alternate ? alternate?.label ?? ground.alternate.closedLabel ?? 'Cargo airlock' : undefined
   const combat = ground?.combat ?? (specialistTraining && scenario === 'training' ? { kind: 'uma' as const } : undefined)
   const shifted = !!combatShift && save.story.flags.includes(combatShift)
   const fitted = acceptsFitted && scenario
