@@ -14,6 +14,7 @@ const { resolveArt } = loadTs('./sources.ts', import.meta.url)
 const { syncWardrobes } = loadTs('./sync.ts', import.meta.url)
 const { CAMPAIGN_PREFIX: PREFIX, COMBAT_SPRITE_PREFIX: SPRITES, GenerationConflict, GcsArtStorage } = loadTs('./storage.ts', import.meta.url)
 const { readSpriteApprovalIndex, publishCombatSprites } = loadTs('./combat-sprite-release.ts', import.meta.url)
+const { P, parseCombatSpriteLoadouts } = loadTs('../../packages/domain/src/story/index.ts', import.meta.url)
 const { main: publishCommand } = loadTs('./cli.ts', import.meta.url)
 const { resolveSplashBindings } = loadTs('./splash-bindings.ts', import.meta.url)
 const { STAND_IN_FILES } = loadTs('../../packages/domain/src/story/stand-in.ts', import.meta.url)
@@ -200,6 +201,16 @@ test('one heroine form serves both boss roles and retains crew pins in a guarded
   assert.deepEqual(result.release.combatSprites[1].roles, row.roles)
   assert.deepEqual(JSON.parse((await f.platform.read(platform)).bytes).roles, row.roles)
   assert.equal((await loadSelected(f.storage)).release.release, live.release.release)
+})
+
+test('an approved complete album can wait for its first compatible game fitting', async t => {
+  const f = await spriteFixture(t)
+  const source = { ...await f.writeBundle('officer-one', 9000001, 'v001'), loadouts: [] }
+  await assert.rejects(f.index([source]), /expected complete loadouts/)
+  await writeFile(f.path, encode({ schemaVersion: 1, universe: 'cyberpunk', campaign: 'cyberpunk',
+    revision: 'album-first', compatibleOnly: true, bundles: [source] }))
+  assert.deepEqual((await readSpriteApprovalIndex(f.path, [])).bundles[0].loadouts, [])
+  assert.throws(() => parseCombatSpriteLoadouts(new P('game'), [], 'loadouts'), /expected complete loadouts/)
 })
 
 test('the normal producer CLI journals draft refusal before opening cloud storage', async t => {

@@ -15,9 +15,10 @@ const versionNumber = (version: string) => Number(version.slice(1))
 export async function readSpriteApprovalIndex(file: string, only: readonly string[]) {
   const bytes = await readFile(file)
   const p = new P(file)
-  const root = p.object(JSON.parse(bytes.toString('utf8')), 'publication', ['schemaVersion', 'universe', 'campaign', 'revision', 'bundles', 'replaceLegacy'], ['schemaVersion', 'universe', 'campaign', 'revision', 'bundles'])
+  const root = p.object(JSON.parse(bytes.toString('utf8')), 'publication', ['schemaVersion', 'universe', 'campaign', 'revision', 'bundles', 'replaceLegacy', 'compatibleOnly'], ['schemaVersion', 'universe', 'campaign', 'revision', 'bundles'])
   p.version(root)
   if (root.replaceLegacy !== undefined && root.replaceLegacy !== true) p.fail('replaceLegacy', 'expected true')
+  if (root.compatibleOnly !== undefined && root.compatibleOnly !== true) p.fail('compatibleOnly', 'expected true')
   if (root.universe !== 'cyberpunk' || root.campaign !== 'cyberpunk') p.fail('campaign', 'expected current Cyberpunk campaign')
   const digest = (value: unknown, field: string) => {
     const text = p.text(value, field, 64)
@@ -46,7 +47,7 @@ export async function readSpriteApprovalIndex(file: string, only: readonly strin
       return { file: p.text(page.file, field + '.file', 240), sha256: digest(page.sha256, field + '.sha256') }
     }, 128)
     return { character, ...identity, version, manifest, status: 'approved' as const, directory, placements, pages,
-      loadouts: row.loadouts === undefined ? undefined : parseCombatSpriteLoadouts(p, row.loadouts, field + '.loadouts') }
+      loadouts: row.loadouts === undefined ? undefined : parseCombatSpriteLoadouts(p, row.loadouts, field + '.loadouts', root.compatibleOnly === true) }
   }, 512)
   if (new Set(bundles.map(combatSpriteKey)).size !== bundles.length) {
     p.fail('bundles', 'duplicate sprite identities')
@@ -59,7 +60,10 @@ export async function readSpriteApprovalIndex(file: string, only: readonly strin
     p.fail('replaceLegacy', 'expects an unfiltered batch of complete sprite approvals')
   }
   if (!scoped.length) throw new Error('No approved or withdrawn combat sprite entries in scope')
-  return { bundles: scoped, replaceLegacy: root.replaceLegacy === true, revision: p.text(root.revision, 'revision', 160), sha256: sha(bytes), assertCurrent: async () => {
+  if (root.compatibleOnly && scoped.some(row => row.status === 'approved' && row.loadouts === undefined)) {
+    p.fail('compatibleOnly', 'requires complete sprite approvals')
+  }
+  return { bundles: scoped, replaceLegacy: root.replaceLegacy === true, compatibleOnly: root.compatibleOnly === true, revision: p.text(root.revision, 'revision', 160), sha256: sha(bytes), assertCurrent: async () => {
     if (!(await readFile(file)).equals(bytes)) throw new GenerationConflict('Combat sprite approval index changed')
   } }
 }
@@ -70,7 +74,7 @@ const identityOf = (source: SpriteSource): CombatSpriteIdentity => source.form =
   ? { outfit: source.outfit } : { outfit: source.outfit, form: source.form, roles: source.roles }
 
 /** The current book, including its alternate encounters, owns role and fixed-fitting assignments. */
-function heroineFittings(book: SelectedCampaign['book'], source: Extract<CombatSpriteIdentity, { outfit: string }>) {
+function heroineFittings(book: SelectedCampaign['book'], source: Extract<CombatSpriteIdentity, { outfit: string }>, allowUnbound = false) {
   const required = new Set<string>()
   for (const role of source.roles) {
     let admitted = role === 'boss-ally' && source.form === 'standard' && book.allies?.some(ally => ally.heroine === source.outfit)
@@ -90,7 +94,7 @@ function heroineFittings(book: SelectedCampaign['book'], source: Extract<CombatS
         required.add(opponent.from)
       }
     }
-    if (!admitted) throw new Error(`Combat sprite role/form has no authored encounter or deployment: ${source.outfit}/${source.form}/${role}`)
+    if (!admitted && !allowUnbound) throw new Error(`Combat sprite role/form has no authored encounter or deployment: ${source.outfit}/${source.form}/${role}`)
   }
   return required
 }
@@ -167,9 +171,9 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
         status: source.status, manifestSha256: source.manifest }) })
       return
     }
-    const required = identity.form === undefined ? new Set<string>() : heroineFittings(selected.book, identity)
+    const required = identity.form === undefined ? new Set<string>() : heroineFittings(selected.book, identity, sources.compatibleOnly)
     const legacy = source.loadouts ? null : await readCombatSprite(source.directory, source, true, identity)
-    const stage = legacy ?? await readCompleteCombatSprite(source.directory, { ...source, loadouts: source.loadouts! }, identity)
+    const stage = legacy ?? await readCompleteCombatSprite(source.directory, { ...source, loadouts: source.loadouts!, compatibleOnly: sources.compatibleOnly }, identity)
     const { ref } = stage
     if (legacy) {
       const { bundle } = legacy
@@ -182,7 +186,7 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
     } else {
       const loadouts = source.loadouts!
       const authored = loadouts.flatMap(row => row.encounters)
-      if (authored.some(fitting => !required.has(fitting)) || [...required].some(fitting => !authored.includes(fitting))) {
+      if (authored.some(fitting => !required.has(fitting)) || (!sources.compatibleOnly && [...required].some(fitting => !authored.includes(fitting)))) {
         throw new Error('Complete sprite encounter assignments differ from the campaign: ' + source.outfit)
       }
     }
@@ -190,7 +194,7 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
     if (pages.size !== source.pages.length || pages.size !== ref.pages.length || ref.pages.some(page => pages.get(page.file) !== page.sha256)) {
       throw new Error('Combat sprite page pins disagree with producer approval: ' + source.character)
     }
-    refs.set(key, ref)
+    if (!source.loadouts || source.loadouts.length) refs.set(key, ref)
     const platformRef = <T extends CampaignReleaseFile>(file: T): T => ({ ...file, path: root + file.path.split('/').at(-1)! })
     plans.set(key, { path, prior, payloads: stage.payloads, bytes: encode({ schemaVersion: 1, ...identity, version: source.version,
       manifest: platformRef(ref.manifest), placements: platformRef(ref.placements), pages: ref.pages.map(platformRef),

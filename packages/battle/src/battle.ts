@@ -133,6 +133,11 @@ function checkObjective(input: BattleInput, map: BattleInput['map']): void {
     || !input.units.some(unit => unit.id === input.preserve && unit.side === 'enemy'))) {
     throw new BattleInputError('preserve', 'expected a living enemy in an expedition reach objective')
   }
+  if (input.protect !== undefined && (input.rulesVersion < EXPEDITION_RULES_VERSION || !Array.isArray(input.protect)
+    || !input.protect.length || new Set(input.protect).size !== input.protect.length
+    || input.protect.some(id => !input.units.some(unit => unit.id === id && unit.side === 'enemy')))) {
+    throw new BattleInputError('protect', 'expected distinct living opponents')
+  }
   const tileOk = (path: string, [x, y]: readonly [number, number]) => { if (!inBounds(map, x, y) || isSolid(map, x, y)) throw new BattleInputError(path, 'expected a standing tile on the map') }
   if (['escort', 'hack', 'freeLeader'].includes(o.kind) && input.rulesVersion < 2) throw new BattleInputError('objective.kind', 'needs rules version 2')
   if (o.kind === 'reach') tileOk('objective.tile', o.tile)
@@ -149,8 +154,16 @@ function checkObjective(input: BattleInput, map: BattleInput['map']): void {
     if (!input.units.some((u) => u.id === o.unit && u.side === 'squad')) throw new BattleInputError('objective.unit', 'expected a squad unit')
     tileOk('objective.tile', o.tile)
   } else if (o.kind === 'hack') {
-    const terminals = (map.props ?? []).filter((p) => p.kind === 'terminal').length
-    if (!(Number.isSafeInteger(o.count) && o.count >= 1 && o.count <= terminals)) throw new BattleInputError('objective.count', `expected 1–${terminals} terminals`)
+    const terminals = (map.props ?? []).filter(p => p.kind === 'terminal')
+    if (!(Number.isSafeInteger(o.count) && o.count >= 1 && o.count <= terminals.length)) throw new BattleInputError('objective.count', `expected 1–${terminals.length} terminals`)
+    if (o.last !== undefined && (input.rulesVersion < EXPEDITION_RULES_VERSION || o.count !== terminals.length || !terminals.some(p => p.id === o.last))) {
+      throw new BattleInputError('objective.last', 'expected the final terminal of a complete circuit')
+    }
+    if (o.protect !== undefined && (input.rulesVersion < EXPEDITION_RULES_VERSION || !Array.isArray(o.protect)
+      || !o.protect.length || new Set(o.protect).size !== o.protect.length
+      || o.protect.some(id => !input.units.some(unit => unit.id === id && unit.side === 'enemy')))) {
+      throw new BattleInputError('objective.protect', 'expected distinct living opponents')
+    }
   } else if (o.kind !== 'defeatAll') throw new BattleInputError('objective.kind', 'unknown objective')
 }
 
@@ -174,8 +187,10 @@ export function objectiveProgress(state: BattleState): { value: number; of: numb
 /** Rules version 2's ways to fail: the escort is out, or the leader to free was broken instead. */
 function failed(state: BattleState): boolean {
   if (state.input.preserve && unitById(state, state.input.preserve).status !== 'active') return true
+  if (state.input.protect?.some(id => unitById(state, id).status !== 'active')) return true
   const o = state.input.objective
   if (o.kind === 'escort') return unitById(state, o.unit).status !== 'active'
+  if (o.kind === 'hack' && o.protect?.some(id => unitById(state, id).status !== 'active')) return true
   if (o.kind === 'freeLeader') {
     const l = leaderOf(state)
     return l?.status === 'down' || l?.status === 'out'

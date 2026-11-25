@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 2,
+  "id": "hush-collar",
+  "width": 10,
+  "depth": 9,
+  "heights": [
+    "0000000000",
+    "0000000000",
+    "0000000000",
+    "0000000000",
+    "0000000000",
+    "0000000000",
+    "0000000000",
+    "0000000000",
+    "0000000000"
+  ],
+  "tiles": [
+    "..........",
+    "..........",
+    "..........",
+    "...#..#...",
+    "..c....c..",
+    "..........",
+    "..........",
+    "..........",
+    ".........."
+  ],
+  "spawns": {
+    "squad": [
+      [
+        2,
+        7
+      ],
+      [
+        4,
+        7
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        8,
+        7
+      ],
+      [
+        0,
+        7
+      ],
+      [
+        1,
+        8
+      ],
+      [
+        3,
+        8
+      ],
+      [
+        5,
+        8
+      ],
+      [
+        7,
+        8
+      ],
+      [
+        9,
+        8
+      ]
+    ],
+    "enemy": [
+      [
+        6,
+        1
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        7,
+        2
+      ]
+    ]
+  },
+  "props": [
+    {
+      "kind": "terminal",
+      "id": "ombrai-channel",
+      "tile": [
+        2,
+        3
+      ],
+      "does": {
+        "lights": true
+      }
+    },
+    {
+      "kind": "terminal",
+      "id": "nocthra-channel",
+      "tile": [
+        4,
+        4
+      ],
+      "does": {
+        "lights": true
+      }
+    },
+    {
+      "kind": "terminal",
+      "id": "vexari-channel",
+      "tile": [
+        6,
+        4
+      ],
+      "does": {
+        "lights": true
+      }
+    },
+    {
+      "kind": "terminal",
+      "id": "solenne-channel",
+      "tile": [
+        8,
+        3
+      ],
+      "does": {
+        "lights": true
+      }
+    },
+    {
+      "kind": "terminal",
+      "id": "rhodane-channel",
+      "tile": [
+        5,
+        6
+      ],
+      "does": {
+        "lights": true
+      }
+    },
+    {
+      "kind": "terminal",
+      "id": "first-collar",
+      "tile": [
+        5,
+        1
+      ],
+      "does": {
+        "lights": true
+      }
+    }
+  ]
+}

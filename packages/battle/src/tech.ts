@@ -66,6 +66,10 @@ const propOf = (state: Pick<BattleState, 'input'>, id: string): Prop | undefined
 export function hackError(state: Pick<BattleState, 'input' | 'units' | 'field'>, unitId: string, terminalId: string, from: Tile): string | null {
   const term = terminalOf(state, terminalId)
   if (!term) return `no terminal ${terminalId}`
+  const objective = state.input.objective
+  if (objective.kind === 'hack' && objective.last === terminalId && (state.field?.hacked.length ?? 0) < objective.count - 1) {
+    return 'Separate each witness channel before breaking the Collar circuit'
+  }
   if (!hasDeck(state, unitId)) return `${unitId} has no Deck`
   const u = unitById(state, unitId)
   if (u.charge < TUNING.tech.hack) return `${unitId} needs ${TUNING.tech.hack} Charge`

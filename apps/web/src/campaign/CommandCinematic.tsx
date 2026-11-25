@@ -2,7 +2,7 @@ import { CompositionLayer } from '../story/ScenePlayer'
 import type { CampaignComposition } from '@cyber/domain'
 import { commandEffectKeys, commandFacts, type CommandActorArt, type ResolvedCommand } from '@cyber/domain'
 import { useEffect, useState } from 'react'
-import { updateSave } from '../save/game'
+import { updateSave, useGame } from '../save/game'
 import { ScenePortrait, selectScenePortrait, type ScenePortraitImage } from '../story/ScenePortrait'
 import { advanceCommandCinema } from './cinematics'
 import { campaignImage, type LoadedCampaign } from './load'
@@ -89,9 +89,19 @@ function CommandEffects({ event, animate }: { event: ResolvedCommand; animate: b
 
 export function CommandCinematic({ event, loaded, encounter, beat, fast }: { event: ResolvedCommand; loaded: LoadedCampaign; encounter: string; beat: number; fast: boolean }) {
   const [error, setError] = useState<string | null>(null), [busy, setBusy] = useState(false)
+  const activeExpedition = useGame(state => state.save?.expedition)
   const binding = loaded.book.commandCinematics?.encounters.find(row => row.encounter === encounter)
   const crew = event.actor && loaded.book.commandCinematics?.actors.find(actor => actor.speaker === event.actor!.speaker && actor.role === 'crew')
   const enemyText = event.commander && binding?.commander === event.commander.speaker ? (event.after.enemy === 0 ? binding?.enemy?.withdrawal : event.disabled ? binding?.enemy?.disabled : binding?.enemy?.contact) : undefined
+  const finale = loaded.book.fourActFinale
+  const call = encounter === finale?.hushApproach && event.actor
+    ? [...finale.hushCrews.values()].map(crew => crew.roster.get(event.actor!.speaker)?.ship).find(Boolean) : undefined
+  const bank = event.actor && finale?.voices?.get(event.actor.speaker)
+  const aboard = bank && (!bank.expeditionOnly || activeExpedition?.members.some(member => member.role !== 'uma' && member.heroine === event.actor?.speaker))
+  const outcomeCue = event.after.result === 'lost' ? 'loss' : event.after.result === 'won' ? 'victory' : event.disabled ? 'disabled' : event.action.order
+  const report = aboard && bank.ship[outcomeCue]
+  const authoredScene = call ?? (report || undefined)
+  const callLine = authoredScene && loaded.book.scenes.get(authoredScene)?.steps.find(step => step.kind === 'line' && step.speaker === event.actor?.speaker)
   const enemySpeaking = beat === 2 && !!enemyText && !!event.commander
   const enemy = enemySpeaking ? loaded.book.commandCinematics?.actors.find(actor => actor.speaker === event.commander!.speaker && actor.role === 'enemy') : undefined
   const actor = enemySpeaking ? enemy : crew, voice = crew?.orders?.[event.action.order]
@@ -100,7 +110,7 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast }: { eve
   const outcome = event.after.result === 'lost' ? 'Withdrawal required' : event.after.result === 'won' ? 'Immediate objective secured' : 'Awaiting next order'
   const line = beat === 0 ? voice?.captain ?? `${orderNames[event.action.order]} · ${event.action.target === 'emitter' ? 'Shield emitter' : 'Opposing ship'}`
     : beat === 1 ? voice?.acknowledgement ?? `Order acknowledged at ${event.station}.`
-    : beat === 2 ? enemyText ?? voice?.result ?? 'The confirmed response is on the tactical display.'
+    : beat === 2 ? enemyText ?? (callLine && callLine.kind === 'line' ? callLine.text : undefined) ?? voice?.result ?? 'The confirmed response is on the tactical display.'
     : event.after.result === 'lost' ? crew?.states?.loss ?? outcome : event.after.result === 'won' ? crew?.states?.victory ?? outcome
       : event.disabled ? crew?.states?.disabled ?? 'Emitter confirmed disabled.' : voice?.result ?? outcome
   function advance(skip = false) {

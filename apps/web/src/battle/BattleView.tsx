@@ -12,7 +12,8 @@ import { initialSaver, toStage, type StageLayout } from '@luismlorenzana/uma-sta
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { looksFor, type UnitLook } from '../board/looks'
 import { campaignCombatLooks, type CombatLook } from '../board/local-combat-sprites'
-import type { CampaignRelease } from '@cyber/domain'
+import type { CampaignRelease, CampaignReleaseFile } from '@cyber/domain'
+import { campaignImage } from '../campaign/load'
 import { BoardScene, type BoardFigure, type StateKind } from '../board/scene'
 import { albumArt } from '../crew/art'
 import { useMaster } from '../master/master'
@@ -87,6 +88,7 @@ export interface BattleViewProps {
   training?: boolean
   objectiveLabel?: string
   portrait?: { unit: string; url: string }
+  campaignPortraits?: ReadonlyMap<string, CampaignReleaseFile>
   standInKit?: 'biome' | 'town'
   combatSprites?: CampaignRelease['combatSprites']
   onCommit: (s: Session) => void
@@ -94,6 +96,7 @@ export interface BattleViewProps {
   onTalkReply?: (target: string, reason: 'refused' | 'notYet') => void
   onEnd: (s: Session) => void
   onQuit: () => void
+  quitLabel?: string
 }
 
 /** The battle screen: its Umas' looks first (their sprite sets or faces from master data, D19, a few seconds at most),
@@ -105,32 +108,49 @@ export function BattleView(props: BattleViewProps) {
   const [loaded, setLoaded] = useState<[number, number]>([0, 0])
   useEffect(() => {
     let live = true
+    const campaignUrls: string[] = []
     // Strict Mode tears down its first effect before this microtask, so the mount that stays owns the asset reads.
     queueMicrotask(() => {
       if (!live) return
       const portrait = props.portrait
       const face = portrait && new Image()
       if (face && portrait) face.src = portrait.url
+      const portraits = [...props.campaignPortraits ?? []].map(async ([unit, asset]) => {
+        const url = await campaignImage(asset).catch(() => undefined)
+        if (!url) return []
+        if (!live) { URL.revokeObjectURL(url); return [] }
+        campaignUrls.push(url)
+        try {
+          const face = new Image()
+          face.src = url
+          await face.decode()
+          return [[unit, { kind: 'face' as const, face }] as const]
+        } catch {
+          return []
+        }
+      })
       void Promise.all([
         looksFor(props.session.input, art, undefined, (d, n) => { if (live) setLoaded([d, n]) }, props.combatSprites === undefined),
         face ? face.decode().then(() => face, () => null) : undefined,
         props.combatSprites ? campaignCombatLooks(props.session.input, props.combatSprites) : undefined,
-      ]).then(([units, decoded, combat]) => {
+        Promise.all(portraits),
+      ]).then(([units, decoded, combat, fallback]) => {
         if (!live) return
         const all = new Map<string, UnitLook | CombatLook>(units)
+        for (const [unit, face] of fallback.flat()) all.set(unit, face)
         if (portrait && decoded) all.set(portrait.unit, { kind: 'face', face: decoded })
         for (const [id, look] of combat ?? []) all.set(id, look)
         setLooks(all)
       })
     })
-    return () => { live = false }
+    return () => { live = false; campaignUrls.forEach(url => URL.revokeObjectURL(url)) }
   }, [])
   const albums = useMemo(() => albumArt((id) => props.session.input.units.find((u) => u.ref?.id === id)?.label ?? `Uma ${id}`), [props.session.input])
   if (!looks) return <div data-loading-squad className="flex h-full items-center justify-center bg-[#0b0d17] font-display text-[15px] text-white/60">Bringing the squad aboard…{loaded[1] ? ` ${loaded[0]} of ${loaded[1]}` : ''}</div>
   return <AlbumArtProvider art={albums}><BattleBoard {...props} looks={looks} /></AlbumArtProvider>
 }
 
-function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, combatSprites, onCommit, onEnd, onQuit, onStoryCues, onTalkReply, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
+function BattleBoard({ layout, session: first, control, debug, training, objectiveLabel, standInKit, combatSprites, onCommit, onEnd, onQuit, quitLabel = 'Setup', onStoryCues, onTalkReply, looks }: BattleViewProps & { looks: Map<string, UnitLook | CombatLook> }) {
   const canvas = useRef<HTMLCanvasElement>(null)
   const scene = useRef<BoardScene | null>(null)
   const session = useRef(first)
@@ -687,7 +707,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
           </p>)}
       </div>
       <div className="pointer-events-none absolute flex flex-col gap-2" style={{ top: 'calc(var(--inset-top) + 6px)', left: 'calc(var(--inset-left) + 6px)' }}>
-        <button type="button" onClick={onQuit} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Setup</button>
+        <button type="button" onClick={onQuit} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">{quitLabel}</button>
         <button type="button" onClick={() => setReachAll((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Reach {reachAll ? 'on' : 'off'}</button>
         <button type="button" onClick={() => setCutInSetting((v) => (v === 'auto' ? 'quick' : v === 'quick' ? 'off' : 'auto'))} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Cut-in {cutInSetting}</button>
         <button type="button" onClick={() => setSaver((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Saver {saver ? 'on' : 'off'}</button>

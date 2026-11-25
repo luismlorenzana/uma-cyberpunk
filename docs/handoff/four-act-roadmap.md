@@ -2,7 +2,7 @@
 
 **Active roadmap · D87 · 2026-11-24.** The [game design](../design/campaign-rework.md) defines what ships, the [systems plan](../technical/four-act-campaign.md) defines the runtime contracts, and the [authoring contract](../design/campaign-art-delivery.md) defines the shared production records and deliverables.
 
-The [implementation launch](four-act-implementation-launch.md) gives the build order, source handoffs and playable acceptance gates.
+[CY97](tasks/CY97.md) owns the remaining implementation and release sequence. The [implementation launch](four-act-implementation-launch.md) records the earlier milestone and source handoffs.
 
 Deliver through the real campaign. Each milestone has a playable entry, exit, defined production coverage and one acceptance pass. Technical experiments belong to the milestone they answer. Keep a single release manifest and cross-workstream status so the working chapter remains part of the full campaign.
 

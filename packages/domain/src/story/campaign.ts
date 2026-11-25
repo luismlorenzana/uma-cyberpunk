@@ -75,7 +75,10 @@ export interface CampaignPortraitFace {
   at: { x: number; y: number }
 }
 
+import { parseFourActFinale, type FourActFinale } from './cy90'
+
 export interface CampaignBook {
+  fourActFinale?: FourActFinale
   fourAct?: FourActCampaign
   combatShift?: string
   wardrobe?: CampaignWardrobe
@@ -138,7 +141,7 @@ export interface CombatSpriteLoadout {
   medic?: true
 }
 
-export function parseCombatSpriteLoadouts(p: P, value: unknown, path: string): CombatSpriteLoadout[] {
+export function parseCombatSpriteLoadouts(p: P, value: unknown, path: string, allowEmpty = false): CombatSpriteLoadout[] {
   const part = (value: unknown, field: string) => value === null ? null : p.slug(value, field)
   const rows = p.list(value, path, (value, field): CombatSpriteLoadout => {
     const row = p.object(value, field, ['set', 'rigs', 'encounters', 'attacks', 'medic'], ['set', 'rigs', 'encounters', 'attacks'])
@@ -155,7 +158,7 @@ export function parseCombatSpriteLoadouts(p: P, value: unknown, path: string): C
     if (row.medic !== undefined && row.medic !== true) p.fail(field + '.medic', 'expected true')
     return { set: p.slug(row.set, field + '.set'), rigs, encounters, attacks, ...(row.medic === true ? { medic: true } : {}) }
   }, 64)
-  if (!rows.length) p.fail(path, 'expected complete loadouts')
+  if (!rows.length && !allowEmpty) p.fail(path, 'expected complete loadouts')
   unique(p, path, rows, row => row.set)
   unique(p, path + '.encounters', rows.flatMap(row => row.encounters), fitting => fitting)
   const rigs = rows.flatMap(row => row.rigs.map(rig => ({ ...rig, set: row.set })))
@@ -373,7 +376,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct', 'combatShift'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct', 'combatShift', 'fourActFinale'], fields)
   const combatShift = o.combatShift === undefined ? undefined : p.slug(o.combatShift, 'combatShift')
   p.version(o)
   if ((identity === 'four-act' || o.fourAct !== undefined) && o.tiers !== undefined) p.fail('tiers', 'four-act books cannot use tier progression')
@@ -497,7 +500,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     if (backdropCues) unique(p, path + '.backdropCues', backdropCues, cue => cue.at)
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}),
       ...(backdropCues ? { backdropCues } : {}) }
-  }, 4096)
+  }, fourActCatalog ? 8192 : 4096)
   unique(p, 'art', art, (a) => a.scene)
   const wardrobe = o.wardrobe === undefined ? undefined : parseCampaignWardrobe(o.wardrobe, { assets, scenes, story })
   const portraitFaces = o.portraitFaces === undefined ? undefined : parsePortraitFaces(p, o.portraitFaces, art, asset, wardrobe)
@@ -735,7 +738,10 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
   const commandCinematics = o.commandCinematics === undefined ? undefined : parseCommandCinematics(o.commandCinematics, { assets, commands, scenes, story })
   const management = o.management === undefined ? undefined : parseCampaignManagement(o.management, { quests, projects, scenes, assets, workshop })
   const tiers = o.tiers === undefined ? undefined : parseCampaignTiers(p, o.tiers, byQuest, recruits ?? [], ground, o.draft === true)
-  return { opening, draft: o.draft as boolean, ...(fourAct ? { fourAct } : {}), ...(previewEnd ? { previewEnd } : {}), quests, assets, art, story, scenes, commands, ground, pairs,
+  const fourActFinale = o.fourActFinale === undefined ? undefined : fourAct
+    ? parseFourActFinale(p, o.fourActFinale, scenes, quests, encounters)
+    : p.fail('fourActFinale', 'requires the four-act campaign')
+  return { opening, draft: o.draft as boolean, ...(fourAct ? { fourAct } : {}), ...(fourActFinale ? { fourActFinale } : {}), ...(previewEnd ? { previewEnd } : {}), quests, assets, art, story, scenes, commands, ground, pairs,
     ...(combatShift ? { combatShift } : {}),
     ...(wardrobe ? { wardrobe } : {}),
     ...(tiers ? { tiers } : {}),

@@ -1,5 +1,6 @@
 import { awayMembers, canTakeOrdinaryAssignment, briefingReady, campaignCaptures, campaignSupport, CORE_CAPTURES, fleetMobilized, newMember, rehabilitationQuestIds, seeScene, setFlag, SIGNAL_CAPTURES, type CampaignBook, type CampaignQuest, type CampaignRecruit, type EffectStep, type Save } from '@cyber/domain'
 import { applyStep } from '../mission/director'
+import { finaleQuestReady, recordFinaleOutcome } from './cy90'
 import { commitExpedition, expeditionForQuest, expeditionQuestBlock } from './expedition'
 import { clearCampaignPosts, homeQuestReady } from './pair'
 import { formationReady } from './specialist-input'
@@ -41,7 +42,8 @@ export function questComplete(save: Save, quest: CampaignQuest, book?: CampaignB
 }
 
 export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQuest, port?: string): boolean {
-  if (questComplete(save, quest, book) || (quest.port && quest.port !== port) || !homeQuestReady(save, book, quest.id)) return false
+  if ((quest.port && quest.port !== port) || quest.flags?.some(flag => !save.story.flags.includes(flag))
+    || questComplete(save, quest, book) || !homeQuestReady(save, book, quest.id) || !finaleQuestReady(save, book, quest)) return false
   const expedition = expeditionForQuest(book, quest.id, save.expedition?.duo)
   if (expeditionQuestBlock(save, book, quest.id, expedition, q => questComplete(save, q, book))) return false
   if (!captureGate(save, book, quest) || (!expedition && personalMissionBlock(save, book, quest))) return false
@@ -61,7 +63,6 @@ export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQu
     const ashore = campaignSupport(book, save).ashore
     if (!save.crew.some(member => canTakeOrdinaryAssignment(member) && !ashore.has(member.outfit))) return false
   }
-  if (quest.flags?.some((flag) => !save.story.flags.includes(flag))) return false
   const prerequisiteMet = (id: string) => {
     const required = book.quests.find(entry => entry.id === id)
     return !!required && questComplete(save, required, book)
@@ -100,7 +101,7 @@ export function finishCampaignDialogue(save: Save, book: CampaignBook, quest: Ca
     const variant = candidate.sceneWhen
     if (variant?.earlier?.[0] === scene && !save.story.seen.includes(variant.earlier[1])) story = setFlag(story, variant.flag)
   }
-  let marked = commitExpedition({ ...next, story }, book, quest.id, expeditionForQuest(book, quest.id))
+  let marked = recordFinaleOutcome(save, commitExpedition({ ...next, story }, book, quest.id, expeditionForQuest(book, quest.id)), book, quest)
   const release = book.allies?.find(ally => ally.release.quest === quest.id)
   if (release) {
     if (!marked.story.flags.includes(release.release.flag) || !marked.crew.some(member => member.outfit === release.partner)) return save

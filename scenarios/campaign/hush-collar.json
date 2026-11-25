@@ -1,0 +1,762 @@
+{
+  "schemaVersion": 1,
+  "id": "hush-collar",
+  "title": "The Hush · The first Collar",
+  "map": "hush-collar",
+  "input": {
+    "rulesVersion": 7,
+    "objective": {
+      "kind": "hack",
+      "count": 6,
+      "last": "first-collar",
+      "protect": [
+        "pulse-keeper",
+        "chorus-1"
+      ]
+    },
+    "units": [
+      {
+        "id": "expedition-1",
+        "side": "squad",
+        "spawn": 0,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-2",
+        "side": "squad",
+        "spawn": 1,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-3",
+        "side": "squad",
+        "spawn": 2,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-4",
+        "side": "squad",
+        "spawn": 3,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-5",
+        "side": "squad",
+        "spawn": 4,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-6",
+        "side": "squad",
+        "spawn": 5,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-7",
+        "side": "squad",
+        "spawn": 6,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-8",
+        "side": "squad",
+        "spawn": 7,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-9",
+        "side": "squad",
+        "spawn": 8,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "expedition-10",
+        "side": "squad",
+        "spawn": 9,
+        "bands": {
+          "guts": 3,
+          "wit": 4,
+          "speed": 5,
+          "stamina": 5,
+          "power": 3
+        },
+        "facing": "N",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 2,
+            "aim": true
+          },
+          "back": {
+            "kind": "med",
+            "load": 2
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "melee",
+            "type": "P",
+            "power": 17,
+            "accuracy": 88,
+            "range": [
+              1,
+              1
+            ],
+            "hits": 1,
+            "load": 4,
+            "twoHanded": true
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "trainee"
+        },
+        "label": "Local lead"
+      },
+      {
+        "id": "pulse-keeper",
+        "side": "enemy",
+        "spawn": 0,
+        "bands": {
+          "guts": 3,
+          "wit": 3,
+          "speed": 3,
+          "stamina": 4,
+          "power": 3
+        },
+        "facing": "S",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2,
+            "hp": 6
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 1
+          },
+          "back": {
+            "kind": "none",
+            "load": 0
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 78,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 2,
+            "load": 2
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "station-commander"
+        },
+        "label": "Pulse Keeper",
+        "leader": true
+      },
+      {
+        "id": "chorus-1",
+        "side": "enemy",
+        "spawn": 1,
+        "bands": {
+          "guts": 3,
+          "wit": 3,
+          "speed": 3,
+          "stamina": 4,
+          "power": 3
+        },
+        "facing": "S",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2,
+            "hp": 6
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 1
+          },
+          "back": {
+            "kind": "none",
+            "load": 0
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 78,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 2,
+            "load": 2
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "station-commander"
+        },
+        "label": "Seraine Chorus",
+        "leader": false
+      },
+      {
+        "id": "chorus-2",
+        "side": "enemy",
+        "spawn": 2,
+        "bands": {
+          "guts": 3,
+          "wit": 3,
+          "speed": 3,
+          "stamina": 4,
+          "power": 3
+        },
+        "facing": "S",
+        "chargeCap": 3,
+        "loadout": {
+          "core": {
+            "load": 2,
+            "hp": 6
+          },
+          "leftArm": {
+            "load": 1
+          },
+          "rightArm": {
+            "load": 1
+          },
+          "legs": {
+            "load": 2
+          },
+          "visor": {
+            "load": 1
+          },
+          "back": {
+            "kind": "none",
+            "load": 0
+          },
+          "leftHand": null,
+          "rightHand": {
+            "kind": "weapon",
+            "band": "short",
+            "type": "P",
+            "power": 6,
+            "accuracy": 78,
+            "range": [
+              1,
+              3
+            ],
+            "hits": 2,
+            "load": 2
+          },
+          "coat": null
+        },
+        "ref": {
+          "kind": "standin",
+          "id": "station-commander"
+        },
+        "label": "Seraine Chorus",
+        "leader": false
+      }
+    ],
+    "goalRequired": true
+  }
+}
