@@ -39,6 +39,7 @@ export function SystemsMap({ book, assets, save, stock, drives, travel, open, lo
     || route.to === stock.port && route.from === journey.first)
   const canJump = leg && jumpRoute(stock, leg, drives, save.story.flags) !== stock
   const approach = port && book.art.find(art => art.scene === port.scene)?.backdrop
+  const landingArt = (approach ? assets.get(approach) : undefined) ?? assets.get('rainward-relief-receiving-dock')
   const settlement = group?.capital?.settlement
   const stage = settlement ? index.get(complete(group?.capital?.operation) ? settlement : group!.capital!.operation) : undefined
   const label = (id: string) => network.ports.find(row => row.id === id)?.name ?? id
@@ -55,7 +56,7 @@ export function SystemsMap({ book, assets, save, stock, drives, travel, open, lo
       aria-pressed={port?.id === row.id} className={campaignControl + ' aria-pressed:ring-2 aria-pressed:ring-cyan-300'}
       onClick={() => select(row.id)}>{row.name}{row.id === stock.port ? ' · Docked' : ''}</button>)}</div>
     {port && stockAtPort && <article className="space-y-2 rounded-lg bg-[#101e32] p-3">
-      {approach && <CampaignThumbnail asset={assets.get(approach)} className="h-32 w-full rounded-lg object-cover" />}
+      {landingArt && <CampaignThumbnail asset={landingArt} className="h-32 w-full rounded-lg object-cover" />}
       <h3 className="font-semibold">{port.name}</h3>
       <p className="text-sm">Stores · {stockAtPort.fuel} fuel · {stockAtPort.provisions} provisions · {stockAtPort.alloy} alloy</p>
       {port.id === stock.port ? locate && <button type="button" className={campaignControl} onClick={locate}>Inspect landing</button>

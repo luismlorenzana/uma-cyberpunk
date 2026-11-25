@@ -1,16 +1,16 @@
 import { CompositionLayer } from '../story/ScenePlayer'
 import type { CampaignComposition } from '@cyber/domain'
 import { commandEffectKeys, commandFacts, type CommandActorArt, type ResolvedCommand } from '@cyber/domain'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { updateSave, useGame } from '../save/game'
 import { ScenePortrait, selectScenePortrait, type ScenePortraitImage } from '../story/ScenePortrait'
-import { advanceCommandCinema } from './cinematics'
+import { advanceCommandCinema, commandStationArt } from './cinematics'
 import { campaignImage, type LoadedCampaign } from './load'
 
 const button = 'min-h-11 rounded-lg bg-[#16263e] px-3 text-sm font-bold text-white ring-1 ring-white/20 disabled:opacity-50'
 const orderNames = { evade: 'Evade', brace: 'Brace shields', fire: 'Fire guns', intercept: 'Intercept', strike: 'Fighter strike', reroute: 'Reroute power' }
 
-function Shot({ loaded, actor, station, emote }: { loaded: LoadedCampaign; actor?: CommandActorArt; station: ResolvedCommand['station']; emote: string }) {
+function Shot({ loaded, actor, station, emote, portraitOnly, showPortrait }: { loaded: LoadedCampaign; actor?: CommandActorArt; station: ResolvedCommand['station']; emote: string; portraitOnly?: boolean; showPortrait: boolean }) {
   const [shot, setShot] = useState<{ plate?: string; pose?: string; portraits: ScenePortraitImage[]; layers?: (CampaignComposition['layers'][number] & { url: string })[] }>({ portraits: [] })
   const plate = loaded.book.commandCinematics?.stations.find(row => row.station === station)?.backdrop
   const member = actor && loaded.book.wardrobe?.members.find(row => row.speaker === actor.speaker)
@@ -29,22 +29,22 @@ function Shot({ loaded, actor, station, emote }: { loaded: LoadedCampaign; actor
     }
     const available = actor ? loaded.book.portraitFaces?.filter(row => row.speaker === actor.speaker && row.base === (expressionBase ?? actor.base)) ?? [] : []
     const matching = available.filter(row => row.emote === emote)
-    const placements = matching.length ? matching : expressionBase && available[0] ? [available[0]] : []
+    const placements = matching.length ? matching : available.filter(row => row.emote === 'neutral')
     const portrait = actor && (expressionBase ?? (placements.length ? actor.base : actor.profile ?? actor.base))
     void Promise.all([plate ? read(plate).catch(() => undefined) : undefined,
-      actor ? read(actor.pose ?? actor.poseFallback ?? actor.base).catch(() => undefined) : undefined,
+      actor && !actor.composition && !portraitOnly ? read(actor.pose ?? actor.poseFallback ?? actor.base).catch(() => undefined) : undefined,
       portrait ? read(portrait).catch(() => undefined) : undefined,
       Promise.all((actor?.composition?.layers ?? []).map(async layer => { try { return { ...layer, url: await read(layer.asset) } } catch { return null } })),
       Promise.all(placements.map(async face => { try { return { emote: face.emote, at: face.at, url: await read(face.asset) } } catch { return null } })),
     ]).then(([plate, pose, profile, layers, faces]) => { if (live) setShot({ plate, pose, layers: layers.filter(layer => layer !== null), portraits: actor && profile ? [{ speaker: actor.speaker, url: profile, faces: faces.filter(face => face !== null) }] : [] }) })
     return () => { live = false; urls.forEach(url => URL.revokeObjectURL(url)) }
-  }, [loaded, actor, plate, emote, expressionBase])
+  }, [loaded, actor, plate, emote, expressionBase, portraitOnly])
   const portrait = actor && selectScenePortrait(shot.portraits, actor.speaker, emote)
   return <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
     {shot.plate && <img src={shot.plate} alt="" className="absolute inset-0 size-full object-cover opacity-50" />}
     {actor?.composition && <svg className="absolute inset-0 size-full" viewBox={`0 0 ${actor.composition.width} ${actor.composition.height}`} preserveAspectRatio="xMidYMid meet" data-scene-composition>{shot.layers?.map(layer => <CompositionLayer key={layer.asset} layer={layer} />)}</svg>}
     {!actor?.composition && shot.pose && <img src={shot.pose} alt="" className="absolute bottom-0 right-0 h-[88%] w-[64%] object-contain object-bottom opacity-80" data-command-pose />}
-    {portrait && actor?.composition?.portraits !== 'hide' && <div className={`absolute left-2 top-14 h-[92px] w-[90px] overflow-hidden rounded-lg bg-[#080d19]/85 [&_img[data-scene-portrait]]:max-h-none ${expressionBase && portrait.image.faces?.length ? '' : actor.profile && !portrait.face ? '[&_img[data-scene-portrait]]:w-[90px] [&_img[data-scene-portrait]]:max-w-[90px]' : '[&>div]:w-[180px] [&>div]:-translate-x-[45px] [&_img[data-scene-portrait]]:w-[180px] [&_img[data-scene-portrait]]:max-w-[180px]'}`}>
+    {showPortrait && portrait && actor?.composition?.portraits !== 'hide' && <div className={`absolute left-2 top-14 h-[92px] w-[90px] overflow-hidden rounded-lg bg-[#080d19]/85 [&_img[data-scene-portrait]]:max-h-none ${expressionBase && portrait.image.faces?.length ? '' : actor.profile && !portrait.face ? '[&_img[data-scene-portrait]]:w-[90px] [&_img[data-scene-portrait]]:max-w-[90px]' : '[&>div]:w-[180px] [&>div]:-translate-x-[45px] [&_img[data-scene-portrait]]:w-[180px] [&_img[data-scene-portrait]]:max-w-[180px]'}`}>
       <ScenePortrait key={portrait.image.url} image={portrait.image} face={portrait.face} profile={!!expressionBase && !!portrait.image.faces?.length} />
     </div>}
   </div>
@@ -91,7 +91,9 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast }: { eve
   const [error, setError] = useState<string | null>(null), [busy, setBusy] = useState(false)
   const activeExpedition = useGame(state => state.save?.expedition)
   const binding = loaded.book.commandCinematics?.encounters.find(row => row.encounter === encounter)
-  const crew = event.actor && loaded.book.commandCinematics?.actors.find(actor => actor.speaker === event.actor!.speaker && actor.role === 'crew')
+  const actorSpeaker = event.actor?.speaker
+  const friendly = useMemo(() => actorSpeaker === undefined ? undefined : commandStationArt(loaded.book, actorSpeaker), [loaded.book, actorSpeaker])
+  const crew = friendly?.actor
   const enemyText = event.commander && binding?.commander === event.commander.speaker ? (event.after.enemy === 0 ? binding?.enemy?.withdrawal : event.disabled ? binding?.enemy?.disabled : binding?.enemy?.contact) : undefined
   const finale = loaded.book.fourActFinale
   const call = encounter === finale?.hushApproach && event.actor
@@ -123,7 +125,8 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast }: { eve
     return () => clearTimeout(timer)
   }, [encounter, event.turn, beat, error])
   return <section className="fixed inset-0 z-20 flex flex-col justify-between overflow-hidden bg-[#15223a] p-3" style={{ margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }} role="dialog" aria-modal="true" aria-label="Ship order cinematic" data-command-cinema={`${event.turn}:${beat}`}>
-    <Shot loaded={loaded} actor={actor || undefined} station={event.station} emote={emote} />
+    <Shot key={actor?.speaker} loaded={loaded} actor={actor || undefined} station={event.station} emote={emote}
+      showPortrait={beat !== 0} portraitOnly={!enemySpeaking && friendly?.portraitOnly} />
     {(beat === 2 || beat === 3) && <AuthoredEffects loaded={loaded} event={event} />}
     <header className="relative flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-lg bg-[#080d19]/95 p-2 text-xs"><span>Hull {event.after.hull} · Fore {event.after.shields.fore} · Aft {event.after.shields.aft} · Reactor {event.after.power}</span><span>{event.objective} {event.after.transport} · Opponent {event.after.enemy}{event.after.emitter === null ? '' : ` · Emitter ${event.after.emitter}`}</span></header>
     <div className="relative space-y-1 pl-24">
