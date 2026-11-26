@@ -1,5 +1,5 @@
 import type { CommandCinemaState } from '../ship/command-cinema'
-import { SECURE_WARD_BERTHS, STATION_DELIVERY_SLOTS, STATION_MODULES, STATION_RESERVE_MAX, STATION_ROOMS, STATION_WORK, WATCHES_PER_DAY, type StationAppointment, type StationModule, type StationState } from '../station'
+import { NIGHT_VISIT_LIMIT, SECURE_WARD_BERTHS, STATION_DELIVERY_SLOTS, STATION_MODULES, STATION_RESERVE_MAX, STATION_ROOMS, STATION_WORK, WATCHES_PER_DAY, type StationAppointment, type StationModule, type StationState } from '../station'
 // uma-cyberpunk's save (CY3, TC11): local first in Dexie, synced through `cyber-api`. Nothing carries over from any
 // other game (P4, TC14). Copied from uma-quest's at cc42fd1 (its Q14, D11), itself from uma-rpg's at 30a322a (its D32,
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
@@ -879,7 +879,7 @@ function parseFleet(raw: unknown, path: string, crew: readonly CrewMember[]): Re
 }
 
 function parseStation(raw: unknown, path: string): StationState {
-  const data = object(raw, path, ['absoluteWatch', 'anchor', 'rooms', 'off', 'shifts', 'report', 'recruit', 'appointments', 'integrity', 'move', 'autoStaff', 'travellers', 'lieutenantResidents', 'preferredCabins', 'reserves', 'custody', 'deliveries', 'sceneRelease'])
+  const data = object(raw, path, ['absoluteWatch', 'anchor', 'rooms', 'off', 'shifts', 'report', 'recruit', 'appointments', 'integrity', 'move', 'autoStaff', 'travellers', 'lieutenantResidents', 'preferredCabins', 'reserves', 'custody', 'deliveries', 'sceneRelease', 'night', 'lastContact', 'automaticRations', 'rationShortfall'])
   const rooms = object(data.rooms, path + '.rooms', STATION_ROOMS)
   const shifts = object(data.shifts, path + '.shifts', STATION_WORK)
   const absoluteWatch = count(data.absoluteWatch, path + '.absoluteWatch')
@@ -894,10 +894,12 @@ function parseStation(raw: unknown, path: string): StationState {
   }
   let report: StationState['report'] = null
   if (data.report !== null) {
-    const row = object(data.report, path + '.report', ['at', 'workers', 'alloy', 'data'])
+    const row = object(data.report, path + '.report', ['at', 'workers', 'alloy', 'data', 'provisions', 'supported'])
     if (!Array.isArray(row.workers) || row.workers.length > STATION_WORK.length) throw new SaveParseError(path + '.report.workers', 'too many workers')
     report = { at: bounded(row.at, path + '.report.at', absoluteWatch), workers: row.workers.map(worker => count(worker, path + '.report.workers')),
-      alloy: bounded(row.alloy, path + '.report.alloy', STATION_WORK.length), data: bounded(row.data, path + '.report.data', STATION_WORK.length) }
+      alloy: bounded(row.alloy, path + '.report.alloy', STATION_WORK.length * 2), data: bounded(row.data, path + '.report.data', STATION_WORK.length * 2),
+      ...(row.provisions === undefined ? {} : { provisions: bounded(row.provisions, path + '.report.provisions', STATION_RESERVE_MAX) }),
+      ...(row.supported === undefined ? {} : { supported: bounded(row.supported, path + '.report.supported', STATION_WORK.length + NIGHT_VISIT_LIMIT) }) }
   }
   let appointments: StationAppointment[] | undefined
   if (data.appointments !== undefined) {
@@ -906,16 +908,19 @@ function parseStation(raw: unknown, path: string): StationState {
       const field = path + '.appointments[' + index + ']'
       const row = object(raw, field, ['at', 'actor', 'quest', 'port'])
       const at = count(row.at, field + '.at')
-      if (at % WATCHES_PER_DAY !== 1 || (row.actor === undefined) === (row.quest === undefined)) {
-        throw new SaveParseError(field, 'expected one appointment in a Free watch')
+      const phase = at % WATCHES_PER_DAY
+      if ((row.actor === undefined) === (row.quest === undefined) || phase !== 1 && (row.actor === undefined || phase !== 2)) {
+        throw new SaveParseError(field, 'expected a care appointment in Free or a visit in Night')
       }
       const venue = row.port === undefined ? {} : { port: id(row.port, field + '.port') }
       return row.actor === undefined ? { at, ...venue, quest: id(row.quest, field + '.quest') }
         : { at, ...venue, actor: count(row.actor, field + '.actor') }
     })
-    if (new Set(appointments.map(row => row.at)).size !== appointments.length
+    const occupancy = new Map<number, number>()
+    for (const row of appointments) occupancy.set(row.at, (occupancy.get(row.at) ?? 0) + 1)
+    if ([...occupancy].some(([at, size]) => size > (at % WATCHES_PER_DAY === 2 ? NIGHT_VISIT_LIMIT : 1))
       || new Set(appointments.map(row => 'actor' in row ? row.actor : row.quest)).size !== appointments.length) {
-      throw new SaveParseError(path + '.appointments', 'appointment targets and times must be distinct')
+      throw new SaveParseError(path + '.appointments', 'duplicate appointment or full watch')
     }
   }
   let custody: StationState['custody']
@@ -974,6 +979,34 @@ function parseStation(raw: unknown, path: string): StationState {
       throw new SaveParseError(path + '.preferredCabins', 'cabin assignments must be distinct')
     }
   }
+  let night: StationState['night']
+  if (data.night !== undefined) {
+    const entry = object(data.night, path + '.night', ['day', 'used', 'mornings'])
+    const day = count(entry.day, path + '.night.day')
+    const used = bounded(entry.used, path + '.night.used', NIGHT_VISIT_LIMIT)
+    if (!day || !Array.isArray(entry.mornings) || entry.mornings.length > used) throw new SaveParseError(path + '.night', 'invalid night ledger')
+    const mornings = entry.mornings.map((value, index) => {
+      const field = path + '.night.mornings[' + index + ']'
+      const kind = (value as { kind?: unknown } | null)?.kind
+      const pending = kind === 'cabin' ? parseCabinNight(value) : parseCampaignDay({ day, pending: value }, field, true).pending
+      if (!pending || pending.kind === 'cabin' && pending.phase !== 'morning'
+        || pending.kind !== 'cabin' && pending.kind !== 'morning' && pending.kind !== 'pair-morning') {
+        throw new SaveParseError(field, 'expected a queued morning')
+      }
+      return pending
+    })
+    night = { day, used, mornings }
+  }
+  let lastContact: StationState['lastContact']
+  if (data.lastContact !== undefined) {
+    if (!data.lastContact || typeof data.lastContact !== 'object' || Array.isArray(data.lastContact)
+      || Object.keys(data.lastContact).length > 250) throw new SaveParseError(path + '.lastContact', 'invalid contact history')
+    lastContact = Object.fromEntries(Object.entries(data.lastContact).map(([actor, day]) =>
+      [id(actor, path + '.lastContact'), bounded(day, path + '.lastContact.' + actor, Math.floor(absoluteWatch / WATCHES_PER_DAY) + 1)]))
+  }
+  if (data.automaticRations !== undefined && typeof data.automaticRations !== 'boolean') {
+    throw new SaveParseError(path + '.automaticRations', 'expected true or false')
+  }
   if (data.sceneRelease !== undefined && (typeof data.sceneRelease !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(data.sceneRelease))) {
     throw new SaveParseError(path + '.sceneRelease', 'invalid scene release ID')
   }
@@ -993,6 +1026,10 @@ function parseStation(raw: unknown, path: string): StationState {
     ...(data.autoStaff === true ? { autoStaff: true } : {}),
     ...(move === undefined ? {} : { move: { to: id(move.to, path + '.move.to'), at: count(move.at, path + '.move.at') } }),
     ...(data.sceneRelease === undefined ? {} : { sceneRelease: data.sceneRelease }),
+    ...(night === undefined ? {} : { night }),
+    ...(lastContact === undefined ? {} : { lastContact }),
+    ...(typeof data.automaticRations === 'boolean' ? { automaticRations: data.automaticRations } : {}),
+    ...(data.rationShortfall === undefined ? {} : { rationShortfall: bounded(data.rationShortfall, path + '.rationShortfall', STATION_RESERVE_MAX) }),
     ...(custody === undefined ? {} : { custody }),
     ...(deliveries === undefined ? {} : { deliveries }),
     ...(appointments === undefined ? {} : { appointments }) }

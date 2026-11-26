@@ -30,7 +30,7 @@ import { indexCampaignNavigation, type OperationBrowse, type RosterBrowse } from
 import { SectorPanel } from './SectorPanel'
 import { ProjectsPanel } from './ProjectsPanel'
 import { SupplyPanel } from './SupplyPanel'
-import { cutterArrival, settleCampaignDay, stationOf } from './watch'
+import { advanceStationWatches, cutterArrival, settleCampaignDay, stationOf, voyageCrew } from './watch'
 import { chooseDatePath, creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
 import { DatePanel } from './DatePanel'
 import { ExpeditionPanel } from './ExpeditionPanel'
@@ -38,6 +38,8 @@ import { expeditionForQuest, expeditionPlan, expeditionQuestBlock } from './expe
 import { beginCampaignEncounter } from './sortie'
 import { finaleActivities, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
   finishFinaleActivity, selectFinaleFormation, selectFinaleVoice, workFinaleRepair } from './cy90'
+import { cabinVisitors, canBookNightContact, checkInWithLieutenant, closeNight, contactDay, enterNight, finishNightContact,
+  nextQueuedMorning, nightActive, nightVisitsLeft, spendNightContact, visitActors, watchesUntilNight } from './night-economy'
 import { cabinAvailable, chooseCabinOutcome, finishCabinScene, finishSharedConsent, leaveCabinEarly, sharedConsentOffer, startCabinEvening } from './cabins'
 
 const button = 'inline-flex min-h-11 items-center justify-center rounded-lg bg-white/10 px-4 text-sm font-semibold text-white'
@@ -74,7 +76,8 @@ export function CampaignAccount() {
 function Campaign({ layout }: { layout: StageLayout }) {
   const save = useGame((g) => g.save)
   const owner = useGame((g) => g.uid)
-  const sceneRelease = save?.station?.recruit || save?.campaignDay.pending ? save.station?.sceneRelease : undefined
+  const sceneRelease = save?.station?.recruit || save?.campaignDay.pending || save?.station?.night?.mornings.length
+    ? save.station?.sceneRelease : undefined
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [location, setLocation] = useState<string | null>(null)
   const [groundReports, setGroundReports] = useState<string[]>([])
@@ -89,6 +92,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [pending, setPending] = useState(true)
   const [check, setCheck] = useState(0)
   const [eveningOpen, setEveningOpen] = useState(false)
+  const [eveningRole, setEveningRole] = useState<'Uma' | 'General' | 'Lieutenant' | 'Shared'>('Uma')
+  const [eveningSearch, setEveningSearch] = useState('')
   const [groundPaused, setGroundPaused] = useState(false)
   const [savingScene, setSavingScene] = useState(false)
   const [view, setView] = useState<CampaignView>('Home')
@@ -496,7 +501,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
         if (campaignDay === s.campaignDay) return s
         const next = nightPair ? recordPairScene(s, loaded.book, nightPair, night.scene, effects)
           : nightDate ? recordDateScene(s, loaded.book, nightDate, night.scene, effects, bondEffects) : reduceEffects(s, effects)
-        return settleDay(nightSector ? { ...next, story: seeScene(next.story, night.scene) } : next, campaignDay)
+        const recorded = nightSector ? { ...next, story: seeScene(next.story, night.scene) } : next
+        if (!loaded.book.stationStory) return settleDay(recorded, campaignDay)
+        if (night.kind === 'morning' || night.kind === 'pair-morning') return nextQueuedMorning(recorded)
+        return finishNightContact(recorded, loaded.book, visitActors(loaded.book, night,
+          nightSector ? [nightSector.officer, nightSector.former!.speaker] : undefined), campaignDay.pending)
       })} />
   }
   if (loaded && portArrival) {
@@ -518,18 +527,20 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }
 
   const opened = !!loaded && complete.has(loaded.book.opening)
+  const insideEvening = !!save && nightActive(save)
+  const showingEvening = eveningOpen || insideEvening
   const menuReady = opened && !night && !pendingPair
-  const currentView = menuReady && !missionState ? view : 'Home'
-  const bridge = currentView === 'Home' && (!menuReady || homeArea === 'Deck' || homeArea === 'Bridge' || !!missionState)
-  const deck = menuReady && currentView === 'Home' && homeArea === 'Deck' && !expedition && !missionState
-  const systems = currentView === 'Home' && !bridge && homeArea === 'Engineering'
-  const hangar = currentView === 'Home' && !bridge && homeArea === 'Hangar'
-  const cargoRoom = currentView === 'Home' && !bridge && homeArea === 'Cargo'
+  const currentView = menuReady && !missionState && !insideEvening ? view : 'Home'
+  const bridge = currentView === 'Home' && !insideEvening && (!menuReady || homeArea === 'Deck' || homeArea === 'Bridge' || !!missionState)
+  const deck = menuReady && currentView === 'Home' && homeArea === 'Deck' && !insideEvening && !expedition && !missionState
+  const systems = currentView === 'Home' && !bridge && !insideEvening && homeArea === 'Engineering'
+  const hangar = currentView === 'Home' && !bridge && !insideEvening && homeArea === 'Hangar'
+  const cargoRoom = currentView === 'Home' && !bridge && !insideEvening && homeArea === 'Cargo'
   const cabins = loaded && save && (deck || homeArea === 'Quarters' || newRecruit !== undefined) ? homestretchCabins(loaded.book, save) : []
   const newChapter = newRecruit === undefined ? undefined : loaded?.book.recruits?.find(row => row.outfit === newRecruit)?.story[0]
   const startChapter = newChapter ? navigation?.quests.get(newChapter) : undefined
   const startTrip = startChapter && loaded && save && homeQuestTravel(save, loaded.book, startChapter)
-  const quarters = currentView === 'Home' && !bridge && homeArea === 'Quarters'
+  const quarters = currentView === 'Home' && !bridge && (homeArea === 'Quarters' || insideEvening)
   const showOperationsProgress = (bridge || currentView === 'Operations') && !missionState
   const managedQuests = new Set((loaded?.book.recruits ?? []).flatMap(({ outfit, signOn, story }) =>
     [signOn, ...story, ...rehabilitationQuestIds(catalog?.arcs.get(outfit))]))
@@ -548,7 +559,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
     ? <SupplyPanel showMap={!cargoRoom} save={save} network={network} supply={supply} port={developedPort(loaded.book, save, port)} worlds={loaded.book.story.worlds}
       upkeep={campaignUpkeep(loaded.book, save, support.ashore)} book={loaded.book} assets={loaded.assets}
       open={id => { const quest = navigation?.quests.get(id); if (quest && questAvailable(save, loaded.book, quest, port.id)) openCampaignQuest(quest); else selectView('Operations') }}
-      locate={() => setLocation(port.id)} destination={portTarget} watch={canRest ? () => chooseEvening(null) : undefined} /> : null
+      locate={() => setLocation(port.id)} destination={portTarget} watch={canRest ? () => {
+        if (loaded.book.stationStory) void updateSave(s => s.mission || s.expedition || s.campaignDay.pending || s.pairScene
+          || nightActive(s) ? s : advanceStationWatches(s, loaded.book, 1))
+        else chooseEvening(null)
+      } : undefined} /> : null
   const basePanels = !expedition && loaded && save && port && !night && !pendingPair && !missionState && !eveningOpen ? pairs.flatMap((pair) => {
     const home = pair.home
     if (!home || home.port !== port.id || !complete.has(home.base)) return []
@@ -568,12 +583,16 @@ function Campaign({ layout }: { layout: StageLayout }) {
     && workshop.port === port?.id && complete.has(workshop.after)
     ? <Suspense fallback={null}><WorkshopPanel save={save} loaded={loaded} ashore={support.ashore} /></Suspense> : null
   const visitOptions = canRest ? evening?.visits.filter((v) => !support?.ashore.has(v.companion) && save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
-  const dateOptions = loaded && save && canRest ? dates.map((date) => {
+  const dateOptions = loaded && save && canRest ? dates.filter(date =>
+    canBookNightContact(save, loaded.book, [campaignSpeaker(loaded.book.allies, date.companion)]))
+    .sort((a, b) => contactDay(save, campaignSpeaker(loaded.book.allies, a.companion))
+      - contactDay(save, campaignSpeaker(loaded.book.allies, b.companion))).map((date) => {
     const visit = dateProgress(save, loaded.book, date).visit
     const cabin = visit === date.regular ? loaded.book.cabinEvenings?.find(c => 'companion' in c.source && c.source.companion === date.companion) : undefined
-    return { visit: { kind: 'visit' as const, companion: date.companion, scene: visit.scene, morning: visit.morning }, title: visit.title, cabin }
+    return { visit: { kind: 'visit' as const, companion: date.companion, scene: visit.scene, morning: visit.morning }, title: visit.title, cabin,
+      established: !!save.crew.find(row => row.outfit === date.companion)?.bond.path }
   }) : []
-  const sharedCabins = loaded && save && canRest ? loaded.book.cabinEvenings?.filter(c => !('companion' in c.source) && cabinAvailable(save, loaded.book, c)) ?? [] : []
+  const sharedCabins = loaded && save && canRest ? loaded.book.cabinEvenings?.filter(c => !('companion' in c.source) && cabinAvailable(save, loaded.book, c) && canBookNightContact(save, loaded.book, cabinVisitors(loaded.book, c))) ?? [] : []
   const consentOffers = quarters && loaded && save && canRest ? loaded.book.allies?.flatMap(ally => {
     const quest = sharedConsentOffer(save, loaded.book, ally)
     return quest ? [{ ally, quest }] : []
@@ -615,21 +634,32 @@ function Campaign({ layout }: { layout: StageLayout }) {
           if (ready.scene !== visit.scene || ready.morning !== visit.morning) return s
         } else if (ashore.has(visit.companion)) return s
       }
+      if (!visit && loaded.book.stationStory) return pinEvening(closeNight(s, loaded.book))
+      let actors = visit ? visitActors(loaded.book, visit) : []
       if (visit?.kind === 'pair-visit') {
         const sector = loaded.book.sectors?.find((row) => sectorNightId(row) === visit.pair)
         if (sector) {
           const eligible = sectorVisit(loaded.book, s, sector)
           if (!eligible || eligible.scene !== visit.scene || eligible.morning !== visit.morning) return s
-          return settleDay(s, startCampaignNight(s.campaignDay, visit))
+          actors = [sector.officer, sector.former!.speaker]
+          if (!canBookNightContact(s, loaded.book, actors)) return s
+          const entered = spendNightContact(s, loaded.book, actors)
+          return settleDay(entered, startCampaignNight(entered.campaignDay, visit))
         }
         const pair = loaded?.book.pairs.find((pair) => pair.id === visit.pair)
         if (!pair || !loaded || !pairAvailable(s, loaded.book, pair)) return s
         const cabin = pairVisit(pair, s.story, s.crew.flatMap(({ outfit }) => ashore.has(outfit) ? [] : [outfit]))
         if (![cabin, availableSharedVisit(s, pair)].some((option) => option?.scene === visit.scene && option.morning === visit.morning)) return s
       }
-      const campaignDay = startCampaignNight(s.campaignDay, visit)
-      if (campaignDay === s.campaignDay) return s
-      const next = settleDay(s, campaignDay)
+      if (visit && !canBookNightContact(s, loaded.book, actors)) return s
+      const entered = visit ? spendNightContact(s, loaded.book, actors) : s
+      if (visit?.kind === 'visit') {
+        const date = loaded.book.dates?.find(row => row.companion === visit.companion)
+        if (date && !dateAvailable(entered, loaded.book, date)) return s
+      }
+      const campaignDay = startCampaignNight(entered.campaignDay, visit)
+      if (campaignDay === entered.campaignDay) return s
+      const next = settleDay(entered, campaignDay)
       return next.station && visit?.kind === 'visit'
         ? { ...next, station: cancelStationAppointment(next.station, { actor: visit.companion }) } : next
     })
@@ -700,13 +730,13 @@ function Campaign({ layout }: { layout: StageLayout }) {
       <div className="mx-auto max-w-5xl space-y-3">
         <header className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b border-white/10 bg-[#0b0d17]/95 pb-2">
           <nav aria-label="Campaign navigation" className="flex flex-wrap items-center gap-1">
-            {(menuReady && !missionState ? campaignViews : ['Home'] as const).map(item =>
+            {(menuReady && !missionState && !insideEvening ? campaignViews : ['Home'] as const).map(item =>
               <button type="button" key={item} className={campaignControl + ' aria-[current=page]:border-cyan-200 aria-[current=page]:text-cyan-200'}
                 aria-current={item === currentView ? 'page' : undefined} onClick={() => selectView(item)}>{item}</button>)}
           </nav>
           <Link to={campaignAccount} className={campaignControl}>Account</Link>
         </header>
-        {menuReady && currentView === 'Home' && !deck && !missionState && <nav aria-label="Ship areas" className="flex flex-wrap gap-2">
+        {menuReady && currentView === 'Home' && !deck && !insideEvening && !missionState && <nav aria-label="Ship areas" className="flex flex-wrap gap-2">
           {homeAreas.filter(area => !expedition || !['Quarters', 'Hangar', 'Cargo'].includes(area)).map(area => <button key={area} type="button" className={campaignControl + ' aria-pressed:border-cyan-200/80'}
             aria-pressed={area === homeArea} onClick={() => area === 'Navigation' ? openNavigation() : selectView('Home', area)}>{area}</button>)}
         </nav>}
@@ -827,7 +857,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
                 </button>)}
             </div>
           </section>}
-          {quarters && loaded && !eveningOpen && <section aria-label="Crew cabins" className="space-y-2 rounded-xl border border-white/15 p-3">
+          {quarters && loaded && !showingEvening && <section aria-label="Crew cabins" className="space-y-2 rounded-xl border border-white/15 p-3">
             <h2 className="font-display text-lg font-bold">Quarters</h2>
             {cabins.length > 0 && save ? <Suspense fallback={<p role="status">Opening cabin directory…</p>}>
               <StationCabins cabins={cabins} book={loaded.book} save={save} open={actor => {
@@ -844,13 +874,51 @@ function Campaign({ layout }: { layout: StageLayout }) {
               Talk about a shared evening with {nameOf(loaded.book.story, ally.partner)} and {nameOf(loaded.book.story, ally.heroine)}
             </button>)}
           </section>}
-          {quarters && canRest && !eveningOpen && <button type="button" className={button} onClick={() => setEveningOpen(true)}>End day</button>}
-          {quarters && canRest && eveningOpen && loaded && <section aria-label="Evening" className="flex flex-wrap gap-2">
+          {quarters && canRest && !showingEvening && loaded && save && <button type="button" className={button} onClick={() => {
+            void updateSave(current => current.mission || current.expedition || current.pairScene || current.campaignDay.pending
+              ? current : enterNight(current, loaded.book)).then(() => setEveningOpen(true))
+          }}>{loaded.book.stationStory ? (watchesUntilNight(save, loaded.book)
+            ? 'Start night · ' + watchesUntilNight(save, loaded.book) + ' watches' : 'Open evening') : 'End day'}</button>}
+          {quarters && canRest && showingEvening && loaded && save && <section aria-label="Evening" className="space-y-2 rounded-xl border border-white/15 p-3">
+            {loaded.book.stationStory && <>
+              <h2 className="font-display text-lg">2200 · Off duty</h2>
+              <p className="text-sm">{nightVisitsLeft(save)} {nightVisitsLeft(save) === 1 ? 'visit' : 'visits'} left · Staying overnight ends the night</p>
+              <nav aria-label="Evening crew" className="flex flex-wrap gap-2">
+                {(['Uma', 'General', 'Lieutenant', 'Shared'] as const).map(role => <button key={role} type="button" className={button}
+                  aria-pressed={eveningRole === role} onClick={() => setEveningRole(role)}>{role}</button>)}
+              </nav>
+              <input type="search" aria-label="Find someone to visit" placeholder="Find someone to visit" value={eveningSearch}
+                onChange={event => setEveningSearch(event.currentTarget.value)} className="min-h-11 rounded bg-white/10 px-3 text-sm" />
+            </>}
+            <div className="flex flex-wrap gap-2">
             {visitOptions.map((visit) => <button key={visit.companion} type="button" className={button}
               onClick={() => chooseEvening({ kind: 'visit', ...visit })}>Visit {nameOf(loaded.book.story, visit.companion)}</button>)}
-            {dateOptions.map(({ visit, title, cabin }) => <button key={visit.companion} type="button" className={button}
-              onClick={() => cabin ? chooseCabin(cabin) : chooseEvening(visit)}>{nameOf(loaded.book.story, campaignSpeaker(loaded.book.allies, visit.companion))} · {title}</button>)}
-            {sharedCabins.map(cabin => {
+            {dateOptions.flatMap(({ visit, title, cabin, established }) => {
+              const actor = campaignSpeaker(loaded.book.allies, visit.companion)
+              const name = nameOf(loaded.book.story, actor)
+              if (loaded.book.stationStory && ((typeof actor === 'number' ? 'Uma' : 'General') !== eveningRole
+                || !name.toLocaleLowerCase().includes(eveningSearch.trim().toLocaleLowerCase()))) return []
+              const last = contactDay(save, actor)
+              return [<button key={visit.companion} type="button" className={button + ' flex-col items-start py-2'}
+                onClick={() => cabin ? chooseCabin(cabin) : chooseEvening(visit)}>
+                <span>{name} · {title}</span>
+                {loaded.book.stationStory && <span className="text-xs text-cyan-200">
+                  {last ? 'Last visit · ' + (save.campaignDay.day - last) + ' nights ago' : 'First visit'}{established && ' · Established bond'}
+                </span>}
+              </button>]
+            })}
+            {eveningRole === 'Lieutenant' && loaded.book.stationStory && (save.station?.lieutenantResidents ?? []).flatMap(actor => {
+              const name = nameOf(loaded.book.story, actor)
+              if (!atStation || voyageCrew(save).has(actor) || !canBookNightContact(save, loaded.book, [actor])
+                || !name.toLocaleLowerCase().includes(eveningSearch.trim().toLocaleLowerCase())) return []
+              const last = contactDay(save, actor)
+              return [<button key={actor} type="button" className={button + ' flex-col items-start py-2'}
+                onClick={() => void updateSave(current => checkInWithLieutenant(current, loaded.book, actor))}>
+                <span>Check in with {name}</span>
+                <span className="text-xs text-cyan-200">{last ? 'Last check-in · ' + (save.campaignDay.day - last) + ' nights ago' : 'First check-in'}</span>
+              </button>]
+            })}
+            {(!loaded.book.stationStory || eveningRole === 'Shared') && sharedCabins.map(cabin => {
               const source = cabin.source
               if ('trio' in source) {
                 const ally = loaded.book.allies?.find(row => row.heroine === source.trio)
@@ -863,8 +931,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
               return <button key={cabin.id} type="button" className={button} onClick={() => chooseCabin(cabin)}>Shared cabin evening · {officer ? nameOf(loaded.book.story, officer) : 'Crew'}</button>
             })}
             {[...pairVisits, ...sectorVisits].map(({ visit, label }) => <button key={visit.scene} type="button" className={button} onClick={() => chooseEvening(visit)}>{label}</button>)}
-            <button type="button" className={button} onClick={() => chooseEvening(null)}>My quarters</button>
-            <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button type="button" className={button} onClick={() => chooseEvening(null)}>{loaded.book.stationStory ? 'End night' : 'My quarters'}</button>
+              {!insideEvening && <button type="button" className={button} onClick={() => setEveningOpen(false)}>Back</button>}
+            </div>
           </section>}
         </div>
         <div className="space-y-3">

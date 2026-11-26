@@ -7,7 +7,7 @@ import {
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
-import { advanceStationWatches, stationOf, stationWorkers } from './watch'
+import { advanceStationWatches, stationOf, stationRations, stationResidentCount, stationWorkers } from './watch'
 import type { HomeArea } from './ShipHome'
 
 const destinations: Partial<Record<StationModule, HomeArea>> = {
@@ -89,7 +89,7 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
         <p className="text-sm">{capacity} permanent berths · {TEMPORARY_BERTHS} reserve · Power {power.used}/{power.supply}</p></div>
       <div className="flex flex-wrap gap-2">
         <button type="button" className={campaignPrimary} onClick={recruit}>Recruit crew</button>
-        <button type="button" className={campaignControl} onClick={calendar}>{date.month} {date.day} · {date.phase}</button>
+        <button type="button" className={campaignControl} onClick={calendar}>{date.month} {date.day} · {date.phase} {date.hour}</button>
       </div>
     </header>
     {state.move && <div className="flex flex-wrap items-center gap-2">
@@ -199,7 +199,10 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
             })}>Transfer power from {STATION_MODULES[donor].label}</button>)}
         </div>}
         {room === 'reactor' && <p className="text-sm text-cyan-100">A staffed Duty watch recovers 1 alloy and 1 data.</p>}
-        {room === 'life-support' && <p className="text-sm text-cyan-100">A staffed Duty watch adds 2 provisions to station reserves.</p>}
+        {room === 'life-support' && <p className="text-sm text-cyan-100">A staffed Duty watch adds {2 + Math.floor(stationResidentCount(save, book) / 40)} provisions to station reserves.</p>}
+        {room === 'cargo' && book.stationStory && <p className="text-sm">Station upkeep · {stationRations(save, book)} provisions at dawn</p>}
+        {!!state.rationShortfall && (room === 'fabrication' || room === 'shipyard') &&
+          <p className="text-sm text-amber-200">Optional duty output paused after a ration shortfall.</p>}
         {room === 'infirmary' && <p className="text-sm text-cyan-100">A staffed Duty watch treats the most strained resident aboard.</p>}
         {status === 'active' && duty && <label className="flex flex-wrap items-center gap-2 text-sm">Duty assignment
           <select className="min-h-11 rounded bg-[#24344b] p-2" value={assigned ?? ''} disabled={unavailable(save)}

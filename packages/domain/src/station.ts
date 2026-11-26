@@ -1,3 +1,4 @@
+import type { CampaignNight } from './campaign-day'
 import type { Wallet } from './ship/hull'
 
 export const STATION_MODULES = {
@@ -24,6 +25,13 @@ export const STATION_DECKS = ['Command', 'Habitation', 'Engineering', 'Flight'] 
 export const STATION_MONTHS = ['Keel', 'Signal', 'Longlight', 'Farwake'] as const
 export const STATION_WATCHES = ['Duty', 'Free', 'Night'] as const
 export const WATCHES_PER_DAY = STATION_WATCHES.length
+export const STATION_HOURS = ['0600', '1400', '2200'] as const
+export const NIGHT_VISIT_LIMIT = 2
+export interface StationNight {
+  day: number
+  used: number
+  mornings: CampaignNight[]
+}
 export const TEMPORARY_BERTHS = 30
 export const STATION_RESERVE_MAX = 99
 export const STARTING_STATION_RESERVES = { fuel: 3, provisions: 6 } as const
@@ -48,7 +56,7 @@ export interface StationState {
   rooms: Partial<Record<StationModule, number>>
   off: StationModule[]
   shifts: Partial<Record<StationWork, number>>
-  report: { at: number; workers: number[]; alloy: number; data: number } | null
+  report: { at: number; workers: number[]; alloy: number; data: number; provisions?: number; supported?: number } | null
   autoStaff?: true
   move?: { to: string; at: number }
   reserves?: { fuel: number; provisions: number }
@@ -61,6 +69,10 @@ export interface StationState {
   appointments?: StationAppointment[]
   recruit?: string
   sceneRelease?: string
+  night?: StationNight
+  lastContact?: Record<string, number>
+  automaticRations?: boolean
+  rationShortfall?: number
 }
 
 export function firstStation(day = 1, anchor = 'selden'): StationState {
@@ -83,10 +95,11 @@ export function bookStationAppointment(state: StationState, target: StationAppoi
   const appointments = current.appointments ?? []
   if (appointments.length >= 50) return state
   const available = Math.max(state.absoluteWatch, earliest)
+  const relationship = 'actor' in target
   const phase = available % WATCHES_PER_DAY
-  let next = available + (WATCHES_PER_DAY + 1 - phase) % WATCHES_PER_DAY
-  const reserved = new Set(appointments.map(row => row.at))
-  while (reserved.has(next)) next += WATCHES_PER_DAY
+  let next = available + (WATCHES_PER_DAY + (relationship ? 2 : 1) - phase) % WATCHES_PER_DAY
+  const occupied = (watch: number) => appointments.filter(row => row.at === watch).length
+  while (occupied(next) >= (relationship ? NIGHT_VISIT_LIMIT : 1)) next += WATCHES_PER_DAY
   const activity = 'actor' in target ? { actor: target.actor } : { quest: target.quest }
   const appointment = { ...activity, at: next, ...(port === undefined ? {} : { port }) }
   return { ...current, appointments: [...appointments, appointment].sort((a, b) => a.at - b.at) }
@@ -95,7 +108,8 @@ export function bookStationAppointment(state: StationState, target: StationAppoi
 export function stationDate(absoluteWatch: number) {
   const index = Math.floor(absoluteWatch / WATCHES_PER_DAY)
   return { year: Math.floor(index / 120) + 1, month: STATION_MONTHS[Math.floor(index % 120 / 30)]!,
-    day: index % 30 + 1, phase: STATION_WATCHES[absoluteWatch % WATCHES_PER_DAY]! }
+    day: index % 30 + 1, phase: STATION_WATCHES[absoluteWatch % WATCHES_PER_DAY]!,
+    hour: STATION_HOURS[absoluteWatch % WATCHES_PER_DAY]! }
 }
 
 export function stationRoom(state: StationState, room: StationModule): 'active' | 'off' | 'building' | 'empty' {
@@ -162,7 +176,9 @@ export function assignStationShift(state: StationState, room: StationWork, actor
   return { ...state, shifts }
 }
 
-export function tickStation(state: StationState, present: ReadonlySet<number>) {
+export function tickStation(state: StationState, present: ReadonlySet<number>, support: {
+  residents?: number; visited?: ReadonlySet<number>; lieutenantSupplies?: number
+} = {}) {
   const next = { ...state, absoluteWatch: state.absoluteWatch + 1, rooms: { ...state.rooms }, off: [...state.off] }
   if (next.move?.at === next.absoluteWatch) {
     next.anchor = next.move.to
@@ -195,17 +211,22 @@ export function tickStation(state: StationState, present: ReadonlySet<number>) {
   }))
   const available = [...present].filter(actor => !reserved.has(actor))
   const jobs = STATION_WORK.flatMap(room => {
-    if (stationRoom(state, room) !== 'active') return []
+    if (stationRoom(state, room) !== 'active' || !!state.rationShortfall && (room === 'fabrication' || room === 'shipyard')) return []
     const preferred = state.shifts[room]
     const actor = preferred !== undefined && present.has(preferred) ? preferred : state.autoStaff ? available.shift() : undefined
     return actor === undefined ? [] : [{ room, actor }]
   })
-  const alloy = jobs.filter(job => job.room === 'reactor' || job.room === 'fabrication' || job.room === 'shipyard').length
-  const data = jobs.filter(job => job.room === 'reactor' || job.room === 'infirmary').length
-  next.report = { at: state.absoluteWatch, workers: jobs.map(job => job.actor), alloy, data }
-  if (jobs.some(job => job.room === 'life-support')) {
-    const reserves = next.reserves ?? STARTING_STATION_RESERVES
-    next.reserves = { ...reserves, provisions: Math.min(STATION_RESERVE_MAX, reserves.provisions + 2) }
-  }
+  const yieldOf = (actor: number) => support.visited?.has(actor) ? 2 : 1
+  const alloy = jobs.reduce((total, { room, actor }) => total + (room === 'reactor' || room === 'fabrication' || room === 'shipyard' ? yieldOf(actor) : 0), 0)
+  const data = jobs.reduce((total, { room, actor }) => total + (room === 'reactor' || room === 'infirmary' ? yieldOf(actor) : 0), 0)
+  const lifeSupport = jobs.find(job => job.room === 'life-support')
+  const lieutenantSupplies = support.lieutenantSupplies ?? 0
+  const food = lieutenantSupplies + (lifeSupport ? yieldOf(lifeSupport.actor) + 1 + Math.floor((support.residents ?? 0) / 40) : 0)
+  const reserves = next.reserves ?? STARTING_STATION_RESERVES
+  const provisions = Math.min(food, STATION_RESERVE_MAX - reserves.provisions)
+  const supported = lieutenantSupplies + jobs.filter(job => support.visited?.has(job.actor)).length
+  next.report = { at: state.absoluteWatch, workers: jobs.map(job => job.actor), alloy, data,
+    ...(provisions ? { provisions } : {}), ...(supported ? { supported } : {}) }
+  if (provisions) next.reserves = { ...reserves, provisions: reserves.provisions + provisions }
   return { station: next, alloy, data, infirmary: jobs.some(job => job.room === 'infirmary') }
 }
