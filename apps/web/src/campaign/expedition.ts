@@ -1,6 +1,7 @@
 import { hash32 } from '@cyber/battle'
-import { settleCampaignDay } from './watch'
+import { advanceStationWatches, settleCampaignDay, stationOf } from './watch'
 import { awayMembers, COMMAND_STATIONS, developedPort, managementReceipt, shipmentAt, loadShipment, type CommandStation, type Speaker, expeditionReadiness, SHIP_CARGO_MAX, startSupply, type CampaignBook, type CampaignQuest, type ExpeditionRun, type FixedDuo, type Save } from '@cyber/domain'
+import { COMMAND_HULL, stationRoom } from '@cyber/domain'
 
 export function expeditionForQuest(book: CampaignBook, quest: string, activeDuo?: string): FixedDuo | undefined {
   if (book.fourAct?.transit?.quests.includes(quest)) return activeDuo ? book.fourAct.duos.get(activeDuo) : undefined
@@ -39,6 +40,8 @@ export function expeditionQuestBlock(save: Save, book: CampaignBook, quest: stri
   if (progress.capitals < 5) return 'Liberate all five capitals'
   if (progress.returned < 6) return 'Bring back all six lieutenants'
   if (progress.cleared < 2) return 'Clear both Generals'
+  if (save.fleet?.[duo.id]?.condition === 'parked') return 'Resume the cutter from the shipyard'
+  if (book.stationStory && !save.fleet?.[duo.id]) return 'Commission the cutter in the shipyard'
   const away = awayMembers(save.operations, save.squads)
   if (duo.umas.some(outfit => !save.crew.some(member => member.outfit === outfit) || away.includes(outfit))) return 'Muster both expedition leads'
   if (duo.expedition?.members.some(member => member.role === 'boss-ally'
@@ -79,16 +82,46 @@ export function commitExpedition(save: Save, book: CampaignBook, quest: string, 
   if (!duo || !formation || !plan || !book.supply) return save
   const stock = save.campaignSupply ?? startSupply(book.supply)
   if (quest === plan.launch && !save.expedition) {
-    return { ...save, expedition: { duo: duo.id, ship: formation.ship, members: formation.members,
-      fuel: plan.cargo.fuel, provisions: plan.cargo.provisions },
+    const integrity = save.fleet?.[duo.id]?.integrity
+    const launched = { ...save, expedition: { duo: duo.id, ship: formation.ship, members: formation.members,
+      fuel: plan.cargo.fuel, provisions: plan.cargo.provisions, ...(integrity === undefined ? {} : { integrity }) },
       campaignSupply: { ...stock, fuel: stock.fuel - plan.cargo.fuel, provisions: stock.provisions - plan.cargo.provisions } }
+    return book.stationStory ? advanceStationWatches(launched, book, 1) : launched
   }
   if (quest === plan.return && save.expedition?.duo === duo.id) {
-    return { ...save, expedition: null, campaignSupply: { ...stock,
+    const run = { ...save.expedition, fuel: 0, provisions: 0 }
+    const returned: Save = { ...save, expedition: null, campaignSupply: { ...stock,
       fuel: Math.min(SHIP_CARGO_MAX, stock.fuel + save.expedition.fuel),
-      provisions: Math.min(SHIP_CARGO_MAX, stock.provisions + save.expedition.provisions) } }
+      provisions: Math.min(SHIP_CARGO_MAX, stock.provisions + save.expedition.provisions) },
+      ...(book.stationStory || save.fleet?.[duo.id] ? { fleet: { ...save.fleet, [duo.id]: { ship: run.ship, condition: 'returned', run } } } : {}) }
+    return book.stationStory ? advanceStationWatches(returned, book, 1) : returned
   }
   return save
+}
+
+export function commissionCutter(save: Save, book: CampaignBook, duo: FixedDuo, complete: ReadonlySet<string>): Save {
+  if (!book.fourAct || !duo.expedition || save.fleet?.[duo.id] || save.expedition || save.mission || save.campaignDay.pending || save.pairScene
+    || stationRoom(stationOf(save, book), 'shipyard') !== 'active') return save
+  if (save.campaignSupply?.port !== stationOf(save, book).anchor) return save
+  const ready = expeditionReadiness(book.fourAct, duo.id, complete)
+  if (!ready || ready.capitals < 5 || ready.returned < 6 || ready.cleared < 2) return save
+  return { ...save, fleet: { ...save.fleet, [duo.id]: { ship: duo.expedition.ship, condition: 'commissioned' } } }
+}
+
+export function parkCutter(save: Save, book: CampaignBook): Save {
+  const berth = expeditionBerth(save, book)
+  if (!berth?.run.berthed) return save
+  const run = berth.run
+  return { ...save, expedition: null, fleet: { ...save.fleet, [run.duo]: { ship: run.ship, condition: 'parked', run } } }
+}
+
+export function restoreParkedCutter(save: Save, book: CampaignBook, duoId: string): Save {
+  if (save.expedition || save.mission || save.campaignDay.pending || save.pairScene) return save
+  const entry = save.fleet?.[duoId]
+  if (entry?.condition !== 'parked' || !entry.run?.berthed || book.fourAct?.duos.get(duoId)?.expedition?.ship !== entry.ship) return save
+  const restored: Save = { ...save, expedition: entry.run,
+    fleet: { ...save.fleet, [duoId]: { ship: entry.ship, condition: 'commissioned' } } }
+  return expeditionBerth(restored, book) ? restored : save
 }
 
 export const TENDER_ARMOR_ALLOY = 3
@@ -142,6 +175,12 @@ export function resumeVoyage(save: Save, book: CampaignBook): Save {
 export function tendAtBerth(save: Save, book: CampaignBook): Save {
   if (!expeditionBerth(save, book)?.run.berthed) return save
   return settleCampaignDay(save, { ...save.campaignDay, day: save.campaignDay.day + 1 }, book)
+}
+
+export function repairExpeditionCutter(save: Save, book: CampaignBook): Save {
+  const berth = expeditionBerth(save, book)
+  if (!berth?.run.berthed || (berth.run.integrity ?? COMMAND_HULL) === COMMAND_HULL) return save
+  return advanceStationWatches({ ...save, expedition: { ...berth.run, integrity: COMMAND_HULL } }, book, 1)
 }
 
 export function loadTender(save: Save, book: CampaignBook, kind: 'fuel' | 'provisions'): Save {

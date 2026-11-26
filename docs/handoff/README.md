@@ -2,6 +2,8 @@
 
 ## Current packets
 
+**D94 · Homestretch station, cutter fleet and calendar.** The [roadmap](homestretch-station-roadmap.md) tracks the implementation through all four acts and records what is staged for review. [CY126](tasks/CY126.md) supplies the Story transitions. [CY127](tasks/CY127.md) and [CY128](tasks/CY128.md) track the remaining General Art, Character Art and Sprite Art acceptance.
+
 **D87 · Four-act campaign.** Build a fresh campaign profile in the existing app and tactics engine. All 50 leads are available from the opening, each Uma can finish Act I on her own, and Story supplies the fixed planetary duos. Five liberated capitals and that duo's own six returned lieutenants open its ten-person expedition. The Queens and soft ending belong to Act IV.
 
 - [CY97 · Full release implementation and verification](tasks/CY97.md)

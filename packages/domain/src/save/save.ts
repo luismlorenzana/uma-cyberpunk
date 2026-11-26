@@ -1,4 +1,5 @@
 import type { CommandCinemaState } from '../ship/command-cinema'
+import { STATION_MODULES, STATION_RESERVE_MAX, STATION_ROOMS, STATION_WORK, WATCHES_PER_DAY, type StationAppointment, type StationModule, type StationState } from '../station'
 // uma-cyberpunk's save (CY3, TC11): local first in Dexie, synced through `cyber-api`. Nothing carries over from any
 // other game (P4, TC14). Copied from uma-quest's at cc42fd1 (its Q14, D11), itself from uma-rpg's at 30a322a (its D32,
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
@@ -28,7 +29,7 @@ import { parseCabinNight } from '../story/campaign-cabins'
 import type { PendingPairScene } from '../campaign-pair'
 import { CAMPAIGN_WORKSHOP_ALLOY_MAX, emptyCampaignGear, type CampaignGear } from '../campaign-gear'
 import { PORT_STOCK_MAX, SHIP_CARGO_MAX, SUPPLY_KINDS, type CampaignSupply } from '../campaign-supply'
-import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandStation, type CommandTraining } from '../ship/command'
+import { COMMAND_HULL, COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandStation, type CommandTraining } from '../ship/command'
 
 /** The save's version now: 2 adds the story state (CY9); 3 the crew, the ship, the worlds and the mission (CY10); 4 each
  * crew member's record (CY11); 5 the captain, the watch, the inbox and each Uma's bond (CY13); 6 each Uma's cabin, the
@@ -39,7 +40,7 @@ import { COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type CommandStation, ty
  * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
  * 18 management receipts and independent first-use/report acknowledgements (CY51);
  * 19 saved command cinematic position and fast-playback preference (CY54); 20 the active expedition (CY87). */
-export const SAVE_VERSION = 21
+export const SAVE_VERSION = 22
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -223,6 +224,7 @@ export interface ExpeditionRun extends ExpeditionV20 {
   berthed?: true
   towFuelDue?: true
   reinforced?: true
+  integrity?: number
   stations?: Record<CommandStation, number>
 }
 
@@ -247,7 +249,20 @@ export interface SaveV21 extends Omit<SaveV20, 'version' | 'expedition'> {
   expedition: ExpeditionRun | null
 }
 
-export type Save = SaveV21
+export interface SaveV22 extends Omit<SaveV21, 'version'> {
+  version: 22
+  station?: StationState
+  fleet?: Record<string, FleetHull>
+}
+
+export interface FleetHull {
+  ship: string
+  condition: 'commissioned' | 'parked' | 'returned'
+  integrity?: number
+  run?: ExpeditionRun
+}
+
+export type Save = SaveV22
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -778,14 +793,21 @@ export function parseSave(value: unknown, path = 'save'): Save {
     if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
     return { ...parseSaveV19(value, path), version: SAVE_VERSION, expedition: null }
   }
-  const { expedition, combatTraining, finaleProgress, ...rest } = object(value, path, Object.keys(value as Obj))
+  const { expedition, combatTraining, finaleProgress, station, fleet, ...rest } = object(value, path, Object.keys(value as Obj))
+  if ((station !== undefined || fleet !== undefined) && version < 22) throw new SaveParseError(path + '.station', 'requires version 22')
   const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path)
   const finale = finaleProgress === undefined ? undefined : parseFinaleProgress(finaleProgress, path + '.finaleProgress')
   const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}),
-    ...(finale ? { finaleProgress: finale } : {}) }
-  if (expedition == null) return { ...base, version: SAVE_VERSION, expedition: null }
-  const field = path + '.expedition'
-  const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions', ...(version >= 21 ? ['berthed', 'towFuelDue', 'reinforced', 'stations'] : [])])
+    ...(finale ? { finaleProgress: finale } : {}), ...(station === undefined ? {} : { station: parseStation(station, path + '.station') }) }
+  const parsedFleet = fleet === undefined ? undefined : parseFleet(fleet, path + '.fleet', base.crew)
+  const active = expedition == null ? null : parseExpeditionRun(expedition, path + '.expedition', base.crew, version)
+  if (active && parsedFleet?.[active.duo]?.condition === 'parked') throw new SaveParseError(path + '.fleet', 'active expedition also parked')
+  return { ...base, version: SAVE_VERSION, expedition: active, ...(parsedFleet ? { fleet: parsedFleet } : {}) }
+}
+
+function parseExpeditionRun(expedition: unknown, field: string, crew: readonly CrewMember[], version = SAVE_VERSION): ExpeditionRun {
+  const data = object(expedition, field, ['duo', 'ship', 'members', 'fuel', 'provisions', ...(version >= 21 ? ['berthed', 'towFuelDue', 'reinforced', 'stations'] : []),
+    ...(version >= 22 ? ['integrity'] : [])])
   if (!Array.isArray(data.members) || data.members.length !== EXPEDITION_SQUAD_SIZE) {
     throw new SaveParseError(field + '.members', 'expected ten expedition members')
   }
@@ -794,7 +816,7 @@ export function parseSave(value: unknown, path = 'save'): Save {
     if ((raw as { role?: unknown } | null)?.role === 'uma') {
       const row = object(raw, item, ['role', 'outfit'])
       const outfit = count(row.outfit, item + '.outfit')
-      if (!base.crew.some(member => member.outfit === outfit && !member.heroine)) throw new SaveParseError(item, 'expected a recruited Uma')
+      if (!crew.some(member => member.outfit === outfit && !member.heroine)) throw new SaveParseError(item, 'expected a recruited Uma')
       return { role: 'uma', outfit }
     }
     const row = object(raw, item, ['role', 'heroine'])
@@ -803,7 +825,7 @@ export function parseSave(value: unknown, path = 'save'): Save {
       throw new SaveParseError(item, 'invalid expedition role')
     }
     const heroine = id(row.heroine, item + '.heroine')
-    if (role === 'boss-ally' && !base.crew.some(member => member.heroine === heroine && member.expeditionOnly)) {
+    if (role === 'boss-ally' && !crew.some(member => member.heroine === heroine && member.expeditionOnly)) {
       throw new SaveParseError(item, 'expected a resident Boss Ally')
     }
     return { role, heroine }
@@ -822,9 +844,113 @@ export function parseSave(value: unknown, path = 'save'): Save {
     if (new Set(entries.map(([, index]) => index)).size !== entries.length) throw new SaveParseError(field + '.stations', 'each station needs a different crew member')
     return Object.fromEntries(entries) as ExpeditionRun['stations']
   })()
-  return { ...base, version: SAVE_VERSION, expedition: { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
+  return { duo: id(data.duo, field + '.duo'), ship: id(data.ship, field + '.ship'), members,
     fuel: bounded(data.fuel, field + '.fuel', SHIP_CARGO_MAX), provisions: bounded(data.provisions, field + '.provisions', SHIP_CARGO_MAX),
-    ...(data.berthed === true ? { berthed: true } : {}), ...(data.towFuelDue === true ? { towFuelDue: true } : {}), ...(data.reinforced === true ? { reinforced: true } : {}), ...(stations ? { stations } : {}) } }
+    ...(data.berthed === true ? { berthed: true } : {}), ...(data.towFuelDue === true ? { towFuelDue: true } : {}), ...(data.reinforced === true ? { reinforced: true } : {}), ...(stations ? { stations } : {}),
+    ...(data.integrity === undefined ? {} : { integrity: bounded(data.integrity, field + '.integrity', COMMAND_HULL) }) }
+}
+
+function parseFleet(raw: unknown, path: string, crew: readonly CrewMember[]): Record<string, FleetHull> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || Object.keys(raw).length > 25) {
+    throw new SaveParseError(path, 'expected at most 25 hulls')
+  }
+  return Object.fromEntries(Object.entries(raw).map(([duo, value]) => {
+    const row = object(value, path + '.' + duo, ['ship', 'condition', 'run', 'integrity'])
+    const ship = id(row.ship, path + '.' + duo + '.ship')
+    const condition = row.condition
+    if (condition !== 'commissioned' && condition !== 'parked' && condition !== 'returned') {
+      throw new SaveParseError(path + '.' + duo + '.condition', 'invalid vessel condition')
+    }
+    const run = row.run === undefined ? undefined : parseExpeditionRun(row.run, path + '.' + duo + '.run', crew)
+    if ((condition === 'parked' && !run?.berthed) || (run && (run.duo !== duo || run.ship !== ship))) {
+      throw new SaveParseError(path + '.' + duo, 'vessel does not match its saved voyage')
+    }
+    return [id(duo, path), { ship, condition, ...(run ? { run } : {}),
+      ...(row.integrity === undefined ? {} : { integrity: bounded(row.integrity, path + '.' + duo + '.integrity', COMMAND_HULL) }) }]
+  }))
+}
+
+function parseStation(raw: unknown, path: string): StationState {
+  const data = object(raw, path, ['absoluteWatch', 'anchor', 'rooms', 'off', 'shifts', 'report', 'recruit', 'appointments', 'integrity', 'move', 'autoStaff', 'travellers', 'lieutenantResidents', 'preferredCabins', 'reserves'])
+  const rooms = object(data.rooms, path + '.rooms', STATION_ROOMS)
+  const shifts = object(data.shifts, path + '.shifts', STATION_WORK)
+  const absoluteWatch = count(data.absoluteWatch, path + '.absoluteWatch')
+  const off = data.off
+  if (!Array.isArray(off) || off.some(room => typeof room !== 'string' || !STATION_ROOMS.includes(room as StationModule)
+    || !STATION_MODULES[room as StationModule].draw || rooms[room] !== 0) || new Set(off).size !== off.length) {
+    throw new SaveParseError(path + '.off', 'expected distinct installed optional rooms')
+  }
+  const assignments = Object.fromEntries(Object.entries(shifts).map(([key, actor]) => [key, count(actor, path + '.shifts.' + key)]))
+  if (new Set(Object.values(assignments)).size !== Object.values(assignments).length) {
+    throw new SaveParseError(path + '.shifts', 'each shift needs a different person')
+  }
+  let report: StationState['report'] = null
+  if (data.report !== null) {
+    const row = object(data.report, path + '.report', ['at', 'workers', 'alloy', 'data'])
+    if (!Array.isArray(row.workers) || row.workers.length > STATION_WORK.length) throw new SaveParseError(path + '.report.workers', 'too many workers')
+    report = { at: bounded(row.at, path + '.report.at', absoluteWatch), workers: row.workers.map(worker => count(worker, path + '.report.workers')),
+      alloy: bounded(row.alloy, path + '.report.alloy', STATION_WORK.length), data: bounded(row.data, path + '.report.data', STATION_WORK.length) }
+  }
+  let appointments: StationAppointment[] | undefined
+  if (data.appointments !== undefined) {
+    if (!Array.isArray(data.appointments) || data.appointments.length > 50) throw new SaveParseError(path + '.appointments', 'expected up to 50 appointments')
+    appointments = data.appointments.map((raw, index): StationAppointment => {
+      const field = path + '.appointments[' + index + ']'
+      const row = object(raw, field, ['at', 'actor', 'quest'])
+      const at = count(row.at, field + '.at')
+      if (at % WATCHES_PER_DAY !== 1 || (row.actor === undefined) === (row.quest === undefined)) {
+        throw new SaveParseError(field, 'expected one appointment in a Free watch')
+      }
+      return row.actor === undefined ? { at, quest: id(row.quest, field + '.quest') } : { at, actor: count(row.actor, field + '.actor') }
+    })
+    if (new Set(appointments.map(row => row.at)).size !== appointments.length
+      || new Set(appointments.map(row => 'actor' in row ? row.actor : row.quest)).size !== appointments.length) {
+      throw new SaveParseError(path + '.appointments', 'appointment targets and times must be distinct')
+    }
+  }
+  const move = data.move === undefined ? undefined : object(data.move, path + '.move', ['to', 'at'])
+  const travelling = data.travellers
+  if (travelling !== undefined && (!Array.isArray(travelling) || travelling.length > 50 || new Set(travelling).size !== travelling.length)) {
+    throw new SaveParseError(path + '.travellers', 'expected a list of up to 50 distinct travellers')
+  }
+  const reserves = data.reserves === undefined ? undefined : object(data.reserves, path + '.reserves', ['fuel', 'provisions'])
+  const residents = data.lieutenantResidents
+  if (residents !== undefined && (!Array.isArray(residents) || residents.length > 150 || new Set(residents).size !== residents.length)) {
+    throw new SaveParseError(path + '.lieutenantResidents', 'expected up to 150 distinct Lieutenants')
+  }
+  let preferredCabins: StationState['preferredCabins']
+  if (data.preferredCabins !== undefined) {
+    if (!data.preferredCabins || typeof data.preferredCabins !== 'object' || Array.isArray(data.preferredCabins)) {
+      throw new SaveParseError(path + '.preferredCabins', 'expected a cabin assignment record')
+    }
+    const entries = Object.entries(data.preferredCabins)
+    if (entries.length > 250) throw new SaveParseError(path + '.preferredCabins', 'too many cabin assignments')
+    preferredCabins = Object.fromEntries(entries.map(([actor, cabin]) => {
+      id(actor, path + '.preferredCabins')
+      const berth = bounded(cabin, path + '.preferredCabins.' + actor, 280)
+      if (!berth) throw new SaveParseError(path + '.preferredCabins.' + actor, 'expected a permanent cabin number')
+      return [actor, berth]
+    }))
+    if (new Set(Object.values(preferredCabins)).size !== entries.length) {
+      throw new SaveParseError(path + '.preferredCabins', 'cabin assignments must be distinct')
+    }
+  }
+  if (data.autoStaff !== undefined && data.autoStaff !== true) throw new SaveParseError(path + '.autoStaff', 'expected true')
+  return { absoluteWatch, anchor: id(data.anchor, path + '.anchor'), off, shifts: assignments, report,
+    rooms: Object.fromEntries(Object.entries(rooms).map(([key, left]) =>
+      [key, bounded(left, path + '.rooms.' + key, STATION_MODULES[key as StationModule].watches)])),
+    ...(data.recruit === undefined ? {} : { recruit: id(data.recruit, path + '.recruit') }),
+    ...(data.integrity === undefined ? {} : { integrity: bounded(data.integrity, path + '.integrity', COMMAND_HULL) }),
+    ...(reserves ? { reserves: {
+      fuel: bounded(reserves.fuel, path + '.reserves.fuel', STATION_RESERVE_MAX),
+      provisions: bounded(reserves.provisions, path + '.reserves.provisions', STATION_RESERVE_MAX),
+    } } : {}),
+    ...(Array.isArray(travelling) ? { travellers: travelling.map(actor => count(actor, path + '.travellers')) } : {}),
+    ...(Array.isArray(residents) ? { lieutenantResidents: residents.map(actor => id(actor, path + '.lieutenantResidents')) } : {}),
+    ...(preferredCabins ? { preferredCabins } : {}),
+    ...(data.autoStaff === true ? { autoStaff: true } : {}),
+    ...(move === undefined ? {} : { move: { to: id(move.to, path + '.move.to'), at: count(move.at, path + '.move.at') } }),
+    ...(appointments === undefined ? {} : { appointments }) }
 }
 
 function parseFinaleProgress(raw: unknown, path: string): FinaleProgress {
@@ -911,7 +1037,7 @@ function parseSaveV18(value: unknown, path: string): SaveV18 {
     const row = object(value, field, ['sequence', 'day', 'kind', 'subject', 'port', 'destination', 'amount', 'officer'])
     const number = count(row.sequence, field), day = count(row.day, field), amount = count(row.amount, field)
     if (!number || number <= previous || number > sequence || !day || day > base.campaignDay.day || !amount) throw new SaveParseError(field, 'invalid receipt order, day or amount')
-    if (!MANAGEMENT_EVENTS.includes(row.kind as ManagementReceipt['kind']) || !['ship', 'hangar', 'port'].includes(row.destination as string)) throw new SaveParseError(field, 'invalid receipt kind or destination')
+    if (!MANAGEMENT_EVENTS.includes(row.kind as ManagementReceipt['kind']) || !['ship', 'hangar', 'port', 'station'].includes(row.destination as string)) throw new SaveParseError(field, 'invalid receipt kind or destination')
     previous = number
     const officer = row.officer === undefined ? undefined : count(row.officer, field)
     if (officer === 0) throw new SaveParseError(field, 'expected an officer id')

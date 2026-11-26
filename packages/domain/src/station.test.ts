@@ -1,0 +1,58 @@
+import { expect, it } from 'vitest'
+import { newSave, parseSave } from './save/save'
+import {
+  assignStationShift, bookStationAppointment, buildStationRoom, cancelStationAppointment, firstStation, setStationPower, stationCapacity, stationDate, stationPower, stationRoom,
+  tickStation,
+} from './station'
+
+it('saves station construction, powers finished rooms in order and advances the date once per watch', () => {
+  const save = newSave('station', '2026-11-26T00:00:00.000Z')
+  const state = { ...firstStation(), rooms: { 'habitat-b': 0, fabrication: 0, shipyard: 1 } } as const
+  const yard = buildStationRoom({ ...state, rooms: { ...state.rooms }, off: [] }, save.wallet, 'habitat-a')
+  expect(yard?.wallet.alloy).toBe(save.wallet.alloy - 18)
+  const first = tickStation(yard!.station, new Set())
+  expect(stationRoom(first.station, 'shipyard')).toBe('off')
+  expect(stationCapacity(first.station)).toBe(180)
+  const second = tickStation(first.station, new Set())
+  expect(stationCapacity(second.station)).toBe(280)
+  expect(second.station.absoluteWatch).toBe(2)
+  expect(stationDate(second.station.absoluteWatch)).toEqual({ year:1, month:'Keel', day:1, phase:'Night' })
+  const reloaded = parseSave(JSON.parse(JSON.stringify({ ...save, station:second.station })))
+  expect(reloaded.station).toEqual(second.station)
+  expect(setStationPower(reloaded.station!, 'shipyard')).toBe(reloaded.station)
+  expect(stationPower(setStationPower(setStationPower(reloaded.station!, 'fabrication'), 'shipyard'))).toEqual({ supply:4, used:3 })
+  expect(stationDate(360)).toEqual({ year:2, month:'Keel', day:1, phase:'Duty' })
+})
+
+it('applies a shift only on Duty and keeps manual assignments ahead of automatic cover', () => {
+  const start = assignStationShift({ ...firstStation(), autoStaff:true, rooms:{ fabrication:0 } }, 'fabrication', 9000001)
+  const first = tickStation(start, new Set([9000001, 9000002]))
+  expect(first.station.report).toEqual({ at:0, workers:[9000002,9000001], alloy:2, data:1 })
+  const second = tickStation(first.station, new Set([9000001, 9000002]))
+  expect(second.station.report).toBe(first.station.report)
+  expect(second.alloy).toBe(0)
+})
+
+it('restores distinct visit and care appointments and reschedules one without moving the other', () => {
+  const save = newSave('station', '2026-11-26T00:00:00.000Z')
+  const booked = bookStationAppointment(bookStationAppointment(firstStation(), { actor: 9000001 }), { quest:'care-review' })
+  expect(booked.appointments).toEqual([{ actor:9000001, at:1 }, { quest:'care-review', at:4 }])
+  const next = bookStationAppointment({ ...booked, absoluteWatch:4 }, { actor:9000001 })
+  expect(next.appointments).toEqual([{ quest:'care-review', at:4 }, { actor:9000001, at:7 }])
+  const reloaded = parseSave(JSON.parse(JSON.stringify({ ...save, station:next })))
+  expect(reloaded.station).toEqual(next)
+  expect(cancelStationAppointment(reloaded.station!, { quest:'care-review' }).appointments).toEqual([{ actor:9000001, at:7 }])
+})
+
+it('keeps station reserves and up to 250 permanent assignments in the saved state', () => {
+  const save = newSave('station', '2026-11-26T00:00:00.000Z')
+  const state = { ...firstStation(), rooms: { 'life-support': 0 }, autoStaff: true as const,
+    lieutenantResidents: Array.from({ length: 150 }, (_, index) => `officer-${index + 1}`),
+    preferredCabins: Object.fromEntries(Array.from({ length: 250 }, (_, index) => [`resident-${index + 1}`, index + 1])),
+    reserves: { fuel: 3, provisions: 98 } }
+  const staffed = tickStation(state, new Set([9000001, 9000002]))
+  expect(staffed.station.reserves).toEqual({ fuel: 3, provisions: 99 })
+  const saved = { ...save, station: staffed.station }
+  expect(parseSave(JSON.parse(JSON.stringify(saved))).station).toEqual(staffed.station)
+  expect(() => parseSave({ ...saved, station: { ...saved.station, preferredCabins: { first: 1, second: 1 } } })).toThrow(/distinct/)
+})

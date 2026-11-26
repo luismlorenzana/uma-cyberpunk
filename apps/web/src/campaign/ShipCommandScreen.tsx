@@ -1,5 +1,5 @@
 import {
-  COMMAND_HULL, COMMAND_ORDERS, COMMAND_SHIELD, COMMAND_STATIONS, MAX_DRILLS, commandActionError, commandFacts, resolvedCommand, resumeCommand,
+  COMMAND_HULL, COMMAND_ORDERS, COMMAND_SHIELD, COMMAND_STATIONS, MAX_DRILLS, STARTER_CUTTER, commandActionError, commandFacts, resolvedCommand, resumeCommand,
   type CampaignSupply, type CampaignReleaseFile, type CommandAction, type CommandEncounter, type CommandInput, type CommandState, type CommandStation, type Mission, type Save,
 } from '@cyber/domain'
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
@@ -11,7 +11,7 @@ import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { CommandCinematic } from './CommandCinematic'
 import { commandContextScene, freezeCommandCast, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
-import { retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
+import { finaleRun, retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { nameOf } from '../story/runner'
 import { expeditionOfficer, expeditionStations, setExpeditionOfficer } from './expedition'
 import { campaignCommandFront, tuneCampaignCommand } from './command-tuning'
@@ -62,6 +62,14 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const prepared = fourAct ? tuneCampaignCommand(encounter, campaignCommandFront(loaded.book, save, encounter.id)) : encounter
   const cargo = expedition ? { ...supply, fuel: expedition.fuel, provisions: expedition.provisions } : supply
   const run = state.battle ? resumeCommand(state.battle.input, state.battle.actions) : null
+  const assigned = expedition ?? (finale ? finaleRun(save, loaded.book) : undefined)
+  const namedCutter = assigned && loaded.book.fourAct?.duos.get(assigned.duo)?.expedition?.route?.name
+  const vessel = run?.input.vessel ?? (fourAct ? {
+    id: assigned?.ship ?? STARTER_CUTTER.id,
+    name: namedCutter ?? assigned?.ship ?? STARTER_CUTTER.name,
+    integrity: Math.max(1, assigned ? assigned.integrity ?? save.fleet?.[assigned.duo]?.integrity ?? save.fleet?.[assigned.duo]?.run?.integrity
+      ?? COMMAND_HULL : save.station?.integrity ?? COMMAND_HULL),
+  } : undefined)
   const assault = run ? run.input.version !== 1 : !!encounter.assault
   const preparation = reinforce ? finale?.preparation : undefined
   const contextButtons = (['preparation', 'victory', 'withdrawal', 'retry', 'disabled'] as const).flatMap(kind => {
@@ -74,7 +82,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"
     style={{ ...insets, ...(background ? { backgroundImage: `linear-gradient(#080d1aeb, #080d1acf), url(${background})` } : {}) }}>
     <div className="mx-auto max-w-4xl space-y-3">
-      {expedition && <p className="text-sm text-cyan-200">{loaded.book.fourAct?.duos.get(expedition.duo)?.expedition?.route?.name ?? expedition.ship} · 10 aboard</p>}
+      {vessel && <p className="text-sm text-cyan-200">{vessel.name} · {expedition ? '10 aboard' : 'Cutter command'}</p>}
       {error && <p role="alert">{error}</p>}
       <h1 className="font-display text-xl font-bold">{assault
         ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : finale ? 'Gate approach' : 'Station approach'
@@ -129,7 +137,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         <button type="button" className={primary} disabled={!canLaunch(cargo, encounter) || save.wallet.alloy < (preparation?.alloy ?? 0)
           || (requiredLead !== undefined && (!names.has(requiredLead) || state.squad[0] !== requiredLead))}
           onClick={() => void updateSave((s) => launchCommand(s, s.expedition ? { ...supply, fuel: s.expedition.fuel, provisions: s.expedition.provisions } : s.campaignSupply ?? supply, prepared,
-            { ashore: missionAshore(loaded.book, s), relay: homeDefense?.relay ?? finale?.allies ?? 0, preparation, qualifications, requiredLead, contributions: finale?.contributions, cast: s.expedition ? (() => {
+            { ashore: missionAshore(loaded.book, s), relay: homeDefense?.relay ?? finale?.allies ?? 0, preparation, qualifications, requiredLead, vessel, contributions: finale?.contributions, cast: s.expedition ? (() => {
                 const present = s.expedition.members.map(member => {
                   const speaker = member.role === 'uma' ? member.outfit : member.heroine
                   return { speaker, name: nameOf(loaded.book.story, speaker) }
@@ -148,7 +156,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
       {state.step === 'results' && !save.commandCinema.pending && <div className="flex flex-wrap gap-2">
         {run?.state.last && <p className="w-full text-sm">{commandFacts(savedCommandEvent(save, run.state.turn)!)}</p>}
         {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{state.won && emitterRoute && ` · ${emitterRoute}`}</p>}
-        {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id, loaded.book.fourAct ? { requiredLead } : undefined))}>Debrief</button>
+        {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id, loaded.book.fourAct ? { requiredLead, book: loaded.book } : undefined))}>Debrief</button>
           : <button type="button" className={primary} onClick={() => {
             if (reports) { setShowRetry(true); setContext(reports.retry) }
             else void updateSave(retryCommand)

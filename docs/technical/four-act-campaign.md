@@ -2,6 +2,8 @@
 
 **Target design, D87.** Implementation packets are in the [roadmap](../handoff/four-act-roadmap.md). Use the shipped story runner, battle engine, dialogue and art paths. Continue to read fixed legacy inputs where they are supported. The four-act profile begins fresh.
 
+The [D94 station program](../handoff/homestretch-station-roadmap.md) extends this save and content scope. [CY116](../handoff/tasks/CY116.md) owns the successor time, station, actor presence, vessel and binding contracts. The existing campaign save, encounter and Story IDs are its source for continuity.
+
 ## Content graph and identities
 
 Use stable private catalog IDs for an Uma, General, each lieutenant, duo, home, capital, ship, expedition, encounter and Seraine. Keep the same actor across portrait roles, locations, aliases, outfits and both opposing and allied unit slots. Verify uniqueness of actor IDs, idempotency of gains, role-qualified portraits and expected battle profiles. Resolve wardrobe and sprite by actor, role, outfit, form and frozen fitting. Keep the original outfit ID and deterministic mapping for guest crew records. Avoid a second copy of each actor in a global roster when they join an expedition.

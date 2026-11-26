@@ -103,7 +103,7 @@ it('uses real jump costs from Homestretch and assigns one cabin only when the in
   expect(questAvailable(arrived, home, remoteStory, 'sw3')).toBe(false)
   const joined = finishCampaignDialogue(arrived, home, remoteSignOn, [{ kind: 'join', outfit: recruit.outfit }], 'sw3')
   const restored = parseSave(JSON.parse(JSON.stringify(joined)))
-  expect(homestretchCabins(home, restored)).toEqual([{ outfit: recruit.outfit, berth: 1 }])
+  expect(homestretchCabins(home, restored)).toEqual([{ actor: recruit.outfit, outfit: recruit.outfit, berth: 1, temporary: false, away: false }])
   expect(questAvailable(restored, home, remoteStory, 'sw3')).toBe(true)
   expect(finishCampaignDialogue(restored, home, remoteSignOn, [], 'sw3')).toBe(restored)
 })

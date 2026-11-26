@@ -10,7 +10,7 @@ export interface ManagementReceipt {
   kind: ManagementEvent
   subject: string
   port: string | null
-  destination: 'ship' | 'hangar' | 'port'
+  destination: 'ship' | 'hangar' | 'port' | 'station'
   amount: number
   officer?: number
 }

@@ -4,6 +4,8 @@
 
 [CY97](tasks/CY97.md) records the live four-act delivery, the completed engineering sequence, and the remaining Art coverage. The [implementation launch](four-act-implementation-launch.md) preserves the original milestone and source handoffs.
 
+The [Homestretch station roadmap](homestretch-station-roadmap.md) is the current plan for the expandable Home, calendar and cutter fleet. It records how CY116–CY128 extend the shipped campaign and which earlier packets supply existing implementation and approved content.
+
 Deliver through the real campaign. Each milestone has a playable entry, exit, defined production coverage and one acceptance pass. Technical experiments belong to the milestone they answer. Keep a single release manifest and cross-workstream status so the working chapter remains part of the full campaign.
 
 ## Scope and starting point

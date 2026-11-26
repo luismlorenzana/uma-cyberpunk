@@ -1,6 +1,8 @@
 # Uma Cyberpunk · Four-act campaign
 
-**Current game design, D87, 2026-11-24.** A personal landscape iPhone tactics RPG. The player is the Captain of the Homestretch. One Uma's story opens into a planetary partnership, then a ten-person expedition, then the shared finale. Build in the existing repo and ship the campaign on a fresh profile. The [roadmap](../handoff/four-act-roadmap.md) sequences delivery. The [game manual](../game/README.md) describes the implementation available today.
+**Current four-act structure, D87, 2026-11-24.** A personal landscape iPhone tactics RPG. The player is the Captain of the Homestretch. One Uma's story opens into a planetary partnership, then a ten-person expedition, then the shared finale. Build in the existing repo and ship the campaign on a fresh profile. The [four-act roadmap](../handoff/four-act-roadmap.md) sequences delivery. The [game manual](../game/README.md) describes the implementation available today.
+
+[D94 station, cutter and calendar design](homestretch-station.md) extends these acts. Homestretch grows as a mobile station. A shared cutter flies the early campaign and each fixed duo can commission its own in Act III. One campaign calendar tracks work, relationships and travel.
 
 ## Campaign rules
 

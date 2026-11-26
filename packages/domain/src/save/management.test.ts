@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { managementReceipt } from '../campaign-management'
-import { newSave, parseSave } from './save'
+import { newSave, parseSave, SAVE_VERSION } from './save'
 
 const NOW = '2026-11-19T00:00:00Z'
 describe('management save migration and receipts', () => {
@@ -8,7 +8,7 @@ describe('management save migration and receipts', () => {
     const { expedition: _expedition, commandCinema: _cinema1, management: _, ...prior } = newSave('captain', NOW)
     const old = { ...prior, version: 17, campaignProjects: { depot: 1 }, cabinVisits: { officer: 3 } }
     const save = parseSave(old)
-    expect(save.version).toBe(21)
+    expect(save.version).toBe(SAVE_VERSION)
     expect(save.account.updatedAt).toBe(NOW)
     expect(save.campaignProjects).toEqual(old.campaignProjects)
     expect(save.cabinVisits).toEqual(old.cabinVisits)

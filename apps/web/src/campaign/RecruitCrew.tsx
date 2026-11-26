@@ -56,6 +56,7 @@ export default function RecruitCrew({ book, save, assets, meet, cargo }: {
           <div><h2 className="font-display text-xl font-bold">{selected.name}</h2>{port && <p className="text-sm text-cyan-200">{port.name}</p>}</div>
         </div>
         <p className="text-sm text-slate-200">{selected.recruit.request}</p>
+        {!!travel?.watches && book.fourAct && <p className="text-sm text-cyan-100">Selden Relief · {travel.watches} {travel.watches === 1 ? 'watch' : 'watches'}</p>}
         <button type="button" className={campaignPrimary + ' disabled:opacity-40'} disabled={!travel?.affordable}
           onClick={() => meet(quest)}>{travel?.fuel ? `Travel and meet · ${travel.fuel} fuel` : 'Meet'}</button>
         {travel && !travel.affordable && <button type="button" className={campaignControl} onClick={cargo}>Get fuel in Cargo</button>}
