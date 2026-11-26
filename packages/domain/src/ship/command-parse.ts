@@ -1,6 +1,6 @@
 import type { CommandCast, CommandParticipant } from './command-cinema'
 import { P } from '../story/parse'
-import { COMMAND_ORDERS, COMMAND_STATIONS, MAX_DRILLS, replayCommand, type CommandAction, type CommandEncounter,
+import { COMMAND_HULL, COMMAND_ORDERS, COMMAND_STATIONS, MAX_DRILLS, replayCommand, type CommandAction, type CommandEncounter,
   type CommandInput, type CommandOrder, type CommandStation, type ShipThreat } from './command'
 
 function threats(p: P, value: unknown, path: string): ShipThreat[] {
@@ -43,7 +43,7 @@ export function resumeCommand(value: unknown, actions: readonly unknown[]) {
   const p = new P('ship encounter')
   try {
     const fields = ['version', 'transport', 'enemy', 'reactor', 'threats', 'officers']
-    const o = p.object(value, 'input', [...fields, 'assault', 'contributions', 'presentation'], fields)
+    const o = p.object(value, 'input', [...fields, 'assault', 'contributions', 'presentation', 'vessel'], fields)
     if ((o.version !== 1 && o.version !== 2 && o.version !== 3) || (o.version === 1 && o.assault !== undefined) || (o.version !== 3 && o.contributions !== undefined)) return null
     const officers = p.object(o.officers, 'officers', COMMAND_STATIONS)
     const participant = (value: unknown, field: string): CommandParticipant => {
@@ -61,7 +61,10 @@ export function resumeCommand(value: unknown, actions: readonly unknown[]) {
       return { crew: parsed, present, objective: p.text(row.objective, 'presentation.objective', 80),
         ...(row.commander === undefined ? {} : { commander: participant(row.commander, 'presentation.commander') }) }
     })()
-    const setup = { ...(presentation ? { presentation } : {}), transport: durability(p, o.transport, 'transport'), enemy: durability(p, o.enemy, 'enemy'),
+    const vessel = o.vessel === undefined ? undefined : p.object(o.vessel, 'input.vessel', ['id', 'name', 'integrity'])
+    const setup = { ...(vessel ? { vessel: { id: p.slug(vessel.id, 'vessel.id'), name: p.text(vessel.name, 'vessel.name', 80),
+      integrity: p.int(vessel.integrity, 'vessel.integrity', 1, COMMAND_HULL) } } : {}),
+      ...(presentation ? { presentation } : {}), transport: durability(p, o.transport, 'transport'), enemy: durability(p, o.enemy, 'enemy'),
       reactor: p.int(o.reactor, 'reactor', 1, 12), threats: threats(p, o.threats, 'threats'),
       officers: Object.fromEntries(COMMAND_STATIONS.map((station) => [station, p.int(officers[station], `officers.${station}`, 0, MAX_DRILLS)])) as Record<CommandStation, number> }
     const input: CommandInput = o.version === 1 ? { ...setup, version: 1 } : o.version === 2

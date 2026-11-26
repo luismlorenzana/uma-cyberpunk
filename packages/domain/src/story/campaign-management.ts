@@ -83,8 +83,8 @@ export function parseCampaignManagement(value: unknown, book: Pick<CampaignBook,
       || (kind.startsWith('refit-') && !MODULE_IDS.includes(subject as ModuleId))
       || ((kind === 'crafted' || kind === 'fitted') && !PARTS_BY_ID.has(subject))
       || (kind === 'shipment' && !['fuel', 'provisions', 'alloy'].includes(subject)))) p.fail(field + '.subject', 'unknown transaction target')
-    const destination = row.destination as 'ship' | 'hangar' | 'port' | undefined
-    if (destination !== undefined && !['ship', 'hangar', 'port'].includes(destination)) p.fail(field, 'unknown receipt destination')
+    const destination = row.destination as 'ship' | 'hangar' | 'port' | 'station' | undefined
+    if (destination !== undefined && !['ship', 'hangar', 'port', 'station'].includes(destination)) p.fail(field, 'unknown receipt destination')
     return { kind, ...(subject ? { subject } : {}), ...(destination ? { destination } : {}),
       location: slugIn(row.location, `${field}.location`, ids), scene: scene(row.scene, `${field}.scene`), fallback: scene(row.fallback, `${field}.fallback`, true) }
   }, 128)

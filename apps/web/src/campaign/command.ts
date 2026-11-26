@@ -1,10 +1,11 @@
 import {
   awayMembers, canTakeOrdinaryAssignment, COMMAND_STATIONS, crewSpeaker, MAX_DRILLS, reactorPips, resumeCommand, shipWith, commandTurn, setFlag,
-  type CommandCast, type CampaignSupply, type CommandAction, type CommandEncounter, type CommandInput, type CommandStation, type Save,
+  STARTER_CUTTER, type CampaignBook, type CommandCast, type CampaignSupply, type CommandAction, type CommandEncounter, type CommandInput, type CommandStation, type Save,
 } from '@cyber/domain'
 import { deploy, finishBattle, finishMission, recordAction, retry, setSquad } from '../mission/director'
 import { expeditionOfficer } from './expedition'
 import { creditCampaignClear } from './progression'
+import { advanceStationWatches, stationOf } from './watch'
 
 export function missionOfficer(save: Save, station: CommandStation) {
   const override = save.mission?.callUp?.stations?.[station]
@@ -52,7 +53,8 @@ export function canLaunch(supply: CampaignSupply, encounter: CommandEncounter): 
 
 export function launchCommand(save: Save, supply: CampaignSupply, encounter: CommandEncounter,
   support?: { ashore: ReadonlySet<number>; relay: number; preparation?: { alloy: number; integrity: number };
-    qualifications?: ReadonlyMap<number, CommandStation>; contributions?: string[]; cast?: CommandCast; requiredLead?: number }): Save {
+    qualifications?: ReadonlyMap<number, CommandStation>; contributions?: string[]; cast?: CommandCast; requiredLead?: number;
+    vessel?: CommandInput['vessel'] }): Save {
   if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id) return save
   if (save.expedition) {
     const current = save.expedition
@@ -60,7 +62,7 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
     const presentation = support?.cast
     if (!presentation) return save
     const officers = Object.fromEntries(COMMAND_STATIONS.map(station => [station, presentation.crew[station] ? expeditionOfficer(current, station).drills : 0])) as CommandInput['officers']
-    const input = commandSnapshot(shipWith(['bridge']), encounter, presentation, officers, Number(!!current.reinforced), [])
+    const input = commandSnapshot(shipWith(['bridge']), encounter, presentation, officers, Number(!!current.reinforced), [], support?.vessel)
     return deploy({ ...save, commandCinema: { ...save.commandCinema, retries: 0, pending: null },
       expedition: { ...current, fuel: current.fuel - encounter.cost.fuel, provisions: current.provisions - encounter.cost.provisions } }, input)
   }
@@ -89,7 +91,7 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
     return [station, assigned && byMember.has(assigned.outfit) ? Math.min(MAX_DRILLS, assigned.drills + Number(!!qualified)) : 0]
   })) as CommandInput['officers']
   const input = commandSnapshot(save.ship, encounter, presentation, officers,
-    (support?.relay ?? 0) + (support?.preparation?.integrity ?? 0), support?.contributions ?? [])
+    (support?.relay ?? 0) + (support?.preparation?.integrity ?? 0), support?.contributions ?? [], support?.vessel)
   const campaignSupply = { ...supply, fuel: supply.fuel - encounter.cost.fuel, provisions: supply.provisions - encounter.cost.provisions }
   const wallet = cost ? { ...save.wallet, alloy: save.wallet.alloy - cost } : save.wallet
   return deploy({ ...setSquad(save, save.mission.squad), campaignSupply, wallet, commandCinema: { ...save.commandCinema, retries: 0, pending: null } }, input)
@@ -97,8 +99,8 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
 
 /** Freeze the chosen ship and cast before the battle starts or the player reloads. */
 export function commandSnapshot(ship: Save['ship'], encounter: CommandEncounter, presentation: CommandCast,
-  officers: CommandInput['officers'], transportBonus: number, contributions: readonly string[]): CommandInput {
-  const setup = { presentation, transport: encounter.transport + transportBonus, enemy: encounter.enemy,
+  officers: CommandInput['officers'], transportBonus: number, contributions: readonly string[], vessel?: CommandInput['vessel']): CommandInput {
+  const setup = { presentation, ...(vessel ? { vessel } : {}), transport: encounter.transport + transportBonus, enemy: encounter.enemy,
     threats: encounter.threats.map(threat => ({ ...threat })), reactor: Math.max(3, reactorPips(ship)), officers }
   const assault = encounter.assault
   if (!assault) return { ...setup, version: 1 }
@@ -120,7 +122,7 @@ export function issueCommand(save: Save, encounter: string, turn: number, action
   return state.result ? finishBattle(committed, state.result === 'won') : committed
 }
 
-export function settleCommand(save: Save, encounter: string, progression?: { requiredLead?: number }): Save {
+export function settleCommand(save: Save, encounter: string, progression?: { requiredLead?: number; book?: CampaignBook }): Save {
   if (save.mission?.step !== 'results' || save.mission.id !== encounter || !save.mission.won) return save
   const first = !save.worlds.missions.includes(encounter)
   const missions = first ? [...save.worlds.missions, encounter] : save.worlds.missions
@@ -132,5 +134,19 @@ export function settleCommand(save: Save, encounter: string, progression?: { req
   const lead = progression?.requiredLead
   const credited = progression && first
     ? creditCampaignClear(save, lead === undefined ? officers : [lead, ...officers]) : save
-  return finishMission({ ...credited, story, worlds: { ...save.worlds, missions } })
+  const finished = finishMission({ ...credited, story, worlds: { ...save.worlds, missions } })
+  const book = progression?.book, vessel = run.input.vessel
+  if (!book?.fourAct || !vessel) return finished
+  const integrity = run.state.hull
+  let ship = finished
+  if (finished.expedition?.ship === vessel.id) ship = { ...finished, expedition: { ...finished.expedition, integrity } }
+  else if (vessel.id === STARTER_CUTTER.id) ship = { ...finished, station: { ...stationOf(finished, book), integrity } }
+  else {
+    const duo = finished.finaleProgress?.duo
+    if (duo && book.fourAct.duos.get(duo)?.expedition?.ship === vessel.id) {
+      const hull = finished.fleet?.[duo] ?? { ship: vessel.id, condition: 'commissioned' }
+      ship = { ...finished, fleet: { ...finished.fleet, [duo]: { ...hull, integrity } } }
+    }
+  }
+  return advanceStationWatches(ship, book, book.stationStory?.commandWatches?.get(encounter) ?? 1)
 }

@@ -1,7 +1,8 @@
 
 import { useMemo, useState } from 'react'
-import { awayMembers, campaignSupport, crewSpeaker, levelOf, ROLE_NAME, type CampaignBook, type CampaignDate, type CampaignQuest,
+import { awayMembers, campaignSupport, crewSpeaker, levelOf, ROLE_NAME, stationCapacity, type CampaignBook, type CampaignDate, type CampaignQuest,
   type CampaignReleaseFile, type Save, type Speaker } from '@cyber/domain'
+import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
 import { CampaignThumbnail } from './CampaignThumbnail'
 import { campaignControl, CampaignQuestRow } from './CampaignQuestRow'
@@ -11,6 +12,8 @@ import { dateAvailable } from './dates'
 import { RigSheet } from './RigSheet'
 import { DatePanel } from './DatePanel'
 import { campaignActs, rosterStatus, type CampaignNavigation, type RosterBrowse, type RosterEntry, type RosterKind } from './navigation'
+import { homestretchCabins, setLieutenantResidence } from './homestretch'
+import { stationOf } from './watch'
 import { Wardrobe } from './Wardrobe'
 
 const roles: readonly RosterKind[] = ['Uma', 'General', 'Lieutenant']
@@ -77,6 +80,7 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
     route?.launch, ...route?.stops ?? [], route?.return])].flatMap(id =>
     id && !entry?.quests.includes(id) ? navigation.quests.get(id) ?? [] : [])
   const returned = entry?.kind === 'Lieutenant' && entry.quests.every(id => complete.has(id))
+  const resident = typeof entry?.speaker === 'string' && save.station?.lieutenantResidents?.includes(entry.speaker)
   const watch = returned && save.expedition?.duo === duo?.id ? expeditionWatchScene(save, book, complete) : null
   const hasActor = (scene: string) => book.scenes.get(scene)?.cast.some(actor => (actor.outfit ?? actor.heroine) === entry?.speaker)
   const returnScene = returned ? chapters.filter(row => complete.has(row.id)).map(row => questScene(save, row))
@@ -153,8 +157,16 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
               : entry.kind === 'General' && lead !== undefined && !complete.has(book.fourAct?.arcs.get(lead)?.rehabilitation?.quarters ?? '')
                 ? 'Evenings open after the shared quarters settlement' : 'Evening visit unavailable at this watch'}</p>}
           {sharedEvening && <button type="button" className={campaignControl} onClick={sharedEvening}>Invite both to an evening</button>}
-          {entry.kind === 'Lieutenant' && <p>{returned ? assignment && save.expedition?.duo === duo?.id ? 'With the expedition formation' : 'Returned to the local crew'
+          {entry.kind === 'Lieutenant' && <p>{returned ? assignment && save.expedition?.duo === duo?.id ? 'With the expedition formation' : resident ? 'Resident on Homestretch' : 'Returned to the local crew'
             : 'Crew interactions open after recovery'}</p>}
+          {returned && book.stationStory && typeof entry?.speaker === 'string' && !save.expedition && (() => {
+            const actor = entry.speaker
+            const hasCabin = resident || homestretchCabins(book, save).length < stationCapacity(stationOf(save, book))
+            return <button type="button" className={campaignControl + ' disabled:opacity-50'} disabled={!hasCabin}
+              onClick={() => void updateSave(current => setLieutenantResidence(current, book, actor, !resident))}>
+              {resident ? 'Return to the local base' : hasCabin ? 'Assign quarters aboard' : 'Permanent cabin required'}
+            </button>
+          })()}
           {returned && report && crewWatch && <button type="button" className={campaignControl}
             onClick={() => report(crewWatch.scene)}>{crewWatch.shortfall ? 'Join supply report' : 'Join off-duty watch'}</button>}
           {returned && report && returnScene && <button type="button" className={campaignControl}

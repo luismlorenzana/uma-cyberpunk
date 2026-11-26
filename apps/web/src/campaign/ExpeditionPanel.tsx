@@ -1,13 +1,14 @@
-import { COMMAND_STATIONS, storesAt, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
+import { COMMAND_HULL, COMMAND_STATIONS, storesAt, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
 import { campaignControl, campaignPrimary, CampaignQuestRow } from './CampaignQuestRow'
-import { expeditionBerth, expeditionPlan, expeditionOfficer, expeditionStations, fitExpeditionHull, loadTender, resumeVoyage, berthVoyage, tendAtBerth, TENDER_ARMOR_ALLOY } from './expedition'
+import { expeditionBerth, expeditionPlan, expeditionOfficer, expeditionStations, fitExpeditionHull, loadTender, parkCutter, repairExpeditionCutter, resumeVoyage, berthVoyage, tendAtBerth, TENDER_ARMOR_ALLOY } from './expedition'
 import type { CampaignNavigation } from './navigation'
 
-export function ExpeditionPanel({ book, save, port, complete, navigation, open, report, travel, systems }: {
+export function ExpeditionPanel({ book, save, port, complete, navigation, open, report, travel, systems, parked }: {
   book: CampaignBook; save: Save; port?: string; complete: ReadonlySet<string>; navigation: CampaignNavigation
   open: (quest: CampaignQuest) => void; report: (scene: string) => void; travel: (destination?: string) => void; systems: boolean
+  parked: (ship: string) => void
 }) {
   const run = save.expedition
   const plan = expeditionPlan(save, book, complete)
@@ -18,14 +19,25 @@ export function ExpeditionPanel({ book, save, port, complete, navigation, open, 
   return <section aria-label="Active expedition" className="space-y-3 rounded-xl border border-white/15 bg-[#101b2d] p-3">
     <h2 className="font-display text-xl font-bold">{route.name} · Expedition</h2>
     <p className="text-sm">{run.berthed ? 'Berthed at ' + (berth?.port.name ?? 'Homestretch') : current?.title ?? 'Departure'} · {run.members.length} assigned</p>
-    <p className="text-sm">Tender cargo · {run.fuel} fuel · {run.provisions} provisions</p>
+    <p className="text-sm">Cutter cargo · {run.fuel} fuel · {run.provisions} provisions · Hull {run.integrity ?? COMMAND_HULL}/{COMMAND_HULL}</p>
     <p className="text-sm">Remaining ship battles · {fuel} fuel · {provisions} provisions</p>
     {remaining[0] && <p className="text-sm text-cyan-200">Next · {remaining[0].title}</p>}
     {watch && <button type="button" className={campaignControl} onClick={() => report(watch.scene)}>{watch.shortfall ? 'Supply report' : 'Off duty'}</button>}
     {run.berthed && portStock && <p className="text-sm">Berth stock · {portStock.fuel} fuel · {portStock.provisions} provisions{run.towFuelDue && ' · 1 fuel tow charge due at departure'}</p>}
     {run.berthed ? <div className="flex flex-wrap gap-2">
       <button type="button" className={campaignPrimary + ' disabled:opacity-50'} disabled={resumeVoyage(save, book) === save} onClick={() => void updateSave(s => resumeVoyage(s, book))}>Resume expedition</button>
+      {book.stationStory && berth && <button type="button" className={campaignControl}
+        onClick={() => {
+          let stored: string | undefined
+          void updateSave(s => {
+            const next = parkCutter(s, book)
+            if (next !== s) stored = s.expedition?.ship
+            return next
+          }).then(() => { if (stored) parked(stored) })
+        }}>Park cutter</button>}
       <button type="button" className={campaignControl} onClick={() => void updateSave(s => tendAtBerth(s, book))}>Advance berth supply watch</button>
+      {run.integrity !== undefined && run.integrity < COMMAND_HULL && <button type="button" className={campaignControl}
+        onClick={() => void updateSave(s => repairExpeditionCutter(s, book))}>Repair cutter · 1 watch</button>}
       {(['fuel', 'provisions'] as const).map(kind => <button type="button" key={kind} className={campaignControl + ' disabled:opacity-50'}
         disabled={loadTender(save, book, kind) === save} onClick={() => void updateSave(s => loadTender(s, book, kind))}>Load tender {kind}</button>)}
       <button type="button" className={campaignControl + ' disabled:opacity-50'} disabled={fitExpeditionHull(save, book) === save}

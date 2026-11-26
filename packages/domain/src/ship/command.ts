@@ -22,6 +22,7 @@ export interface CommandEncounter {
 
 interface CommandSetup {
   presentation?: CommandCast
+  vessel?: { id: string; name: string; integrity: number }
   transport: number
   enemy: number
   reactor: number
@@ -56,7 +57,7 @@ export const COMMAND_SHIELD = 6
 export const MAX_DRILLS = 2
 
 export function commandStart(input: CommandInput): CommandState {
-  return { turn: 0, hull: COMMAND_HULL, transport: input.transport, enemy: input.enemy,
+  return { turn: 0, hull: input.vessel?.integrity ?? COMMAND_HULL, transport: input.transport, enemy: input.enemy,
     emitter: input.version !== 1 ? input.assault.emitter : null, shields: { fore: 3, aft: 3 }, power: input.reactor, result: null, last: null }
 }
 

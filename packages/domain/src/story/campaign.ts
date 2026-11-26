@@ -76,8 +76,10 @@ export interface CampaignPortraitFace {
 }
 
 import { parseFourActFinale, type FourActFinale } from './cy90'
+import { parseStationStory, type StationStory } from './station'
 
 export interface CampaignBook {
+  stationStory?: StationStory
   fourActFinale?: FourActFinale
   fourAct?: FourActCampaign
   combatShift?: string
@@ -381,7 +383,7 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
   const { 'campaign.json': config, ...storyFiles } = files
   const p = new P('campaign.json')
   const fields = ['schemaVersion', 'opening', 'draft', 'quests', 'assets', 'art']
-  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct', 'combatShift', 'fourActFinale'], fields)
+  const o = p.object(config, 'campaign', [...fields, 'evening', 'supply', 'commands', 'commandArt', 'ground', 'pairs', 'finale', 'dates', 'workshop', 'recruits', 'allies', 'tiers', 'sectors', 'projects', 'portraitFaces', 'cabinEvenings', 'management', 'commandCinematics', 'wardrobe', 'previewEnd', 'fourAct', 'combatShift', 'fourActFinale', 'stationStory'], fields)
   const combatShift = o.combatShift === undefined ? undefined : p.slug(o.combatShift, 'combatShift')
   p.version(o)
   if ((identity === 'four-act' || o.fourAct !== undefined) && o.tiers !== undefined) p.fail('tiers', 'four-act books cannot use tier progression')
@@ -756,7 +758,11 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
   const fourActFinale = o.fourActFinale === undefined ? undefined : fourAct
     ? parseFourActFinale(p, o.fourActFinale, scenes, quests, encounters)
     : p.fail('fourActFinale', 'requires the four-act campaign')
-  return { opening, draft: o.draft as boolean, ...(fourAct ? { fourAct } : {}), ...(fourActFinale ? { fourActFinale } : {}), ...(previewEnd ? { previewEnd } : {}), quests, assets, art, story, scenes, commands, ground, pairs,
+  const stationStory = o.stationStory === undefined ? undefined : fourAct
+    ? parseStationStory(o.stationStory, scenes, new Set(supply?.ports.map(port => port.id)), new Set(commands.keys()),
+      new Set([...fourAct.duos.values()].flatMap(duo => duo.expedition ? [duo.expedition.ship] : [])))
+    : p.fail('stationStory', 'requires the four-act campaign')
+  return { opening, draft: o.draft as boolean, ...(stationStory ? { stationStory } : {}), ...(fourAct ? { fourAct } : {}), ...(fourActFinale ? { fourActFinale } : {}), ...(previewEnd ? { previewEnd } : {}), quests, assets, art, story, scenes, commands, ground, pairs,
     ...(combatShift ? { combatShift } : {}),
     ...(wardrobe ? { wardrobe } : {}),
     ...(tiers ? { tiers } : {}),

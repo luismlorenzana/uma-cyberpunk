@@ -61,7 +61,7 @@ export function SystemsMap({ book, assets, save, stock, drives, travel, open, lo
       <p className="text-sm">Stores · {stockAtPort.fuel} fuel · {stockAtPort.provisions} provisions · {stockAtPort.alloy} alloy</p>
       {port.id === stock.port ? locate && <button type="button" className={campaignControl} onClick={locate}>Inspect landing</button>
         : journey && leg ? <>
-          <p className="text-sm">{journey.fuel} fuel total · {leg.fuel} for next jump to {label(journey.first)}</p>
+          <p className="text-sm">{journey.fuel} fuel total · {leg.fuel} fuel and 1 watch for the next jump to {label(journey.first)}</p>
           <button type="button" disabled={!canJump} className={campaignControl + ' disabled:opacity-50'}
             onClick={() => travel(port.id)}>Jump to {label(journey.first)}</button>
         </> : <p className="text-sm">Route locked · check clearance and drive capability.</p>}

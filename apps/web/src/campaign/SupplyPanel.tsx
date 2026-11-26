@@ -1,11 +1,12 @@
 import {
   CAPABILITY_NAME, managementReceipt, observeManagement, earn, freePlace, jumpRoute, loadShipment, nextCampaignStop, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
-  shipCapabilities, shipmentAt, startSupply, storesAt, SUPPLY_KINDS,
+  shipCapabilities, shipmentAt, SHIP_CARGO_MAX, startSupply, STARTING_STATION_RESERVES, STATION_RESERVE_MAX, storesAt, SUPPLY_KINDS,
   type CampaignBook, type CampaignSupply, type Save, type SupplyNetwork, type SupplyPort, type World,
 } from '@cyber/domain'
 import { SystemsMap } from './SystemsMap'
 import { type LoadedCampaign } from './load'
 import { updateSave } from '../save/game'
+import { advanceStationWatches, cutterArrival, stationOf, transferStationStock } from './watch'
 
 const button = 'min-h-11 rounded-lg px-3 text-sm font-semibold text-white'
 const action = `${button} bg-white/10 disabled:opacity-50`
@@ -38,6 +39,8 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
   }
   const strategic = !!book?.fourAct && !!assets
   const batch = book?.fourAct ? 8 : undefined
+  const station = book?.stationStory ? stationOf(save, book) : undefined
+  const reserves = station?.reserves ?? STARTING_STATION_RESERVES
   return <section className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3" aria-label={showMap ? 'Star map and supply' : 'Cargo'}>
     <div className="flex flex-wrap items-baseline justify-between gap-2">
       <h2 className="font-display text-lg font-bold">{showMap ? 'Star map' : 'Cargo'}</h2>
@@ -51,7 +54,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
         const route = first && network.routes.find(({ from, to }) => from === stock.port && to === first || to === stock.port && from === first)
         if (!route) return current
         const next = jumpRoute(stock, route, capabilities, current.story.flags)
-        return next === stock ? current : { ...current, campaignSupply: next }
+        return next === stock ? current : advanceStationWatches(cutterArrival({ ...current, campaignSupply: next }, book), book, 1)
       })} />}
     {showMap && !strategic && <ul className={mapped ? 'relative aspect-[2.3] rounded-lg bg-[#080c19]' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'} aria-label="Landing ports">
       {mapped && network.routes.map((route) => {
@@ -74,7 +77,9 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
             if (!route) return
             change((current, stock) => {
               const next = jumpRoute(stock, route, shipCapabilities(current.ship), current.story.flags)
-              return next === stock ? current : { ...current, campaignSupply: next }
+              if (next === stock) return current
+              const moved = { ...current, campaignSupply: next }
+              return book ? advanceStationWatches(cutterArrival(moved, book), book, 1) : moved
             })
           }}><span className="block">{destination.name}</span><span className="block font-normal text-white/75">{status}</span></button>
         </li>
@@ -87,6 +92,16 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
     <p className="text-sm text-slate-300">After next watch · {Math.max(0, supply.provisions - upkeep)} ship provisions{upkeep > supply.provisions && ' · Short ' + (upkeep - supply.provisions)}</p>
     <p className="text-sm text-slate-300">Net port output each watch · {port.produces.fuel - port.upkeep.fuel} fuel · {port.produces.provisions - port.upkeep.provisions} provisions · {port.produces.alloy - port.upkeep.alloy + (liberated?.alloy ?? 0) + (port.liberations ?? []).reduce((n, row) => n + (flags.includes(row.flag) ? row.alloy : 0), 0)} alloy</p>
     {supply.shortfall > 0 && <p className="text-sm text-[#ffa7b7]">Last night’s shortfall {supply.shortfall} provisions</p>}
+    {book && station?.anchor === port.id && <section className="space-y-1" aria-label="Homestretch reserves">
+      <h3 className="font-semibold">Homestretch reserves</h3>
+      {(['fuel', 'provisions'] as const).map(kind => <div key={kind} className="flex flex-wrap items-center gap-2 text-sm">
+        <span>{label[kind]} {reserves[kind]}</span>
+        <button type="button" className={action} disabled={!reserves[kind] || supply[kind] >= SHIP_CARGO_MAX}
+          onClick={() => change(current => transferStationStock(current, book, kind, true))}>Transfer {kind} to cutter</button>
+        <button type="button" className={action} disabled={!supply[kind] || reserves[kind] >= STATION_RESERVE_MAX}
+          onClick={() => change(current => transferStationStock(current, book, kind, false))}>Store {kind} aboard station</button>
+      </div>)}
+    </section>}
     <div>
       <h3 className="font-semibold">Port stock</h3>
       <div className="grid grid-cols-3 gap-2">

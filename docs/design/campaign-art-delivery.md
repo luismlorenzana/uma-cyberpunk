@@ -44,6 +44,8 @@ An actor role determines the eligible outfit and default dialogue base. Keep gen
 
 ## Pillars 2 and 3 contracts
 
+The [D94 General Art packet](../handoff/tasks/CY127.md) covers reusable station geometry, module exteriors and the cutter family. Use the [CY126 Story placement rows](../handoff/tasks/CY126.md) and [CY128 actor/sprite delta audit](../handoff/tasks/CY128.md) to tie all new views to actual campaign state and exact authored scenes.
+
 General art follows reachable location and gameplay state. Author place keys, day/night where required, interactive prop states and upgrade/outcome visuals. Each capital, base and launch destination needs readable approach, interactable, mission and resolution staging. Use approved assets for unchanged ship room families. When a project completes or a yard is restored, visibly change the part of the scene the mission affected. Ground boards need terrain height, target selection and cover compatibility independent from decorative plates.
 
 For ship combat, define operator, order, target, affected side, current ship, pre-order pose and actual outcome. Use the frozen officer and committed result to pick a suitable pilot-suit composition with a profile. Bind emitter enabled/disabled, defended hull, impact, withdrawal, retry and result. Reusable bridge and ship assets can serve multiple charts. Script and Art record when a named actor requires an exact authored image. Fast playback and available fallbacks follow the same result.

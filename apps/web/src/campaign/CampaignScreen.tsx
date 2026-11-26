@@ -1,7 +1,7 @@
 import type { SceneDecision } from '../story/ScenePlayer'
 import {
   awayMembers, campaignCaptures, campaignSpeaker, campaignSupport, campaignUpkeep, CORE_CAPTURES, crewSpeaker, developedPort, expeditionReadiness, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, moduleAt, pairProgress, pairVisit, reactorPips, rehabilitationQuestIds, seeScene, SIGNAL_CAPTURES,
-  sectorNightId, sectorVisit, startCampaignNight, startSupply,
+  cancelStationAppointment, sectorNightId, sectorVisit, setFlag, startCampaignNight, startSupply, stationDate, stationRoom,
   type CabinEvening, type CampaignAlly, type CampaignDate, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save, type Speaker,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
@@ -24,12 +24,12 @@ import { finishCampaignDialogue, optionalCampaignTraining, personalMissionLead, 
 import { missionAshore } from './call-up'
 import { ShipHome, homeAreas, type HomeArea } from './ShipHome'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
-import { homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
+import { closeRecruitment, homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
 import { indexCampaignNavigation, type OperationBrowse, type RosterBrowse } from './navigation'
 import { SectorPanel } from './SectorPanel'
 import { ProjectsPanel } from './ProjectsPanel'
 import { SupplyPanel } from './SupplyPanel'
-import { settleCampaignDay } from './watch'
+import { cutterArrival, settleCampaignDay, stationOf } from './watch'
 import { chooseDatePath, creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
 import { DatePanel } from './DatePanel'
 import { ExpeditionPanel } from './ExpeditionPanel'
@@ -49,9 +49,14 @@ const LocationScreen = lazy(() => import('./LocationScreen'))
 const RosterScreen = lazy(() => import('./RosterScreen'))
 const OperationsScreen = lazy(() => import('./OperationsScreen'))
 const RecruitCrew = lazy(() => import('./RecruitCrew'))
+const StationHome = lazy(() => import('./StationHome'))
+const StationCalendar = lazy(() => import('./StationCalendar'))
+const StationCabins = lazy(() => import('./StationCabins'))
+const StationFleet = lazy(() => import('./StationFleet').then(module => ({ default: module.StationFleet })))
+const StationCare = lazy(() => import('./StationCare').then(module => ({ default: module.StationCare })))
 const Squads = lazy(() => import('../crew/SquadsPanel').then(module => ({ default: module.SquadsPanel })))
 const campaignViews = ['Home', 'Roster', 'Operations'] as const
-type CampaignView = typeof campaignViews[number] | 'Recruit'
+type CampaignView = typeof campaignViews[number] | 'Recruit' | 'Calendar'
 type Invitation = { outfit: number; quest: CampaignQuest; release: string; scene: string; effects: readonly EffectStep[] }
 
 export default function CampaignScreen() {
@@ -75,6 +80,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [finaleScene, setFinaleScene] = useState<string | null>(null)
   const [sharedConsent, setSharedConsent] = useState<{ ally: CampaignAlly; quest: CampaignQuest; day: number } | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
+  const [stationScene, setStationScene] = useState<{ scene: string; flag?: string; after?: () => void } | null>(null)
   const [invitation, setInvitation] = useState<Invitation | null>(null)
   const [newRecruit, setNewRecruit] = useState<number>()
   const [error, setError] = useState<string | null>(null)
@@ -89,6 +95,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [rosterBrowse, setRosterBrowse] = useState<RosterBrowse>({ kind: 'Uma', search: '', page: 0 })
   const [operationBrowse, setOperationBrowse] = useState<OperationBrowse>({ type: 'All', act: 'All acts', state: 'Ready', search: '', page: 0 })
   const screen = useRef<HTMLElement>(null)
+  const restoredRecruit = useRef(false)
+  const invitationChoice = useRef<number | undefined>(undefined)
   const complete = useMemo(() => new Set(save && loaded ? loaded.book.quests.filter(q => questComplete(save, q, loaded.book)).map(q => q.id) : []), [save, loaded])
   const navigation = useMemo(() => loaded && indexCampaignNavigation(loaded.book), [loaded])
   function selectView(next: CampaignView, area: HomeArea = 'Deck') {
@@ -111,6 +119,16 @@ function Campaign({ layout }: { layout: StageLayout }) {
   useEffect(() => {
     if (loaded && save) void updateSave((current) => creditCampaignDates(current, loaded.book))
   }, [loaded, save])
+  useEffect(() => {
+    if (restoredRecruit.current || !loaded || !save) return
+    restoredRecruit.current = true
+    const selected = save.station?.recruit && navigation?.quests.get(save.station.recruit)
+    if (selected && loaded.book.recruits?.some(row => row.signOn === selected.id)
+      && questAvailable(save, loaded.book, selected, save.campaignSupply?.port ?? loaded.book.supply?.start)) {
+      setView('Recruit')
+      setActive(selected)
+    }
+  }, [loaded, navigation, save])
   function commitScene(change: (save: Save) => Save) {
     setSavingScene(true)
     void updateSave(change).finally(() => setSavingScene(false))
@@ -119,6 +137,28 @@ function Campaign({ layout }: { layout: StageLayout }) {
   function openCrew(outfit: number) {
     setRosterBrowse({ kind: 'Uma', search: '', page: 0, selected: outfit })
     selectView('Roster')
+  }
+  function showStationStory(key: string, after?: () => void, repeat = false): boolean {
+    const scene = loaded?.book.stationStory?.transition.get(key)
+    if (!scene || !save || (!repeat && useGame.getState().save?.story.seen.includes(scene))) return false
+    setStationScene({ scene, after })
+    return true
+  }
+  function startRecruitTrip(quest: CampaignQuest) {
+    if (!loaded || !save) return
+    const trip = homeQuestTravel(save, loaded.book, quest)
+    const example = loaded.book.stationStory?.opening
+    const signOn = loaded.book.recruits?.find(row => row.signOn === quest.id)
+    const travel = () => void meetQuest(quest)
+    if (trip?.affordable && trip.watches > 0 && signOn && signOn.outfit === example?.actor && trip.destination === example.port) {
+      const depart = () => { if (!showStationStory('depart', travel)) travel() }
+      if (!showStationStory('call', depart)) depart()
+    } else travel()
+  }
+  function deferInvitation(offer: Invitation) {
+    void updateSave(s => closeRecruitment(s, offer.quest.id))
+    setInvitation(null)
+    setError(null)
   }
   async function meetQuest(quest: CampaignQuest) {
     if (!loaded || savingScene) return
@@ -145,9 +185,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
     setSavingScene(true)
     setError(null)
     try {
-      await updateSave(current => offer.release === loaded.release.release && questScene(current, offer.quest) === offer.scene
-        ? finishCampaignDialogue(current, loaded.book, offer.quest, offer.effects, current.campaignSupply?.port ?? loaded.book.supply?.start)
-        : current)
+      await updateSave(current => {
+        if (offer.release !== loaded.release.release || questScene(current, offer.quest) !== offer.scene) return current
+        const invited = finishCampaignDialogue(current, loaded.book, offer.quest, offer.effects, current.campaignSupply?.port ?? loaded.book.supply?.start)
+        return invited === current ? current : closeRecruitment(cutterArrival(invited, loaded.book, offer.outfit), offer.quest.id)
+      })
       if (!useGame.getState().save?.crew.some(member => member.outfit === offer.outfit)) {
         setError('The invitation expired. Meet her again to continue.')
         setInvitation(null)
@@ -156,6 +198,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       setInvitation(null)
       openCrew(offer.outfit)
       setNewRecruit(offer.outfit)
+      if (offer.outfit === loaded.book.stationStory?.opening?.actor) showStationStory('berth-assigned')
     } catch {
       setError('Could not save the invitation. Try again.')
     } finally {
@@ -284,20 +327,53 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const signOn = active && loaded?.book.fourAct && loaded.book.recruits?.find(row => row.signOn === active.id)
   const portArrival = loaded && save && port && !night && !pendingPair && !missionState && !error
     && !save.story.seen.includes(port.scene) ? port : undefined
+  const specialArrival = portArrival && signOn && signOn.outfit === loaded?.book.stationStory?.opening?.actor
+    && portArrival.id === loaded.book.stationStory.opening.port ? loaded.book.stationStory.transition.get('arrive') : undefined
+  if (loaded && save && stationScene) return <CampaignScene key={stationScene.scene} loaded={loaded} sceneId={stationScene.scene}
+    fail={message => { setError(message); setStationScene(null) }} onExit={() => setStationScene(null)} exitLabel="Back"
+    finish={effects => {
+      setSavingScene(true)
+      void updateSave(current => {
+        if (stationScene.flag && current.story.flags.includes(stationScene.flag)) return current
+        const next = reduceEffects(current, effects)
+        const seen = seeScene(next.story, stationScene.scene)
+        return { ...next, story: stationScene.flag ? setFlag(seen, stationScene.flag) : seen }
+      }).then(() => {
+        setStationScene(null)
+        setSavingScene(false)
+        stationScene.after?.()
+      }, () => {
+        setStationScene(null)
+        setSavingScene(false)
+        setError('Could not save this scene. Try again.')
+      })
+    }} />
+  const authoredOffer = invitation && invitation.outfit === loaded?.book.stationStory?.opening?.actor
+    ? loaded.book.stationStory.transition.get('offer') : undefined
+  if (invitation && loaded && authoredOffer && !error) return <CampaignScene key={authoredOffer} loaded={loaded} sceneId={authoredOffer}
+    decision={{ commit: async index => { invitationChoice.current = index } }}
+    onExit={() => deferInvitation(invitation)} exitLabel="Defer invitation" fail={setError}
+    finish={() => {
+      if (invitationChoice.current === 0) void inviteAboard(invitation)
+      else deferInvitation(invitation)
+    }} />
   if (invitation && loaded) return <main className={viewport} style={insets} data-recruit-invitation>
     <section className="mx-auto mt-6 max-w-lg space-y-4 rounded-xl border border-cyan-200/20 bg-[#101e32] p-5" aria-labelledby="invite-title">
       <h1 id="invite-title" className="font-display text-2xl font-bold">{nameOf(loaded.book.story, invitation.outfit)}</h1>
       {error && <p role="alert" className="text-rose-200">{error}</p>}
       <div className="flex flex-wrap gap-2">
         <button type="button" className={campaignPrimary} onClick={() => void inviteAboard(invitation)}>Invite aboard</button>
-        <button type="button" className={campaignControl} onClick={() => { setInvitation(null); setError(null) }}>Back</button>
+        <button type="button" className={campaignControl} onClick={() => deferInvitation(invitation)}>Back</button>
       </div>
     </section>
   </main>
   if (loaded && active && activeScene
     && !(signOn && portArrival && active.port === portArrival.id && activeScene !== portArrival.scene)) return <CampaignScene
     key={voice ?? activeScene} loaded={loaded} sceneId={voice ?? activeScene}
-    onExit={signOn ? () => setActive(null) : undefined}
+    onExit={signOn ? () => {
+      void updateSave(s => closeRecruitment(s, active.id))
+      setActive(null)
+    } : undefined}
     exitLabel={signOn ? 'Leave meeting' : undefined}
     squad={save?.expedition?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : [])}
     battle={async (id, effects) => {
@@ -314,12 +390,21 @@ function Campaign({ layout }: { layout: StageLayout }) {
     }}
     finish={(effects) => {
       if (signOn) {
+        invitationChoice.current = undefined
         setInvitation({ outfit: signOn.outfit, quest: active, scene: activeScene, release: loaded.release.release, effects })
         setActive(null)
         return
       }
       setSavingScene(true)
-      void updateSave((s) => finishCampaignDialogue(s, loaded.book, active, effects, s.campaignSupply?.port ?? supply?.port))
+      void updateSave((s) => {
+        const next = finishCampaignDialogue(s, loaded.book, active, effects, s.campaignSupply?.port ?? supply?.port)
+        return next !== s && next.station ? { ...next, station: cancelStationAppointment(next.station, { quest: active.id }) } : next
+      }).then(() => {
+        const pilot = loaded.book.stationStory?.opening?.actor
+        const current = useGame.getState().save
+        if (pilot && current && loaded.book.fourAct?.arcs.get(pilot)?.capture?.custody === active.id
+          && questComplete(current, active, loaded.book)) showStationStory('intake')
+      })
         .finally(() => { setActive(null); setSavingScene(false) })
     }}
     fail={(message) => { setError(message); setActive(null) }} />
@@ -393,11 +478,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
       })} />
   }
   if (loaded && portArrival) {
-    return <CampaignScene key={portArrival.scene} loaded={loaded} sceneId={portArrival.scene} fail={setError}
+    return <CampaignScene key={specialArrival ?? portArrival.scene} loaded={loaded} sceneId={specialArrival ?? portArrival.scene} fail={setError}
       finish={(effects) => void updateSave((s) => {
         if (s.story.seen.includes(portArrival.scene)) return s
         const next = reduceEffects(s, effects)
-        return { ...next, story: seeScene(next.story, portArrival.scene) }
+        const arrived = seeScene(next.story, portArrival.scene)
+        return { ...next, story: specialArrival ? seeScene(arrived, specialArrival) : arrived }
       })} />
   }
 
@@ -473,7 +559,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
   function chooseCabin(cabin: CabinEvening) {
     if (!loaded || !day || !canRest) return
     setEveningOpen(false)
-    commitScene(s => startCabinEvening(s, loaded.book, cabin, day.day))
+    commitScene(s => {
+      const next = startCabinEvening(s, loaded.book, cabin, day.day)
+      return next !== s && next.station && 'companion' in cabin.source
+        ? { ...next, station: cancelStationAppointment(next.station, { actor: cabin.source.companion }) } : next
+    })
   }
   const pairVisits = loaded && save && canRest ? pairs.flatMap((pair) => {
     const visit = pairVisit(pair, save.story, save.crew.flatMap(({ outfit }) => support?.ashore.has(outfit) ? [] : [outfit]))
@@ -516,12 +606,32 @@ function Campaign({ layout }: { layout: StageLayout }) {
         if (![cabin, availableSharedVisit(s, pair)].some((option) => option?.scene === visit.scene && option.morning === visit.morning)) return s
       }
       const campaignDay = startCampaignNight(s.campaignDay, visit)
-      return campaignDay === s.campaignDay ? s : settleDay(s, campaignDay)
+      if (campaignDay === s.campaignDay) return s
+      const next = settleDay(s, campaignDay)
+      return next.station && visit?.kind === 'visit'
+        ? { ...next, station: cancelStationAppointment(next.station, { actor: visit.companion }) } : next
     })
   }
   function visitFromRoster(date: CampaignDate) {
     const option = dateOptions.find(({ visit }) => visit.companion === date.companion)
-    if (option) option.cabin ? chooseCabin(option.cabin) : chooseEvening(option.visit)
+    if (!option) return
+    const visit = () => { if (option.cabin) chooseCabin(option.cabin); else chooseEvening(option.visit) }
+    if (loaded && save && date.companion === loaded.book.stationStory?.opening?.actor
+      && supply?.port === stationOf(save, loaded.book).anchor && stationDate(stationOf(save, loaded.book).absoluteWatch).phase !== 'Duty'
+      && showStationStory('free-watch', visit)) return
+    visit()
+  }
+  function openCare(quest: CampaignQuest, missed = false) {
+    if (!loaded || !save) return
+    const arc = loaded.book.stationStory?.opening && catalog?.arcs.get(loaded.book.stationStory.opening.actor)
+    const prelude = arc?.rehabilitation?.sessions.includes(quest.id) ? 'rehab-next' : undefined
+    const open = () => {
+      if (quest.port && quest.port !== port?.id) openNavigation(quest.port)
+      else if (questAvailable(save, loaded.book, quest, port?.id)) {
+        if (!prelude || !showStationStory(prelude, () => setActive(quest))) setActive(quest)
+      } else selectView('Home', 'Quarters')
+    }
+    if (!missed || !prelude || !showStationStory('rehab-missed', open)) open()
   }
   function sharedFromRoster(actor: Speaker) {
     const ally = loaded?.book.allies?.find(row => row.heroine === actor || row.partner === actor)
@@ -530,6 +640,25 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }
   const activePlan = loaded && save ? expeditionPlan(save, loaded.book, complete) : null
   const activeShip = expedition && !expedition.berthed ? catalog?.duos.get(expedition.duo)?.expedition?.route?.name ?? expedition.ship : 'Homestretch'
+  const atStation = !!(save && loaded && supply?.port === stationOf(save, loaded.book).anchor)
+  const stationStory = loaded?.book.stationStory
+  function openExpeditionQuest(quest: CampaignQuest) {
+    const open = () => setActive(quest)
+    if (expedition && expedition.ship === stationStory?.pilotShip && activePlan?.route.stops[0] === quest.id
+      && showStationStory('errand-brief', open)) return
+    open()
+  }
+  const homeSignals = deck && atStation && loaded && save && stationStory ? [
+    ...(save.crew.some(member => member.outfit === stationStory.opening?.actor) ? ['first-home'] : []),
+    ...(stationRoom(stationOf(save, loaded.book), 'habitat-a') === 'active'
+      && !['room-ready','room-ready-fallback'].some(key => save.story.seen.includes(stationStory.transition.get(key) ?? ''))
+      ? [save.station?.report?.workers.includes(stationStory.opening?.actor ?? -1) ? 'room-ready' : 'room-ready-fallback'] : []),
+    ...(stationRoom(stationOf(save, loaded.book), 'shipyard') === 'active' ? ['yard-open'] : []),
+    ...(finalBook && save.story.flags.includes(finalBook.returnToPlay) ? ['lark-home'] : []),
+  ].flatMap(key => {
+    const scene = stationStory.transition.get(key)
+    return scene && !save.story.seen.includes(scene) ? [{ key, scene }] : []
+  }) : []
 
   return (
     <main ref={screen} className={viewport} style={insets} data-campaign data-campaign-release={loaded?.release.release}>
@@ -546,7 +675,18 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {homeAreas.filter(area => !expedition || !['Quarters', 'Hangar', 'Cargo'].includes(area)).map(area => <button key={area} type="button" className={campaignControl + ' aria-pressed:border-cyan-200/80'}
             aria-pressed={area === homeArea} onClick={() => area === 'Navigation' ? openNavigation() : selectView('Home', area)}>{area}</button>)}
         </nav>}
-        {bridge && loaded && save && <ShipHome ship={activeShip}
+        {deck && loaded && save && loaded.book.fourAct && <Suspense fallback={<p role="status">Opening Homestretch…</p>}>
+          <StationHome book={loaded.book} save={save} open={area => selectView('Home', area)}
+            recruit={() => selectView('Recruit')} calendar={() => selectView('Calendar')}
+            relocation={delayed => { showStationStory(delayed ? 'translation-delayed' : 'translation', undefined, delayed) }}
+            returnHome={() => openNavigation(stationOf(save, loaded.book).anchor)} />
+        </Suspense>}
+        {homeSignals.length > 0 && <section className="flex flex-wrap gap-2" aria-label="Station reports">
+          {homeSignals.map(({ key, scene }) => <button key={key} type="button" className={campaignControl}
+            onClick={() => setStationScene({ scene })}>{key === 'first-home' ? 'Report to the berth' : key === 'yard-open' ? 'Inspect the new shipyard'
+              : key === 'lark-home' ? 'Report to Homestretch' : 'Open Habitat A'}</button>)}
+        </section>}
+        {bridge && loaded && save && (!deck || !loaded.book.fourAct) && <ShipHome ship={activeShip}
           location={expedition?.berthed ? 'Expedition at launch berth' : expedition ? activePlan?.current?.title ?? 'Expedition underway' : port?.name} day={day?.day}
           cargo={(expedition && !expedition.berthed ? expedition : undefined) ?? (supply && { fuel: supply.fuel, provisions: supply.provisions, alloy: save.wallet.alloy })}
           backdrop={expedition && !expedition.berthed ? undefined : loaded.assets.get('homestretch-bridge')}
@@ -558,12 +698,21 @@ function Campaign({ layout }: { layout: StageLayout }) {
           operations={menuReady && !missionState ? () => selectView('Operations') : undefined} />}
         {currentView === 'Recruit' && loaded && save && <Suspense fallback={<p role="status">Opening recruitment…</p>}>
           <RecruitCrew book={loaded.book} save={save} assets={loaded.assets}
-            meet={quest => void meetQuest(quest)} cargo={() => selectView('Home', 'Cargo')} />
+            meet={startRecruitTrip} cargo={() => selectView('Home', 'Cargo')} />
+        </Suspense>}
+        {currentView === 'Calendar' && loaded && save && <Suspense fallback={<p role="status">Opening calendar…</p>}>
+          <StationCalendar book={loaded.book} save={save} quarters={() => selectView('Home', 'Quarters')}
+            observance={(scene, flag) => setStationScene({ scene, flag })}
+            openCare={(id, missed) => { const quest = navigation?.quests.get(id); if (quest) openCare(quest, missed) }} openVisit={actor => {
+            const date = loaded.book.dates?.find(row => row.companion === actor)
+            if (date && canRest && dateAvailable(save, loaded.book, date)) visitFromRoster(date)
+            else selectView('Home', 'Quarters')
+          }} />
         </Suspense>}
         {currentView === 'Roster' && newRecruit !== undefined && loaded && <section aria-label="Recruit aboard"
           className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-cyan-200/30 bg-[#101e32] p-3">
           <div><h2 className="font-display text-xl font-bold">{nameOf(loaded.book.story, newRecruit)} is aboard</h2>
-            <p className="text-sm text-cyan-200">Quarters · Cabin {cabins.find(cabin => cabin.outfit === newRecruit)?.berth}</p></div>
+            <p className="text-sm text-cyan-200">Quarters · {cabins.find(cabin => cabin.outfit === newRecruit)?.temporary ? 'Guest room' : 'Cabin'} {cabins.find(cabin => cabin.outfit === newRecruit)?.berth ?? 'pending'}</p></div>
           {startChapter && startTrip && <button type="button" className={campaignPrimary + ' disabled:opacity-40'}
             disabled={!startTrip.affordable} onClick={() => void meetQuest(startChapter)}>Start Act I{startTrip.fuel ? ' · ' + startTrip.fuel + ' fuel' : ''}</button>}
         </section>}
@@ -590,8 +739,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
             </section>
           })}
           {expedition && loaded && save && navigation && !missionState && currentView !== 'Roster' && <ExpeditionPanel
-            book={loaded.book} save={save} port={port?.id} complete={complete} navigation={navigation} open={setActive}
-            report={setReportScene} travel={openNavigation} systems={systems} />}
+            book={loaded.book} save={save} port={port?.id} complete={complete} navigation={navigation} open={openExpeditionQuest}
+            report={setReportScene} travel={openNavigation} systems={systems} parked={ship => {
+              if (ship === stationStory?.pilotShip) showStationStory('errand-park', undefined, true)
+            }} />}
           {currentView === 'Operations' && loaded && expeditions && expeditions.length > 0 && complete.has(loaded.book.opening) && <details
             className="space-y-2 rounded-lg border border-white/15 p-2 text-sm" aria-label="Expedition readiness">
             <summary className="min-h-11 cursor-pointer py-2 font-semibold">Expedition readiness</summary>
@@ -638,10 +789,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
           </section>}
           {quarters && loaded && !eveningOpen && <section aria-label="Crew cabins" className="space-y-2 rounded-xl border border-white/15 p-3">
             <h2 className="font-display text-lg font-bold">Quarters</h2>
-            {cabins.length > 0 ? <ul className="grid gap-2 sm:grid-cols-2">
-              {cabins.map(({ outfit, berth }) => <li key={outfit}><button type="button" className={button + ' w-full justify-between'}
-                onClick={() => openCrew(outfit)}><span>{nameOf(loaded.book.story, outfit)}</span><span className="text-xs text-cyan-200">Cabin {berth}</span></button></li>)}
-            </ul> : <button type="button" className={campaignPrimary} onClick={() => selectView('Recruit')}>Recruit crew</button>}
+            {cabins.length > 0 && save ? <Suspense fallback={<p role="status">Opening cabin directory…</p>}>
+              <StationCabins cabins={cabins} book={loaded.book} save={save} open={actor => {
+                const kind = navigation?.roster.find(row => row.speaker === actor)?.kind
+                if (!kind) return
+                setRosterBrowse({ kind, search: '', page: 0, selected: actor })
+                selectView('Roster')
+              }} />
+            </Suspense> : <button type="button" className={campaignPrimary} onClick={() => selectView('Recruit')}>Recruit crew</button>}
           </section>}
           {quarters && loaded && day && consentOffers.length > 0 && <section aria-label="Shared evening invitations" className="flex flex-wrap gap-2">
             {consentOffers.map(({ ally, quest }) => <button key={quest.id} type="button" className={button}
@@ -710,7 +865,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
             <p>{active?.progress ?? 0} / 2 work stages{active?.paused && ' · Paused'}</p>
             {active?.paused
               ? <button type="button" className={button} onClick={() => {
-                void updateSave(s => workFinaleRepair(s, loaded.book, quest, 'resume')).then(() => setReportScene(reports.retry))
+                void updateSave(s => workFinaleRepair(s, loaded.book, quest, 'resume')).then(() => {
+                  if (!showStationStory('repair-resume', () => setReportScene(reports.retry), true)) setReportScene(reports.retry)
+                })
               }}>Resume work</button>
               : <>
                 {(active?.progress ?? 0) < 2 && <button type="button" className={button} disabled={!save.campaignSupply?.provisions}
@@ -738,7 +895,15 @@ function Campaign({ layout }: { layout: StageLayout }) {
               : <button type="button" className={campaignPrimary} onClick={() => selectView('Recruit')}>Recruit crew</button>}
           </section>}
           {hangar && workshopPanel}
+          {hangar && loaded && save && loaded.book.fourAct && <Suspense fallback={<p role="status">Opening cutter berth…</p>}>
+            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} commissioned={ship => {
+              if (ship === stationStory?.pilotShip) showStationStory('errand-commission')
+            }} />
+          </Suspense>}
           {quarters && pairPanels}
+          {quarters && loaded && save && !eveningOpen && <Suspense fallback={null}>
+            <StationCare book={loaded.book} save={save} port={port?.id} open={openCare} travel={openNavigation} />
+          </Suspense>}
           {systems && basePanels}
           {currentView === 'Home' && !bridge && (homeArea === 'Navigation' || cargoRoom) && supplyPanel}
           {currentView === 'Operations' && loaded && save && Object.keys(save.story.files).length > 0 && <section aria-label="Evidence" className="space-y-2 rounded-xl border border-white/15 p-3">

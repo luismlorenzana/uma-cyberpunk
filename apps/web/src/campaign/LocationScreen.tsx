@@ -22,7 +22,8 @@ function receiptSubject(event: ManagementReceipt, loaded: LoadedCampaign) {
 
 function receiptLabel(event: ManagementReceipt, loaded: LoadedCampaign) {
   const subject = receiptSubject(event, loaded), officer = event.officer ? ` · ${nameOf(loaded.book.story, event.officer)}` : ''
-  return `Day ${event.day} · ${event.kind.replaceAll('-', ' ')} · ${subject}${event.kind === 'shipment' ? ` × ${event.amount} → ${event.destination === 'hangar' ? 'Hangar' : 'ship cargo'}` : ''}${officer}`
+  const destination = { ship: 'cutter cargo', hangar: 'Hangar', port: 'port stock', station: 'station reserves' }[event.destination]
+  return `Day ${event.day} · ${event.kind.replaceAll('-', ' ')} · ${subject}${event.kind === 'shipment' ? ` × ${event.amount} → ${destination}` : ''}${officer}`
 }
 
 function LocationArt({ loaded, location, state, props }: { loaded: LoadedCampaign; location: ManagementLocation; state: ReturnType<typeof locationState>; props: LocationProp[] }) {

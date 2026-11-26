@@ -20,7 +20,7 @@ const BOND = { rank: 1, rapport: 0, path: null, seen: [] }
 const CABIN = { slots: { bed: null, desk: null, wall: null, floor: null, light: null, keepsake: null }, revealed: [], request: null }
 
 describe('the save', () => {
-  it('is version 21', () => expect(SAVE_VERSION).toBe(21))
+  it('is version 22', () => expect(SAVE_VERSION).toBe(22))
 
   it('retains a version 20 expedition and validates tender preparation on the same route', () => {
     const base = newSave('captain', T0)
@@ -145,7 +145,7 @@ describe('the save', () => {
     const crew = [9000001, 9000002, 9000003, 9000004, 9000005].map((outfit) => ({ outfit, xp: 0, role: null, rig: null, presets: [], strain: 0, bond: BOND, cabin: CABIN, post: null }))
     const v9 = { ...base, crew, version: 9, account: { uid: 'u1', createdAt: T0, updatedAt: T1 } }
     expect(parseSave(JSON.parse(JSON.stringify(v9)))).toMatchObject({
-      version: 21, account: { updatedAt: T1 }, operations: [], operationsWon: [], standing: {},
+      version: SAVE_VERSION, account: { updatedAt: T1 }, operations: [], operationsWon: [], standing: {},
       squads: [{ id: 'squad-1', name: 'First Squad', leader: 9000001, members: [9000001, 9000002, 9000003, 9000004], cohesion: 0 }],
     })
   })

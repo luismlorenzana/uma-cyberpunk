@@ -1,7 +1,93 @@
-import { observeManagement, campaignSupport, campaignUpkeep, developedPort, projectCompleteFlag, setFlag, startSupply, supplyNight, type CampaignBook, type CampaignDay, type Save } from '@cyber/domain'
+import {
+  awayMembers, canTakeOrdinaryAssignment, campaignSupport, campaignUpkeep, COMMAND_HULL, developedPort, earn, firstStation,
+  managementReceipt, observeManagement, projectCompleteFlag, setFlag, SHIP_CARGO_MAX, startSupply, STARTING_STATION_RESERVES,
+  STATION_RESERVE_MAX, supplyNight, tickStation, WATCHES_PER_DAY,
+  type CampaignBook, type CampaignDay, type Save,
+} from '@cyber/domain'
 import { passAWatch } from '../mission/director'
 
 export function settleCampaignDay(save: Save, day: CampaignDay, book: CampaignBook): Save {
+  if (book.fourAct && day.day > save.campaignDay.day) {
+    const station = stationOf(save, book)
+    const until = (day.day - 1) * WATCHES_PER_DAY
+    const advanced = advanceStationWatches(save, book, until - station.absoluteWatch)
+    return { ...advanced, campaignDay: day }
+  }
+  return settleSupplyDay(save, day, book)
+}
+
+export function stationOf(save: Save, book: CampaignBook) {
+  return save.station ?? firstStation(save.campaignDay.day, book.supply?.start)
+}
+
+function stationPresent(save: Save, book: CampaignBook): Save['crew'] {
+  const station = stationOf(save, book)
+  const away = new Set(awayMembers(save.operations, save.squads))
+  const ashore = campaignSupport(book, save).ashore
+  const deployed = new Set(save.expedition?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : []))
+  if (save.campaignSupply?.port && station.anchor !== save.campaignSupply.port) {
+    for (const outfit of station.travellers ?? []) deployed.add(outfit)
+    const recruit = book.recruits?.find(row => row.signOn === station.recruit)
+    if (recruit) deployed.add(recruit.outfit)
+    for (const outfit of save.mission?.squad ?? []) deployed.add(outfit)
+  }
+  return save.crew.filter(member => !away.has(member.outfit) && !ashore.has(member.outfit) && !deployed.has(member.outfit))
+}
+
+export function stationWorkers(save: Save, book: CampaignBook): number[] {
+  return stationPresent(save, book).filter(canTakeOrdinaryAssignment).map(member => member.outfit)
+}
+
+export function transferStationStock(save: Save, book: CampaignBook, kind: 'fuel' | 'provisions', load: boolean): Save {
+  if (save.mission || save.expedition || save.campaignDay.pending || save.pairScene) return save
+  const station = stationOf(save, book)
+  const stock = save.campaignSupply
+  if (!stock || stock.port !== station.anchor) return save
+  const reserves = station.reserves ?? STARTING_STATION_RESERVES
+  const amount = Math.min(4, load ? reserves[kind] : stock[kind],
+    load ? SHIP_CARGO_MAX - stock[kind] : STATION_RESERVE_MAX - reserves[kind])
+  if (amount <= 0) return save
+  return managementReceipt({ ...save,
+    station: { ...station, reserves: { ...reserves, [kind]: reserves[kind] + (load ? -amount : amount) } },
+    campaignSupply: { ...stock, [kind]: stock[kind] + (load ? amount : -amount) },
+  }, { kind: 'shipment', subject: kind, destination: load ? 'ship' : 'station', amount })
+}
+
+export function cutterArrival(save: Save, book: CampaignBook, aboard?: number): Save {
+  if (!book.fourAct || !save.campaignSupply) return save
+  const state = stationOf(save, book)
+  const travellers = save.campaignSupply.port === state.anchor ? [] : [...new Set([
+    ...state.travellers ?? [], ...Object.values(save.commandCrew).map(officer => officer.outfit), ...(aboard === undefined ? [] : [aboard]),
+  ])].slice(0, 50)
+  return { ...save, station: { ...state, travellers } }
+}
+
+export function repairStarterCutter(save: Save, book: CampaignBook): Save {
+  const station = stationOf(save, book)
+  if (save.mission || save.expedition || save.campaignDay.pending || save.pairScene || save.campaignSupply?.port !== station.anchor
+    || (station.integrity ?? COMMAND_HULL) === COMMAND_HULL) return save
+  return advanceStationWatches({ ...save, station: { ...station, integrity: COMMAND_HULL } }, book, 1)
+}
+
+export function advanceStationWatches(save: Save, book: CampaignBook, count: number): Save {
+  if (!book.fourAct || !Number.isSafeInteger(count) || count <= 0) return save
+  let next = save
+  for (let watch = 0; watch < count; watch++) {
+    const state = stationOf(next, book)
+    const result = tickStation(state, new Set(stationWorkers(next, book)))
+    next = { ...next, station: result.station, wallet: earn(next.wallet, { credits: 0, alloy: result.alloy, data: result.data }) }
+    if (result.infirmary) {
+      const patient = stationPresent(next, book).reduce<Save['crew'][number] | undefined>((chosen, member) =>
+        member.strain > (chosen?.strain ?? 0) ? member : chosen, undefined)
+      if (patient) next = { ...next, crew: next.crew.map(member => member === patient ? { ...patient, strain: patient.strain - 1 } : member) }
+    }
+    const day = Math.floor(result.station.absoluteWatch / WATCHES_PER_DAY) + 1
+    if (next.campaignDay.day < day) next = settleSupplyDay(next, { ...next.campaignDay, day }, book)
+  }
+  return next
+}
+
+function settleSupplyDay(save: Save, day: CampaignDay, book: CampaignBook): Save {
   const next = { ...save, campaignDay: day }
   const network = book.supply
   if (day.day < save.campaignDay.day) return save
