@@ -134,6 +134,11 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
             className="min-h-11 w-full min-w-0 rounded-lg border border-white/15 bg-[#17273c] px-2 text-sm text-white placeholder:text-slate-400" />
         </div>
         <div ref={list} className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5">
+          {guestWardrobes.length > 0 && <details className="mb-1 rounded-lg border border-white/10">
+            <summary className="flex min-h-11 cursor-pointer items-center px-2 text-xs font-semibold">Ally wardrobes</summary>
+            <div className="grid gap-1 p-1">{guestWardrobes.map(row => <button key={row.speaker} type="button"
+              className={campaignControl} onClick={() => setWardrobe(row.speaker)}>{nameOf(book.story, row.speaker)}</button>)}</div>
+          </details>}
           <ul aria-label={choices[kind]} className="space-y-1">
             {candidates.slice(visiblePage * pageSize, (visiblePage + 1) * pageSize).map(row => <li key={row.speaker}>
               <button type="button" data-roster-actor={row.speaker} aria-pressed={entry?.speaker === row.speaker} onClick={() => select(row.speaker)}
@@ -227,11 +232,6 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
               <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold">Duo operations</summary>
               <ol>{related.map(quest => <CampaignQuestRow key={quest.id} quest={quest} book={book} save={save}
                 port={port} complete={complete} navigation={navigation} open={open} travel={travel} />)}</ol>
-            </details>}
-            {guestWardrobes.length > 0 && <details className="rounded-xl border border-white/10 bg-[#101b2d] p-2">
-              <summary className="flex min-h-11 cursor-pointer items-center px-1 font-semibold">Ally wardrobes</summary>
-              <div className="flex flex-wrap gap-2">{guestWardrobes.map(row => <button key={row.speaker} type="button"
-                className={campaignControl} onClick={() => setWardrobe(row.speaker)}>{nameOf(book.story, row.speaker)}</button>)}</div>
             </details>}
           </>}
         </div>
