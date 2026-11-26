@@ -1,8 +1,8 @@
 import type { SceneDecision } from '../story/ScenePlayer'
 import {
   awayMembers, campaignCaptures, campaignSpeaker, campaignSupport, campaignUpkeep, CORE_CAPTURES, crewSpeaker, developedPort, expeditionReadiness, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, moduleAt, pairProgress, pairVisit, reactorPips, rehabilitationQuestIds, seeScene, SIGNAL_CAPTURES,
-  cancelStationAppointment, sectorNightId, sectorVisit, setFlag, startCampaignNight, startSupply, stationDate, stationRoom,
-  type CabinEvening, type CampaignAlly, type CampaignDate, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save, type Speaker,
+  cancelStationAppointment, sectorNightId, sectorVisit, setFlag, startCampaignNight, startSupply, stationDate, stationRoom, STATION_MODULES,
+  type CabinEvening, type CampaignAlly, type CampaignDate, type CampaignDay, type CampaignQuest, type CampaignReleaseFile, type CampaignVisit, type EffectStep, type Save, type Speaker, type StationModule,
 } from '@cyber/domain'
 import { ContentError } from '@luismlorenzana/uma-kit/content'
 import { TurnedStage, type StageLayout } from '@luismlorenzana/uma-stage'
@@ -24,6 +24,7 @@ import { finishCampaignDialogue, optionalCampaignTraining, personalMissionLead, 
 import { missionAshore } from './call-up'
 import { ShipHome, homeAreas, type HomeArea } from './ShipHome'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
+import { careLeadAway, carePort, isCareSession } from './appointments'
 import { closeRecruitment, homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
 import { indexCampaignNavigation, type OperationBrowse, type RosterBrowse } from './navigation'
 import { SectorPanel } from './SectorPanel'
@@ -73,6 +74,7 @@ export function CampaignAccount() {
 function Campaign({ layout }: { layout: StageLayout }) {
   const save = useGame((g) => g.save)
   const owner = useGame((g) => g.uid)
+  const sceneRelease = save?.station?.recruit || save?.campaignDay.pending ? save.station?.sceneRelease : undefined
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [location, setLocation] = useState<string | null>(null)
   const [groundReports, setGroundReports] = useState<string[]>([])
@@ -92,10 +94,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [view, setView] = useState<CampaignView>('Home')
   const [portTarget, setPortTarget] = useState<string>()
   const [homeArea, setHomeArea] = useState<HomeArea>('Deck')
+  const [stationFocus, setStationFocus] = useState<{
+    deck?: typeof STATION_MODULES[StationModule]['deck']; room?: StationModule; zoom: number
+  }>({ zoom: 1 })
   const [rosterBrowse, setRosterBrowse] = useState<RosterBrowse>({ kind: 'Uma', search: '', page: 0 })
   const [operationBrowse, setOperationBrowse] = useState<OperationBrowse>({ type: 'All', act: 'All acts', state: 'Ready', search: '', page: 0 })
   const screen = useRef<HTMLElement>(null)
   const restoredRecruit = useRef(false)
+  const loadedFor = useRef<{ owner: typeof owner; check: number; pinned?: string; release: string } | undefined>(undefined)
   const invitationChoice = useRef<number | undefined>(undefined)
   const complete = useMemo(() => new Set(save && loaded ? loaded.book.quests.filter(q => questComplete(save, q, loaded.book)).map(q => q.id) : []), [save, loaded])
   const navigation = useMemo(() => loaded && indexCampaignNavigation(loaded.book), [loaded])
@@ -107,20 +113,27 @@ function Campaign({ layout }: { layout: StageLayout }) {
     screen.current?.scrollTo(0, 0)
   }
   useEffect(() => {
+    const previous = loadedFor.current
+    if (previous && previous.owner === owner && previous.check === check
+      && (sceneRelease ? previous.release === sceneRelease : !previous.pinned)) return
     let live = true
     setPending(true)
     setError(null)
-    loadCampaign(undefined, owner ?? undefined, campaignIdentity).then((value) => { if (live) setLoaded(value) }, (err: unknown) => {
+    loadCampaign(undefined, owner ?? undefined, campaignIdentity, sceneRelease).then((value) => {
+      if (!live) return
+      loadedFor.current = { owner, check, pinned: sceneRelease, release: value.release.release }
+      setLoaded(value)
+    }, (err: unknown) => {
       if (live) setError(err instanceof ContentError && err.status === 404 ? 'Campaign release unavailable.'
         : err instanceof Error ? err.message : String(err))
     }).finally(() => { if (live) setPending(false) })
     return () => { live = false }
-  }, [check, owner])
+  }, [check, owner, sceneRelease])
   useEffect(() => {
     if (loaded && save) void updateSave((current) => creditCampaignDates(current, loaded.book))
   }, [loaded, save])
   useEffect(() => {
-    if (restoredRecruit.current || !loaded || !save) return
+    if (restoredRecruit.current || !loaded || !save || sceneRelease && loaded.release.release !== sceneRelease) return
     restoredRecruit.current = true
     const selected = save.station?.recruit && navigation?.quests.get(save.station.recruit)
     if (selected && loaded.book.recruits?.some(row => row.signOn === selected.id)
@@ -128,12 +141,15 @@ function Campaign({ layout }: { layout: StageLayout }) {
       setView('Recruit')
       setActive(selected)
     }
-  }, [loaded, navigation, save])
+  }, [loaded, navigation, save, sceneRelease])
   function commitScene(change: (save: Save) => Save) {
     setSavingScene(true)
     void updateSave(change).finally(() => setSavingScene(false))
   }
   if (savingScene) return <div className={viewport} style={insets} role="status">Saving…</div>
+  if (sceneRelease && loaded && sceneRelease !== loaded.release.release && !error) {
+    return <div className={viewport} style={insets} role="status">Resuming scene…</div>
+  }
   function openCrew(outfit: number) {
     setRosterBrowse({ kind: 'Uma', search: '', page: 0, selected: outfit })
     selectView('Roster')
@@ -165,7 +181,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     setSavingScene(true)
     setError(null)
     try {
-      await updateSave(current => travelForHomeQuest(current, loaded.book, quest))
+      await updateSave(current => travelForHomeQuest(current, loaded.book, quest, loaded.release.release))
       const now = useGame.getState().save
       const arrival = now && homeQuestTravel(now, loaded.book, quest)
       if (!arrival || arrival.fuel !== 0) {
@@ -422,8 +438,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
     </main>
   }
 
+  function pinEvening(s: Save): Save {
+    if (!loaded?.book.stationStory || !s.campaignDay.pending) return s
+    const station = stationOf(s, loaded.book)
+    if (station.sceneRelease === loaded.release.release) return s
+    return { ...s, station: { ...station, sceneRelease: loaded.release.release } }
+  }
   function settleDay(s: Save, campaignDay: CampaignDay): Save {
-    return supply && loaded ? settleCampaignDay(s, campaignDay, loaded.book) : { ...s, campaignDay }
+    return pinEvening(supply && loaded ? settleCampaignDay(s, campaignDay, loaded.book) : { ...s, campaignDay })
   }
   if (loaded && save && night?.kind === 'cabin' && !error && loaded.book.scenes.has(night.scene)) {
     const invite = night.plan.invitation, dayNumber = save.campaignDay.day
@@ -525,7 +547,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const supplyPanel = !expedition && loaded && save && supply && network && port && support && !night && !pendingPair && !missionState && !eveningOpen
     ? <SupplyPanel showMap={!cargoRoom} save={save} network={network} supply={supply} port={developedPort(loaded.book, save, port)} worlds={loaded.book.story.worlds}
       upkeep={campaignUpkeep(loaded.book, save, support.ashore)} book={loaded.book} assets={loaded.assets}
-      open={id => { const quest = navigation?.quests.get(id); if (quest && questAvailable(save, loaded.book, quest, port.id)) setActive(quest); else selectView('Operations') }}
+      open={id => { const quest = navigation?.quests.get(id); if (quest && questAvailable(save, loaded.book, quest, port.id)) openCampaignQuest(quest); else selectView('Operations') }}
       locate={() => setLocation(port.id)} destination={portTarget} watch={canRest ? () => chooseEvening(null) : undefined} /> : null
   const basePanels = !expedition && loaded && save && port && !night && !pendingPair && !missionState && !eveningOpen ? pairs.flatMap((pair) => {
     const home = pair.home
@@ -560,7 +582,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     if (!loaded || !day || !canRest) return
     setEveningOpen(false)
     commitScene(s => {
-      const next = startCabinEvening(s, loaded.book, cabin, day.day)
+      const next = pinEvening(startCabinEvening(s, loaded.book, cabin, day.day))
       return next !== s && next.station && 'companion' in cabin.source
         ? { ...next, station: cancelStationAppointment(next.station, { actor: cabin.source.companion }) } : next
     })
@@ -621,12 +643,25 @@ function Campaign({ layout }: { layout: StageLayout }) {
       && showStationStory('free-watch', visit)) return
     visit()
   }
+  function focusStationRoom(room: StationModule) {
+    setStationFocus({ room, deck: STATION_MODULES[room].deck, zoom: 1 })
+    selectView('Home')
+  }
+  function openCampaignQuest(quest: CampaignQuest) {
+    if (loaded && isCareSession(loaded.book, quest.id)) openCare(quest)
+    else setActive(quest)
+  }
   function openCare(quest: CampaignQuest, missed = false) {
     if (!loaded || !save) return
+    if (careLeadAway(save, loaded.book, quest.id)) {
+      selectView('Home', 'Quarters')
+      return
+    }
+    const venue = carePort(loaded.book, save, quest.id) ?? (isCareSession(loaded.book, quest.id) ? stationOf(save, loaded.book).anchor : undefined)
     const arc = loaded.book.stationStory?.opening && catalog?.arcs.get(loaded.book.stationStory.opening.actor)
     const prelude = arc?.rehabilitation?.sessions.includes(quest.id) ? 'rehab-next' : undefined
     const open = () => {
-      if (quest.port && quest.port !== port?.id) openNavigation(quest.port)
+      if (venue && venue !== port?.id) openNavigation(venue)
       else if (questAvailable(save, loaded.book, quest, port?.id)) {
         if (!prelude || !showStationStory(prelude, () => setActive(quest))) setActive(quest)
       } else selectView('Home', 'Quarters')
@@ -676,7 +711,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
             aria-pressed={area === homeArea} onClick={() => area === 'Navigation' ? openNavigation() : selectView('Home', area)}>{area}</button>)}
         </nav>}
         {deck && loaded && save && loaded.book.fourAct && <Suspense fallback={<p role="status">Opening Homestretch…</p>}>
-          <StationHome book={loaded.book} save={save} open={area => selectView('Home', area)}
+          <StationHome book={loaded.book} save={save} focus={stationFocus} onFocus={setStationFocus} open={area => selectView('Home', area)}
             recruit={() => selectView('Recruit')} calendar={() => selectView('Calendar')}
             relocation={delayed => { showStationStory(delayed ? 'translation-delayed' : 'translation', undefined, delayed) }}
             returnHome={() => openNavigation(stationOf(save, loaded.book).anchor)} />
@@ -701,7 +736,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
             meet={startRecruitTrip} cargo={() => selectView('Home', 'Cargo')} />
         </Suspense>}
         {currentView === 'Calendar' && loaded && save && <Suspense fallback={<p role="status">Opening calendar…</p>}>
-          <StationCalendar book={loaded.book} save={save} quarters={() => selectView('Home', 'Quarters')}
+          <StationCalendar book={loaded.book} save={save} travel={openNavigation} room={focusStationRoom} quarters={() => selectView('Home', 'Quarters')}
             observance={(scene, flag) => setStationScene({ scene, flag })}
             openCare={(id, missed) => { const quest = navigation?.quests.get(id); if (quest) openCare(quest, missed) }} openVisit={actor => {
             const date = loaded.book.dates?.find(row => row.companion === actor)
@@ -718,13 +753,18 @@ function Campaign({ layout }: { layout: StageLayout }) {
         </section>}
         {currentView === 'Roster' && navigation && loaded && save && <Suspense fallback={<p role="status">Opening roster…</p>}>
           <RosterScreen book={loaded.book} save={save} assets={loaded.assets} complete={complete} navigation={navigation}
-            port={port?.id} open={setActive} travel={openNavigation} evening={canRest ? visitFromRoster : undefined}
+            port={port?.id} open={openCampaignQuest} travel={openNavigation} evening={canRest ? visitFromRoster : undefined}
             shared={sharedFromRoster} report={setReportScene}
             browse={rosterBrowse} onBrowse={setRosterBrowse} />
         </Suspense>}
         {currentView === 'Operations' && navigation && loaded && save && <Suspense fallback={<p role="status">Opening operations…</p>}>
           <OperationsScreen book={loaded.book} save={save} port={port?.id} complete={complete} navigation={navigation}
-            open={setActive} travel={openNavigation} browse={operationBrowse} onBrowse={setOperationBrowse} />
+            open={openCampaignQuest} travel={openNavigation} browse={operationBrowse} onBrowse={setOperationBrowse} />
+          {loaded.book.stationStory && <details className="rounded-xl border border-white/15 p-2">
+            <summary className="flex min-h-11 cursor-pointer items-center px-2 font-semibold">Fleet and shipyard</summary>
+            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} operations
+              yardRoom={() => focusStationRoom('shipyard')} inspect={() => showStationStory('errand-commission')} />
+          </details>}
         </Suspense>}
         <div className="space-y-3">
           {error && !pending && <button type="button" className={button} onClick={() => setCheck(n => n + 1)}>Try again</button>}
@@ -896,9 +936,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
           </section>}
           {hangar && workshopPanel}
           {hangar && loaded && save && loaded.book.fourAct && <Suspense fallback={<p role="status">Opening cutter berth…</p>}>
-            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} commissioned={ship => {
-              if (ship === stationStory?.pilotShip) showStationStory('errand-commission')
-            }} />
+            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation}
+              yardRoom={() => focusStationRoom('shipyard')} inspect={() => showStationStory('errand-commission')} />
           </Suspense>}
           {quarters && pairPanels}
           {quarters && loaded && save && !eveningOpen && <Suspense fallback={null}>

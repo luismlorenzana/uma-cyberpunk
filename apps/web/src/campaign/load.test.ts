@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto'
-import { CAMPAIGN_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, PILOT_PREVIEW_INDEX, STAND_IN_FILES } from '@cyber/domain'
+import { campaignReleasePath, CAMPAIGN_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, PILOT_PREVIEW_INDEX, STAND_IN_FILES } from '@cyber/domain'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadCampaign } from './load'
 
@@ -53,6 +53,20 @@ describe('campaign release recovery', () => {
     await expect(loadCampaign(offline, 'different-owner')).rejects.toThrow('Offline')
     await expect(loadCampaign(source('next-release'), 'owner')).resolves.toMatchObject({ release: { release: 'next-release' } })
     await expect(loadCampaign(offline, 'owner')).resolves.toMatchObject({ release: { release: 'next-release' } })
+  })
+
+  it('keeps an interrupted four-act scene on its exact archived release after the active pointer advances', async () => {
+    const path = campaignReleasePath('first-release', 'four-act')
+    const current = source('next-release', FOUR_ACT_PREVIEW_INDEX, 'four-act')
+    const archive = source('first-release', path, 'four-act')
+    const content = { pack: (key: string) => key === path ? archive.pack(key) : current.pack(key) }
+    await expect(loadCampaign(content, 'owner', 'four-act', 'first-release'))
+      .resolves.toMatchObject({ release: { release: 'first-release' } })
+    await expect(loadCampaign(content, 'owner', 'four-act'))
+      .resolves.toMatchObject({ release: { release: 'next-release' } })
+    const wrong = source('wrong-release', path, 'four-act')
+    await expect(loadCampaign({ pack: key => key === path ? wrong.pack(key) : current.pack(key) }, 'owner', 'four-act', 'first-release'))
+      .rejects.toThrow('does not match')
   })
 
   it('does not expose cached content after an explicit authorization denial', async () => {

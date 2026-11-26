@@ -30,8 +30,18 @@ export const STARTING_STATION_RESERVES = { fuel: 3, provisions: 6 } as const
 export const STARTER_CUTTER = { id: 'selden-relief', name: 'Selden Relief' } as const
 export const STATION_WORK = ['reactor', 'fabrication', 'life-support', 'infirmary', 'shipyard'] as const
 export type StationWork = typeof STATION_WORK[number]
+export const SECURE_WARD_BERTHS = 12
+export const STATION_DELIVERY_SLOTS = 5
+export type StationCustody = { actor: string; berth: number } | { actor: string; port: string }
+export interface StationDelivery {
+  from: string
+  kind: 'fuel' | 'provisions'
+  amount: number
+  at: number
+}
 
-export type StationAppointment = { at: number; actor: number } | { at: number; quest: string }
+export type StationAppointmentTarget = { actor: number } | { quest: string }
+export type StationAppointment = StationAppointmentTarget & { at: number; port?: string }
 export interface StationState {
   absoluteWatch: number
   anchor: string
@@ -46,34 +56,40 @@ export interface StationState {
   travellers?: number[]
   lieutenantResidents?: string[]
   preferredCabins?: Record<string, number>
+  custody?: StationCustody[]
+  deliveries?: StationDelivery[]
   appointments?: StationAppointment[]
   recruit?: string
+  sceneRelease?: string
 }
 
 export function firstStation(day = 1, anchor = 'selden'): StationState {
   return { absoluteWatch: (day - 1) * WATCHES_PER_DAY, anchor, rooms: {}, off: [], shifts: {}, report: null }
 }
 
-export function appointmentFor(state: StationState, target: { actor: number } | { quest: string }) {
+export function appointmentFor(state: StationState, target: StationAppointmentTarget) {
   return state.appointments?.find(row => 'actor' in row ? 'actor' in target && row.actor === target.actor
     : 'quest' in target && row.quest === target.quest)
 }
 
-export function cancelStationAppointment(state: StationState, target: { actor: number } | { quest: string }): StationState {
+export function cancelStationAppointment(state: StationState, target: StationAppointmentTarget): StationState {
   const cancel = appointmentFor(state, target)
   if (!cancel) return state
   return { ...state, appointments: state.appointments!.filter(row => row !== cancel) }
 }
 
-export function bookStationAppointment(state: StationState, target: { actor: number } | { quest: string }): StationState {
+export function bookStationAppointment(state: StationState, target: StationAppointmentTarget, port?: string, earliest = state.absoluteWatch): StationState {
   const current = cancelStationAppointment(state, target)
   const appointments = current.appointments ?? []
   if (appointments.length >= 50) return state
-  const phase = state.absoluteWatch % WATCHES_PER_DAY
-  let next = state.absoluteWatch + (WATCHES_PER_DAY + 1 - phase) % WATCHES_PER_DAY
+  const available = Math.max(state.absoluteWatch, earliest)
+  const phase = available % WATCHES_PER_DAY
+  let next = available + (WATCHES_PER_DAY + 1 - phase) % WATCHES_PER_DAY
   const reserved = new Set(appointments.map(row => row.at))
   while (reserved.has(next)) next += WATCHES_PER_DAY
-  return { ...current, appointments: [...appointments, { ...target, at: next }].sort((a, b) => a.at - b.at) }
+  const activity = 'actor' in target ? { actor: target.actor } : { quest: target.quest }
+  const appointment = { ...activity, at: next, ...(port === undefined ? {} : { port }) }
+  return { ...current, appointments: [...appointments, appointment].sort((a, b) => a.at - b.at) }
 }
 
 export function stationDate(absoluteWatch: number) {
@@ -113,12 +129,28 @@ export function cancelStationRoom(state: StationState, wallet: Wallet, room: Sta
   return { station: { ...state, rooms }, wallet: { ...wallet, alloy: wallet.alloy + Math.floor(STATION_MODULES[room].cost / 2) } }
 }
 
+export function stationPowerShortfall(state: StationState, room: StationModule) {
+  const { supply, used } = stationPower(state)
+  return Math.max(0, used + STATION_MODULES[room].draw - supply)
+}
+
+export function stationPowerDonors(state: StationState, room: StationModule) {
+  if (stationRoom(state, room) !== 'off') return []
+  const short = stationPowerShortfall(state, room)
+  const shedding: StationModule[] = ['fabrication', 'shipyard', 'jump-ring', 'infirmary', 'life-support']
+  return short > 0 ? shedding.filter(donor => stationRoom(state, donor) === 'active' && STATION_MODULES[donor].draw >= short
+    && (donor !== 'jump-ring' || !state.move)) : []
+}
+
+export function rerouteStationPower(state: StationState, room: StationModule, from: StationModule) {
+  return stationPowerDonors(state, room).includes(from) ? setStationPower(setStationPower(state, from), room) : state
+}
+
 export function setStationPower(state: StationState, room: StationModule) {
-  if (!STATION_MODULES[room].draw) return state
+  if (!STATION_MODULES[room].draw || room === 'jump-ring' && state.move) return state
   const mode = stationRoom(state, room)
-  const power = stationPower(state)
   if (mode === 'active') return { ...state, off: [...state.off, room] }
-  if (mode !== 'off' || power.used + STATION_MODULES[room].draw > power.supply) return state
+  if (mode !== 'off' || stationPowerShortfall(state, room)) return state
   return { ...state, off: state.off.filter(key => key !== room) }
 }
 
@@ -145,8 +177,22 @@ export function tickStation(state: StationState, present: ReadonlySet<number>) {
     }
     next.rooms[room] = left - 1
   }
+  if (next.deliveries?.length) {
+    const reserves = { ...next.reserves ?? STARTING_STATION_RESERVES }
+    next.deliveries = next.deliveries.flatMap(order => {
+      const due = Math.max(order.at, next.move?.at ?? 0)
+      if (due > next.absoluteWatch) return [due === order.at ? order : { ...order, at: due }]
+      const unloaded = Math.min(order.amount, STATION_RESERVE_MAX - reserves[order.kind])
+      reserves[order.kind] += unloaded
+      return unloaded === order.amount ? [] : [{ ...order, amount: order.amount - unloaded }]
+    })
+    next.reserves = reserves
+  }
   if (state.absoluteWatch % WATCHES_PER_DAY !== 0) return { station: next, alloy: 0, data: 0 }
-  const reserved = new Set(Object.values(state.shifts))
+  const reserved = new Set(STATION_WORK.flatMap(room => {
+    const assigned = state.shifts[room]
+    return assigned !== undefined && stationRoom(state, room) === 'active' && present.has(assigned) ? [assigned] : []
+  }))
   const available = [...present].filter(actor => !reserved.has(actor))
   const jobs = STATION_WORK.flatMap(room => {
     if (stationRoom(state, room) !== 'active') return []
@@ -158,7 +204,7 @@ export function tickStation(state: StationState, present: ReadonlySet<number>) {
   const data = jobs.filter(job => job.room === 'reactor' || job.room === 'infirmary').length
   next.report = { at: state.absoluteWatch, workers: jobs.map(job => job.actor), alloy, data }
   if (jobs.some(job => job.room === 'life-support')) {
-    const reserves = state.reserves ?? STARTING_STATION_RESERVES
+    const reserves = next.reserves ?? STARTING_STATION_RESERVES
     next.reserves = { ...reserves, provisions: Math.min(STATION_RESERVE_MAX, reserves.provisions + 2) }
   }
   return { station: next, alloy, data, infirmary: jobs.some(job => job.room === 'infirmary') }

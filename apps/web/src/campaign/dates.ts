@@ -1,23 +1,41 @@
-import { awayMembers, BOND_TUNING, campaignSupport, seeScene, setFlag, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
+import { awayMembers, BOND_TUNING, campaignSupport, seeScene, setFlag, crewSpeaker, type CampaignBook, type CampaignDate, type DateVisit, type EffectStep, type Save } from '@cyber/domain'
 import { applyBondEffect, giveRapport } from '../bonds/bonds'
 import { applyStep } from '../mission/director'
 import type { BondEffect } from '../story/runner'
 import { questComplete } from './quests'
+import { stationOf, voyageCrew } from './watch'
 
 function cleared(save: Save, book: CampaignBook, id: string): boolean {
   const quest = book.quests.find((entry) => entry.id === id)
   return !!quest && questComplete(save, quest, book)
 }
 
-export function dateAvailable(save: Save, book: CampaignBook, date: CampaignDate): boolean {
-  if (awayMembers(save.operations, save.squads).includes(date.companion)) return false
+export function dateEligible(save: Save, book: CampaignBook, date: CampaignDate): boolean {
   if (!cleared(save, book, date.after) || !save.crew.some(({ outfit }) => outfit === date.companion)) return false
   const ally = book.allies?.find(row => row.member === date.companion)
   const quarters = ally && book.fourAct?.arcs.get(ally.partner)?.rehabilitation?.quarters
   if (quarters && !cleared(save, book, quarters)) return false
-  if (!campaignSupport(book, save).ashore.has(date.companion)) return true
-  const sector = book.sectors?.find(({ officer }) => officer === date.companion)
-  return !!sector && sector.port === (save.campaignSupply?.port ?? book.supply?.start)
+  return !save.expedition
+}
+
+export function dateMeetingPort(save: Save, book: CampaignBook, date: CampaignDate) {
+  if (campaignSupport(book, save).ashore.has(date.companion)) {
+    return book.sectors?.find(({ officer }) => officer === date.companion)?.port
+  }
+  const earned = date.milestones.find(({ scene }) => !save.story.seen.includes(scene))
+  const rank = save.crew.find(({ outfit }) => outfit === date.companion)?.bond.rank ?? 0
+  return earned?.port && rank >= earned.rank && (!earned.after || cleared(save, book, earned.after)) ? earned.port : undefined
+}
+
+export function dateAvailable(save: Save, book: CampaignBook, date: CampaignDate): boolean {
+  if (!dateEligible(save, book, date) || awayMembers(save.operations, save.squads).includes(date.companion)) return false
+  const member = save.crew.find(row => row.outfit === date.companion)
+  if (member && voyageCrew(save).has(crewSpeaker(member))) return false
+  const current = save.campaignSupply?.port ?? book.supply?.start
+  if (campaignSupport(book, save).ashore.has(date.companion)) return !!current && dateMeetingPort(save, book, date) === current
+  if (!book.stationStory) return true
+  const home = stationOf(save, book).anchor
+  return current === home || !!current && dateMeetingPort(save, book, date) === current
 }
 
 export function dateProgress(save: Save, book: CampaignBook, date: CampaignDate) {

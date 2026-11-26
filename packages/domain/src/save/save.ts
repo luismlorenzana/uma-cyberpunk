@@ -1,5 +1,5 @@
 import type { CommandCinemaState } from '../ship/command-cinema'
-import { STATION_MODULES, STATION_RESERVE_MAX, STATION_ROOMS, STATION_WORK, WATCHES_PER_DAY, type StationAppointment, type StationModule, type StationState } from '../station'
+import { SECURE_WARD_BERTHS, STATION_DELIVERY_SLOTS, STATION_MODULES, STATION_RESERVE_MAX, STATION_ROOMS, STATION_WORK, WATCHES_PER_DAY, type StationAppointment, type StationModule, type StationState } from '../station'
 // uma-cyberpunk's save (CY3, TC11): local first in Dexie, synced through `cyber-api`. Nothing carries over from any
 // other game (P4, TC14). Copied from uma-quest's at cc42fd1 (its Q14, D11), itself from uma-rpg's at 30a322a (its D32,
 // D45, D260), cut to one account. Every change to the shape is a new version with its migration and tests: `parseSave`
@@ -257,7 +257,9 @@ export interface SaveV22 extends Omit<SaveV21, 'version'> {
 
 export interface FleetHull {
   ship: string
-  condition: 'commissioned' | 'parked' | 'returned'
+  condition: 'commissioning' | 'commissioned' | 'parked' | 'returned'
+  watches?: number
+  reinforced?: true
   integrity?: number
   run?: ExpeditionRun
 }
@@ -855,23 +857,29 @@ function parseFleet(raw: unknown, path: string, crew: readonly CrewMember[]): Re
     throw new SaveParseError(path, 'expected at most 25 hulls')
   }
   return Object.fromEntries(Object.entries(raw).map(([duo, value]) => {
-    const row = object(value, path + '.' + duo, ['ship', 'condition', 'run', 'integrity'])
+    const row = object(value, path + '.' + duo, ['ship', 'condition', 'run', 'integrity', 'watches', 'reinforced'])
     const ship = id(row.ship, path + '.' + duo + '.ship')
     const condition = row.condition
-    if (condition !== 'commissioned' && condition !== 'parked' && condition !== 'returned') {
+    if (condition !== 'commissioning' && condition !== 'commissioned' && condition !== 'parked' && condition !== 'returned') {
       throw new SaveParseError(path + '.' + duo + '.condition', 'invalid vessel condition')
     }
     const run = row.run === undefined ? undefined : parseExpeditionRun(row.run, path + '.' + duo + '.run', crew)
     if ((condition === 'parked' && !run?.berthed) || (run && (run.duo !== duo || run.ship !== ship))) {
       throw new SaveParseError(path + '.' + duo, 'vessel does not match its saved voyage')
     }
+    const watches = row.watches === undefined ? undefined : bounded(row.watches, path + '.' + duo + '.watches', 2)
+    if (condition === 'commissioning' ? !watches || run : watches !== undefined) {
+      throw new SaveParseError(path + '.' + duo, 'invalid commissioning order')
+    }
+    if (row.reinforced !== undefined && row.reinforced !== true) throw new SaveParseError(path + '.' + duo, 'invalid cutter fitting')
     return [id(duo, path), { ship, condition, ...(run ? { run } : {}),
+      ...(watches === undefined ? {} : { watches }), ...(row.reinforced === true ? { reinforced: true } : {}),
       ...(row.integrity === undefined ? {} : { integrity: bounded(row.integrity, path + '.' + duo + '.integrity', COMMAND_HULL) }) }]
   }))
 }
 
 function parseStation(raw: unknown, path: string): StationState {
-  const data = object(raw, path, ['absoluteWatch', 'anchor', 'rooms', 'off', 'shifts', 'report', 'recruit', 'appointments', 'integrity', 'move', 'autoStaff', 'travellers', 'lieutenantResidents', 'preferredCabins', 'reserves'])
+  const data = object(raw, path, ['absoluteWatch', 'anchor', 'rooms', 'off', 'shifts', 'report', 'recruit', 'appointments', 'integrity', 'move', 'autoStaff', 'travellers', 'lieutenantResidents', 'preferredCabins', 'reserves', 'custody', 'deliveries', 'sceneRelease'])
   const rooms = object(data.rooms, path + '.rooms', STATION_ROOMS)
   const shifts = object(data.shifts, path + '.shifts', STATION_WORK)
   const absoluteWatch = count(data.absoluteWatch, path + '.absoluteWatch')
@@ -896,17 +904,48 @@ function parseStation(raw: unknown, path: string): StationState {
     if (!Array.isArray(data.appointments) || data.appointments.length > 50) throw new SaveParseError(path + '.appointments', 'expected up to 50 appointments')
     appointments = data.appointments.map((raw, index): StationAppointment => {
       const field = path + '.appointments[' + index + ']'
-      const row = object(raw, field, ['at', 'actor', 'quest'])
+      const row = object(raw, field, ['at', 'actor', 'quest', 'port'])
       const at = count(row.at, field + '.at')
       if (at % WATCHES_PER_DAY !== 1 || (row.actor === undefined) === (row.quest === undefined)) {
         throw new SaveParseError(field, 'expected one appointment in a Free watch')
       }
-      return row.actor === undefined ? { at, quest: id(row.quest, field + '.quest') } : { at, actor: count(row.actor, field + '.actor') }
+      const venue = row.port === undefined ? {} : { port: id(row.port, field + '.port') }
+      return row.actor === undefined ? { at, ...venue, quest: id(row.quest, field + '.quest') }
+        : { at, ...venue, actor: count(row.actor, field + '.actor') }
     })
     if (new Set(appointments.map(row => row.at)).size !== appointments.length
       || new Set(appointments.map(row => 'actor' in row ? row.actor : row.quest)).size !== appointments.length) {
       throw new SaveParseError(path + '.appointments', 'appointment targets and times must be distinct')
     }
+  }
+  let custody: StationState['custody']
+  if (data.custody !== undefined) {
+    if (!Array.isArray(data.custody) || data.custody.length > 50) throw new SaveParseError(path + '.custody', 'expected up to 50 placements')
+    custody = data.custody.map((value, index) => {
+      const field = `${path}.custody[${index}]`
+      const row = object(value, field, ['actor', 'berth', 'port'])
+      const actor = id(row.actor, field + '.actor')
+      if ((row.berth === undefined) === (row.port === undefined)) throw new SaveParseError(field, 'expected one secure location')
+      return row.berth === undefined ? { actor, port: id(row.port, field + '.port') }
+        : { actor, berth: bounded(row.berth, field + '.berth', rooms['secure-ward'] === 0 ? SECURE_WARD_BERTHS : 0) }
+    })
+    const roomsHeld = custody.flatMap(row => 'berth' in row ? [row.berth] : [])
+    if (new Set(custody.map(row => row.actor)).size !== custody.length || new Set(roomsHeld).size !== roomsHeld.length) {
+      throw new SaveParseError(path + '.custody', 'distinct actors and secure rooms required')
+    }
+  }
+  let deliveries: StationState['deliveries']
+  if (data.deliveries !== undefined) {
+    if (!Array.isArray(data.deliveries) || data.deliveries.length > STATION_DELIVERY_SLOTS) {
+      throw new SaveParseError(path + '.deliveries', 'too many supply deliveries')
+    }
+    deliveries = data.deliveries.map((value, index) => {
+      const field = `${path}.deliveries[${index}]`
+      const row = object(value, field, ['from', 'kind', 'amount', 'at'])
+      const amount = bounded(row.amount, field + '.amount', 8)
+      if (!amount || row.kind !== 'fuel' && row.kind !== 'provisions') throw new SaveParseError(field, 'invalid station delivery')
+      return { from: id(row.from, field + '.from'), kind: row.kind, amount, at: count(row.at, field + '.at') }
+    })
   }
   const move = data.move === undefined ? undefined : object(data.move, path + '.move', ['to', 'at'])
   const travelling = data.travellers
@@ -935,6 +974,9 @@ function parseStation(raw: unknown, path: string): StationState {
       throw new SaveParseError(path + '.preferredCabins', 'cabin assignments must be distinct')
     }
   }
+  if (data.sceneRelease !== undefined && (typeof data.sceneRelease !== 'string' || !/^[a-z0-9][a-z0-9-]{0,63}$/.test(data.sceneRelease))) {
+    throw new SaveParseError(path + '.sceneRelease', 'invalid scene release ID')
+  }
   if (data.autoStaff !== undefined && data.autoStaff !== true) throw new SaveParseError(path + '.autoStaff', 'expected true')
   return { absoluteWatch, anchor: id(data.anchor, path + '.anchor'), off, shifts: assignments, report,
     rooms: Object.fromEntries(Object.entries(rooms).map(([key, left]) =>
@@ -950,6 +992,9 @@ function parseStation(raw: unknown, path: string): StationState {
     ...(preferredCabins ? { preferredCabins } : {}),
     ...(data.autoStaff === true ? { autoStaff: true } : {}),
     ...(move === undefined ? {} : { move: { to: id(move.to, path + '.move.to'), at: count(move.at, path + '.move.at') } }),
+    ...(data.sceneRelease === undefined ? {} : { sceneRelease: data.sceneRelease }),
+    ...(custody === undefined ? {} : { custody }),
+    ...(deliveries === undefined ? {} : { deliveries }),
     ...(appointments === undefined ? {} : { appointments }) }
 }
 

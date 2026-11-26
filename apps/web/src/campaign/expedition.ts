@@ -40,6 +40,7 @@ export function expeditionQuestBlock(save: Save, book: CampaignBook, quest: stri
   if (progress.capitals < 5) return 'Liberate all five capitals'
   if (progress.returned < 6) return 'Bring back all six lieutenants'
   if (progress.cleared < 2) return 'Clear both Generals'
+  if (save.fleet?.[duo.id]?.condition === 'commissioning') return 'Wait for the shipyard to finish this cutter'
   if (save.fleet?.[duo.id]?.condition === 'parked') return 'Resume the cutter from the shipyard'
   if (book.stationStory && !save.fleet?.[duo.id]) return 'Commission the cutter in the shipyard'
   const away = awayMembers(save.operations, save.squads)
@@ -82,8 +83,11 @@ export function commitExpedition(save: Save, book: CampaignBook, quest: string, 
   if (!duo || !formation || !plan || !book.supply) return save
   const stock = save.campaignSupply ?? startSupply(book.supply)
   if (quest === plan.launch && !save.expedition) {
-    const integrity = save.fleet?.[duo.id]?.integrity
+    const hull = save.fleet?.[duo.id]
+    if (hull?.condition === 'commissioning') return save
+    const integrity = hull?.integrity
     const launched = { ...save, expedition: { duo: duo.id, ship: formation.ship, members: formation.members,
+      ...(hull?.reinforced ? { reinforced: true as const } : {}),
       fuel: plan.cargo.fuel, provisions: plan.cargo.provisions, ...(integrity === undefined ? {} : { integrity }) },
       campaignSupply: { ...stock, fuel: stock.fuel - plan.cargo.fuel, provisions: stock.provisions - plan.cargo.provisions } }
     return book.stationStory ? advanceStationWatches(launched, book, 1) : launched
@@ -99,13 +103,22 @@ export function commitExpedition(save: Save, book: CampaignBook, quest: string, 
   return save
 }
 
-export function commissionCutter(save: Save, book: CampaignBook, duo: FixedDuo, complete: ReadonlySet<string>): Save {
+export const COMMISSIONING_BERTHS = 2
+
+export function commissioningBerthsUsed(save: Save) {
+  return Object.values(save.fleet ?? {}).filter(hull => hull.condition === 'commissioning').length
+}
+
+export function commissionCutter(save: Save, book: CampaignBook, duo: FixedDuo, complete: ReadonlySet<string>, reinforced = false): Save {
   if (!book.fourAct || !duo.expedition || save.fleet?.[duo.id] || save.expedition || save.mission || save.campaignDay.pending || save.pairScene
-    || stationRoom(stationOf(save, book), 'shipyard') !== 'active') return save
+    || stationRoom(stationOf(save, book), 'shipyard') !== 'active' || commissioningBerthsUsed(save) >= COMMISSIONING_BERTHS
+    || reinforced && save.wallet.alloy < TENDER_ARMOR_ALLOY) return save
   if (save.campaignSupply?.port !== stationOf(save, book).anchor) return save
   const ready = expeditionReadiness(book.fourAct, duo.id, complete)
   if (!ready || ready.capitals < 5 || ready.returned < 6 || ready.cleared < 2) return save
-  return { ...save, fleet: { ...save.fleet, [duo.id]: { ship: duo.expedition.ship, condition: 'commissioned' } } }
+  const wallet = reinforced ? { ...save.wallet, alloy: save.wallet.alloy - TENDER_ARMOR_ALLOY } : save.wallet
+  return { ...save, wallet, fleet: { ...save.fleet, [duo.id]: { ship: duo.expedition.ship, condition: 'commissioning', watches: 2,
+    ...(reinforced ? { reinforced: true } : {}) } } }
 }
 
 export function parkCutter(save: Save, book: CampaignBook): Save {

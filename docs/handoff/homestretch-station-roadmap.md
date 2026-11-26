@@ -1,6 +1,6 @@
 # Homestretch station and fleet production roadmap
 
-**D94 · Planning · 2026-11-26.** Extend the selected four-act campaign in the existing game. [Game design](../design/homestretch-station.md) owns player-facing rules. [CY116](tasks/CY116.md) establishes the clock, station and cutter contracts from the current implementation. The [four-act roadmap](four-act-roadmap.md) remains the source for existing campaign scope and released behavior.
+**D94 · Live campaign · 2026-11-26.** Extend the selected four-act campaign in the existing game. [Game design](../design/homestretch-station.md) owns player-facing rules. [CY116](tasks/CY116.md) establishes the clock, station and cutter contracts from the current implementation. The [four-act roadmap](four-act-roadmap.md) remains the source for existing campaign scope and released behavior.
 
 ## First playable checkpoint
 
@@ -54,17 +54,25 @@ The four lanes share the same private ledger. Record release/build, packet, arc,
 
 CY116 is the first engineering packet. CY126 is ready to hand to Story in parallel. CY127 and CY128 can start with intake and reuse maps while the first station and cutter layout contracts settle. Implement the first opening checkpoint in the main campaign viewer on a private candidate, using exact data destinations. Promote it via the normal verified release path when its acceptance milestone closes.
 
-## Review candidate
+## Playable release
 
-The implementation branch and the privately staged CY126 revision use the same playable four-act profile. The deterministic receipt for the selected base records the manifest digest, four chapter digests, exact scene edits and verified reused art. The campaign currently stages 22 new transition scenes, 20 exact scene edits, six reused backdrops and 186 command timings. The authoring release and all franchise assets stay in private storage.
+The deployed app uses the selected CY126 revision on the playable four-act profile. The release receipt records 22 new transitions, 20 exact scene edits, six approved reused backdrops and 186 command timings. Story packs and art are served from private storage. Hands-on play and additional approved media continue during the playable release.
 
-| Work | Implemented on the branch | Remaining acceptance |
+| Work | Implemented | Remaining acceptance |
 | --- | --- | --- |
 | CY116–CY119 | Saved station state, interactive cutaway, ten expansion modules, power and queue controls, permanent and reserve cabins, separate station stores, a three-watch clock, recurring shifts and a week forecast. | Confirm final cutaway art direction, expanded room surfaces and manual play balance. Add any approved roster and calendar exceptions. |
 | CY120–CY121 | Any of 50 recruits from First Watch, travel cost and arrival, authored invitation and deferral, cabin assignment, booking, persistent cutter damage and docking. | Review time and presence across unsolicited travel, venue-specific relationships and device interruption. |
 | CY122–CY124 | Intake capacity with guarded overflow, care bookings, cleared residence, Lieutenant quarters, yard commissioning, all 25 cutter routes, independent hull and cargo, safe parking, the final formation's cutter and return to play. | Review relocation while operations are in progress, any signed-off venue variants, and each new motion or outfit cue that actually appears. |
-| CY125 | Private full campaign replay covers all five capitals, 50 solo capture arcs, 150 Lieutenant returns, 25 returned cutters and both endings. A full save accommodates 250 residents and the full fleet and preserves a manual cabin move on reload. | Physical iPhone, human economy and encounter tuning, final campaign/media approval and hosted release verification. |
-| CY126 | All delivered exact Story changes are staged with the actual gameplay triggers. When the export leaves durations open, the review uses one watch per flight leg and committed command. | Finish any new Story approvals and production timing decisions against the private review. |
-| CY127–CY128 | Six existing approved backdrops are pinned for the new transitions. The review uses the existing cutter interior and current character and combat bindings. | Approve the station exterior and expansion kit, and finish the changed actor, portrait, splash and sprite disposition before final publishing. |
+| CY125 | Private full campaign replay covers all five capitals, 50 solo capture arcs, 150 Lieutenant returns, 25 returned cutters and both endings. A full save accommodates 250 residents and the full fleet and preserves a manual cabin move on reload. | Physical iPhone, human economy and encounter tuning, final campaign and media acceptance. |
+| CY126 | All delivered exact Story changes are live with the actual gameplay triggers. When the export leaves durations open, the review uses one watch per flight leg and committed command. | Finish any new Story approvals and production timing decisions against the private review. |
+| CY127–CY128 | Six existing approved backdrops are pinned for the new transitions. The review uses the existing cutter interior and current character and combat bindings. | Approve the station exterior and expansion kit, and finish the changed actor, portrait, splash and sprite disposition before publishing new media. |
 
-The Reactor earns 1 alloy and 1 data per staffed Duty watch so the first shipyard has a funding path from the core. Habitat A must complete before Habitat B extends the residential deck. The core holds one General and the expanded ward adds 12 rooms. Additional valid captures use guarded transfer and stay reachable. These are review balance settings. The normal checked merge and private release flow apply after acceptance.
+The Reactor earns 1 alloy and 1 data per staffed Duty watch so the first shipyard has a funding path from the core. Habitat A must complete before Habitat B extends the residential deck. The core holds one General and the expanded ward adds 12 rooms. Additional valid captures use guarded transfer and stay reachable. These are review balance settings. Use the normal checked merge and private release flow for each playable update.
+
+
+## Operations follow-through
+
+- **CY119–CY120.** Recruitment and Navigation preview travel watches and overlapping bookings. Calendar checks the actual venue and availability, schedules around away assignments, and supports earlier and future months. Interrupted meetings and evenings use the exact saved Story release when the selected index changes.
+- **CY117–CY118 and CY122.** Room focus survives menu navigation. Calendar links to duty rooms and Operations links to the yard. Explicit power transfer shows which service will pause. Secure intake, ward and guarded transfer have saved actor assignments. Eligible bases dispatch supplies to the station reserve ledger.
+- **CY123–CY124.** Operations shows commissioning, launch readiness, parked and active voyages, and the next authored stop. Two yard berths queue baseline hulls in two watches with an optional reinforced fitting for 3 alloy. Shipyard work pauses during a power interruption. Parked crews remain off the station roster for duties and visits until they return.
+- **CY102, CY103 and CY125.** Use the actual campaign to measure beginner, midway and fleet economies, combat pacing, input and recovery. Scripted coverage, the landscape browser checks and the deployed readback complement the hands-on physical iPhone pass. Keep the final tuning and exact new art bindings open until those inputs arrive.
