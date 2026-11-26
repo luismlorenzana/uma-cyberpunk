@@ -1,6 +1,7 @@
-import { newMember, newSave, parseCampaignBook, parseSave, startSupply, STAND_IN_FILES } from '@cyber/domain'
+import { firstStation, newMember, newSave, parseCampaignBook, parseSave, startSupply, STAND_IN_FILES } from '@cyber/domain'
 import { expect, it } from 'vitest'
 import { finishCampaignDialogue, questAvailable, questScene, recruitOnBoard, recruitProgress } from './quests'
+import { travelAppointmentConflicts } from './appointments'
 import { homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
 
 const stock = { fuel: 3, provisions: 2, alloy: 1 }
@@ -92,7 +93,12 @@ it('uses real jump costs from Homestretch and assigns one cabin only when the in
   const fresh = newSave('test', '2026-11-26T00:00:00Z')
   expect(homeQuestTravel(fresh, home, remoteSignOn)).toBeNull()
   const ready = finishCampaignDialogue(fresh, home, opening, [])
-  expect(homeQuestTravel(ready, home, remoteSignOn)).toMatchObject({ destination: 'sw3', fuel: 5, affordable: true })
+  const itinerary = homeQuestTravel(ready, home, remoteSignOn)
+  expect(itinerary).toMatchObject({ destination: 'sw3', fuel: 5, affordable: true, departure: 0, arrival: 2,
+    stops: [{ port: 'sw2' }, { port: 'sw3' }] })
+  const agenda = { ...ready, station: { ...firstStation(1, 'sw1'), appointments: [{ actor: 9000001, at: 1, port: 'sw2' }] } }
+  expect(travelAppointmentConflicts(home, agenda, 'sw2', 1)).toEqual([])
+  expect(travelAppointmentConflicts(home, agenda, 'sw3', 2)).toEqual(agenda.station.appointments)
   const short = { ...ready, campaignSupply: { ...startSupply(home.supply!), fuel: 4 } }
   expect(travelForHomeQuest(short, home, remoteSignOn)).toBe(short)
 

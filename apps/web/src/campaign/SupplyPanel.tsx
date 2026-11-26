@@ -1,9 +1,12 @@
 import {
-  CAPABILITY_NAME, managementReceipt, observeManagement, earn, freePlace, jumpRoute, loadShipment, nextCampaignStop, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
+  CAPABILITY_NAME, managementReceipt, observeManagement, earn, freePlace, jumpRoute, loadShipment, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
   shipCapabilities, shipmentAt, SHIP_CARGO_MAX, startSupply, STARTING_STATION_RESERVES, STATION_RESERVE_MAX, storesAt, SUPPLY_KINDS,
   type CampaignBook, type CampaignSupply, type Save, type SupplyNetwork, type SupplyPort, type World,
 } from '@cyber/domain'
 import { SystemsMap } from './SystemsMap'
+import { flyStationJourney } from './station-travel'
+import { dispatchStationDelivery, stationDelivery } from './station-logistics'
+import { watchLabel } from './appointments'
 import { type LoadedCampaign } from './load'
 import { updateSave } from '../save/game'
 import { advanceStationWatches, cutterArrival, stationOf, transferStationStock } from './watch'
@@ -41,6 +44,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
   const batch = book?.fourAct ? 8 : undefined
   const station = book?.stationStory ? stationOf(save, book) : undefined
   const reserves = station?.reserves ?? STARTING_STATION_RESERVES
+  const outgoing = book?.stationStory ? (['fuel', 'provisions'] as const).flatMap(kind => stationDelivery(save, book, kind) ?? []) : []
   return <section className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3" aria-label={showMap ? 'Star map and supply' : 'Cargo'}>
     <div className="flex flex-wrap items-baseline justify-between gap-2">
       <h2 className="font-display text-lg font-bold">{showMap ? 'Star map' : 'Cargo'}</h2>
@@ -48,14 +52,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
     </div>
     {liberated && <p className="text-sm font-semibold text-cyan-200">Liberated · +{liberated.alloy} alloy each night</p>}
     {showMap && strategic && <SystemsMap book={book} assets={assets} save={save} stock={supply} drives={drives} open={open} locate={locate} destination={destination}
-      travel={(destination) => change((current, stock) => {
-        const capabilities = shipCapabilities(current.ship)
-        const first = nextCampaignStop(network, stock.port, destination, capabilities, current.story.flags)
-        const route = first && network.routes.find(({ from, to }) => from === stock.port && to === first || to === stock.port && from === first)
-        if (!route) return current
-        const next = jumpRoute(stock, route, capabilities, current.story.flags)
-        return next === stock ? current : advanceStationWatches(cutterArrival({ ...current, campaignSupply: next }, book), book, 1)
-      })} />}
+      travel={destination => change(current => flyStationJourney(current, book, destination, true))} />}
     {showMap && !strategic && <ul className={mapped ? 'relative aspect-[2.3] rounded-lg bg-[#080c19]' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'} aria-label="Landing ports">
       {mapped && network.routes.map((route) => {
         const from = worlds[route.from]!, to = worlds[route.to]!
@@ -101,6 +98,19 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
         <button type="button" className={action} disabled={!supply[kind] || reserves[kind] >= STATION_RESERVE_MAX}
           onClick={() => change(current => transferStationStock(current, book, kind, false))}>Store {kind} aboard station</button>
       </div>)}
+    </section>}
+    {book && (outgoing.length > 0 || !!station?.deliveries?.length) && <section className="space-y-1" aria-label="Station deliveries">
+      <h3 className="font-semibold">Station deliveries</h3>
+      {station?.deliveries?.map((order, index) => <p key={index} className="text-sm">
+        {order.amount} {order.kind} from {network.ports.find(row => row.id === order.from)?.name ?? order.from}
+        {' · '}{order.at <= station.absoluteWatch ? 'Waiting for storage' : watchLabel(order.at)}
+      </p>)}
+      {outgoing.map(order => <p key={order.kind} className="flex flex-wrap items-center gap-2 text-sm">
+        <button type="button" className={action} onClick={() => change(current => dispatchStationDelivery(current, book, order.kind))}>
+          Send {order.amount} {order.kind} to Homestretch
+        </button>
+        <span>Arrives {watchLabel(order.at)}</span>
+      </p>)}
     </section>}
     <div>
       <h3 className="font-semibold">Port stock</h3>

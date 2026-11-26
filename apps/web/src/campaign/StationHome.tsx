@@ -1,6 +1,6 @@
-import { useRef, useState, type PointerEvent } from 'react'
+import { useRef, type Dispatch, type SetStateAction, type PointerEvent } from 'react'
 import {
-  assignStationShift, buildStationRoom, cancelStationRoom, setStationPower, stationCapacity, stationDate, stationPower, stationRoom,
+  assignStationShift, buildStationRoom, cancelStationRoom, rerouteStationPower, setStationPower, stationCapacity, stationDate, stationPower, stationPowerDonors, stationPowerShortfall, stationRoom,
   STARTER_CUTTER, STATION_DECKS, STATION_MODULES, STATION_ROOMS, STATION_WORK, TEMPORARY_BERTHS,
   type CampaignBook, type Save, type StationModule,
 } from '@cyber/domain'
@@ -27,14 +27,15 @@ const deckPosition = {
 }
 const unavailable = (save: Save) => !!(save.mission || save.campaignDay.pending || save.pairScene || save.expedition)
 
-export default function StationHome({ book, save, open, recruit, calendar, returnHome, relocation }: {
+type StationFocus = { deck?: typeof STATION_DECKS[number]; room?: StationModule; zoom: number }
+
+export default function StationHome({ book, save, open, recruit, calendar, returnHome, relocation, focus, onFocus }: {
+  focus: StationFocus; onFocus: Dispatch<SetStateAction<StationFocus>>
   book: CampaignBook; save: Save; open: (area: HomeArea) => void
   recruit: () => void; calendar: () => void; returnHome: () => void
   relocation: (delayed: boolean) => void
 }) {
-  const [deck, setDeck] = useState<typeof STATION_DECKS[number]>()
-  const [room, setRoom] = useState<StationModule>()
-  const [zoom, setZoom] = useState(1)
+  const { deck, room, zoom } = focus
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   const pinch = useRef(0)
   const gestureDistance = useRef(0)
@@ -47,6 +48,8 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
   const capacity = stationCapacity(state)
   const current = room ? STATION_MODULES[room] : undefined
   const status = room ? stationRoom(state, room) : undefined
+  const shortfall = room && status === 'off' ? stationPowerShortfall(state, room) : 0
+  const protectedJump = room === 'jump-ring' && state.move
   const duty = room && STATION_WORK.find(key => key === room)
   const assigned = duty ? state.shifts[duty] : undefined
   const available = stationWorkers(save, book)
@@ -57,7 +60,9 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
   const recognized = settlement && book.quests.find(quest => quest.id === settlement)
   const mayRelocate = !!recognized && save.story.seen.includes(recognized.scene) && state.anchor !== 'orla'
     && book.supply?.ports.some(row => row.id === 'orla')
-  function adjust(change: number) { setZoom(value => Math.max(1, Math.min(2, value + change))) }
+  function adjust(change: number) {
+    onFocus(current => ({ ...current, zoom: Math.max(1, Math.min(2, current.zoom + change)) }))
+  }
   function handlePointer(event: PointerEvent<HTMLDivElement>) {
     const prior = pointers.current.get(event.pointerId)
     const viewport = scroll.current
@@ -100,9 +105,9 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
       <button type="button" className={campaignControl} onClick={returnHome}>Plot return to Homestretch</button>
     </div>}
     <div className="flex flex-wrap gap-1" aria-label="Station camera">
-      <button type="button" className={campaignControl} onClick={() => { setDeck(undefined); setRoom(undefined); setZoom(1) }}>Overview</button>
+      <button type="button" className={campaignControl} onClick={() => onFocus({ zoom: 1 })}>Overview</button>
       {STATION_DECKS.map(key => <button key={key} type="button" className={campaignControl + ' aria-pressed:border-cyan-100'} aria-pressed={deck === key}
-        onClick={() => { setDeck(key); setRoom(undefined); setZoom(1) }}>{key}</button>)}
+        onClick={() => onFocus({ deck: key, zoom: 1 })}>{key}</button>)}
       <button type="button" className={campaignControl} onClick={() => adjust(-.25)} disabled={zoom === 1}>Zoom out</button>
       <button type="button" className={campaignControl} onClick={() => adjust(.25)} disabled={zoom === 2}>Zoom in</button>
     </div>
@@ -126,7 +131,7 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
             <div aria-hidden="true" className="pointer-events-none absolute inset-y-1 left-[calc(50%-1.15rem)] w-9 border-x-2 border-slate-600 bg-[#283a51]" />
             <div aria-hidden="true" className="pointer-events-none relative col-start-2 row-start-2 justify-self-center self-center size-10 rotate-45 rounded-md border-2 border-cyan-100/60 bg-[#12253b] shadow-[0_0_18px_#35647a]" />
             {STATION_DECKS.map(key => <button key={key} type="button" aria-label={key + ' deck on cutaway'}
-              onClick={() => { setDeck(key); setZoom(1) }}
+              onClick={() => onFocus({ deck: key, zoom: 1 })}
               className={'relative min-h-11 rounded-xl border-2 border-slate-500 bg-[#102036] px-2 py-1 text-xs text-cyan-50 hover:border-cyan-200 ' + deckPosition[key]}>
               <strong>{key}</strong>
               <div aria-hidden="true" className="mt-0.5 flex justify-center gap-1">
@@ -144,7 +149,7 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
                 return <button key={id} type="button" data-station-room={id} data-condition={mode} aria-pressed={room === id}
                   className={'flex min-h-12 min-w-0 flex-col items-start justify-center rounded-md border px-2 py-1 text-left text-xs aria-pressed:border-cyan-200 '
                     + socket[mode] + (mode === 'empty' ? ' text-slate-300' : ' text-white')}
-                  onClick={() => { setDeck(key); setRoom(id) }}><strong>{module.label}</strong><span>{condition[mode]}</span></button>
+                  onClick={() => onFocus(current => ({ ...current, deck: key, room: id }))}><strong>{module.label}</strong><span>{condition[mode]}</span></button>
               })}
             </div>
           </section>)}
@@ -178,9 +183,21 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
           })}>Cancel build · recover {Math.floor(current.cost / 2)} alloy</button>}
         {!!current.draw && (status === 'active' || status === 'off') &&
           <button type="button" className={campaignControl + ' disabled:opacity-40'}
-            disabled={unavailable(save) || status === 'off' && power.used + current.draw > power.supply}
+            disabled={unavailable(save) || !!protectedJump || shortfall > 0}
             onClick={() => void updateSave(s => unavailable(s) ? s : { ...s, station: setStationPower(stationOf(s, book), room) })}>
             {status === 'active' ? 'Pause power' : 'Restore power'}</button>}
+        {protectedJump && <p className="text-sm">Power reserved for the scheduled relocation.</p>}
+        {shortfall > 0 && <div className="space-y-2">
+          <p className="text-sm text-amber-200">Needs {shortfall} more power. Pause another facility or expand the Reactor.</p>
+          {stationPowerDonors(state, room).map(donor => <button key={donor} type="button" className={campaignControl}
+            disabled={unavailable(save)}
+            onClick={() => void updateSave(s => {
+              if (unavailable(s)) return s
+              const station = stationOf(s, book)
+              const next = rerouteStationPower(station, room, donor)
+              return next === station ? s : { ...s, station: next }
+            })}>Transfer power from {STATION_MODULES[donor].label}</button>)}
+        </div>}
         {room === 'reactor' && <p className="text-sm text-cyan-100">A staffed Duty watch recovers 1 alloy and 1 data.</p>}
         {room === 'life-support' && <p className="text-sm text-cyan-100">A staffed Duty watch adds 2 provisions to station reserves.</p>}
         {room === 'infirmary' && <p className="text-sm text-cyan-100">A staffed Duty watch treats the most strained resident aboard.</p>}

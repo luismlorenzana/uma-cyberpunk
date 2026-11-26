@@ -4,6 +4,7 @@ import { finaleQuestReady, recordFinaleOutcome } from './cy90'
 import { commitExpedition, expeditionForQuest, expeditionQuestBlock } from './expedition'
 import { clearCampaignPosts, homeQuestReady } from './pair'
 import { formationReady } from './specialist-input'
+import { custodyCommit } from './station-custody'
 
 export function questScene(save: Save, quest: CampaignQuest): string {
   const variant = quest.sceneWhen
@@ -118,7 +119,7 @@ export function finishCampaignDialogue(save: Save, book: CampaignBook, quest: Ca
   const transfer = book.sectors?.find((sector) => sector.appointment === quest.id || sector.retirement === quest.id)
   const returning = book.finale?.muster && book.finale.ending === quest.id
   if (returning) return clearCampaignPosts(marked, campaignSupport(book, marked).ashore)
-  return transfer ? clearCampaignPosts(marked, new Set([transfer.officer])) : marked
+  return custodyCommit(transfer ? clearCampaignPosts(marked, new Set([transfer.officer])) : marked, book, quest.id)
 }
 
 export function generalPhase(save: Save, book: CampaignBook, outfit: number) {

@@ -13,6 +13,8 @@ import type { DynamicModule } from '@nestjs/common'
 import { CAMPAIGN_FILE_PATH, CAMPAIGN_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, PILOT_PREVIEW_INDEX } from '@cyber/domain'
 
 /** `story.json`, and `story/<name>.<hash8>.json` (`scripts/story/pack.ts`'s names). */
+/** Owner pack reader only serves immutable releases of the current campaign. */
+export const FOUR_ACT_ARCHIVE = /^campaign\/releases\/four-act\/[a-z0-9][a-z0-9-]{0,63}\.json$/
 export const STORY_ALLOW: PackAllow = ['story.json', /story\/[a-z0-9]+(-[a-z0-9]+)*\.[a-f0-9]{8}\.json/]
 /** The universe's index, and its images as `pnpm art:push` names them: `<character>-<look>.<hash16>.png`. */
 export const LOOKS_ALLOW: PackAllow = ['looks/index.json', /looks\/images\/[a-z0-9]+(-[a-z0-9]+)*\.[a-f0-9]{16}\.png/]
@@ -39,7 +41,7 @@ export function storyPackModule(env: Record<string, string | undefined> = proces
   const campaignSource: FileSource = campaignBucket && campaignPrefix ? { read: (path) => campaign.read(`${campaignPrefix}/${path}`) } : campaign
   return PrivatePackModule.forRoot({
     route: 'content',
-    allow: [...STORY_ALLOW, ...LOOKS_ALLOW, CAMPAIGN_PREVIEW_INDEX, PILOT_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, CAMPAIGN_FILE_PATH],
+    allow: [...STORY_ALLOW, ...LOOKS_ALLOW, CAMPAIGN_PREVIEW_INDEX, PILOT_PREVIEW_INDEX, FOUR_ACT_PREVIEW_INDEX, FOUR_ACT_ARCHIVE, CAMPAIGN_FILE_PATH],
     source: contentSource(story, looks, env.LOOKS_PREFIX || LOOKS_PREFIX, campaignSource),
   })
 }

@@ -1,9 +1,11 @@
-import { campaignJourney, developedPort, jumpRoute, storesAt, type CampaignBook, type CampaignSupply, type Save } from '@cyber/domain'
+import { developedPort, storesAt, type CampaignBook, type CampaignSupply, type Save } from '@cyber/domain'
 import { useState } from 'react'
 import { CampaignThumbnail } from './CampaignThumbnail'
 import { campaignControl } from './CampaignQuestRow'
 import { type LoadedCampaign } from './load'
 import { questComplete } from './quests'
+import { stationJourney } from './station-travel'
+import { TravelTiming } from './TravelTiming'
 
 export function SystemsMap({ book, assets, save, stock, drives, travel, open, locate, destination }: {
   book: CampaignBook; assets: LoadedCampaign['assets']; save: Save; stock: CampaignSupply; drives: readonly string[]
@@ -34,10 +36,9 @@ export function SystemsMap({ book, assets, save, stock, drives, travel, open, lo
   const [selected, select] = useState(destination)
   const port = ports.find(port => port.id === selected) ?? ports.find(port => port.id === stock.port) ?? ports[0]
   const stockAtPort = port ? storesAt(stock, developedPort(book, save, port)) : null
-  const journey = port && campaignJourney(network, stock.port, port.id, drives, save.story.flags)
-  const leg = port && journey && network.routes.find(route => route.from === stock.port && route.to === journey.first
-    || route.to === stock.port && route.from === journey.first)
-  const canJump = leg && jumpRoute(stock, leg, drives, save.story.flags) !== stock
+  const journey = port && stationJourney(save, book, port.id)
+  const stop = journey?.stops[0]
+  const canJump = !!stop && stock.fuel >= stop.route.fuel
   const approach = port && book.art.find(art => art.scene === port.scene)?.backdrop
   const landingArt = (approach ? assets.get(approach) : undefined) ?? assets.get('rainward-relief-receiving-dock')
   const settlement = group?.capital?.settlement
@@ -60,10 +61,12 @@ export function SystemsMap({ book, assets, save, stock, drives, travel, open, lo
       <h3 className="font-semibold">{port.name}</h3>
       <p className="text-sm">Stores · {stockAtPort.fuel} fuel · {stockAtPort.provisions} provisions · {stockAtPort.alloy} alloy</p>
       {port.id === stock.port ? locate && <button type="button" className={campaignControl} onClick={locate}>Inspect landing</button>
-        : journey && leg ? <>
-          <p className="text-sm">{journey.fuel} fuel total · {leg.fuel} fuel and 1 watch for the next jump to {label(journey.first)}</p>
+        : journey && stop ? <>
+          <p className="text-sm">{journey.fuel} fuel total · {stop.route.fuel} fuel and 1 watch for the next jump to {label(stop.port)}</p>
+          <TravelTiming save={save} book={book} departure={journey.departure} arrival={journey.departure + 1} destination={stop.port} />
+          {journey.watches > 1 && <p className="text-sm">At least {journey.watches} watches to {port.name}.</p>}
           <button type="button" disabled={!canJump} className={campaignControl + ' disabled:opacity-50'}
-            onClick={() => travel(port.id)}>Jump to {label(journey.first)}</button>
+            onClick={() => travel(port.id)}>Jump to {label(stop.port)}</button>
         </> : <p className="text-sm">Route locked · check clearance and drive capability.</p>}
       {stage && !complete(settlement) && stage.port === port.id && <p className="text-sm">Capital operation · {stage.title}</p>}
       {group?.duos.flatMap(duo => {

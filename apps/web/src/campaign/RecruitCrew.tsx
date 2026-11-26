@@ -4,6 +4,7 @@ import { nameOf } from '../story/runner'
 import { CampaignThumbnail } from './CampaignThumbnail'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
 import { homeQuestTravel } from './homestretch'
+import { TravelTiming } from './TravelTiming'
 
 export default function RecruitCrew({ book, save, assets, meet, cargo }: {
   book: CampaignBook; save: Save; assets: ReadonlyMap<string, CampaignReleaseFile>
@@ -57,6 +58,7 @@ export default function RecruitCrew({ book, save, assets, meet, cargo }: {
         </div>
         <p className="text-sm text-slate-200">{selected.recruit.request}</p>
         {!!travel?.watches && book.fourAct && <p className="text-sm text-cyan-100">Selden Relief · {travel.watches} {travel.watches === 1 ? 'watch' : 'watches'}</p>}
+        {travel && book.fourAct && <TravelTiming save={save} book={book} {...travel} />}
         <button type="button" className={campaignPrimary + ' disabled:opacity-40'} disabled={!travel?.affordable}
           onClick={() => meet(quest)}>{travel?.fuel ? `Travel and meet · ${travel.fuel} fuel` : 'Meet'}</button>
         {travel && !travel.affordable && <button type="button" className={campaignControl} onClick={cargo}>Get fuel in Cargo</button>}

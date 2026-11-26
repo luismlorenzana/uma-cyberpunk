@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest'
 import { newSave, parseSave } from './save/save'
 import {
-  assignStationShift, bookStationAppointment, buildStationRoom, cancelStationAppointment, firstStation, setStationPower, stationCapacity, stationDate, stationPower, stationRoom,
+  assignStationShift, bookStationAppointment, buildStationRoom, cancelStationAppointment, firstStation, rerouteStationPower, setStationPower, stationCapacity, stationDate, stationPower, stationRoom,
   tickStation,
 } from './station'
 
@@ -55,4 +55,24 @@ it('keeps station reserves and up to 250 permanent assignments in the saved stat
   const saved = { ...save, station: staffed.station }
   expect(parseSave(JSON.parse(JSON.stringify(saved))).station).toEqual(staffed.station)
   expect(() => parseSave({ ...saved, station: { ...saved.station, preferredCabins: { first: 1, second: 1 } } })).toThrow(/distinct/)
+})
+
+it('conserves base deliveries through storage limits, relocation and reload, and protects reserved jump power', () => {
+  const save = newSave('station', '2026-11-26T00:00:00.000Z')
+  const station = { ...firstStation(), rooms: { 'jump-ring': 0, fabrication: 0, shipyard: 0 },
+    off: ['shipyard' as const], move: { to: 'remote', at: 2 }, reserves: { fuel: 97, provisions: 6 },
+    deliveries: [{ from: 'nearby', kind: 'fuel' as const, at: 1, amount: 4 }] }
+  expect(setStationPower(station, 'jump-ring')).toBe(station)
+  expect(rerouteStationPower(station, 'shipyard', 'jump-ring')).toBe(station)
+  const next = tickStation(station, new Set()).station
+  expect(next.reserves?.fuel).toBe(97)
+  expect(next.deliveries?.[0]?.at).toBe(2)
+  const relocated = tickStation(next, new Set()).station
+  expect(relocated.anchor).toBe('remote')
+  expect(relocated.reserves?.fuel).toBe(99)
+  expect(relocated.deliveries?.[0]?.amount).toBe(2)
+  const restored = parseSave(JSON.parse(JSON.stringify({ ...save, station: relocated }))).station!
+  const serviced = tickStation({ ...restored, reserves: { fuel: 94, provisions: 6 } }, new Set()).station
+  expect(serviced.reserves?.fuel).toBe(96)
+  expect(serviced.deliveries).toEqual([])
 })

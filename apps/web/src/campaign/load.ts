@@ -1,5 +1,5 @@
 import {
-  campaignPreviewIndex, documentsInStoryPage, parseCampaignBook, parseCampaignRelease, requireCampaignIdentity,
+  campaignPreviewIndex, campaignReleasePath, documentsInStoryPage, parseCampaignBook, parseCampaignRelease, requireCampaignIdentity,
   type CampaignBook, type CampaignIdentity, type CampaignRelease, type CampaignReleaseFile,
 } from '@cyber/domain'
 import { fourActLocations } from './four-act-locations'
@@ -14,12 +14,17 @@ export interface LoadedCampaign {
 }
 
 /** The mutable index is read at entry and whenever the Captain checks for a release. Every payload is verified by hash. */
-export async function loadCampaign(content: Pick<typeof CONTENT, 'pack'> = CONTENT, owner?: string, identity: CampaignIdentity = 'current'): Promise<LoadedCampaign> {
+export async function loadCampaign(content: Pick<typeof CONTENT, 'pack'> = CONTENT, owner?: string, identity: CampaignIdentity = 'current', pinned?: string): Promise<LoadedCampaign> {
   const key = { current: 'cyber-campaign-release', pilot: 'cyber-pilot-release', 'four-act': 'cyber-four-act-release' }[identity]
   const storageKey = owner ? `${key}:${owner}` : undefined
   const index = campaignPreviewIndex(identity)
   try {
-    const release = requireCampaignIdentity(parseCampaignRelease(decode(await content.pack(index)), index), identity)
+    let release = requireCampaignIdentity(parseCampaignRelease(decode(await content.pack(index)), index), identity)
+    if (pinned && release.release !== pinned) {
+      const path = campaignReleasePath(pinned, identity)
+      release = requireCampaignIdentity(parseCampaignRelease(decode(await content.pack(path)), path), identity)
+      if (release.release !== pinned) throw new Error('The saved scene release does not match its archive')
+    }
     const loaded = await loadRelease(content, release, identity)
     if (storageKey) {
       try { localStorage.setItem(storageKey, JSON.stringify(release)) } catch { /* The current session can still play. */ }
@@ -28,7 +33,7 @@ export async function loadCampaign(content: Pick<typeof CONTENT, 'pack'> = CONTE
   } catch (error) {
     if (!storageKey || !interrupted(error)) throw error
     const saved = readCachedRelease(storageKey)
-    if (!saved) throw error
+    if (!saved || pinned && saved.release !== pinned) throw error
     return loadRelease(content, requireCampaignIdentity(saved, identity), identity)
   }
 }
