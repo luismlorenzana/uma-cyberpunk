@@ -15,6 +15,7 @@ import { finaleRun, retryCampaignAttempt, withdrawCampaignAttempt } from './cy90
 import { nameOf } from '../story/runner'
 import { expeditionOfficer, expeditionStations, setExpeditionOfficer } from './expedition'
 import { campaignCommandFront, tuneCampaignCommand } from './command-tuning'
+import { forecastStation } from './station-forecast'
 import { CampaignThumbnail } from './CampaignThumbnail'
 import type { CombatReadiness } from './navigation'
 import { BattleHelp } from '../battle/BattleHelp'
@@ -65,6 +66,11 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const fourAct = loaded.book.fourAct
   const prepared = fourAct ? tuneCampaignCommand(encounter, campaignCommandFront(loaded.book, save, encounter.id)) : encounter
   const cargo = expedition ? { ...supply, fuel: expedition.fuel, provisions: expedition.provisions } : supply
+  const station = loaded.book.stationStory
+  const rationShort = state.step === 'deploy' && station && !expedition && canLaunch(cargo, prepared)
+    ? [...forecastStation({ ...save, mission: null, campaignSupply: { ...cargo, provisions: cargo.provisions - prepared.cost.provisions } },
+      loaded.book, station.commandWatches?.get(encounter.id) ?? 1).dawns.values()].find(row => row.cutterShort)?.cutterShort
+    : undefined
   const run = state.battle ? resumeCommand(state.battle.input, state.battle.actions) : null
   const assigned = expedition ?? (finale ? finaleRun(save, loaded.book) : undefined)
   const namedCutter = assigned && loaded.book.fourAct?.duos.get(assigned.duo)?.expedition?.route?.name
@@ -129,6 +135,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         {readiness && <div className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
           {!!readiness.bridge && ` · Bridge drills ${readiness.bridge}+`}<BattleHelp topic="readiness" /></div>}
         <div className="flex items-center text-sm">Cargo {cargo.fuel} fuel · {cargo.provisions} provisions <BattleHelp topic="supplies" /></div>
+        {!!rationShort && <p className="text-sm text-amber-200">After launch · Cutter short {rationShort} provisions at dawn</p>}
         <details className="text-sm"><summary className="min-h-11 cursor-pointer py-2">Threat forecast · {prepared.threats.length} waves</summary>
           <ol className="list-decimal space-y-1 pl-5">{prepared.threats.map((wave, i) => <li key={i}>{wave.section === 'fore' ? 'Fore' : 'Aft'} · {wave.power} incoming power · {wave.fighters} fighters</li>)}</ol>
         </details>

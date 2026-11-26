@@ -1,6 +1,6 @@
 import { hash32 } from '@cyber/battle'
 import { advanceStationWatches, settleCampaignDay, stationOf } from './watch'
-import { awayMembers, COMMAND_STATIONS, developedPort, managementReceipt, shipmentAt, loadShipment, type CommandStation, type Speaker, expeditionReadiness, SHIP_CARGO_MAX, startSupply, type CampaignBook, type CampaignQuest, type ExpeditionFormation, type ExpeditionRun, type FixedDuo, type Save } from '@cyber/domain'
+import { awayMembers, COMMAND_STATIONS, developedPort, managementReceipt, requestRelief, shipmentAt, loadShipment, type CommandStation, type Speaker, expeditionReadiness, SHIP_CARGO_MAX, startSupply, type CampaignBook, type CampaignQuest, type ExpeditionFormation, type ExpeditionRun, type FixedDuo, type Save } from '@cyber/domain'
 import { COMMAND_HULL, stationRoom } from '@cyber/domain'
 import { focusExpeditionCrew, initializeCampaignCurve } from './progression'
 
@@ -241,6 +241,19 @@ export function loadTender(save: Save, book: CampaignBook, kind: 'fuel' | 'provi
   return managementReceipt({ ...save, expedition: { ...berth.run, [kind]: berth.run[kind] + count },
     campaignSupply: { ...berth.main, stores: shipment.supply.stores } },
     { kind: 'shipment', subject: 'tender-' + kind, destination: 'ship', amount: count })
+}
+
+export function requestTenderRelief(save: Save, book: CampaignBook): Save {
+  const berth = expeditionBerth(save, book)
+  if (!book.stationStory || !berth?.run.berthed) return save
+  const { main, port, run } = berth
+  const cargo = { ...main, fuel: run.fuel, provisions: run.provisions }
+  const supplied = requestRelief(cargo, save.campaignDay.day)
+  if (supplied === cargo || !(['fuel', 'provisions'] as const).some(kind =>
+    supplied[kind] > cargo[kind] && shipmentAt(cargo, port, kind) === 0)) return save
+  return managementReceipt({ ...save, expedition: { ...run, fuel: supplied.fuel, provisions: supplied.provisions },
+    campaignSupply: { ...main, reliefDay: supplied.reliefDay } },
+    { kind: 'relief', subject: 'tender-supplies', destination: 'ship', amount: supplied.fuel - run.fuel + supplied.provisions - run.provisions })
 }
 
 export function fitExpeditionHull(save: Save, book: CampaignBook): Save {

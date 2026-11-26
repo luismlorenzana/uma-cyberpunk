@@ -6,7 +6,7 @@ import { CAMPAIGN_XP_THRESHOLDS, campaignLevel, chooseSubclass, migrateCampaignX
   startSupply, type CampaignBook, type ExpeditionRun, type GroundEncounter, type Mission, type Save } from '@cyber/domain'
 import { describe, expect, it, vi } from 'vitest'
 import { act, resume, startSession } from '../battle/session'
-import { deploy, finishBattle, recordAction, retry, toDeploy } from '../mission/director'
+import { applyStep, deploy, finishBattle, recordAction, retry, toDeploy } from '../mission/director'
 import { lifeAboardInput } from '../mission/battleInput'
 import { commitExpedition, expeditionSquad } from './expedition'
 import { settleGround } from './ground'
@@ -88,6 +88,15 @@ function saveVictory(save: Save, session: ReturnType<typeof play>, finale?: Expe
 }
 
 describe('CY129 campaign combat', () => {
+  it('starts a recruit at level one even after the captain has trained other leads', () => {
+    const save = { ...fresh(), crew: [{ ...newMember(lead), xp: 1250 }] }
+    const step = { kind: 'join' as const, outfit: second }
+    expect(applyStep(save, book.story, step).crew.at(-1)?.xp).toBe(1250)
+    const campaign = initializeCampaignCurve(save, book)
+    const joined = applyStep(campaign, book.story, step)
+    expect(joined.crew.map(member => member.xp)).toEqual([campaign.crew[0]!.xp, 0])
+  })
+
   it('converts the flat XP curve once, preserving each level and matching armor thresholds', () => {
     for (let xp = 0; xp < 5500; xp++) expect(campaignLevel(migrateCampaignXp(xp), 1)).toBe(campaignLevel(xp))
     expect(CAMPAIGN_XP_THRESHOLDS.at(-1)).toBe(10300)
@@ -136,10 +145,10 @@ describe('CY129 campaign combat', () => {
     expect(objectiveProgress(win.state).value).toBeGreaterThan(0)
     const result = saveVictory(deployAt(launched, mission.id, expeditionSquad(launched.expedition!)), win)
     const cleared = settleGround(result, { id: mission.id, title: 'Landing', win: {} }, story, true, book, 3)
-    expect(cleared.crew.find(member => member.outfit === lead)?.xp).toBe(125)
+    expect(cleared.crew.find(member => member.outfit === lead)?.xp).toBe(85)
     expect(cleared.combatTraining?.[lead]?.rank).toBe(7)
-    expect(cleared.crew.filter(member => member.heroine).every(member => member.xp === 625)).toBe(true)
-    expect(Object.values(cleared.expeditionXp ?? {})).toEqual(Array(6).fill(625))
+    expect(cleared.crew.filter(member => member.heroine).every(member => member.xp === 585)).toBe(true)
+    expect(Object.values(cleared.expeditionXp ?? {})).toEqual(Array(6).fill(585))
   })
 
   it('settles two repeat salvage runs, crafts and deploys the selected part without story XP', () => {

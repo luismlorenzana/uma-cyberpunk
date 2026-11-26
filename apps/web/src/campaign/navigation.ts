@@ -119,9 +119,16 @@ export function combatReadiness(book: CampaignBook, navigation: CampaignNavigati
   const act = combatActFor(navigation, quest)
   const configured = book.combatReadiness?.get(id)
   if (configured) return { ...configured, act }
-  if (act === 4) return { act, minimum: 11, maximum: 15, support: 8, bridge: 2 }
-  if (act === 3) return { act, minimum: 8, maximum: 12, support: 6, bridge: 2 }
-  if (act === 2) return { act, minimum: 4, maximum: 8, bridge: 1 }
+  if (act === 4) {
+    const formation = book.fourActFinale?.ground.includes(id)
+    return formation ? { act, minimum: 11, maximum: 15, support: 8, bridge: 2 }
+      : { act, minimum: 6, maximum: 10, bridge: 1 }
+  }
+  if (act === 3) return { act, minimum: 7, maximum: 12, support: 6, bridge: 2 }
+  if (act === 2) {
+    const capital = [...book.fourAct.systems.values()].some(system => system.capital?.operation === quest.id)
+    return { act, minimum: capital ? 6 : 3, maximum: capital ? 9 : 6, bridge: 1 }
+  }
   return book.ground.get(id)?.rescue ? { act, minimum: 2, maximum: 4 } : { act, minimum: 1, maximum: 2, bridge: 0 }
 }
 
