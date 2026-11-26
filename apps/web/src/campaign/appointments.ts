@@ -96,5 +96,5 @@ export function travelAppointmentConflicts(book: CampaignBook, save: Save, desti
 
 export function watchLabel(watch: number) {
   const date = stationDate(watch)
-  return `${date.month} ${date.day} · ${date.phase}`
+  return `${date.month} ${date.day} · ${date.phase} ${date.hour}`
 }

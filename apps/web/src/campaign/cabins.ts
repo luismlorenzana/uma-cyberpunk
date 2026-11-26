@@ -3,7 +3,7 @@ import { awayMembers, campaignSupport, homeOutcome, pairProgress, sectorAssignme
 import { dateAvailable, dateProgress } from './dates'
 import { pairAvailable } from './pair'
 import { applyStep } from '../mission/director'
-import { settleCampaignDay } from './watch'
+import { cabinVisitors, canBookNightContact, finishNightContact, nextQueuedMorning, reserveOvernight, spendNightContact } from './night-economy'
 import { questAvailable, questComplete } from './quests'
 import { giveRapport } from '../bonds/bonds'
 
@@ -93,6 +93,11 @@ export function startCabinEvening(save: Save, book: CampaignBook, cabin: CabinEv
   if (save.campaignDay.day !== expectedDay || save.campaignDay.pending || save.pairScene || save.mission || !cabinAvailable(save, book, cabin)) return save
   const after = book.quests.find(q => q.id === book.evening?.after)
   if (!after || !questComplete(save, after, book)) return save
+  const visitors = cabinVisitors(book, cabin)
+  if (!canBookNightContact(save, book, visitors)) return save
+  const entered = spendNightContact(save, book, visitors)
+  if (!cabinAvailable(entered, book, cabin)) return save
+  save = entered
   const stage = cabinStage(save, book, cabin), key = `${cabin.id}-${stage}`, count = save.cabinVisits[key] ?? 0
   const scene = cabin.chats[stage][count % cabin.chats[stage].length]!
   const source = cabin.source
@@ -101,7 +106,9 @@ export function startCabinEvening(save: Save, book: CampaignBook, cabin: CabinEv
     : book.pairs.find(p => p.id === source.pair)?.members[0].outfit
   const pending: CabinNight = { kind: 'cabin', id: cabin.id, phase: 'chat', scene, round: 0, outcome: null, choice: null,
     plan: { location: companion && campaignSupport(book, save).ashore.has(companion) ? 'ashore' : 'aboard',
-      rapport: 'companion' in source ? { companion: source.companion, amount: cabin.chatRapport } : null,
+      rapport: 'companion' in source ? {
+        companion: source.companion, amount: cabin.chatRapport || (book.stationStory ? 50 : 0),
+      } : null,
       invitation: canStay(save, book, cabin) ? { ...cabin.invitation } : null,
       bed: cabin.bed[(save.cabinVisits[`${cabin.id}-bed`] ?? 0) % cabin.bed.length]!, morning: { ...cabin.morning }, changeMind: cabin.changeMind } }
   return { ...save, cabinVisits: { ...save.cabinVisits, [key]: Math.min(1000000, count + 1) }, campaignDay: { ...save.campaignDay, pending } }
@@ -120,7 +127,8 @@ export function chooseCabinOutcome(save: Save, book: CampaignBook, day: number, 
   if (index === invite.wait) return save
   const outcome = index === invite.stay ? 'stay' : index === invite.leave || index === invite.decline ? 'leave' : null
   if (!outcome || outcome === 'stay' && (!cabin || !canStay(save, book, cabin))) return save
-  return { ...save, ...(outcome === 'stay' ? { cabinVisits: { ...save.cabinVisits,
+  const paid = outcome === 'stay' ? reserveOvernight(save) : save
+  return { ...paid, ...(outcome === 'stay' ? { cabinVisits: { ...save.cabinVisits,
     [`${pending.id}-bed`]: Math.min(1000000, (save.cabinVisits[`${pending.id}-bed`] ?? 0) + 1) } } : {}),
     campaignDay: { ...save.campaignDay, pending: { ...pending, outcome, choice: index } } }
 }
@@ -141,7 +149,7 @@ export function finishCabinScene(save: Save, book: CampaignBook, day: number, ex
   }
   const move = (phase: CabinNight['phase'], scene: string): Save => ({ ...next,
     campaignDay: { ...next.campaignDay, pending: { ...pending, phase, scene } } })
-  if (pending.phase === 'morning') return { ...next, campaignDay: { ...next.campaignDay, pending: null } }
+  if (pending.phase === 'morning') return nextQueuedMorning(next)
   if (pending.phase === 'chat' && pending.plan.invitation) return move('invitation', pending.plan.invitation.scene)
   if (pending.phase === 'invitation') {
     if (!pending.outcome) return { ...next, campaignDay: { ...next.campaignDay,
@@ -149,6 +157,7 @@ export function finishCabinScene(save: Save, book: CampaignBook, day: number, ex
     if (pending.outcome === 'stay') return move('bed', pending.plan.bed)
   }
   const outcome = pending.outcome ?? 'leave'
-  return settleCampaignDay(next, { day: day + 1,
-    pending: { ...pending, phase: 'morning', outcome, scene: pending.plan.morning[outcome] } }, book)
+  const cabin = book.cabinEvenings?.find(row => row.id === pending.id)
+  return finishNightContact(next, book, cabin ? cabinVisitors(book, cabin) : [],
+    { ...pending, phase: 'morning', outcome, scene: pending.plan.morning[outcome] })
 }

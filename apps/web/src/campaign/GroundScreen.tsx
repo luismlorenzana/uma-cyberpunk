@@ -367,7 +367,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               let released: string[] = []
               await updateSave(s => {
                 if (!ground) return settleTraining(s)
-                const settled = settleGround(s, ground, pack, !!loaded?.book.fourAct)
+                const settled = settleGround(s, ground, pack, !!loaded?.book.fourAct, loaded?.book)
                 if (s.worlds.missions.includes(ground.id) || !settled.worlds.missions.includes(ground.id) || !s.mission?.battle || !ground.cues) return settled
                 released = groundOpponentScenes(ground.cues, s.mission.battle.input as BattleInput, 'released')
                   .filter(scene => !settled.story.seen.includes(scene))

@@ -1,7 +1,7 @@
 import {
   awayMembers, canTakeOrdinaryAssignment, crewSpeaker, campaignSupport, campaignUpkeep, COMMAND_HULL, developedPort, earn, firstStation,
   managementReceipt, observeManagement, projectCompleteFlag, setFlag, SHIP_CARGO_MAX, startSupply, STARTING_STATION_RESERVES,
-  STATION_RESERVE_MAX, stationRoom, supplyNight, tickStation, WATCHES_PER_DAY,
+  STATION_RESERVE_MAX, stationRoom, storesAt, supplyNight, tickStation, WATCHES_PER_DAY,
   type CampaignBook, type CampaignDay, type Save, type Speaker,
 } from '@cyber/domain'
 import { passAWatch } from '../mission/director'
@@ -45,6 +45,25 @@ function stationPresent(save: Save, book: CampaignBook, inTransit = false): Save
   return save.crew.filter(member => !away.has(member.outfit) && !ashore.has(member.outfit) && !deployed.has(crewSpeaker(member)) && !deployed.has(member.outfit))
 }
 
+function residentLieutenants(save: Save) {
+  const away = voyageCrew(save)
+  return (save.station?.lieutenantResidents ?? []).filter(actor => !away.has(actor))
+}
+
+export function stationResidentCount(save: Save, book: CampaignBook, inTransit = false) {
+  return stationPresent(save, book, inTransit).length + residentLieutenants(save).length
+}
+
+export function stationRations(save: Save, book: CampaignBook, inTransit = false) {
+  return 2 + Math.floor(stationResidentCount(save, book, inTransit) / 20)
+}
+
+export function cutterRations(save: Save, book: CampaignBook) {
+  const station = stationOf(save, book)
+  return save.expedition || !save.campaignSupply || save.campaignSupply.port === station.anchor
+    ? 0 : 1 + Math.floor((station.travellers?.length ?? 0) / 10)
+}
+
 export function stationWorkers(save: Save, book: CampaignBook, inTransit = false): number[] {
   return stationPresent(save, book, inTransit).filter(canTakeOrdinaryAssignment).map(member => member.outfit)
 }
@@ -85,7 +104,14 @@ export function advanceStationWatches(save: Save, book: CampaignBook, count: num
   let next = save
   for (let watch = 0; watch < count; watch++) {
     const state = stationOf(next, book)
-    const result = tickStation(state, new Set(stationWorkers(next, book, inTransit)))
+    const priorDay = next.campaignDay.day - 1
+    const visited = state.lastContact ? new Set(next.crew.filter(member =>
+      state.lastContact?.[crewSpeaker(member)] === priorDay).map(member => member.outfit)) : undefined
+    const result = tickStation(state, new Set(stationWorkers(next, book, inTransit)), book.stationStory ? {
+      residents: stationResidentCount(next, book, inTransit),
+      visited,
+      lieutenantSupplies: residentLieutenants(next).filter(actor => state.lastContact?.[actor] === priorDay).length,
+    } : undefined)
     const stock = next.campaignSupply
     const carriesCutter = !inTransit && !next.expedition && !next.mission && stock?.port === state.anchor
       && result.station.anchor !== state.anchor
@@ -107,12 +133,12 @@ export function advanceStationWatches(save: Save, book: CampaignBook, count: num
       if (patient) next = { ...next, crew: next.crew.map(member => member === patient ? { ...patient, strain: patient.strain - 1 } : member) }
     }
     const day = Math.floor(result.station.absoluteWatch / WATCHES_PER_DAY) + 1
-    if (next.campaignDay.day < day) next = settleSupplyDay(next, { ...next.campaignDay, day }, book)
+    if (next.campaignDay.day < day) next = settleSupplyDay(next, { ...next.campaignDay, day }, book, inTransit)
   }
   return next
 }
 
-function settleSupplyDay(save: Save, day: CampaignDay, book: CampaignBook): Save {
+function settleSupplyDay(save: Save, day: CampaignDay, book: CampaignBook, inTransit = false): Save {
   const next = { ...save, campaignDay: day }
   const network = book.supply
   if (day.day < save.campaignDay.day) return save
@@ -125,11 +151,29 @@ function settleSupplyDay(save: Save, day: CampaignDay, book: CampaignBook): Save
   }
   const support = campaignSupport(book, save)
   const ports = network.ports.map((port) => developedPort(book, next, port))
-  const supply = supplyNight(save.campaignSupply ?? startSupply(network), { ...network, ports }, save.story.flags,
-    { ...support, provisions: campaignUpkeep(book, save, support.ashore) })
+  let supply = supplyNight(save.campaignSupply ?? startSupply(network), { ...network, ports }, save.story.flags,
+    { ...support, provisions: book.stationStory ? (inTransit ? Math.max(1, cutterRations(save, book)) : cutterRations(save, book))
+      : campaignUpkeep(book, save, support.ashore) })
+  if (book.stationStory) {
+    const station = stationOf(save, book)
+    const reserves = station.reserves ?? STARTING_STATION_RESERVES
+    const due = stationRations(save, book, inTransit)
+    const fromReserve = Math.min(due, reserves.provisions)
+    let shortfall = due - fromReserve
+    const anchor = ports.find(port => port.id === station.anchor)
+    if (shortfall > 0 && station.automaticRations !== false && anchor) {
+      const stores = storesAt(supply, anchor)
+      const fromDock = Math.min(shortfall, Math.max(0, stores.provisions - anchor.reserve.provisions - anchor.upkeep.provisions))
+      supply = { ...supply, stores: { ...supply.stores, [anchor.id]: { ...stores, provisions: stores.provisions - fromDock } } }
+      shortfall -= fromDock
+    }
+    next.station = { ...station, reserves: { ...reserves, provisions: reserves.provisions - fromReserve }, rationShortfall: shortfall }
+    if (station.lastContact) next.crew = save.crew.map(member =>
+      member.strain > 0 && station.lastContact?.[crewSpeaker(member)] === day.day - 1 ? { ...member, strain: member.strain - 1 } : member)
+  }
   if (!support.ashore.size) return observeManagement(save, passAWatch({ ...next, campaignSupply: supply }, book.story), book)
-  const crew = save.crew.filter(({ outfit }) => !support.ashore.has(outfit))
+  const crew = next.crew.filter(({ outfit }) => !support.ashore.has(outfit))
   const watched = passAWatch({ ...next, campaignSupply: supply, crew }, book.story)
   const aboard = new Map(watched.crew.map((member) => [member.outfit, member]))
-  return observeManagement(save, { ...watched, crew: save.crew.map((member) => aboard.get(member.outfit) ?? member) }, book)
+  return observeManagement(save, { ...watched, crew: next.crew.map((member) => aboard.get(member.outfit) ?? member) }, book)
 }

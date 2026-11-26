@@ -1,5 +1,5 @@
 import {
-  CAPABILITY_NAME, managementReceipt, observeManagement, earn, freePlace, jumpRoute, loadShipment, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
+  CAPABILITY_NAME, developedPort, managementReceipt, observeManagement, earn, freePlace, jumpRoute, loadShipment, moduleAt, MODULES_BY_ID, placeModule, placeProblem, requestRelief,
   shipCapabilities, shipmentAt, SHIP_CARGO_MAX, startSupply, STARTING_STATION_RESERVES, STATION_RESERVE_MAX, storesAt, SUPPLY_KINDS,
   type CampaignBook, type CampaignSupply, type Save, type SupplyNetwork, type SupplyPort, type World,
 } from '@cyber/domain'
@@ -9,7 +9,7 @@ import { dispatchStationDelivery, stationDelivery } from './station-logistics'
 import { watchLabel } from './appointments'
 import { type LoadedCampaign } from './load'
 import { updateSave } from '../save/game'
-import { advanceStationWatches, cutterArrival, stationOf, transferStationStock } from './watch'
+import { advanceStationWatches, cutterArrival, cutterRations, stationOf, stationRations, transferStationStock } from './watch'
 
 const button = 'min-h-11 rounded-lg px-3 text-sm font-semibold text-white'
 const action = `${button} bg-white/10 disabled:opacity-50`
@@ -44,6 +44,17 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
   const batch = book?.fourAct ? 8 : undefined
   const station = book?.stationStory ? stationOf(save, book) : undefined
   const reserves = station?.reserves ?? STARTING_STATION_RESERVES
+  const shipUpkeep = book?.stationStory ? cutterRations(save, book) : upkeep
+  const stationUpkeep = book?.stationStory ? stationRations(save, book) : 0
+  const supplyOrder = (kind: 'fuel' | 'provisions' | 'alloy', capacity: number | undefined) =>
+    change((current, stock) => {
+      const original = network.ports.find(row => row.id === port.id)
+      const dock = book && original ? developedPort(book, current, original) : port
+      const amount = shipmentAt(stock, dock, kind, capacity)
+      const loaded = loadShipment(stock, dock, kind, capacity)
+      return loaded ? managementReceipt({ ...current, campaignSupply: loaded.supply, wallet: earn(current.wallet, { alloy: loaded.alloy }) },
+        { kind: 'shipment', subject: kind, destination: 'ship', amount }) : current
+    })
   const outgoing = book?.stationStory ? (['fuel', 'provisions'] as const).flatMap(kind => stationDelivery(save, book, kind) ?? []) : []
   return <section className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3" aria-label={showMap ? 'Star map and supply' : 'Cargo'}>
     <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -84,13 +95,22 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
     </ul>}
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Ship cargo">
       <span>Fuel {supply.fuel}</span><span>Provisions {supply.provisions}</span><span>Alloy {save.wallet.alloy}</span>
-      <span>Nightly upkeep {upkeep} {upkeep === 1 ? 'provision' : 'provisions'}</span>
+      <span>Cutter upkeep · {shipUpkeep} provisions at dawn</span>
     </div>
-    <p className="text-sm text-slate-300">After next watch · {Math.max(0, supply.provisions - upkeep)} ship provisions{upkeep > supply.provisions && ' · Short ' + (upkeep - supply.provisions)}</p>
+    <p className="text-sm text-slate-300">After dawn · {Math.max(0, supply.provisions - shipUpkeep)} cutter provisions{shipUpkeep > supply.provisions && ' · Short ' + (shipUpkeep - supply.provisions)}</p>
     <p className="text-sm text-slate-300">Net port output each watch · {port.produces.fuel - port.upkeep.fuel} fuel · {port.produces.provisions - port.upkeep.provisions} provisions · {port.produces.alloy - port.upkeep.alloy + (liberated?.alloy ?? 0) + (port.liberations ?? []).reduce((n, row) => n + (flags.includes(row.flag) ? row.alloy : 0), 0)} alloy</p>
     {supply.shortfall > 0 && <p className="text-sm text-[#ffa7b7]">Last night’s shortfall {supply.shortfall} provisions</p>}
     {book && station?.anchor === port.id && <section className="space-y-1" aria-label="Homestretch reserves">
       <h3 className="font-semibold">Homestretch reserves</h3>
+      <p className="text-sm">Station upkeep · {stationUpkeep} provisions at dawn</p>
+      {!!station.rationShortfall && <p className="text-sm text-amber-200">Last dawn was short by {station.rationShortfall}. Optional fabrication and shipyard duty output is paused.</p>}
+      <label className="flex min-h-11 items-center gap-2 text-sm">
+        <input type="checkbox" checked={station.automaticRations !== false}
+          onChange={event => {
+            const automaticRations = event.currentTarget.checked
+            change(current => ({ ...current, station: { ...stationOf(current, book), automaticRations } }))
+          }} /> Draw station rations from local surplus when reserves run low
+      </label>
       {(['fuel', 'provisions'] as const).map(kind => <div key={kind} className="flex flex-wrap items-center gap-2 text-sm">
         <span>{label[kind]} {reserves[kind]}</span>
         <button type="button" className={action} disabled={!reserves[kind] || supply[kind] >= SHIP_CARGO_MAX}
@@ -119,11 +139,12 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
           const count = shipmentAt(supply, port, kind, batch)
           return <div key={kind} className="space-y-1">
             <p className="text-sm">{label[kind]} {storesAt(supply, port)[kind]}</p>
-            <button type="button" className={action} disabled={count === 0} onClick={() => change((current, stock) => {
-              const shipment = loadShipment(stock, port, kind, batch)
-              return shipment ? managementReceipt({ ...current, campaignSupply: shipment.supply, wallet: earn(current.wallet, { alloy: shipment.alloy }) },
-                { kind: 'shipment', subject: kind, destination: 'ship', amount: shipmentAt(stock, port, kind, batch) }) : current
-            })}>Load {count} {label[kind].toLowerCase()}</button>
+            <button type="button" className={action} disabled={count === 0}
+              onClick={() => supplyOrder(kind, batch)}>Load {count} {label[kind].toLowerCase()}</button>
+            {kind !== 'alloy' && book?.stationStory && shipmentAt(supply, port, kind, SHIP_CARGO_MAX) > count &&
+              <button type="button" className={action} onClick={() => supplyOrder(kind, SHIP_CARGO_MAX)}>
+                Load {shipmentAt(supply, port, kind, SHIP_CARGO_MAX)} {label[kind].toLowerCase()}
+              </button>}
           </div>
         })}
       </div>

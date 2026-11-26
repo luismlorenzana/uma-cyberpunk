@@ -4,7 +4,7 @@ import { appointmentFor, cancelStationAppointment, stationDate, stationRoom, STA
 import { nameOf } from '../story/runner'
 import { updateSave } from '../save/game'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
-import { advanceStationWatches, stationOf, stationWorkers } from './watch'
+import { advanceStationWatches, cutterRations, stationOf, stationRations, stationWorkers } from './watch'
 import { dateEligible } from './dates'
 import { appointmentStatus, appointmentTitle, reserveAppointment, watchLabel } from './appointments'
 
@@ -73,7 +73,8 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
   return <section className="space-y-3 rounded-xl border border-cyan-200/20 bg-[#0b1727] p-3" aria-label="Captain’s Calendar">
     <header className="flex flex-wrap items-center justify-between gap-2">
       <div><h1 className="font-display text-xl font-bold">Captain’s Calendar</h1>
-        <p className="text-sm">{watchLabel(now)} · Charter Year {date.year}</p></div>
+        <p className="text-sm">{watchLabel(now)} · Charter Year {date.year}</p>
+        {book.stationStory && <p className="text-sm">Dawn rations · Homestretch {stationRations(save, book)} · Cutter {cutterRations(save, book)}</p>}</div>
       <button type="button" className={campaignPrimary + ' disabled:opacity-40'} disabled={busy}
         onClick={() => void updateSave(s => s.mission || s.pairScene || s.campaignDay.pending || s.expedition ? s : advanceStationWatches(s, book, 1))}>Advance watch</button>
     </header>
@@ -104,14 +105,16 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
             {STATION_MODULES[key].label} · {assigned === undefined ? '' : nameOf(book.story, assigned) + ' · '}{coverage}
           </button>
         })}
-        {station.report && <p className="text-sm text-cyan-100">Last duty · {station.report.workers.length} crew · +{station.report.alloy} alloy · +{station.report.data} data</p>}
+        {station.report && <p className="text-sm text-cyan-100">Last duty · {station.report.workers.length} crew · +{station.report.alloy} alloy · +{station.report.data} data
+          {!!station.report.provisions && ` · +${station.report.provisions} provisions`}
+          {!!station.report.supported && ` · ${station.report.supported} supported by last night’s visits`}</p>}
       </section>
       <section className="space-y-2" aria-label="Personal appointments">
         <h2 className="font-semibold">Personal appointments</h2>
         {bookings.map(row => {
           const { venue, state } = appointmentStatus(book, save, row)
           const next = book.supply?.ports.find(port => port.id === venue)
-          return <div key={row.at} className="flex flex-wrap items-center gap-2 text-sm">
+          return <div key={'actor' in row ? row.actor : row.quest} className="flex flex-wrap items-center gap-2 text-sm">
             <span>{appointmentTitle(book, save, row)} · {watchLabel(row.at)} · {next?.name ?? venue} · {statusText[state]}</span>
             {(state === 'ready' || (state === 'missed' && 'quest' in row)) &&
               <button type="button" className={campaignControl} disabled={busy}
@@ -132,7 +135,7 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
           </select>
           <button type="button" className={campaignControl} disabled={busy || actor === undefined}
             onClick={() => { if (actor !== undefined) modify({ actor }, 'book') }}>
-            {booked ? 'Reschedule' : 'Reserve next Free watch'}</button>
+            {booked ? 'Reschedule' : 'Reserve next Night'}</button>
           <button type="button" className={campaignControl} onClick={quarters}>Quarters</button>
         </div>
       </section>
@@ -157,14 +160,15 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
           <strong>{calendarDay.month} {calendarDay.day}</strong>
           {projects.map(label => <p key={label}>Ready · {label}</p>)}
           {hulls.length > 0 && <p>Shipyard · {hulls.length} ready</p>}
-          {appointments.map(row => <p key={row.at}>Free · {appointmentTitle(book, save, row)}</p>)}
+          {appointments.map(row => <p key={'actor' in row ? row.actor : row.quest}>{'actor' in row ? 'Night' : 'Free'} · {appointmentTitle(book, save, row)}</p>)}
           {station.deliveries?.filter(order => Math.max(order.at, now) >= day &&
             Math.max(order.at, now) < day + WATCHES_PER_DAY).map((order, index) => <p key={index}>
             {order.at <= now ? 'Waiting for storage' : 'Delivery'} · {order.amount} {order.kind}
           </p>)}
           {station.move && station.move.at >= day && station.move.at < day + WATCHES_PER_DAY && <p>Homestretch arrives</p>}
           {annual.filter(row => row.due === day).map(row => <p key={row.flag}>{row.label} · {STATION_MONTHS[row.month]} {row.day}</p>)}
-          {coverage && <p>Duty · {coverage.workers.length} crew · +{coverage.alloy} alloy · +{coverage.data} data</p>}
+          {coverage && <p>Duty · {coverage.workers.length} crew · +{coverage.alloy} alloy · +{coverage.data} data
+            {!!coverage.provisions && ` · +${coverage.provisions} provisions`}</p>}
         </li>
       })}
     </ol>

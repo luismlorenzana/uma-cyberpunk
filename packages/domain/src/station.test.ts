@@ -16,12 +16,12 @@ it('saves station construction, powers finished rooms in order and advances the 
   const second = tickStation(first.station, new Set())
   expect(stationCapacity(second.station)).toBe(280)
   expect(second.station.absoluteWatch).toBe(2)
-  expect(stationDate(second.station.absoluteWatch)).toEqual({ year:1, month:'Keel', day:1, phase:'Night' })
+  expect(stationDate(second.station.absoluteWatch)).toEqual({ year:1, month:'Keel', day:1, phase:'Night', hour:'2200' })
   const reloaded = parseSave(JSON.parse(JSON.stringify({ ...save, station:second.station })))
   expect(reloaded.station).toEqual(second.station)
   expect(setStationPower(reloaded.station!, 'shipyard')).toBe(reloaded.station)
   expect(stationPower(setStationPower(setStationPower(reloaded.station!, 'fabrication'), 'shipyard'))).toEqual({ supply:4, used:3 })
-  expect(stationDate(360)).toEqual({ year:2, month:'Keel', day:1, phase:'Duty' })
+  expect(stationDate(360)).toEqual({ year:2, month:'Keel', day:1, phase:'Duty', hour:'0600' })
 })
 
 it('applies a shift only on Duty and keeps manual assignments ahead of automatic cover', () => {
@@ -36,12 +36,12 @@ it('applies a shift only on Duty and keeps manual assignments ahead of automatic
 it('restores distinct visit and care appointments and reschedules one without moving the other', () => {
   const save = newSave('station', '2026-11-26T00:00:00.000Z')
   const booked = bookStationAppointment(bookStationAppointment(firstStation(), { actor: 9000001 }), { quest:'care-review' })
-  expect(booked.appointments).toEqual([{ actor:9000001, at:1 }, { quest:'care-review', at:4 }])
+  expect(booked.appointments).toEqual([{ quest:'care-review', at:1 }, { actor:9000001, at:2 }])
   const next = bookStationAppointment({ ...booked, absoluteWatch:4 }, { actor:9000001 })
-  expect(next.appointments).toEqual([{ quest:'care-review', at:4 }, { actor:9000001, at:7 }])
+  expect(next.appointments).toEqual([{ quest:'care-review', at:1 }, { actor:9000001, at:5 }])
   const reloaded = parseSave(JSON.parse(JSON.stringify({ ...save, station:next })))
   expect(reloaded.station).toEqual(next)
-  expect(cancelStationAppointment(reloaded.station!, { quest:'care-review' }).appointments).toEqual([{ actor:9000001, at:7 }])
+  expect(cancelStationAppointment(reloaded.station!, { quest:'care-review' }).appointments).toEqual([{ actor:9000001, at:5 }])
 })
 
 it('keeps station reserves and up to 250 permanent assignments in the saved state', () => {
@@ -75,4 +75,20 @@ it('conserves base deliveries through storage limits, relocation and reload, and
   const serviced = tickStation({ ...restored, reserves: { fuel: 94, provisions: 6 } }, new Set()).station
   expect(serviced.reserves?.fuel).toBe(96)
   expect(serviced.deliveries).toEqual([])
+})
+
+it('queues two visits on one Night and preserves dawn scenes and contact history through reload', () => {
+  const save = newSave('captain', '2026-11-26T00:00:00.000Z')
+  const first = bookStationAppointment(firstStation(), { actor: 9000001 })
+  const second = bookStationAppointment(first, { actor: 9000002 })
+  const station = {
+    ...bookStationAppointment(second, { actor: 9000003 }),
+    absoluteWatch: 3,
+    night: { day: 1, used: 2, mornings: [{ kind: 'morning' as const, companion: 9000002, scene: 'second-morning' }] },
+    lastContact: { '9000001': 1, '9000002': 1 },
+  }
+  expect(station.appointments?.map(row => row.at)).toEqual([2, 2, 5])
+  const morning = { kind: 'morning' as const, companion: 9000001, scene: 'first-morning' }
+  const stored = { ...save, campaignDay: { day: 2, pending: morning }, station }
+  expect(parseSave(JSON.parse(JSON.stringify(stored)))).toEqual(stored)
 })
