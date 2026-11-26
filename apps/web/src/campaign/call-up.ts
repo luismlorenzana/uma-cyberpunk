@@ -1,4 +1,4 @@
-import { awayMembers, campaignSupport, resting, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
+import { awayMembers, campaignSupport, crewSpeaker, resting, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
 
 /** Only that operation borrows both members of an available, released home pair. */
 export function campaignCallUp(book: CampaignBook, save: Save, quest: CampaignQuest): number[] {
@@ -21,6 +21,12 @@ export function missionAshore(book: CampaignBook, save: Save): ReadonlySet<numbe
     const quest = book.quests.find(row => row.encounter === save.mission!.id)
     const admitted = new Set(quest ? campaignCallUp(book, save, quest) : [])
     for (const outfit of save.mission.callUp.members) if (admitted.has(outfit)) ashore.delete(outfit)
+  }
+  const duo = save.finaleProgress?.duo
+  if (duo && save.mission && save.mission.id === book.fourActFinale?.hushApproach) {
+    const riders = book.fourAct?.duos.get(duo)?.expedition?.members ?? []
+    const reserved = new Set(riders.map(member => member.role === 'uma' ? member.outfit : member.heroine))
+    for (const member of save.crew) if (reserved.has(crewSpeaker(member))) ashore.add(member.outfit)
   }
   return ashore
 }
