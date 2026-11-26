@@ -2,6 +2,7 @@ import { hash32 } from '@cyber/battle'
 import { advanceStationWatches, settleCampaignDay, stationOf } from './watch'
 import { awayMembers, COMMAND_STATIONS, developedPort, managementReceipt, shipmentAt, loadShipment, type CommandStation, type Speaker, expeditionReadiness, SHIP_CARGO_MAX, startSupply, type CampaignBook, type CampaignQuest, type ExpeditionFormation, type ExpeditionRun, type FixedDuo, type Save } from '@cyber/domain'
 import { COMMAND_HULL, stationRoom } from '@cyber/domain'
+import { focusExpeditionCrew, initializeCampaignCurve } from './progression'
 
 export function expeditionForQuest(book: CampaignBook, quest: string, activeDuo?: string): FixedDuo | undefined {
   if (book.fourAct?.transit?.quests.includes(quest)) return activeDuo ? book.fourAct.duos.get(activeDuo) : undefined
@@ -84,9 +85,10 @@ export function commitExpedition(save: Save, book: CampaignBook, quest: string, 
   const stock = save.campaignSupply ?? startSupply(book.supply)
   if (quest === plan.launch && !save.expedition) {
     const hull = save.fleet?.[duo.id]
-    if (hull?.condition === 'commissioning') return save
+    if (hull?.condition === 'commissioning' || hull?.condition === 'parked' || stock.fuel < plan.cargo.fuel || stock.provisions < plan.cargo.provisions) return save
     const integrity = hull?.integrity
-    const launched = { ...save, expedition: { duo: duo.id, ship: formation.ship, members: formation.members,
+    const prepared = focusExpeditionCrew(initializeCampaignCurve(save, book), formation.members)
+    const launched = { ...prepared, expedition: { duo: duo.id, ship: formation.ship, members: formation.members,
       ...(hull?.reinforced ? { reinforced: true as const } : {}),
       fuel: plan.cargo.fuel, provisions: plan.cargo.provisions, ...(integrity === undefined ? {} : { integrity }) },
       campaignSupply: { ...stock, fuel: stock.fuel - plan.cargo.fuel, provisions: stock.provisions - plan.cargo.provisions } }

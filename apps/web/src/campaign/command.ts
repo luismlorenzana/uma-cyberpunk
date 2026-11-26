@@ -1,6 +1,6 @@
 import {
   awayMembers, canTakeOrdinaryAssignment, COMMAND_STATIONS, crewSpeaker, MAX_DRILLS, reactorPips, resumeCommand, shipWith, commandTurn, setFlag,
-  STARTER_CUTTER, type CampaignBook, type CommandCast, type CampaignSupply, type CommandAction, type CommandEncounter, type CommandInput, type CommandStation, type Save,
+  STARTER_CUTTER, type CampaignBook, type CombatAct, type CommandCast, type CampaignSupply, type CommandAction, type CommandEncounter, type CommandInput, type CommandStation, type Save,
 } from '@cyber/domain'
 import { deploy, finishBattle, finishMission, recordAction, retry, setSquad } from '../mission/director'
 import { expeditionOfficer } from './expedition'
@@ -122,7 +122,7 @@ export function issueCommand(save: Save, encounter: string, turn: number, action
   return state.result ? finishBattle(committed, state.result === 'won') : committed
 }
 
-export function settleCommand(save: Save, encounter: string, progression?: { requiredLead?: number; book?: CampaignBook }): Save {
+export function settleCommand(save: Save, encounter: string, progression?: { requiredLead?: number; book?: CampaignBook; act?: CombatAct }): Save {
   if (save.mission?.step !== 'results' || save.mission.id !== encounter || !save.mission.won) return save
   const first = !save.worlds.missions.includes(encounter)
   const missions = first ? [...save.worlds.missions, encounter] : save.worlds.missions
@@ -133,7 +133,7 @@ export function settleCommand(save: Save, encounter: string, progression?: { req
   const officers = Object.values(run.input.presentation?.crew ?? {}).flatMap(actor => actor ? [actor.speaker] : [])
   const lead = progression?.requiredLead
   const credited = progression && first
-    ? creditCampaignClear(save, lead === undefined ? officers : [lead, ...officers]) : save
+    ? creditCampaignClear(save, lead === undefined ? officers : [lead, ...officers], progression.act) : save
   const finished = finishMission({ ...credited, story, worlds: { ...save.worlds, missions } })
   const book = progression?.book, vessel = run.input.vessel
   if (!book?.fourAct || !vessel) return finished

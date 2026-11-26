@@ -51,16 +51,20 @@ export function UnitCard({ state, unit, onClose }: { state: BattleState; unit: U
   const hue = SIDE_HUE[unit.side]
   const contact = unit.status === 'active' ? talkContact(state, unit.id) : undefined
   return (
-    <Panel className="pointer-events-auto w-56">
+    <Panel className="pointer-events-auto max-h-[44dvh] w-56 overflow-y-auto">
       <div className="mb-1 flex items-center justify-between gap-2">
         {umaOf(state, unit.id) && <FaceTile outfitId={umaOf(state, unit.id)!} size={40} label={labelOf(state, unit.id)} round />}
         <b className="min-w-0 flex-1 truncate" style={{ color: hue }}>{labelOf(state, unit.id)}</b>
+        <BattleHelp topic="parts" version={state.input.rulesVersion} />
         <button type="button" onClick={onClose} className="min-h-11 min-w-11 text-[#a3abc2]" aria-label="Close">✕</button>
       </div>
       {(['core', 'leftArm', 'rightArm', 'legs'] as const).map((p) => (
         <div key={p} className="flex items-center justify-between gap-2"><span>{PART_NAME[p]}</span><span>{unit.hp[p]}/{unit.maxHp[p]} <Bar hp={unit.hp[p]} max={unit.maxHp[p]} hue={hue} /></span></div>
       ))}
-      <div className="mt-1 text-[#a3abc2]">Charge {unit.charge} · Link {unit.link ? 'on' : 'off'} · {unit.status === 'active' ? `facing ${unit.facing}` : unit.status}{unit.stunned ? ' · stunned' : ''}{unit.reloading ? ' · reloading' : ''}</div>
+      <div className="flex flex-wrap items-center text-[#a3abc2]">Charge {unit.charge}<BattleHelp topic="charge" detail={`${unit.charge} Charge now`} version={state.input.rulesVersion} />· Link {unit.link ? 'on' : 'off'}<BattleHelp topic="link" version={state.input.rulesVersion} />
+        · Facing {unit.facing}</div>
+      <div className="flex flex-wrap gap-x-2 text-[#a3abc2]">{unitHelpTopics(unit).map(topic => <div className="inline-flex items-center" key={topic}>
+        {battleHelp[topic][0]}<BattleHelp topic={topic} version={state.input.rulesVersion} /></div>)}</div>
       {contact && <p className="mt-1 text-[#a3abc2]">{unit.talkHit ? `Talk · ${labelOf(state, contact.actor)}` : contact.hint}</p>}
       {unit.windup && <p className="text-[#ffb84d]">Preparing a shot at {labelOf(state, unit.windup.target)}</p>}
       {unit.suppressed && <p className="text-[#ffb84d]">Suppressed · reactions blocked</p>}
@@ -87,6 +91,12 @@ export function ForecastCard({ state, f, onConfirm, onCancel, children }: { stat
   return (
     <Panel className="pointer-events-auto max-h-[72dvh] w-64 overflow-y-auto">
       <div data-forecast className="space-y-1">
+        <div className="flex flex-wrap items-center gap-1">Forecast <BattleHelp topic="forecast" version={state.input.rulesVersion} />
+          {f.cover && <BattleHelp topic="cover" version={state.input.rulesVersion} detail={`Covering unit · ${labelOf(state, f.cover)}`} />}
+          {!!f.crossfire.length && <BattleHelp topic="crossfire" version={state.input.rulesVersion} />}
+          {f.counter && <BattleHelp topic="counter" version={state.input.rulesVersion} />}
+          {!!f.attack?.guard && <BattleHelp topic="guard" version={state.input.rulesVersion} />}
+        </div>
         {f.attack && <StrikeLine state={state} s={f.attack} title={f.cover ? `Covered by ${labelOf(state, f.cover)}` : f.signature ?? 'Attack'} />}
         {f.splash && <div className="text-[#ffb84d]">On hit · {f.splash.damage} splash to {f.splash.targets.map((id) => labelOf(state, id)).join(', ')}</div>}
         {f.suppression && <div className="text-[#ffb84d]">
@@ -129,7 +139,7 @@ export function PaperDoll({ d }: { d: Doll }) {
 }
 
 /** The terrain card on a long press (TC24). */
-export function TerrainPanel({ card, onClose }: { card: TerrainCard; onClose: () => void }) {
+export function TerrainPanel({ card, onClose, version }: { card: TerrainCard; onClose: () => void; version?: number }) {
   return (
     <Panel className="pointer-events-auto w-60">
       <div className="mb-1 flex items-center justify-between">
@@ -137,6 +147,12 @@ export function TerrainPanel({ card, onClose }: { card: TerrainCard; onClose: ()
         <button type="button" onClick={onClose} className="min-h-11 min-w-11 text-[#a3abc2]" aria-label="Close">✕</button>
       </div>
       <div>{card.ground}{card.state ? ` · ${card.state}${card.rounds ? ` (${card.rounds} rounds)` : ''}` : ''}{card.live ? ' · live' : ''}</div>
+      <div className="flex items-center">
+        <BattleHelp topic={card.state ? tileTopics[card.state] : 'terrain'} version={version}
+          detail={card.rounds ? `${card.rounds} rounds remaining` : undefined} />
+        {card.live && <BattleHelp topic="live" version={version} />}
+        {!!card.props.length && <BattleHelp topic="props" version={version} />}
+      </div>
       {card.effects.map((e) => <div key={e} className="text-[#a3abc2]">{e}</div>)}
       {card.changes.length > 0 && <div className="mt-1 text-[11px] text-[#6d7590]">Can change: {card.changes.join('; ')}</div>}
     </Panel>
@@ -176,3 +192,5 @@ export function CutIn({ state, c }: { state: BattleState; c: CutInView }) {
     </div>
   )
 }
+import { BattleHelp } from './BattleHelp'
+import { battleHelp, tileTopics, unitHelpTopics } from './help'

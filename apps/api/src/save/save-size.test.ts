@@ -51,6 +51,12 @@ describe('the save in one document', () => {
         files: Object.fromEntries(Array.from({ length: 40 }, (_, i) => [slug('file', i), [0, 1, 2, 3, 4]])), anomalies: Object.fromEntries(Array.from({ length: 30 }, (_, i) => [slug('a', i), i % 2 === 0])),
       },
       expedition: profile.squad === 10 ? { duo: 'duo-1', ship: 'ship-1', members, fuel: 3, provisions: 6 } : null,
+      ...(profile.squad === 10 ? { campaignCurve: 1,
+        combatTraining: Object.fromEntries(Array.from({ length: 50 }, (_, index) => [9_000_001 + index, { rank: 10, subclass: 'heal', focused: true }])),
+        expeditionXp: Object.fromEntries(Array.from({ length: 150 }, (_, index) => [slug('guest', index), 10_300])),
+        fleet: Object.fromEntries(Array.from({ length: 25 }, (_, index) => [slug('duo', index), { ship: slug('ship', index), condition: 'commissioned' }])),
+        salvage: { sequence: 300, clears: { 'dock-recovery': 200, 'dock-defense': 50, 'base-recovery': 50 } },
+      } : {}),
       mission: { id: 'm', chapter: 'c', step: 'battle', squad: Array.from({ length: profile.squad }, (_, index) => 9_000_001 + index), won: null,
         battle: { input, actions: Array.from({ length: profile.actions }, (_, i) => ({ kind: 'turn', unit: 'android-1', to: [i % 14, (i * 3) % 14], act: { kind: 'attack', with: 'right', target: 'vanguard-a' }, face: 'N' })) } },
     }
@@ -58,6 +64,7 @@ describe('the save in one document', () => {
     expect(parsed.crew).toHaveLength(profile.crew)
     expect(parsed.mission?.squad).toHaveLength(profile.squad)
     expect(parsed.expedition?.members.length ?? 0).toBe(profile.squad === 10 ? 10 : 0)
+    expect(Object.keys(parsed.expeditionXp ?? {})).toHaveLength(profile.squad === 10 ? 150 : 0)
     expect(bytes({ baseRevision: 1, save: parsed })).toBeLessThan(profile.limit)
   })
 })

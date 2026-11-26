@@ -1,6 +1,6 @@
 
 import { useMemo, useState } from 'react'
-import { awayMembers, campaignSupport, crewSpeaker, levelOf, ROLE_NAME, stationCapacity, type CampaignBook, type CampaignDate, type CampaignQuest,
+import { awayMembers, campaignSupport, campaignLevel, crewSpeaker, ROLE_NAME, stationCapacity, SUBCLASS_NAME, trainingOf, type CampaignBook, type CampaignDate, type CampaignQuest,
   type CampaignReleaseFile, type Save, type Speaker } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
@@ -15,6 +15,19 @@ import { campaignActs, rosterStatus, type CampaignNavigation, type RosterBrowse,
 import { homestretchCabins, setLieutenantResidence } from './homestretch'
 import { stationOf } from './watch'
 import { Wardrobe } from './Wardrobe'
+import { BattleHelp } from '../battle/BattleHelp'
+import { campaignActorXp } from './progression'
+
+function LaserProgress({ save, outfit }: { save: Save; outfit: number }) {
+  const progress = trainingOf(save, outfit)
+  const modes = ['Focused', ...(progress.rank >= 2 ? ['Thermal'] : []), ...(progress.rank >= 3 ? ['Impact'] : []), ...(progress.rank >= 5 ? ['Area'] : [])]
+  const next = progress.rank < 2 ? 'Thermal at Rank 2' : progress.rank < 3 ? 'Impact at Rank 3' : progress.rank < 5 ? 'Area at Rank 5' : undefined
+  return <div className="text-sm">
+    <div className="flex items-center">Laser Rank {progress.rank}
+      {progress.focused ? ' · Laser-only' : progress.subclass ? ` · ${SUBCLASS_NAME[progress.subclass]}` : ''}<BattleHelp topic="laser" /></div>
+    <p>{modes.join(' · ')}{next && ` · Next ${next}`}</p>
+  </div>
+}
 
 const roles: readonly RosterKind[] = ['Uma', 'General', 'Lieutenant']
 const choices = { Uma: 'Umas', General: 'Generals', Lieutenant: 'Lieutenants' }
@@ -134,8 +147,13 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
         {entry.kind !== 'Uma' && entry.lead !== undefined && <p className="text-sm text-slate-300">Home front · {names.get(entry.lead)}</p>}
         {entry.kind === 'Uma' && partner !== undefined && <p className="text-sm text-slate-300">Fixed partner · {names.get(partner)}</p>}
         {member && <div className="rounded-lg border border-white/10 p-2 text-sm">
-          <p>Level {levelOf(member.xp)} · {member.xp} XP{member.role && ' · ' + ROLE_NAME[member.role]}</p>
-          <RigSheet rig={member.rig} xp={member.xp} />
+          <p>Level {campaignLevel(member.xp, save.campaignCurve)} · {member.xp} XP{member.role && ' · ' + ROLE_NAME[member.role]}</p>
+          {book.fourAct && !member.heroine && <LaserProgress save={save} outfit={member.outfit} />}
+          <RigSheet rig={member.rig} xp={member.xp} curve={save.campaignCurve} />
+        </div>}
+        {!member && entry.kind === 'Lieutenant' && campaignActorXp(save, entry.speaker) !== undefined && <div className="rounded-lg border border-white/10 p-2 text-sm">
+          <p>Level {campaignLevel(campaignActorXp(save, entry.speaker)!, save.campaignCurve)} · {campaignActorXp(save, entry.speaker)} XP</p>
+          <RigSheet rig={null} xp={campaignActorXp(save, entry.speaker)!} curve={save.campaignCurve} />
         </div>}
         <section aria-label="Character chapters">
           <h3 className="font-semibold">Chapters</h3>

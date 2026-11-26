@@ -152,6 +152,8 @@ export interface UnitInput {
   sprite?: HeroineSprite
   signature?: Signature
   specialty?: Specialty
+  /** An issued Deck limited to terminal interaction for an objective. */
+  terminalOnly?: true
   /** Optional frozen equipment identities for presentation. The reducer uses loadout. */
   frozenRig?: Record<'core' | 'leftArm' | 'rightArm' | 'legs' | 'visor', string>
     & Record<'leftHand' | 'rightHand' | 'back' | 'coat', string | null>

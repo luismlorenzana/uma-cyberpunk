@@ -26,7 +26,10 @@ import { ShipHome, homeAreas, type HomeArea } from './ShipHome'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
 import { careLeadAway, carePort, isCareSession } from './appointments'
 import { closeRecruitment, homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
-import { indexCampaignNavigation, type OperationBrowse, type RosterBrowse } from './navigation'
+import { combatReadiness, indexCampaignNavigation, type OperationBrowse, type RosterBrowse } from './navigation'
+import { initializeCampaignCurve } from './progression'
+import { salvageDeployment, startSalvage } from './salvage'
+import { workshopAt } from './workshop'
 import { SectorPanel } from './SectorPanel'
 import { ProjectsPanel } from './ProjectsPanel'
 import { SupplyPanel } from './SupplyPanel'
@@ -76,8 +79,8 @@ export function CampaignAccount() {
 function Campaign({ layout }: { layout: StageLayout }) {
   const save = useGame((g) => g.save)
   const owner = useGame((g) => g.uid)
-  const sceneRelease = save?.station?.recruit || save?.campaignDay.pending || save?.station?.night?.mornings.length
-    ? save.station?.sceneRelease : undefined
+  const sceneRelease = save?.salvage?.active?.release ?? (save?.station?.recruit || save?.campaignDay.pending || save?.station?.night?.mornings.length
+    ? save.station?.sceneRelease : undefined)
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [location, setLocation] = useState<string | null>(null)
   const [groundReports, setGroundReports] = useState<string[]>([])
@@ -136,7 +139,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     return () => { live = false }
   }, [check, owner, sceneRelease])
   useEffect(() => {
-    if (loaded && save) void updateSave((current) => creditCampaignDates(current, loaded.book))
+    if (loaded && save) void updateSave((current) => creditCampaignDates(initializeCampaignCurve(current, loaded.book), loaded.book))
   }, [loaded, save])
   useEffect(() => {
     if (restoredRecruit.current || !loaded || !save || sceneRelease && loaded.release.release !== sceneRelease) return
@@ -244,15 +247,17 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const missionState = save?.mission
   const sortieAshore = loaded && save && missionState?.callUp ? missionAshore(loaded.book, save) : support?.ashore
   const missionChapter = missionState && loaded?.book.story.chapters[missionState.chapter]
-  const mission = missionChapter && missionChapter.missions.find((m) => m.id === missionState?.id)
+  const salvage = save && salvageDeployment(save)
+  const mission = salvage?.mission ?? missionChapter?.missions.find((m) => m.id === missionState?.id)
   const training = mission?.scenario === 'training'
   const trainingQuest = training ? loaded?.book.quests.find(({ encounter }) => encounter === mission.id) : undefined
   const optionalTraining = !!(trainingQuest && loaded && optionalCampaignTraining(loaded.book, trainingQuest))
   const missionQuest = mission && loaded?.book.quests.find(({ encounter }) => encounter === mission.id)
+  const battleReadiness = loaded && navigation ? combatReadiness(loaded.book, navigation, missionQuest ?? undefined) : undefined
   const expeditionFight = loaded && missionQuest ? expeditionForQuest(loaded.book, missionQuest.id, save?.expedition?.duo) : undefined
   const personalLead = loaded && missionQuest ? personalMissionLead(loaded.book, missionQuest) : undefined
   const command = mission && loaded?.book.commands.get(mission.id)
-  const ground = mission && loaded?.book.ground.get(mission.id)
+  const ground = salvage?.ground ?? (mission && loaded?.book.ground.get(mission.id))
   const hush = loaded && save && ground && loaded.book.fourActFinale?.ground.includes(ground.id) ? finaleRun(save, loaded.book) : undefined
   const trainee = personalLead ?? missionState?.squad[0] ?? missionChapter?.leads[0]
   if (loaded && groundReports[0]) {
@@ -264,7 +269,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       <GroundScreen key={mission.id} loaded={loaded} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
         expedition={hush ? 'Hush expedition' : expeditionFight?.expedition?.route?.name} formationRun={hush} ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
         combatSprites={loaded.release.combatSprites}
-        combatShift={loaded.book.combatShift}
+        combatShift={loaded.book.combatShift} readiness={battleReadiness}
         acceptsFitted={!!ground && !ground.combat && !expeditionFight && !hush && (!!loaded.book.fourAct || loaded.book.workshop?.missions.includes(mission.id))}
         ashore={sortieAshore} requiredLead={personalLead}
         editableSquad={!!ground && (!!loaded.book.sectors?.length || !!missionState?.callUp || personalLead !== undefined)}
@@ -308,7 +313,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
         backdrop={backdrop ? loaded.assets.get(backdrop) : undefined}
         objectiveArt={commandArt?.objective ? loaded.assets.get(commandArt.objective) : undefined}
         objectiveLabel={commandArt?.objectiveLabel}
-        ashore={bridgeAshore} requiredLead={personalLead} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute}
+        ashore={bridgeAshore} requiredLead={personalLead} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute} readiness={battleReadiness}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
         portraits={new Map([...portraits, ...profiles])}
         names={new Map(save.crew.filter(({ outfit, heroine, expeditionOnly }) => !expeditionOnly && (personalLead === undefined || !heroine)
@@ -590,9 +595,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
   )) : []
   const datePanel = !expedition && loaded && save && dates.length > 0 && !night && !pendingPair && !missionState && !eveningOpen
     ? <DatePanel save={save} book={loaded.book} dates={dates} /> : null
-  const workshop = loaded?.book.workshop
-  const workshopPanel = !expedition && loaded && save && support && workshop && !night && !pendingPair && !missionState && !eveningOpen
-    && workshop.port === port?.id && complete.has(workshop.after)
+  const workshopPanel = !expedition && loaded && save && support && !night && !pendingPair && !missionState && !eveningOpen
+    && workshopAt(save, loaded.book)
     ? <Suspense fallback={null}><WorkshopPanel save={save} loaded={loaded} ashore={support.ashore} /></Suspense> : null
   const visitOptions = canRest ? evening?.visits.filter((v) => !support?.ashore.has(v.companion) && save?.crew.some((crew) => crew.outfit === v.companion)) ?? [] : []
   const dateOptions = loaded && save && canRest ? dates.filter(date =>
@@ -690,7 +694,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     selectView('Home')
   }
   function openCampaignQuest(quest: CampaignQuest) {
-    const duo = loaded?.book.stationStory && expeditionForQuest(loaded.book, quest.id)
+    const duo = loaded && expeditionForQuest(loaded.book, quest.id)
     if (duo?.expedition?.route?.launch === quest.id) setLaunchReview(quest)
     else if (loaded && isCareSession(loaded.book, quest.id)) openCare(quest)
     else setActive(quest)
@@ -726,7 +730,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const atStation = !!(save && loaded && supply?.port === stationOf(save, loaded.book).anchor)
   const stationStory = loaded?.book.stationStory
   function openExpeditionQuest(quest: CampaignQuest) {
-    const open = () => setActive(quest)
+    const open = () => openCampaignQuest(quest)
     if (expedition && expedition.ship === stationStory?.pilotShip && activePlan?.route.stops[0] === quest.id
       && showStationStory('errand-brief', open)) return
     open()
@@ -807,7 +811,11 @@ function Campaign({ layout }: { layout: StageLayout }) {
         </Suspense>}
         {currentView === 'Operations' && navigation && loaded && save && <Suspense fallback={<p role="status">Opening operations…</p>}>
           <OperationsScreen book={loaded.book} save={save} port={port?.id} complete={complete} navigation={navigation}
-            open={openCampaignQuest} travel={openNavigation} browse={operationBrowse} onBrowse={setOperationBrowse} />
+            open={openCampaignQuest} travel={openNavigation} browse={operationBrowse} onBrowse={setOperationBrowse}
+            startSalvage={(contract, outfit) => {
+              setGroundPaused(false)
+              void updateSave(current => startSalvage(current, loaded.book, loaded.release.release, contract, outfit))
+            }} />
           {loaded.book.stationStory && <details className="rounded-xl border border-white/15 p-2">
             <summary className="flex min-h-11 cursor-pointer items-center px-2 font-semibold">Fleet and shipyard</summary>
             <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} reviewLaunch={reviewExpeditionLaunch} operations

@@ -1,5 +1,5 @@
 import { capacityOf, EXPEDITION_RULES_VERSION, loadOf, maxHpOf, moveOf, type BattleAction, type BattleInput } from '@cyber/battle'
-import { awayMembers, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, groundOpponentScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
+import { awayMembers, bandsOf, CAMPAIGN_ACT_XP, campaignLevel, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, groundOpponentScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
 import { useEffect, useRef, useState } from 'react'
 import { BattleView } from '../battle/BattleView'
@@ -13,17 +13,21 @@ import { retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { nameOf } from '../story/runner'
-import { expeditionGroundInput, groundInput, groundSquadCapacity, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
-import { campaignBattleProgression, veteranCoreHp } from './progression'
+import { campaignRefitParts, campaignSquadInput, expeditionGroundInput, groundInput, groundSquadCapacity, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
+import { campaignActorXp, campaignBattleProgression, focusExpeditionCrew, initializeCampaignCurve } from './progression'
 import { fittedGroundRig, fittedSummary } from './workshop'
 import { formationReady, specialistInput } from './specialist-input'
+import { useMaster } from '../master/master'
+import type { CombatReadiness } from './navigation'
+import { closeSalvage } from './salvage'
+import { BattleHelp } from '../battle/BattleHelp'
 
 const action = 'min-h-11 rounded-lg bg-white/10 px-4 text-sm font-bold text-white'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-4 font-bold text-[#0b0d17]'
 const panel = 'absolute inset-0 overflow-auto bg-[#0b0d17] p-4 text-[#e8ebf5]'
 const insets = { margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }
 
-export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, requiredLead, loaded, expedition, formationRun, combatShift, onSettled }: {
+export default function GroundScreen({ save, mission, layout, trainee, label, close, ground, pack, bossArt, combatSprites, acceptsFitted, ashore, editableSquad, requiredLead, loaded, expedition, formationRun, combatShift, onSettled, readiness }: {
   save: Save; mission: Mission; layout: StageLayout; trainee: number; label: string; close: () => void
   ground?: GroundEncounter; pack: StoryPack; bossArt?: CampaignReleaseFile
   combatSprites?: CampaignRelease['combatSprites']
@@ -36,14 +40,23 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   loaded?: LoadedCampaign
   onSettled?: (scenes: string[]) => void
   combatShift?: string
+  readiness?: CombatReadiness
 }) {
+  const master = useMaster()
+  const baseBands = (outfit: number) => {
+    const base = master.status === 'ready' ? master.view.info.get(outfit) : undefined
+    return base && bandsOf(base.stats)
+  }
   const state = save.mission
+  const salvage = save.salvage?.active?.id === mission.id ? save.salvage.active : undefined
   const parts = (ids: readonly string[]) => ids.map((id) => ({ id, name: PARTS_BY_ID.get(id)!.name, details: PARTS_BY_ID.get(id)!.note }))
   const weapons = ground?.kit ? parts(ground.kit.weapons) : TRAINING_MAIN
   const expansions = ground?.kit ? parts(ground.kit.expansions) : TRAINING_EXPANSION
   const [main, setMain] = useState<string>(weapons[0]!.id)
   const [expansion, setExpansion] = useState<string>(expansions[0]!.id)
   const [useFitted, setUseFitted] = useState(true)
+  const [refitPart, setRefitPart] = useState('')
+  const [refitActor, setRefitActor] = useState(0)
   const [launching, setLaunching] = useState(false)
   const [settling, setSettling] = useState(false)
   const [specialistTraining, setSpecialistTraining] = useState(false)
@@ -89,6 +102,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
     return !!ally && (formation.advisory || eligible(s, ally.outfit)) && s.mission?.squad[0] === formation.lead.outfit && s.story.flags.includes(formation.ally.released)
   }
   const combat = ground?.combat ?? (specialistTraining && scenario === 'training' ? { kind: 'uma' as const } : undefined)
+  const campaignSpecialists = !!(loaded?.book.fourAct && ground && !combat && (!ground.kit || ground.kit.weapons.includes('hand-rifle')))
   const shifted = !!combatShift && save.story.flags.includes(combatShift)
   const fitted = acceptsFitted && scenario
     ? fittedGroundRig(save.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario, ground?.expansion) : null
@@ -119,7 +133,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
         const asset = loaded?.assets.get(splash.asset)
         return asset ? [[splash.unit + ':' + splash.signature, asset] as const] : []
       })}
-      withdraw={reports ? () => void updateSave(s => withdrawCampaignAttempt(s, mission.id)) : undefined}
+      withdraw={salvage ? () => void updateSave(s => closeSalvage(s, mission.id, false))
+        : reports ? () => void updateSave(s => withdrawCampaignAttempt(s, mission.id)) : undefined}
       onStoryCues={ground?.cues || hushCrew || voices ? cues => {
         const input = state.battle!.input as BattleInput
         const scenes = ground?.cues ? groundCueScenes(ground.cues, cues, input) : []
@@ -184,24 +199,37 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
       const member = s.crew.find(candidate => candidate.outfit === outfit)
       return member ? [{ outfit, heroine: member.heroine, label: nameOf(pack, crewSpeaker(member)), rig: member.rig, issueIfUnfitted }] : []
     })
-    const rig = fitted && useFitted ? fittedGroundRig(s.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario!, ground?.expansion) : null
-    if (fitted && useFitted && !rig) throw new Error('The fitted rig cannot deploy in this mission.')
-    return prepareCrew(groundInput(scenario!, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions, rig ?? undefined,
-      ground, s.story.flags, formationMember(s)?.rig ?? undefined))
+    const rig = !campaignSpecialists && fitted && useFitted ? fittedGroundRig(s.crew.find(({ outfit }) => outfit === trainee)?.rig, scenario!, ground?.expansion) : null
+    const base = groundInput(scenario!, trainee, label, main, ground?.expansion ?? expansion, ground?.boss, companions, rig ?? undefined,
+      ground, s.story.flags, formationMember(s)?.rig ?? undefined)
+    return prepareCrew(campaignSpecialists ? campaignSquadInput(base, s, {
+      bandsOf: baseBands, alternate: alternateFit, useFitted, expansion: ground?.expansion,
+    }) : base)
+  }
+  const currentSave = (s: Save) => loaded ? initializeCampaignCurve(s, loaded.book) : s
+  const prepareExpedition = (s: Save, run: NonNullable<Save['expedition']>) => {
+    const member = run.members[refitActor]
+    const refit = member && refitPart ? { actor: member.role === 'uma' ? member.outfit : member.heroine, part: refitPart } : undefined
+    return campaignBattleProgression(expeditionGroundInput(mission, run, pack, s, baseBands, useFitted, ground, refit), s)
   }
   let deployment: BattleInput | undefined
   if (state.step === 'deploy') {
     try {
-      deployment = expedition && formationState
-        ? campaignBattleProgression(expeditionGroundInput(mission, formationState, pack), save) : prepare(save)
+      const current = currentSave(save)
+      deployment = expedition && formationState ? prepareExpedition(current, formationState) : prepare(current)
     } catch { /* The deployment button reports a rejected fit or formation. */ }
   }
+  const offeredRefits = expedition ? campaignRefitParts(save) : []
+  const refitted = deployment?.units.filter(unit => unit.side === 'squad')[refitActor]?.frozenRig
   const deploymentStats = deployment && <details className="rounded-lg border border-white/10 px-3">
     <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Effective sortie stats</summary>
+    <div className="flex gap-1"><BattleHelp topic="armor" /><BattleHelp topic="capacity" /><BattleHelp topic="equipment" /></div>
     <ul className="space-y-2 pb-2 text-sm">{deployment.units.filter(unit => unit.side === 'squad').map(unit => {
       const hp = maxHpOf(unit)
       return <li key={unit.id}><b>{unit.label ?? nameOf(pack, unit.ref?.kind === 'uma' ? Number(unit.ref.id) : unit.ref?.id ?? null)}</b>
         <p>Load {loadOf(unit.loadout)}/{capacityOf(unit)} · Move {moveOf(unit, { hp })} · Core {hp.core} · Arms {hp.leftArm}/{hp.rightArm} · Legs {hp.legs}</p>
+        <p>Speed {unit.bands.speed} · Stamina {unit.bands.stamina} · Power {unit.bands.power} · Guts {unit.bands.guts} · Wit {unit.bands.wit}</p>
+        {unit.specialty?.kind === 'laser' && <p>Laser Rank {unit.specialty.rank}{unit.specialty.subclass && ` · ${SUBCLASS_NAME[unit.specialty.subclass]}`}</p>}
         {unit.frozenRig && <p className="text-slate-300">{Object.values(unit.frozenRig).flatMap(id => id && PARTS_BY_ID.get(id)?.name || []).join(' · ')}</p>}
       </li>
     })}</ul>
@@ -212,13 +240,17 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
         <h1 className="font-display text-2xl font-bold">{state.step === 'briefing' ? title
           : state.step === 'deploy' ? `${title} Hangar` : state.won ? (ground ? 'Objective secured' : 'Exercise passed') : (withdrew ? 'Squad withdrawn' : ground ? 'Objective lost' : 'Exercise lost')}</h1>
         {approach && state.step !== 'results' && <p className="text-sm font-semibold text-cyan-200">{approach}</p>}
+      {salvage && <div className="flex items-center text-sm">{salvage.alloy} Hangar Alloy on victory <BattleHelp topic="salvage" /></div>}
+      {readiness && state.step !== 'results' && <div className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
+        {readiness.support && ` · Support Lv ${readiness.support}+`}<BattleHelp topic="readiness" /></div>}
         {state.step === 'briefing' && <>
           <p className="text-sm text-white/80">{mission.brief}</p>
           <div className="flex gap-2">
+            <BattleHelp />
             <button type="button" className={primary} onClick={() => void (async () => {
               const binding = ground?.cues
               const warning = binding?.opponents?.length && formationState
-                ? groundOpponentScenes(binding, expeditionGroundInput(mission, formationState, pack), 'warning') : []
+                ? groundOpponentScenes(binding, prepareExpedition(currentSave(save), formationState), 'warning') : []
               await present([...(binding?.preparation ? [binding.preparation] : []), ...warning])
               await updateSave(toDeploy)
             })()}>Prepare gear</button>
@@ -226,22 +258,42 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           </div>
         </>}
         {state.step === 'deploy' && expedition && formationState && <>
-          <p className="font-semibold">{expedition} · 10 deploy</p>
+          <div className="flex items-center font-semibold">{expedition} · 10 deploy <BattleHelp topic="roles" /></div>
           <ul className="grid grid-cols-2 gap-1 text-sm">
             {formationState.members.map(member => {
               const actor = member.role === 'uma' ? member.outfit : member.heroine
-              return <li key={actor}>{nameOf(pack, actor)}</li>
+              const xp = campaignActorXp(save, actor)
+              const minimum = member.role === 'uma' ? readiness?.minimum : readiness?.support
+              const level = campaignLevel(xp ?? 0, save.campaignCurve)
+              return <li key={actor}>{nameOf(pack, actor)}{xp !== undefined && ` · Lv ${level}`}
+                {minimum && xp !== undefined && level < minimum && <span className="text-amber-200"> of {minimum} recommended</span>}</li>
             })}
           </ul>
+          <button type="button" className={action} aria-pressed={useFitted} onClick={() => setUseFitted(!useFitted)}>{useFitted ? 'Use fitted armor' : 'Use issued armor'}</button>
+          {offeredRefits.length > 0 && <fieldset className="flex flex-wrap gap-2 rounded-lg border border-white/10 p-2">
+            <legend className="text-sm">Sortie refit</legend>
+            <select className={action} aria-label="Crafted part" value={refitPart} onChange={event => setRefitPart(event.currentTarget.value)}>
+              <option value="">Use issued part</option>
+              {offeredRefits.map(recipe => <option key={recipe.part} value={recipe.part}>{PARTS_BY_ID.get(recipe.part)?.name}</option>)}
+            </select>
+            <select className={action} aria-label="Refit crew member" value={refitActor} onChange={event => setRefitActor(Number(event.currentTarget.value))}>
+              {formationState.members.map((member, index) => <option key={index} value={index}>{nameOf(pack, member.role === 'uma' ? member.outfit : member.heroine)}</option>)}
+            </select>
+            {refitPart && refitted && !Object.values(refitted).includes(refitPart)
+              && <p className="w-full text-sm text-amber-200">This crew member uses the issued part to stay within Capacity.</p>}
+          </fieldset>}
           {deploymentStats}
           <button type="button" className={primary} onClick={() => {
             setLaunching(true)
             void updateSave(s => {
               const run = formationRun ?? s.expedition
               if (!run || s.mission?.id !== mission.id || s.mission.step !== 'deploy') return s
-              return deploy(s, campaignBattleProgression(expeditionGroundInput(mission, run, pack), s), formationRun ?? undefined)
-            }).finally(() => setLaunching(false))
+              const prepared = focusExpeditionCrew(currentSave(s), run.members)
+              return deploy(prepared, prepareExpedition(prepared, run), formationRun ?? undefined)
+            }).catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
+              .finally(() => setLaunching(false))
           }}>Deploy all ten</button>
+          {deploymentError && <p role="alert" className="text-sm text-red-300">{deploymentError}</p>}
         </>}
         {state.step === 'deploy' && !expedition && <>
           <p className="font-semibold">{label}</p>
@@ -287,21 +339,23 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               })}>Save as squad</button>}
             </div>
           </details>}
-          {combat?.kind === 'uma' && <div className="space-y-2" aria-label="Laser training">
-            {state.squad.filter((outfit) => eligible(save, outfit)).map((outfit) => {
-              const progress = trainingOf(save, outfit, shifted)
+          {(combat?.kind === 'uma' || campaignSpecialists) && <div className="space-y-2" aria-label="Laser training">
+            <div className="flex gap-1"><BattleHelp topic="laser" /><BattleHelp topic="subclass" /></div>
+            {state.squad.filter((outfit) => eligible(save, outfit) && !save.crew.find(member => member.outfit === outfit)?.heroine).map((outfit) => {
+              const progress = campaignSpecialists && !save.combatTraining?.[outfit]
+                ? { rank: 1, subclass: 'heal' as const, focused: undefined } : trainingOf(save, outfit, shifted)
               return <div className="flex flex-wrap items-center gap-2" key={outfit}>
                 <span className="text-sm font-semibold">{nameOf(pack, outfit)} · Laser {progress.rank}</span>
-                {!shifted && <select className={action} aria-label={`Subclass for ${nameOf(pack, outfit)}`} value={progress.subclass ?? ''}
+                {!shifted && !progress.focused && <select className={action} aria-label={`Subclass for ${nameOf(pack, outfit)}`} value={progress.subclass ?? ''}
                   onChange={(event) => {
                     const choice = COMBAT_SUBCLASSES.find((key) => key === event.currentTarget.value) ?? null
                     void updateSave((current) => current.mission?.id === mission.id && current.mission.step === 'deploy'
                       ? chooseSubclass(current, outfit, choice) : current)
                   }}>
                   <option value="">No subclass</option>
-                  {COMBAT_SUBCLASSES.map((key) => <option key={key} value={key}>{SUBCLASS_NAME[key]}</option>)}
+                  {COMBAT_SUBCLASSES.map((key) => <option key={key} value={key}>{SUBCLASS_NAME[key]}{campaignSpecialists && key === 'heal' ? ' · Recommended solo' : ''}</option>)}
                 </select>}
-                {!shifted && (progress.subclass === 'melee' || progress.subclass === 'shield') && <button type="button" className={action}
+                {!shifted && !progress.focused && (progress.subclass === 'melee' || progress.subclass === 'shield') && <button type="button" className={action}
                   aria-pressed={!!alternateFit[outfit]} onClick={() => setAlternateFit({ ...alternateFit, [outfit]: !alternateFit[outfit] })}>
                   {alternateFit[outfit] ? progress.subclass === 'shield' ? 'Blade and shield' : 'Great blade' : 'Laser rifle'}
                 </button>}
@@ -309,11 +363,11 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
             })}
             {ground?.expansion && <p className="text-sm">Mission gear · {PARTS_BY_ID.get(ground.expansion)?.name}</p>}
           </div>}
-          {!combat && fitted && <div className="flex flex-wrap gap-2" aria-label="Rig for this sortie">
+          {!combat && (fitted || campaignSpecialists && save.campaignGear.parts.length > 0) && <div className="flex flex-wrap gap-2" aria-label="Rig for this sortie">
             <button type="button" className={action} aria-pressed={useFitted} onClick={() => setUseFitted(true)}>Use fitted rig</button>
             <button type="button" className={action} aria-pressed={!useFitted} onClick={() => setUseFitted(false)}>Use issued kit</button>
           </div>}
-          {!combat && (fitted && useFitted ? <p className="text-sm text-cyan-200">{fittedSummary(fitted)}</p> : <div className="grid gap-3 sm:grid-cols-2">
+          {!combat && !campaignSpecialists && (fitted && useFitted ? <p className="text-sm text-cyan-200">{fittedSummary(fitted)}</p> : <div className="grid gap-3 sm:grid-cols-2">
             <fieldset className="space-y-2"><legend className="text-sm text-white/70">Main weapon</legend>
               {weapons.map((option) => <button key={option.id} type="button" aria-pressed={main === option.id}
                 className={`${action} block w-full text-left aria-pressed:ring-2 aria-pressed:ring-cyan-300`} onClick={() => setMain(option.id)}>
@@ -331,8 +385,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
             </fieldset>}
           </div>)}
           {deploymentStats}
-          {loaded?.book.fourAct && save.crew.filter(member => state.squad.includes(member.outfit) && veteranCoreHp(member.xp) > 0).map(member =>
-            <p key={member.outfit} className="text-sm text-cyan-200">{nameOf(pack, crewSpeaker(member))} · +{veteranCoreHp(member.xp)} veteran Core HP</p>)}
+          {readiness && save.crew.filter(member => state.squad.includes(member.outfit) && campaignLevel(member.xp, save.campaignCurve) < readiness.minimum).map(member =>
+            <p key={member.outfit} className="text-sm text-amber-200">{nameOf(pack, crewSpeaker(member))} · Lv {campaignLevel(member.xp, save.campaignCurve)} of {readiness.minimum} recommended</p>)}
           {deploymentError && <p role="alert" className="text-sm text-red-300">{deploymentError}</p>}
           <div className="flex gap-2">
             <button type="button" className={primary} onClick={() => {
@@ -343,7 +397,11 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                 if (!readyFormation(s)) return s
                 if (loaded?.book.fourAct && mission.fixedSquad?.some(outfit => !s.mission!.squad.includes(outfit) || !eligible(s, outfit))) return s
                 if (requiredLead !== undefined && (s.mission.squad[0] !== requiredLead || !eligible(s, requiredLead))) return s
-                const input = prepare(s)
+                let prepared = currentSave(s)
+                if (campaignSpecialists) for (const outfit of s.mission.squad) {
+                  if (eligible(s, outfit) && !s.combatTraining?.[outfit]) prepared = chooseSubclass(prepared, outfit, 'heal')
+                }
+                const input = prepare(prepared)
                 const squad = input.units.flatMap((unit) => {
                   if (unit.side !== 'squad') return []
                   if (unit.ref?.kind === 'uma') return [Number(unit.ref.id)]
@@ -351,14 +409,17 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                   const ally = s.crew.find(member => member.heroine && unit.ref?.kind === 'heroine' && member.heroine === unit.ref.id)
                   return ally ? [ally.outfit] : []
                 })
-                return deploy(setSquad(s, squad), input)
+                return deploy(setSquad(prepared, squad), input)
               }).catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
                 .finally(() => setLaunching(false))
             }}>Deploy</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
           </div>
         </>}
+        {state.step === 'results' && state.won && readiness && !save.worlds.missions.includes(mission.id)
+          && <div className="flex items-center text-sm">{CAMPAIGN_ACT_XP[readiness.act]} XP per eligible participant <BattleHelp topic="xp" /></div>}
         {state.step === 'results' && <div className="flex gap-2">
+          <BattleHelp topic="results" />
           {state.won ? <button type="button" className={primary} disabled={settling} onClick={() => {
             setSettling(true)
             const victory = ground?.cues?.victory ?? (hushCrew && mission.id === loaded?.book.fourActFinale?.ground.at(-1) ? hushCrew.secured : undefined)
@@ -366,8 +427,9 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               if (victory) await present([victory])
               let released: string[] = []
               await updateSave(s => {
+                if (salvage) return closeSalvage(s, mission.id, true)
                 if (!ground) return settleTraining(s)
-                const settled = settleGround(s, ground, pack, !!loaded?.book.fourAct, loaded?.book)
+                const settled = settleGround(currentSave(s), ground, pack, !!loaded?.book.fourAct, loaded?.book, readiness?.act)
                 if (s.worlds.missions.includes(ground.id) || !settled.worlds.missions.includes(ground.id) || !s.mission?.battle || !ground.cues) return settled
                 released = groundOpponentScenes(ground.cues, s.mission.battle.input as BattleInput, 'released')
                   .filter(scene => !settled.story.seen.includes(scene))
@@ -387,7 +449,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           <button type="button" className={action} onClick={close}>Campaign</button>
         </div>}
         {state.callUp && !state.won && <button type="button" className={action} onClick={() => void updateSave((current) =>
-          current.mission?.id === mission.id && current.mission.step !== 'battle' && !current.mission.won ? finishMission(current) : current)}>Return to port</button>}
+          current.mission?.id === mission.id && current.mission.step !== 'battle' && !current.mission.won
+            ? salvage ? closeSalvage(current, mission.id, false) : finishMission(current) : current)}>Return to port</button>}
       </div>
     </main>{overlay}</>
   )

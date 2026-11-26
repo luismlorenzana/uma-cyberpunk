@@ -18,6 +18,8 @@ import { BoardScene, type BoardFigure, type StateKind } from '../board/scene'
 import { albumArt } from '../crew/art'
 import { useMaster } from '../master/master'
 import { CutIn, ForecastCard, labelOf, PaperDoll, SIDE_HUE, TerrainPanel, Timeline, UnitCard, type CutInView, type Doll } from './parts'
+import { BattleHelp } from './BattleHelp'
+import { actionHelpTopic, objectiveTopics } from './help'
 import { CUT_IN_MS, cutInSpeed, speedOf, stepMs, type CutInSetting } from './playback'
 import { targetsFrom, threatTiles, tileKey, turnReach } from './reach'
 import { act as applyAct, type Session } from './session'
@@ -711,7 +713,10 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       </div>
       <div className="pointer-events-none absolute flex flex-col items-end gap-1 text-xs font-semibold text-white"
         style={{ top: 'calc(var(--inset-top) + 55px)', right: 'calc(var(--inset-right) + 6px)' }}>
-        {objectiveLabel && <p className="rounded bg-black/75 px-2 py-1">{objectiveLabel}</p>}
+        {objectiveLabel && <div className="flex items-center rounded bg-black/75 pl-2">{objectiveLabel}
+          <BattleHelp topic={objectiveTopics[state.input.objective.kind]} version={state.input.rulesVersion} disabled={busy.current} />
+          {!!state.input.protect?.length && <BattleHelp topic="protect" version={state.input.rulesVersion} disabled={busy.current} />}
+        </div>}
         {!state.result && state.units.filter(unit => unit.status === 'active' && unit.signatureMark).map(unit =>
           <p key={unit.id} className="rounded bg-[#58263d] px-2 py-1">
             {state.input.units.find(input => input.id === unit.id)?.signature?.label} · Tile marked
@@ -722,6 +727,7 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
         <button type="button" onClick={() => setReachAll((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Reach {reachAll ? 'on' : 'off'}</button>
         <button type="button" onClick={() => setCutInSetting((v) => (v === 'auto' ? 'quick' : v === 'quick' ? 'off' : 'auto'))} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Cut-in {cutInSetting}</button>
         <button type="button" onClick={() => setSaver((v) => !v)} className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Saver {saver ? 'on' : 'off'}</button>
+        {!inspected && !terrain && <BattleHelp version={state.input.rulesVersion} disabled={busy.current || !isPlayer(state) && !state.result} />}
         {expedition && <select aria-label="Inspect squad member" value={inspected?.side === 'squad' ? inspected.id : ''}
           onChange={event => setInspect(event.currentTarget.value || null)}
           className="pointer-events-auto min-h-11 max-w-44 rounded-md bg-[#141827] px-2 text-[13px] font-semibold text-white ring-1 ring-white/15">
@@ -731,13 +737,14 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
         {expanded && <button type="button" onClick={() => setQuickTurns(!quickTurns)} aria-pressed={quickTurns}
           className="pointer-events-auto min-h-11 rounded-md bg-[#141827]/90 px-3 text-[13px] font-semibold text-white ring-1 ring-white/15">Auto face {quickTurns ? 'on' : 'off'}</button>}
         {inspected && <UnitCard state={state} unit={inspected} onClose={() => setInspect(null)} />}
-        {terrain && <TerrainPanel card={terrain} onClose={() => setTerrain(null)} />}
+        {terrain && <TerrainPanel card={terrain} version={state.input.rulesVersion} onClose={() => setTerrain(null)} />}
       </div>
       {me && !isPlayer(state) && !state.result && (
         <div className="absolute" style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>{btn('Skip', skip, true)}</div>
       )}
       <div className={`absolute flex max-w-[46%] flex-wrap items-end justify-end gap-2 ${scrollActions ? 'pointer-events-auto max-h-[66%] overflow-y-auto overscroll-contain p-1' : 'pointer-events-none'}`} style={{ bottom: 'calc(var(--inset-bottom) + 10px)', right: 'calc(var(--inset-right) + 10px)' }}>
         {ui.phase === 'forecast' && <ForecastCard state={state} f={ui.f} onCancel={() => show({ phase: 'act', reach: ui.reach, dash: ui.dash })} onConfirm={() => toFace(ui.reach, ui.dash, ui.act)}>
+          {actionHelpTopic(ui.act) !== 'forecast' && <BattleHelp topic={actionHelpTopic(ui.act)} version={state.input.rulesVersion} />}
           {conversation && <p className="mt-2 text-[13px] text-white/80">{conversation.hint}</p>}
           {shot && me && modes.length > 0 && <div className="mt-2 grid grid-cols-2 gap-1" aria-label="Firing mode">
             {([undefined, ...modes] as const).map((mode) => {

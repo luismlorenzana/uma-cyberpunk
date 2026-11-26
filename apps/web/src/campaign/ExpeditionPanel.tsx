@@ -7,6 +7,7 @@ import type { CampaignNavigation } from './navigation'
 import { watchLabel } from './appointments'
 import { stationOf } from './watch'
 import { nextStationDawn } from './station-forecast'
+import { BattleHelp } from '../battle/BattleHelp'
 
 export function ExpeditionLaunchReview({ book, save, duo, complete, block, launch, cargo, back }: {
   book: CampaignBook; save: Save; duo: FixedDuo; complete: ReadonlySet<string>; block?: string
@@ -18,6 +19,10 @@ export function ExpeditionLaunchReview({ book, save, duo, complete, block, launc
   const stock = save.campaignSupply
   return <section className="mx-auto max-w-lg space-y-3 rounded-xl border border-cyan-200/20 bg-[#101e32] p-4" aria-label="Expedition launch review">
     <h1 className="font-display text-xl font-bold">{duo.expedition?.route?.name}</h1>
+    <div className="space-y-1 text-sm" aria-label="Formation at launch">
+      {duo.umas.map(outfit => <p key={outfit}>{nameOf(book.story, outfit)} · Laser Rank {Math.max(6, save.combatTraining?.[outfit]?.rank ?? 1)} · Laser-only</p>)}
+      <div className="flex items-center">The Umas retire subclasses at launch. The eight allies use full kits at Lv 6 or higher.<BattleHelp topic="roles" /></div>
+    </div>
     <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-sm">
       <dt>Available at berth</dt><dd>{stock?.fuel ?? 0} fuel · {stock?.provisions ?? 0} provisions</dd>
       <dt>Load at departure</dt><dd>{budget.departure.fuel} fuel · {budget.departure.provisions} provisions</dd>

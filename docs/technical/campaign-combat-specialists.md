@@ -1,5 +1,10 @@
 # Campaign combat specialists
 
+The four-act campaign prepares these fittings on its live sorties. New ordinary sorties freeze rules 6 and
+the saved ten-member expeditions freeze rules 7. A duo's launch commits the two Umas' permanent Laser phase.
+The expedition resolver uses the campaign's fixed identities, objectives, mounts and adjusted armor while
+preserving the existing rules reader for recorded battles. [Campaign guide](../game/campaign.md)
+
 Rules version 5 and save version 20 add two ground formations. Play **Laser specialist practice**
 from the campaign Training Hangar. The Sandbox also includes **Specialist Practice** and
 **Combined Strike**, with issued rigs and stand-in cast. Older campaign encounters retain their

@@ -67,6 +67,9 @@ function checkInput(input: BattleInput): void {
     if (u.specialty !== undefined && (input.rulesVersion < 5 || !validSpecialty(u.specialty, u))) {
       throw new BattleInputError(`${path}.specialty`, 'expected a version 5 specialist with a compatible fitting')
     }
+    if (u.terminalOnly !== undefined && (input.rulesVersion < 6 || u.terminalOnly !== true || u.loadout.back.kind !== 'deck')) {
+      throw new BattleInputError(`${path}.terminalOnly`, 'expected an issued objective Deck on rules version 6 or later')
+    }
   })
   const squad = input.units.filter((u) => u.side === 'squad').length, enemies = input.units.length - squad
   if (expedition) {
