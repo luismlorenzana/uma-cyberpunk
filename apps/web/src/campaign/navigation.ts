@@ -10,12 +10,15 @@ import { generalPhase, personalMissionBlock, questAvailable } from './quests'
 export const campaignActs = ['Act I', 'Act II', 'Act III', 'Act IV', 'Shared'] as const
 export type CampaignAct = typeof campaignActs[number]
 export type RosterKind = 'Uma' | 'General' | 'Lieutenant'
+export const characterTabs = ['Stats', 'Equipment', 'Progression', 'Story'] as const
+export type CharacterTab = typeof characterTabs[number]
 
 export interface RosterBrowse {
   kind: RosterKind
   search: string
   page: number
   selected?: Speaker
+  tab?: CharacterTab
 }
 
 export const operationTypes = ['All', 'Ship', 'Ground', 'Story', 'Salvage'] as const
