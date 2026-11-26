@@ -9,10 +9,11 @@ import { questComplete } from './quests'
 import { stationJourney } from './station-travel'
 import { advanceStationWatches, repairStarterCutter, stationOf } from './watch'
 
-export function StationFleet({ book, save, complete, navigation, yardRoom, inspect, operations = false }: {
+export function StationFleet({ book, save, complete, navigation, yardRoom, inspect, reviewLaunch, operations = false }: {
   book: CampaignBook; save: Save; complete: ReadonlySet<string>; navigation: (port?: string) => void
   yardRoom: () => void
   inspect?: (ship: string) => void
+  reviewLaunch: (quest: string) => void
   operations?: boolean
 }) {
   const station = stationOf(save, book)
@@ -97,6 +98,8 @@ export function StationFleet({ book, save, complete, navigation, yardRoom, inspe
           {restorable ? 'Open parked voyage' : 'Plot course to parked cutter'}</button>}
         {!active && hull?.condition === 'commissioned' && origin && save.campaignSupply?.port !== origin &&
           <button type="button" className={campaignControl} disabled={busy} onClick={() => navigation(origin)}>Plot launch berth</button>}
+        {!active && hull?.condition === 'commissioned' && origin === save.campaignSupply?.port &&
+          <button type="button" className={campaignControl} disabled={busy} onClick={() => reviewLaunch(route.launch)}>Review launch budget</button>}
         {!active && hull?.condition === 'commissioned' && hull.ship === book.stationStory?.pilotShip && inspect &&
           <button type="button" className={campaignControl} onClick={() => inspect(hull.ship)}>Inspect commissioned cutter</button>}
       </article>

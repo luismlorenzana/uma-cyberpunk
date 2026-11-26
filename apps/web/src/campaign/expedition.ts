@@ -1,6 +1,6 @@
 import { hash32 } from '@cyber/battle'
 import { advanceStationWatches, settleCampaignDay, stationOf } from './watch'
-import { awayMembers, COMMAND_STATIONS, developedPort, managementReceipt, shipmentAt, loadShipment, type CommandStation, type Speaker, expeditionReadiness, SHIP_CARGO_MAX, startSupply, type CampaignBook, type CampaignQuest, type ExpeditionRun, type FixedDuo, type Save } from '@cyber/domain'
+import { awayMembers, COMMAND_STATIONS, developedPort, managementReceipt, shipmentAt, loadShipment, type CommandStation, type Speaker, expeditionReadiness, SHIP_CARGO_MAX, startSupply, type CampaignBook, type CampaignQuest, type ExpeditionFormation, type ExpeditionRun, type FixedDuo, type Save } from '@cyber/domain'
 import { COMMAND_HULL, stationRoom } from '@cyber/domain'
 import { focusExpeditionCrew, initializeCampaignCurve } from './progression'
 
@@ -141,10 +141,7 @@ export function restoreParkedCutter(save: Save, book: CampaignBook, duoId: strin
 
 export const TENDER_ARMOR_ALLOY = 3
 
-export function expeditionPlan(save: Save, book: CampaignBook, complete: ReadonlySet<string>) {
-  const run = save.expedition
-  const route = run && book.fourAct?.duos.get(run.duo)?.expedition?.route
-  if (!route) return null
+function expeditionStops(save: Save, book: CampaignBook, route: NonNullable<ExpeditionFormation['route']>) {
   const index = new Map(book.quests.map(quest => [quest.id, quest]))
   const transit = book.fourAct?.transit
   const stops = [...route.stops]
@@ -152,12 +149,39 @@ export function expeditionPlan(save: Save, book: CampaignBook, complete: Readonl
     const departure = route.transitAfter ?? route.launch
     stops.splice(stops.indexOf(departure) + 1, 0, ...transit.quests)
   }
-  const ordered = [route.launch, ...stops, route.return].flatMap(id => index.get(id) ?? [])
-  const remaining = ordered.filter(row => !complete.has(row.id))
-  const cost = remaining.reduce((total, row) => {
+  return [route.launch, ...stops, route.return].flatMap(id => index.get(id) ?? [])
+}
+
+function routeBudget(book: CampaignBook, route: NonNullable<ExpeditionFormation['route']>, stops: readonly CampaignQuest[]) {
+  return stops.reduce((total, row) => {
+    if (row.id === route.launch || row.id === route.return) {
+      return { ...total, watches: total.watches + Number(!!book.stationStory) }
+    }
     const command = row.encounter && book.commands.get(row.encounter)
-    return command ? { fuel: total.fuel + command.cost.fuel, provisions: total.provisions + command.cost.provisions } : total
-  }, { fuel: 0, provisions: 0 })
+    if (command && row.encounter) return {
+      fuel: total.fuel + command.cost.fuel, provisions: total.provisions + command.cost.provisions,
+      watches: total.watches + (book.stationStory?.commandWatches?.get(row.encounter) ?? Number(!!book.stationStory)),
+    }
+    return row.encounter && book.ground.has(row.encounter) && book.stationStory ? { ...total, watches: total.watches + 1 } : total
+  }, { fuel: 0, provisions: 0, watches: 0 })
+}
+
+export function expeditionLaunchBudget(save: Save, book: CampaignBook, duo: FixedDuo, complete: ReadonlySet<string>) {
+  const route = duo.expedition?.route
+  if (!route) return
+  const stops = expeditionStops(save, book, route).filter(row => !complete.has(row.id))
+  const budget = routeBudget(book, route, stops)
+  return { ...budget, departure: route.cargo, fuelMargin: route.cargo.fuel - budget.fuel,
+    provisionMargin: route.cargo.provisions - budget.provisions, at: stationOf(save, book).absoluteWatch + budget.watches }
+}
+
+export function expeditionPlan(save: Save, book: CampaignBook, complete: ReadonlySet<string>) {
+  const run = save.expedition
+  const route = run && book.fourAct?.duos.get(run.duo)?.expedition?.route
+  if (!route) return null
+  const ordered = expeditionStops(save, book, route)
+  const remaining = ordered.filter(row => !complete.has(row.id))
+  const cost = routeBudget(book, route, remaining)
   return { route, remaining, current: ordered.findLast(row => complete.has(row.id)), watch: expeditionWatchScene(save, book, complete), ...cost }
 }
 
@@ -189,7 +213,16 @@ export function resumeVoyage(save: Save, book: CampaignBook): Save {
 
 export function tendAtBerth(save: Save, book: CampaignBook): Save {
   if (!expeditionBerth(save, book)?.run.berthed) return save
+  if (book.stationStory) return advanceStationWatches(save, book, 1)
   return settleCampaignDay(save, { ...save.campaignDay, day: save.campaignDay.day + 1 }, book)
+}
+
+export function setBerthRationPriority(save: Save, book: CampaignBook, automaticRations: boolean): Save {
+  const station = stationOf(save, book)
+  const berth = expeditionBerth(save, book)
+  if (!book.stationStory || !berth?.run.berthed || berth.port.id !== station.anchor
+    || automaticRations === (station.automaticRations !== false)) return save
+  return { ...save, station: { ...station, automaticRations } }
 }
 
 export function repairExpeditionCutter(save: Save, book: CampaignBook): Save {

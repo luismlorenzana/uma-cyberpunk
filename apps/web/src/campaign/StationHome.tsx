@@ -1,4 +1,4 @@
-import { useRef, type Dispatch, type SetStateAction, type PointerEvent } from 'react'
+import { useMemo, useRef, type Dispatch, type SetStateAction, type PointerEvent } from 'react'
 import {
   assignStationShift, buildStationRoom, cancelStationRoom, rerouteStationPower, setStationPower, stationCapacity, stationDate, stationPower, stationPowerDonors, stationPowerShortfall, stationRoom,
   STARTER_CUTTER, STATION_DECKS, STATION_MODULES, STATION_ROOMS, STATION_WORK, TEMPORARY_BERTHS,
@@ -6,7 +6,9 @@ import {
 } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
+import { watchLabel } from './appointments'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
+import { stationBuildForecast } from './station-forecast'
 import { advanceStationWatches, stationOf, stationRations, stationResidentCount, stationWorkers } from './watch'
 import type { HomeArea } from './ShipHome'
 
@@ -48,6 +50,7 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
   const capacity = stationCapacity(state)
   const current = room ? STATION_MODULES[room] : undefined
   const status = room ? stationRoom(state, room) : undefined
+  const buildForecast = useMemo(() => room && stationBuildForecast(save, book, room), [book, room, save])
   const shortfall = room && status === 'off' ? stationPowerShortfall(state, room) : 0
   const protectedJump = room === 'jump-ring' && state.move
   const duty = room && STATION_WORK.find(key => key === room)
@@ -163,6 +166,12 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
         </div>
         <p className="text-sm">{condition[status]}{status === 'building' && ` · ${state.rooms[room]} watches left`}</p>
         {!!current.berths && <p className="text-sm">{current.berths} permanent cabins</p>}
+        {buildForecast && <div className="space-y-1 text-sm" aria-label="Build forecast">
+          <p>Completes {watchLabel(buildForecast.at)} · Power {buildForecast.power.used}/{buildForecast.power.supply}</p>
+          <p>{buildForecast.berths} permanent berths · {buildForecast.stock} Ship Alloy projected</p>
+          {!buildForecast.powered && <p className="text-amber-200">Opens with power paused. Expand the Reactor or free power to use this room.</p>}
+          {duty && <p>Duty output starts when staffed and powered.</p>}
+        </div>}
         {status === 'empty' && <>
           <p className="text-sm">{current.cost} alloy · {current.watches} watches{current.draw ? ` · ${current.draw} power` : ''}</p>
           <button type="button" className={campaignPrimary + ' disabled:opacity-40'}
