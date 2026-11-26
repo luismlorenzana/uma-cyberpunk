@@ -10,6 +10,7 @@ import { watchLabel } from './appointments'
 import { type LoadedCampaign } from './load'
 import { updateSave } from '../save/game'
 import { advanceStationWatches, cutterArrival, cutterRations, stationOf, stationRations, transferStationStock } from './watch'
+import { nextStationDawn } from './station-forecast'
 
 const button = 'min-h-11 rounded-lg px-3 text-sm font-semibold text-white'
 const action = `${button} bg-white/10 disabled:opacity-50`
@@ -46,6 +47,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
   const reserves = station?.reserves ?? STARTING_STATION_RESERVES
   const shipUpkeep = book?.stationStory ? cutterRations(save, book) : upkeep
   const stationUpkeep = book?.stationStory ? stationRations(save, book) : 0
+  const dawn = book?.stationStory && nextStationDawn(save, book)
   const supplyOrder = (kind: 'fuel' | 'provisions' | 'alloy', capacity: number | undefined) =>
     change((current, stock) => {
       const original = network.ports.find(row => row.id === port.id)
@@ -97,12 +99,16 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
       <span>Fuel {supply.fuel}</span><span>Provisions {supply.provisions}</span><span>Alloy {save.wallet.alloy}</span>
       <span>Cutter upkeep · {shipUpkeep} provisions at dawn</span>
     </div>
-    <p className="text-sm text-slate-300">After dawn · {Math.max(0, supply.provisions - shipUpkeep)} cutter provisions{shipUpkeep > supply.provisions && ' · Short ' + (shipUpkeep - supply.provisions)}</p>
-    <p className="text-sm text-slate-300">Net port output each watch · {port.produces.fuel - port.upkeep.fuel} fuel · {port.produces.provisions - port.upkeep.provisions} provisions · {port.produces.alloy - port.upkeep.alloy + (liberated?.alloy ?? 0) + (port.liberations ?? []).reduce((n, row) => n + (flags.includes(row.flag) ? row.alloy : 0), 0)} alloy</p>
+    <p className="text-sm text-slate-300">After dawn · {dawn ? dawn.cutterStock : Math.max(0, supply.provisions - shipUpkeep)} cutter provisions
+      {(dawn ? dawn.cutterShort : shipUpkeep > supply.provisions) ? ' · Short ' + (dawn ? dawn.cutterShort : shipUpkeep - supply.provisions) : ''}</p>
+    <p className="text-sm text-slate-300">Net port output at dawn · {port.produces.fuel - port.upkeep.fuel} fuel · {port.produces.provisions - port.upkeep.provisions} provisions · {port.produces.alloy - port.upkeep.alloy + (liberated?.alloy ?? 0) + (port.liberations ?? []).reduce((n, row) => n + (flags.includes(row.flag) ? row.alloy : 0), 0)} alloy</p>
     {supply.shortfall > 0 && <p className="text-sm text-[#ffa7b7]">Last night’s shortfall {supply.shortfall} provisions</p>}
     {book && station?.anchor === port.id && <section className="space-y-1" aria-label="Homestretch reserves">
       <h3 className="font-semibold">Homestretch reserves</h3>
       <p className="text-sm">Station upkeep · {stationUpkeep} provisions at dawn</p>
+      {dawn && <p className={dawn.short ? 'text-sm text-amber-200' : 'text-sm text-slate-300'}>
+        Next dawn · {dawn.short ? `Short ${dawn.short} provisions` : `${dawn.reserves} provisions in reserve`}
+      </p>}
       {!!station.rationShortfall && <p className="text-sm text-amber-200">Last dawn was short by {station.rationShortfall}. Optional fabrication and shipyard duty output is paused.</p>}
       <label className="flex min-h-11 items-center gap-2 text-sm">
         <input type="checkbox" checked={station.automaticRations !== false}

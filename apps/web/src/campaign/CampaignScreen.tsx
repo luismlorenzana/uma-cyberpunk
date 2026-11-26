@@ -33,7 +33,7 @@ import { SupplyPanel } from './SupplyPanel'
 import { advanceStationWatches, cutterArrival, settleCampaignDay, stationOf, voyageCrew } from './watch'
 import { chooseDatePath, creditCampaignDates, dateAvailable, dateProgress, dateScene, recordDateScene } from './dates'
 import { DatePanel } from './DatePanel'
-import { ExpeditionPanel } from './ExpeditionPanel'
+import { ExpeditionLaunchReview, ExpeditionPanel } from './ExpeditionPanel'
 import { expeditionForQuest, expeditionPlan, expeditionQuestBlock } from './expedition'
 import { beginCampaignEncounter } from './sortie'
 import { finaleActivities, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
@@ -85,6 +85,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [finaleScene, setFinaleScene] = useState<string | null>(null)
   const [sharedConsent, setSharedConsent] = useState<{ ally: CampaignAlly; quest: CampaignQuest; day: number } | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
+  const [launchReview, setLaunchReview] = useState<CampaignQuest | null>(null)
   const [stationScene, setStationScene] = useState<{ scene: string; flag?: string; after?: () => void } | null>(null)
   const [invitation, setInvitation] = useState<Invitation | null>(null)
   const [newRecruit, setNewRecruit] = useState<number>()
@@ -388,6 +389,17 @@ function Campaign({ layout }: { layout: StageLayout }) {
       </div>
     </section>
   </main>
+  const launchDuo = loaded && launchReview && expeditionForQuest(loaded.book, launchReview.id)
+  if (loaded && save && launchReview && launchDuo) {
+    const ready = questAvailable(save, loaded.book, launchReview, port?.id) && !save.mission && !save.campaignDay.pending && !save.pairScene
+    const block = ready ? undefined : expeditionQuestBlock(save, loaded.book, launchReview.id, launchDuo, q => complete.has(q.id)) ?? 'Finish the pending campaign activity'
+    return <main className={viewport} style={insets}>
+      <ExpeditionLaunchReview book={loaded.book} save={save} duo={launchDuo} complete={complete} block={block}
+        launch={() => { if (ready) { setLaunchReview(null); setActive(launchReview) } }}
+        cargo={() => { setLaunchReview(null); selectView('Home', 'Cargo') }}
+        back={() => setLaunchReview(null)} />
+    </main>
+  }
   if (loaded && active && activeScene
     && !(signOn && portArrival && active.port === portArrival.id && activeScene !== portArrival.scene)) return <CampaignScene
     key={voice ?? activeScene} loaded={loaded} sceneId={voice ?? activeScene}
@@ -678,8 +690,14 @@ function Campaign({ layout }: { layout: StageLayout }) {
     selectView('Home')
   }
   function openCampaignQuest(quest: CampaignQuest) {
-    if (loaded && isCareSession(loaded.book, quest.id)) openCare(quest)
+    const duo = loaded?.book.stationStory && expeditionForQuest(loaded.book, quest.id)
+    if (duo?.expedition?.route?.launch === quest.id) setLaunchReview(quest)
+    else if (loaded && isCareSession(loaded.book, quest.id)) openCare(quest)
     else setActive(quest)
+  }
+  function reviewExpeditionLaunch(id: string) {
+    const quest = navigation?.quests.get(id)
+    if (quest) openCampaignQuest(quest)
   }
   function openCare(quest: CampaignQuest, missed = false) {
     if (!loaded || !save) return
@@ -792,7 +810,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
             open={openCampaignQuest} travel={openNavigation} browse={operationBrowse} onBrowse={setOperationBrowse} />
           {loaded.book.stationStory && <details className="rounded-xl border border-white/15 p-2">
             <summary className="flex min-h-11 cursor-pointer items-center px-2 font-semibold">Fleet and shipyard</summary>
-            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} operations
+            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} reviewLaunch={reviewExpeditionLaunch} operations
               yardRoom={() => focusStationRoom('shipyard')} inspect={() => showStationStory('errand-commission')} />
           </details>}
         </Suspense>}
@@ -1007,7 +1025,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
           </section>}
           {hangar && workshopPanel}
           {hangar && loaded && save && loaded.book.fourAct && <Suspense fallback={<p role="status">Opening cutter berth…</p>}>
-            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation}
+            <StationFleet book={loaded.book} save={save} complete={complete} navigation={openNavigation} reviewLaunch={reviewExpeditionLaunch}
               yardRoom={() => focusStationRoom('shipyard')} inspect={() => showStationStory('errand-commission')} />
           </Suspense>}
           {quarters && pairPanels}

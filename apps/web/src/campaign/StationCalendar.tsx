@@ -7,6 +7,7 @@ import { campaignControl, campaignPrimary } from './CampaignQuestRow'
 import { advanceStationWatches, cutterRations, stationOf, stationRations, stationWorkers } from './watch'
 import { dateEligible } from './dates'
 import { appointmentStatus, appointmentTitle, reserveAppointment, watchLabel } from './appointments'
+import { forecastStation } from './station-forecast'
 
 const ranges = ['Today', 'Next 7 days', 'Month'] as const
 const statusText = {
@@ -34,18 +35,9 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
   const period = stationDate(start)
   const slots = Array.from({ length: today ? 1 : week ? 7 : 30 }, (_, index) => start + index * WATCHES_PER_DAY)
   const present = new Set(stationWorkers(save, book))
-  const forecast = useMemo(() => {
-    const reports = new Map<number, NonNullable<typeof station.report>>()
-    if (!week) return reports
-    let simulated = save
-    if (station.report) reports.set(station.report.at, station.report)
-    for (let at = now; at < dayStart + 7 * WATCHES_PER_DAY; at++) {
-      simulated = advanceStationWatches(simulated, book, 1)
-      const report = simulated.station?.report
-      if (report?.at === at) reports.set(at, report)
-    }
-    return reports
-  }, [week, save, book, now, dayStart, station.report])
+  const forecast = useMemo(() => today || week
+    ? forecastStation(save, book, dayStart + (today ? 1 : 7) * WATCHES_PER_DAY - now) : undefined, [today, week, save, book, now, dayStart])
+  const dawn = forecast?.dawns.values().next().value
   const busy = !!save.campaignDay.pending || !!save.pairScene || !!save.mission || !!save.expedition
   const bookings = station.appointments ?? []
   const available = new Set(book.dates?.filter(row => dateEligible(save, book, row)).map(row => row.companion))
@@ -78,6 +70,10 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
       <button type="button" className={campaignPrimary + ' disabled:opacity-40'} disabled={busy}
         onClick={() => void updateSave(s => s.mission || s.pairScene || s.campaignDay.pending || s.expedition ? s : advanceStationWatches(s, book, 1))}>Advance watch</button>
     </header>
+    {today && dawn && <p className="text-sm" aria-label="Next dawn forecast">
+      Next dawn · Station {dawn.short ? `short ${dawn.short}` : `${dawn.reserves} provisions left`}
+      {dawn.cutterDue > 0 && ` · Cutter ${dawn.cutterShort ? `short ${dawn.cutterShort}` : `${dawn.cutterStock} provisions left`}`}
+    </p>}
     <nav aria-label="Calendar range" className="flex flex-wrap gap-2">
       {ranges.map(item => <button type="button" key={item} className={campaignControl + ' aria-pressed:border-cyan-100'}
         aria-pressed={range === item} onClick={() => setRange(item)}>{item}</button>)}
@@ -152,7 +148,8 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
           return left && now + left >= day && now + left < day + WATCHES_PER_DAY ? [STATION_MODULES[key].label] : []
         })
         const appointments = bookings.filter(row => row.at >= day && row.at < day + WATCHES_PER_DAY)
-        const coverage = forecast.get(day)
+        const coverage = forecast?.duties.get(day)
+        const rations = week ? forecast?.dawns.get(day) : undefined
         const hulls = stationRoom(station, 'shipyard') === 'active' ? Object.values(save.fleet ?? {}).filter(hull =>
           hull.condition === 'commissioning' && hull.watches !== undefined && now + hull.watches >= day
           && now + hull.watches < day + WATCHES_PER_DAY) : []
@@ -167,6 +164,10 @@ export default function StationCalendar({ book, save, quarters, openVisit, openC
           </p>)}
           {station.move && station.move.at >= day && station.move.at < day + WATCHES_PER_DAY && <p>Homestretch arrives</p>}
           {annual.filter(row => row.due === day).map(row => <p key={row.flag}>{row.label} · {STATION_MONTHS[row.month]} {row.day}</p>)}
+          {rations && <p className={rations.short || rations.cutterShort ? 'text-amber-200' : undefined}>
+            Dawn · {rations.due} rations · {rations.short ? `Station short ${rations.short}` : `${rations.reserves} in reserve`}
+            {rations.cutterDue > 0 && ` · Cutter ${rations.cutterShort ? `short ${rations.cutterShort}` : `${rations.cutterStock} left`}`}
+          </p>}
           {coverage && <p>Duty · {coverage.workers.length} crew · +{coverage.alloy} alloy · +{coverage.data} data
             {!!coverage.provisions && ` · +${coverage.provisions} provisions`}</p>}
         </li>
