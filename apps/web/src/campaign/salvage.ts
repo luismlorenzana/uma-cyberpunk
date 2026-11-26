@@ -3,6 +3,7 @@ import { CAMPAIGN_WORKSHOP_ALLOY_MAX, awayMembers, campaignSupport, canTakeOrdin
   type CampaignBook, type GroundEncounter, type Mission, type Save } from '@cyber/domain'
 import { finishMission } from '../mission/director'
 import { advanceStationWatches, stationOf, voyageCrew } from './watch'
+import { nightActive } from './night-economy'
 
 const contracts = {
   'dock-recovery': { title: 'Recover the salvage cache', scenario: 'drydock-receiver', kind: 'reach', alloy: 2, base: false },
@@ -17,6 +18,7 @@ export const salvageRecipes = [
   { contract: 'dock-defense', part: 'legs-anchor', slot: 'legs', alloy: 4, icon: '' },
   { contract: 'base-recovery', part: 'core-reactor', slot: 'core', alloy: 5, icon: '' },
 ] as const
+export const salvageTitle = (key: SalvageContract) => contracts[key].title
 
 export function salvageSite(save: Save, book: CampaignBook) {
   const port = save.campaignSupply?.port
@@ -44,13 +46,19 @@ export function salvageCrew(save: Save, book: CampaignBook): number[] {
     && !ashore.has(member.outfit) && !away.has(member.outfit) && !voyages.has(member.outfit)).map(member => member.outfit)
 }
 
+export function salvageBlock(save: Save, book: CampaignBook, outfit?: number): string | undefined {
+  if (save.mission || save.salvage?.active || save.expedition) return 'Finish the current sortie or voyage.'
+  if (save.campaignDay.pending || save.pairScene || nightActive(save)) return 'Finish the current visit.'
+  if (outfit === undefined || !salvageCrew(save, book).includes(outfit)) return 'Choose an available Uma.'
+  const station = stationOf(save, book)
+  if (station.appointments?.some(row => row.at === station.absoluteWatch)) return 'This watch has an appointment.'
+}
+
 export function startSalvage(save: Save, book: CampaignBook, release: string, key: SalvageContract, outfit: number): Save {
-  if (save.mission || save.salvage?.active || save.expedition || save.campaignDay.pending || save.pairScene || !salvageCrew(save, book).includes(outfit)) return save
+  if (salvageBlock(save, book, outfit)) return save
   const offer = salvageOptions(save, book).find(row => row.key === key)
   const port = save.campaignSupply?.port
   if (!port || !offer?.reward) return save
-  const station = stationOf(save, book)
-  if (station.appointments?.some(row => row.at === station.absoluteWatch)) return save
   const sequence = (save.salvage?.sequence ?? 0) + 1
   const id = `salvage-${sequence}`
   const started: Save = { ...save, salvage: { sequence, clears: save.salvage?.clears ?? {},

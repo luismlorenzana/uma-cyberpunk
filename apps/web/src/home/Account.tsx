@@ -23,7 +23,7 @@ function CaptainPanel({ captain }: { captain: Captain }) {
   )
 }
 
-const REASON: Record<SafetyReason, string> = { replaced: 'Replaced by a newer save', restore: 'Before a restore', unreadable: 'Couldn’t be read' }
+const REASON: Record<SafetyReason, string> = { replaced: 'Replaced by a newer save', restore: 'Before a restore', unreadable: 'Couldn’t be read', migration: 'Before campaign XP update' }
 
 export function Account() {
   const auth = useAuth()

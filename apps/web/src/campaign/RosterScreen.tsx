@@ -16,6 +16,7 @@ import { homestretchCabins, setLieutenantResidence } from './homestretch'
 import { stationOf } from './watch'
 import { Wardrobe } from './Wardrobe'
 import { BattleHelp } from '../battle/BattleHelp'
+import { campaignActorXp } from './progression'
 
 function LaserProgress({ save, outfit }: { save: Save; outfit: number }) {
   const progress = trainingOf(save, outfit)
@@ -149,6 +150,10 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
           <p>Level {campaignLevel(member.xp, save.campaignCurve)} · {member.xp} XP{member.role && ' · ' + ROLE_NAME[member.role]}</p>
           {book.fourAct && !member.heroine && <LaserProgress save={save} outfit={member.outfit} />}
           <RigSheet rig={member.rig} xp={member.xp} curve={save.campaignCurve} />
+        </div>}
+        {!member && entry.kind === 'Lieutenant' && campaignActorXp(save, entry.speaker) !== undefined && <div className="rounded-lg border border-white/10 p-2 text-sm">
+          <p>Level {campaignLevel(campaignActorXp(save, entry.speaker)!, save.campaignCurve)} · {campaignActorXp(save, entry.speaker)} XP</p>
+          <RigSheet rig={null} xp={campaignActorXp(save, entry.speaker)!} curve={save.campaignCurve} />
         </div>}
         <section aria-label="Character chapters">
           <h3 className="font-semibold">Chapters</h3>

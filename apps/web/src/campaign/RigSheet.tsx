@@ -7,9 +7,9 @@ export function RigSheet({ rig, xp, curve }: { rig: Rig | null; xp: number; curv
   const armor = curve ? campaignArmor(level) : { core: veteranCoreHp(xp), arms: 0, legs: 0, next: undefined }
   const next = curve ? (CAMPAIGN_XP_THRESHOLDS[level] ?? xp) - xp : 100 - xp % 100
   return <div className="space-y-2 text-sm">
-    <p className="flex flex-wrap items-center">{level < CAMPAIGN_LEVEL_CAP ? next + ' XP to level ' + (level + 1) : 'Maximum level'}
+    <div className="flex flex-wrap items-center">{level < CAMPAIGN_LEVEL_CAP ? next + ' XP to level ' + (level + 1) : 'Maximum level'}
       {' · Armor +'}{armor.core} Core / +{armor.arms} each arm / +{armor.legs} Legs {armor.next && ` · Next at Lv ${armor.next}`}
-      <BattleHelp topic="xp" /></p>
+      <BattleHelp topic="xp" /></div>
     {rig ? <details>
       <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Fitted equipment</summary>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">{RIG_SLOTS.map(slot => <div key={slot} className="contents">

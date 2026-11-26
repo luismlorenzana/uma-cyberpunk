@@ -63,8 +63,8 @@ export function UnitCard({ state, unit, onClose }: { state: BattleState; unit: U
       ))}
       <div className="flex flex-wrap items-center text-[#a3abc2]">Charge {unit.charge}<BattleHelp topic="charge" detail={`${unit.charge} Charge now`} version={state.input.rulesVersion} />· Link {unit.link ? 'on' : 'off'}<BattleHelp topic="link" version={state.input.rulesVersion} />
         · Facing {unit.facing}</div>
-      <div className="flex flex-wrap gap-x-2 text-[#a3abc2]">{unitHelpTopics(unit).map(topic => <span className="inline-flex items-center" key={topic}>
-        {battleHelp[topic][0]}<BattleHelp topic={topic} version={state.input.rulesVersion} /></span>)}</div>
+      <div className="flex flex-wrap gap-x-2 text-[#a3abc2]">{unitHelpTopics(unit).map(topic => <div className="inline-flex items-center" key={topic}>
+        {battleHelp[topic][0]}<BattleHelp topic={topic} version={state.input.rulesVersion} /></div>)}</div>
       {contact && <p className="mt-1 text-[#a3abc2]">{unit.talkHit ? `Talk · ${labelOf(state, contact.actor)}` : contact.hint}</p>}
       {unit.windup && <p className="text-[#ffb84d]">Preparing a shot at {labelOf(state, unit.windup.target)}</p>}
       {unit.suppressed && <p className="text-[#ffb84d]">Suppressed · reactions blocked</p>}

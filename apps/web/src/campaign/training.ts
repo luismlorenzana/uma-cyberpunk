@@ -1,9 +1,10 @@
 import { capacityOf, createBattle, hash32, loadOf, type Band, type Bands, type BattleInput, type UnitInput } from '@cyber/battle'
 import { advanceCombatTraining, applyGroundRules, issuedCampaignRig, laserFitting, loadoutOf, rigProblem, specialistFitting, trainingOf,
-  type ExpeditionRun, type GroundRules, type Mission, type Rig, type Save, type StoryPack } from '@cyber/domain'
+  type ExpeditionRun, type GroundRules, type Mission, type Rig, type Save, type Speaker, type StoryPack } from '@cyber/domain'
 import { missionInput, SCENARIOS, type SquadUnit } from '../mission/battleInput'
 import { finishMission } from '../mission/director'
 import { nameOf } from '../story/runner'
+import { salvageRecipes } from './salvage'
 
 export const TRAINING_MAIN = [
   { id: 'hand-greatblade', name: 'Great blade', details: 'Two hands · 1 tile' },
@@ -22,7 +23,7 @@ export function groundSquadCapacity(scenario: string | undefined): number {
 
 /** All ten fixed expedition members arrive from the saved roster with role-appropriate issued equipment. */
 export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, story: StoryPack, save?: Save,
-  bandsOf?: CampaignBands, useFitted = true, rules?: GroundRules): BattleInput {
+  bandsOf?: CampaignBands, useFitted = true, rules?: GroundRules, refit?: ExpeditionRefit): BattleInput {
   const scenario = SCENARIOS[mission.scenario!]!
   const slots = scenario.input.units.filter(unit => unit.side === 'squad')
   const variants = new Map<string, number>()
@@ -35,12 +36,14 @@ export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, stor
     const objectiveDeck = scenario.input.objective.kind === 'hack' && variant === 0 ? 'back-deck' : undefined
     const template = member.role === 'uma' ? laserFitting(trainingOf(save ?? {}, member.outfit, true), false, objectiveDeck)
       : specialistFitting(role === 'boss-ally' ? 'wing' : role === 'melee-shield' ? 'shield' : role === 'ranged-medic' ? 'medic' : 'sniper', variant)
-    const equipped = save?.crew.find(row => member.role === 'uma' ? row.outfit === member.outfit : row.heroine === member.heroine)?.rig
-    const fit = fitCampaignChassis(template, bands, useFitted ? equipped : undefined, save?.campaignGear.parts)
+    const equipped = useFitted ? save?.crew.find(row => member.role === 'uma' ? row.outfit === member.outfit : row.heroine === member.heroine)?.rig : undefined
+    const optional = refit?.actor === identity && campaignRefitParts(save).find(row => row.part === refit.part)
+    const armor = optional ? { ...template.rig, ...equipped, [optional.slot]: optional.part } : equipped
+    const fit = fitCampaignChassis(template, bands, armor, save?.campaignGear.parts)
     const squad: SquadUnit = { outfit: member.role === 'uma' ? member.outfit : 0,
       ...(member.role === 'uma' ? {} : { heroine: member.heroine }), label: nameOf(story, identity), bands, frozenRig: fit.rig,
       loadout: fit.loadout, stride: null, spriteRole: role === 'boss-ally' ? 'boss-ally' : 'sub-boss' }
-    return { squad, specialty: fit.specialty }
+    return { squad, specialty: fit.specialty, terminalOnly: role === 'uma' && !!objectiveDeck }
   })
   const attempt = scenario.id.length + mission.id.length < 64 ? mission.id : String(hash32(mission.id))
   const input = missionInput(scenario.id, fittings.map(row => row.squad), [], attempt)
@@ -54,7 +57,10 @@ export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, stor
     ?? input.units.find(unit => unit.side === 'enemy' && !unit.leader && [unit.loadout.leftHand, unit.loadout.rightHand]
       .some(item => item?.kind === 'weapon' && item.band !== 'melee'))
   const projected: BattleInput = { ...input, ...(queen ? { goalRequired: true as const, protect: [queen.id] } : {}), units: input.units.map(unit => {
-    if (unit.side === 'squad') return { ...unit, specialty: fittings[friendly++]!.specialty }
+    if (unit.side === 'squad') {
+      const fit = fittings[friendly++]!
+      return { ...unit, specialty: fit.specialty, ...(fit.terminalOnly ? { terminalOnly: true as const } : {}) }
+    }
     const second = mission.scenario === 'hush-collar' && unit.id === 'chorus-1'
     const named = unit.leader && target || (second ? 'seraine-seraxis' : undefined)
     const actor = named || opposition[sentry++]
@@ -70,6 +76,12 @@ export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, stor
 }
 
 export type CampaignBands = (outfit: number) => Bands | undefined
+export interface ExpeditionRefit { actor: Speaker; part: string }
+
+export function campaignRefitParts(save?: Save) {
+  return salvageRecipes.filter(recipe => save?.campaignGear.parts.includes(recipe.part)
+    && !save.crew.some(member => member.rig?.[recipe.slot] === recipe.part))
+}
 
 function personalBands(slot: Bands, personal?: Bands): Bands {
   if (!personal) return slot
@@ -99,11 +111,11 @@ function fitCampaignChassis(fit: ReturnType<typeof laserFitting>, bands: Bands, 
 }
 
 export function campaignSquadInput(input: BattleInput, save: Save, options: {
-  bandsOf?: CampaignBands; alternate?: Readonly<Record<number, boolean>>; useFitted?: boolean; expansion?: string; fixedKit?: boolean
+  bandsOf?: CampaignBands; alternate?: Readonly<Record<number, boolean>>; useFitted?: boolean; expansion?: string
 } = {}): BattleInput {
   const lead = input.units.find(unit => unit.side === 'squad')
   const units = input.units.map(unit => {
-    if (unit.side !== 'squad' || unit.ref?.kind !== 'uma' || options.fixedKit) return unit
+    if (unit.side !== 'squad' || unit.ref?.kind !== 'uma') return unit
     const outfit = Number(unit.ref.id)
     const bands = personalBands(unit.bands, options.bandsOf?.(outfit))
     const member = save.crew.find(row => row.outfit === outfit && !row.heroine)
@@ -115,9 +127,10 @@ export function campaignSquadInput(input: BattleInput, save: Save, options: {
     if (requiredWeapon) return unit
     const fit = fitCampaignChassis(laserFitting(progress, options.alternate?.[outfit], back), bands,
       options.useFitted ? member?.rig : undefined, save.campaignGear.parts)
-    return { ...unit, bands, specialty: fit.specialty, loadout: fit.loadout, frozenRig: fit.rig }
+    const terminalOnly = back === 'back-deck' && progress.subclass !== 'support' && input.objective.kind === 'hack'
+    return { ...unit, bands, specialty: fit.specialty, loadout: fit.loadout, frozenRig: fit.rig, ...(terminalOnly ? { terminalOnly: true as const } : {}) }
   })
-  const battle = { ...input, rulesVersion: Math.max(input.rulesVersion, 5), units }
+  const battle = { ...input, rulesVersion: Math.max(input.rulesVersion, 6), units }
   createBattle(battle)
   return battle
 }

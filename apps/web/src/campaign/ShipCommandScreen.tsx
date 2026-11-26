@@ -126,9 +126,9 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
             </div>
           })}
         </div>}
-        {readiness && <p className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
-          {!!readiness.bridge && ` · Bridge drills ${readiness.bridge}+`}<BattleHelp topic="readiness" /></p>}
-        <p className="flex items-center text-sm">Cargo {cargo.fuel} fuel · {cargo.provisions} provisions <BattleHelp topic="supplies" /></p>
+        {readiness && <div className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
+          {!!readiness.bridge && ` · Bridge drills ${readiness.bridge}+`}<BattleHelp topic="readiness" /></div>}
+        <div className="flex items-center text-sm">Cargo {cargo.fuel} fuel · {cargo.provisions} provisions <BattleHelp topic="supplies" /></div>
         <details className="text-sm"><summary className="min-h-11 cursor-pointer py-2">Threat forecast · {prepared.threats.length} waves</summary>
           <ol className="list-decimal space-y-1 pl-5">{prepared.threats.map((wave, i) => <li key={i}>{wave.section === 'fore' ? 'Fore' : 'Aft'} · {wave.power} incoming power · {wave.fighters} fighters</li>)}</ol>
         </details>
@@ -204,7 +204,7 @@ function CommandBoard({ encounter, input, state, relay, actions, portraits, obje
       <div className="flex flex-wrap justify-between gap-1 text-sm font-bold">
         <span>{state.result ? `Resolved · ${state.turn} orders` : `Wave ${state.turn + 1}/${input.threats.length}`}</span><span>{state.result ? `Reactor ${state.power}` : `Reactor ${spent}/${state.power}`}</span>
       </div>
-      <p className="flex items-center rounded-lg bg-[#58263d] px-2 text-sm font-semibold">{threat ? `Incoming ${threat.section} · ${threat.power} fire · ${threat.fighters} fighters` : 'Encounter resolved'} <BattleHelp topic="shipThreat" disabled={!!cinema.pending} /></p>
+      <div className="flex items-center rounded-lg bg-[#58263d] px-2 text-sm font-semibold">{threat ? `Incoming ${threat.section} · ${threat.power} fire · ${threat.fighters} fighters` : 'Encounter resolved'} <BattleHelp topic="shipThreat" disabled={!!cinema.pending} /></div>
       <div className="flex gap-1"><BattleHelp topic="shipHull" disabled={!!cinema.pending} />
         {!!state.emitter && <BattleHelp topic="emitter" disabled={!!cinema.pending} />}</div>
       {objectiveArt && <div className="flex min-h-14 items-center gap-3 rounded-lg bg-[#24314a] px-2" data-command-objective>

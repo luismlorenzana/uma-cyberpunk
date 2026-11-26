@@ -88,6 +88,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const [finaleScene, setFinaleScene] = useState<string | null>(null)
   const [sharedConsent, setSharedConsent] = useState<{ ally: CampaignAlly; quest: CampaignQuest; day: number } | null>(null)
   const [active, setActive] = useState<CampaignQuest | null>(null)
+  const [launchPreview, setLaunchPreview] = useState<CampaignQuest | null>(null)
   const [stationScene, setStationScene] = useState<{ scene: string; flag?: string; after?: () => void } | null>(null)
   const [invitation, setInvitation] = useState<Invitation | null>(null)
   const [newRecruit, setNewRecruit] = useState<number>()
@@ -235,6 +236,23 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const night = day?.pending
   const pendingPair = save?.pairScene
   const catalog = loaded?.book.fourAct
+  const launchDuo = loaded && launchPreview && expeditionForQuest(loaded.book, launchPreview.id)
+  if (loaded && save && launchPreview && launchDuo?.expedition?.route) {
+    const route = launchDuo.expedition.route
+    return <main className={viewport} style={insets}>
+      <section className="mx-auto max-w-xl space-y-3 rounded-xl bg-[#101e32] p-4" aria-labelledby="launch-review">
+        <h1 id="launch-review" className="text-xl font-bold">{route.name}</h1>
+        {launchDuo.umas.map(outfit => <p className="text-sm" key={outfit}>{nameOf(loaded.book.story, outfit)} · Laser Rank {Math.max(6, save.combatTraining?.[outfit]?.rank ?? 1)} · Laser-only</p>)}
+        <p className="text-sm">The two Umas retire their subclasses at launch. The eight allies receive role kits and reach at least Lv 6.</p>
+        <p className="text-sm">{route.cargo.fuel} fuel · {route.cargo.provisions} provisions · 10 aboard</p>
+        <div className="flex gap-2"><button type="button" className={campaignPrimary} onClick={() => {
+          setLaunchPreview(null)
+          const current = useGame.getState().save
+          if (current && questAvailable(current, loaded.book, launchPreview, current.campaignSupply?.port)) setActive(launchPreview)
+        }}>Continue to departure</button><button type="button" className={campaignControl} onClick={() => setLaunchPreview(null)}>Back</button></div>
+      </section>
+    </main>
+  }
   const expeditions = view === 'Operations' && catalog ? [...catalog.duos.values()].map(duo => ({ duo, readiness: expeditionReadiness(catalog, duo.id, complete)! })) : undefined
   const network = loaded?.book.supply
   const supply = network && complete.has(network.after) ? save?.campaignSupply ?? startSupply(network) : undefined
@@ -682,7 +700,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
     selectView('Home')
   }
   function openCampaignQuest(quest: CampaignQuest) {
-    if (loaded && isCareSession(loaded.book, quest.id)) openCare(quest)
+    if (loaded && expeditionForQuest(loaded.book, quest.id)?.expedition?.route?.launch === quest.id) setLaunchPreview(quest)
+    else if (loaded && isCareSession(loaded.book, quest.id)) openCare(quest)
     else setActive(quest)
   }
   function openCare(quest: CampaignQuest, missed = false) {
@@ -712,7 +731,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const atStation = !!(save && loaded && supply?.port === stationOf(save, loaded.book).anchor)
   const stationStory = loaded?.book.stationStory
   function openExpeditionQuest(quest: CampaignQuest) {
-    const open = () => setActive(quest)
+    const open = () => openCampaignQuest(quest)
     if (expedition && expedition.ship === stationStory?.pilotShip && activePlan?.route.stops[0] === quest.id
       && showStationStory('errand-brief', open)) return
     open()

@@ -4,7 +4,7 @@ import { PARTS_BY_ID, type CampaignBook, type CampaignQuest, type Save } from '@
 import { campaignControl, CampaignQuestRow } from './CampaignQuestRow'
 import { campaignActs, operationTypes, operationStates, type CampaignNavigation, type OperationBrowse } from './navigation'
 import { questAvailable } from './quests'
-import { salvageCrew, salvageOptions, type SalvageContract } from './salvage'
+import { salvageBlock, salvageCrew, salvageOptions, type SalvageContract } from './salvage'
 import { nameOf } from '../story/runner'
 
 const option = 'min-h-11 rounded-lg border border-white/15 bg-[#17253b] px-3 text-sm'
@@ -42,6 +42,7 @@ export default function OperationsScreen({ book, save, port, complete, navigatio
   const leads = type === 'Salvage' ? salvageCrew(save, book) : []
   const lead = selectedLead !== undefined && leads.includes(selectedLead) ? selectedLead : leads[0]
   const contracts = type === 'Salvage' ? salvageOptions(save, book).filter(row => row.title.toLocaleLowerCase().includes(query)) : []
+  const blocker = contracts.length ? salvageBlock(save, book, lead) : undefined
   return <section aria-labelledby="operations-title" className="space-y-3">
     <h1 id="operations-title" className="font-display text-2xl font-bold">Operations</h1>
     <div className="flex flex-wrap items-end gap-2">
@@ -61,13 +62,14 @@ export default function OperationsScreen({ book, save, port, complete, navigatio
         </select>
       </label>}
       {!contracts.length && <p className="text-sm text-slate-300">Clear a ground battle, then dock at Homestretch or an operating base.</p>}
+      {blocker && <p className="text-sm text-amber-200">{blocker}</p>}
       {contracts.map(row => <article key={row.key} className="rounded-xl border border-white/10 bg-[#101b2d] p-3">
         <h2 className="font-semibold">{row.title}</h2>
         <p className="text-sm">1 watch · {row.reward} Hangar Alloy on victory</p>
         {row.recipe && !save.salvage?.clears[row.key] && <p className="text-sm">First clear · {PARTS_BY_ID.get(row.recipe.part)?.name} recipe</p>}
         {!row.reward && <p className="text-sm">Spend Hangar Alloy before launching.</p>}
         <button type="button" className={campaignControl + ' disabled:opacity-40'}
-          disabled={lead === undefined || !row.reward || !!save.mission || !!save.expedition || !!save.campaignDay.pending || !!save.pairScene}
+          disabled={!!blocker || !row.reward}
           onClick={() => { if (lead !== undefined) startSalvage?.(row.key, lead) }}>Launch salvage</button>
       </article>)}
     </> : <><p className="text-sm text-slate-300">{matching.length} {matching.length === 1 ? 'operation' : 'operations'}</p>

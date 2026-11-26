@@ -20,7 +20,7 @@ export interface SaveRow {
 
 /** Why a safety copy exists: a newer save replaced unsynced changes, the player restored an older copy over it, or this
  * device's save couldn't be read (kept as it was, for a later build that can). */
-export type SafetyReason = 'replaced' | 'restore' | 'unreadable'
+export type SafetyReason = 'replaced' | 'restore' | 'unreadable' | 'migration'
 export interface SafetyCopy {
   id?: number
   uid: string

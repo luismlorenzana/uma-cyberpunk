@@ -6,9 +6,14 @@ import { CAMPAIGN_ACT_XP, CAMPAIGN_XP_THRESHOLDS, campaignArmor, campaignLevel, 
 export const veteranCoreHp = (xp: number) => Math.min(3, Math.floor(levelOf(xp) / 5))
 
 /** A new deployment freezes veteran reinforcement. Retrying or replaying a recorded battle keeps its original input. */
-export function campaignBattleProgression(input: BattleInput, save: Pick<Save, 'crew' | 'campaignCurve'>): BattleInput {
-  const bonuses = new Map(save.crew.map(member => [String(crewSpeaker(member)), save.campaignCurve
-    ? campaignArmor(campaignLevel(member.xp, save.campaignCurve)) : { core: veteranCoreHp(member.xp), arms: 0, legs: 0 }]))
+export function campaignActorXp(save: Pick<Save, 'crew' | 'expeditionXp'>, actor: Speaker): number | undefined {
+  return save.crew.find(member => crewSpeaker(member) === actor)?.xp ?? (typeof actor === 'string' ? save.expeditionXp?.[actor] : undefined)
+}
+
+export function campaignBattleProgression(input: BattleInput, save: Pick<Save, 'crew' | 'campaignCurve' | 'expeditionXp'>): BattleInput {
+  const xp = [...Object.entries(save.expeditionXp ?? {}), ...save.crew.map(member => [String(crewSpeaker(member)), member.xp] as const)]
+  const bonuses = new Map(xp.map(([actor, earned]) => [actor, save.campaignCurve
+    ? campaignArmor(campaignLevel(earned, save.campaignCurve)) : { core: veteranCoreHp(earned), arms: 0, legs: 0 }]))
   return { ...input, units: input.units.map(unit => {
     const hp = unit.side === 'squad' && unit.ref ? bonuses.get(unit.ref.id) : undefined
     if (!hp || !(hp.core || hp.arms || hp.legs)) return unit
@@ -24,10 +29,13 @@ export const CAMPAIGN_CLEAR_XP = 50
 /** Settlements call this once, after recording a first clear. The battle supplies the participating identities. */
 export function creditCampaignClear(save: Save, actors: readonly Speaker[], act?: CombatAct): Save {
   const present = new Set(actors.map(String))
-  if (!save.crew.some(member => present.has(String(crewSpeaker(member))))) return save
+  const roster = new Set(save.crew.map(member => String(crewSpeaker(member))))
+  if (![...present].some(actor => roster.has(actor) || Object.hasOwn(save.expeditionXp ?? {}, actor))) return save
   const xp = save.campaignCurve && act ? CAMPAIGN_ACT_XP[act] : CAMPAIGN_CLEAR_XP
   const cap = save.campaignCurve ? CAMPAIGN_XP_THRESHOLDS.at(-1)! : Infinity
-  return { ...save, crew: save.crew.map(member => present.has(String(crewSpeaker(member)))
+  const expeditionXp = save.expeditionXp && Object.fromEntries(Object.entries(save.expeditionXp).map(([actor, earned]) =>
+    [actor, present.has(actor) && !roster.has(actor) ? Math.min(cap, earned + xp) : earned]))
+  return { ...save, ...(expeditionXp ? { expeditionXp } : {}), crew: save.crew.map(member => present.has(String(crewSpeaker(member)))
     ? { ...member, xp: Math.min(cap, member.xp + xp) } : member) }
 }
 
@@ -35,16 +43,20 @@ export function creditCampaignClear(save: Save, actors: readonly Speaker[], act?
 export function focusExpeditionCrew(save: Save, members: ExpeditionRun['members']): Save {
   const training = { ...save.combatTraining }
   const guests = new Set<string>()
+  const expeditionXp = { ...save.expeditionXp }
+  const floor = CAMPAIGN_XP_THRESHOLDS[5]!
   for (const member of members) {
     if (member.role !== 'uma') {
       guests.add(member.heroine)
+      if (member.role !== 'boss-ally' && !save.crew.some(row => row.heroine === member.heroine)) {
+        expeditionXp[member.heroine] = Math.max(floor, expeditionXp[member.heroine] ?? 0)
+      }
       continue
     }
     const prior = training[member.outfit] ?? { rank: 1, subclass: null }
     training[member.outfit] = { ...prior, rank: Math.max(6, prior.rank), focused: true }
   }
-  const floor = CAMPAIGN_XP_THRESHOLDS[5]!
-  return { ...save, combatTraining: training, crew: save.crew.map(member =>
+  return { ...save, combatTraining: training, expeditionXp, crew: save.crew.map(member =>
     member.heroine && guests.has(member.heroine) && member.xp < floor ? { ...member, xp: floor } : member) }
 }
 

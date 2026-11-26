@@ -6,6 +6,7 @@ import { nameOf } from '../story/runner'
 import { campaignImage, type LoadedCampaign } from './load'
 import { craftCampaignPart, fitCampaignPart, fittedSummary, sendWorkshopAlloy, workshopAt } from './workshop'
 import { BattleHelp } from '../battle/BattleHelp'
+import { salvageRecipes, salvageTitle } from './salvage'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm font-semibold text-white disabled:opacity-50'
 const partName = (id: string | null) => id ? PARTS_BY_ID.get(id)?.name : undefined
@@ -36,6 +37,7 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
   const currentStats = rigStats(rig, STAND_IN_BANDS)
   const gear = save.campaignGear
   const shipment = shipmentAt(at.cargo, at.port, 'alloy')
+  const lockedRecipes = loaded.book.fourAct ? salvageRecipes.filter(recipe => !at.recipes.some(row => row.part === recipe.part)) : []
   function change(fn: (save: Save) => Save) {
     setBusy(true)
     void updateSave(fn).finally(() => setBusy(false))
@@ -56,8 +58,12 @@ export default function WorkshopPanel({ save, loaded, ashore }: { save: Save; lo
       <span>{fittedSummary(rig)}</span>
     </label>}
     {member && <RigSheet rig={rig} xp={member.xp} curve={save.campaignCurve} />}
-    <p className="flex flex-wrap items-center text-sm">Workshop reference · Load {currentStats.load}/{currentStats.capacity} · Move {currentStats.move} · Core HP {currentStats.hp.core} · Guard {currentStats.guard}<BattleHelp topic="capacity" /><BattleHelp topic="equipment" /></p>
+    <div className="flex flex-wrap items-center text-sm">Workshop reference · Load {currentStats.load}/{currentStats.capacity} · Move {currentStats.move} · Core HP {currentStats.hp.core} · Guard {currentStats.guard}<BattleHelp topic="capacity" /><BattleHelp topic="equipment" /></div>
     <ul className="grid gap-2 sm:grid-cols-2">
+      {lockedRecipes.map(recipe => <li key={recipe.part} className="rounded-lg border border-white/10 p-2 text-sm">
+        <p className="font-semibold">{PARTS_BY_ID.get(recipe.part)?.name} · {recipe.alloy} Hangar Alloy</p>
+        <p className="text-slate-300">Unlock · {salvageTitle(recipe.contract)}</p>
+      </li>)}
       {at.recipes.map((recipe) => {
         const preview = rigStats({ ...rig, [recipe.slot]: recipe.part }, STAND_IN_BANDS)
         const installed = partName(rig[recipe.slot]) ?? 'Empty'

@@ -13,8 +13,8 @@ import { retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { nameOf } from '../story/runner'
-import { campaignSquadInput, expeditionGroundInput, groundInput, groundSquadCapacity, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
-import { campaignBattleProgression, focusExpeditionCrew, initializeCampaignCurve } from './progression'
+import { campaignRefitParts, campaignSquadInput, expeditionGroundInput, groundInput, groundSquadCapacity, settleTraining, TRAINING_EXPANSION, TRAINING_MAIN } from './training'
+import { campaignActorXp, campaignBattleProgression, focusExpeditionCrew, initializeCampaignCurve } from './progression'
 import { fittedGroundRig, fittedSummary } from './workshop'
 import { formationReady, specialistInput } from './specialist-input'
 import { useMaster } from '../master/master'
@@ -55,6 +55,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   const [main, setMain] = useState<string>(weapons[0]!.id)
   const [expansion, setExpansion] = useState<string>(expansions[0]!.id)
   const [useFitted, setUseFitted] = useState(true)
+  const [refitPart, setRefitPart] = useState('')
+  const [refitActor, setRefitActor] = useState(0)
   const [launching, setLaunching] = useState(false)
   const [settling, setSettling] = useState(false)
   const [specialistTraining, setSpecialistTraining] = useState(false)
@@ -205,8 +207,11 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
     }) : base)
   }
   const currentSave = (s: Save) => loaded ? initializeCampaignCurve(s, loaded.book) : s
-  const prepareExpedition = (s: Save, run: NonNullable<Save['expedition']>) =>
-    campaignBattleProgression(expeditionGroundInput(mission, run, pack, s, baseBands, useFitted, ground), s)
+  const prepareExpedition = (s: Save, run: NonNullable<Save['expedition']>) => {
+    const member = run.members[refitActor]
+    const refit = member && refitPart ? { actor: member.role === 'uma' ? member.outfit : member.heroine, part: refitPart } : undefined
+    return campaignBattleProgression(expeditionGroundInput(mission, run, pack, s, baseBands, useFitted, ground, refit), s)
+  }
   let deployment: BattleInput | undefined
   if (state.step === 'deploy') {
     try {
@@ -214,6 +219,8 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
       deployment = expedition && formationState ? prepareExpedition(current, formationState) : prepare(current)
     } catch { /* The deployment button reports a rejected fit or formation. */ }
   }
+  const offeredRefits = expedition ? campaignRefitParts(save) : []
+  const refitted = deployment?.units.filter(unit => unit.side === 'squad')[refitActor]?.frozenRig
   const deploymentStats = deployment && <details className="rounded-lg border border-white/10 px-3">
     <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Effective sortie stats</summary>
     <div className="flex gap-1"><BattleHelp topic="armor" /><BattleHelp topic="capacity" /><BattleHelp topic="equipment" /></div>
@@ -233,9 +240,9 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
         <h1 className="font-display text-2xl font-bold">{state.step === 'briefing' ? title
           : state.step === 'deploy' ? `${title} Hangar` : state.won ? (ground ? 'Objective secured' : 'Exercise passed') : (withdrew ? 'Squad withdrawn' : ground ? 'Objective lost' : 'Exercise lost')}</h1>
         {approach && state.step !== 'results' && <p className="text-sm font-semibold text-cyan-200">{approach}</p>}
-      {salvage && <p className="flex items-center text-sm">{salvage.alloy} Hangar Alloy on victory <BattleHelp topic="salvage" /></p>}
-      {readiness && state.step !== 'results' && <p className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
-        {readiness.support && ` · Support Lv ${readiness.support}+`}<BattleHelp topic="readiness" /></p>}
+      {salvage && <div className="flex items-center text-sm">{salvage.alloy} Hangar Alloy on victory <BattleHelp topic="salvage" /></div>}
+      {readiness && state.step !== 'results' && <div className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
+        {readiness.support && ` · Support Lv ${readiness.support}+`}<BattleHelp topic="readiness" /></div>}
         {state.step === 'briefing' && <>
           <p className="text-sm text-white/80">{mission.brief}</p>
           <div className="flex gap-2">
@@ -251,18 +258,30 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           </div>
         </>}
         {state.step === 'deploy' && expedition && formationState && <>
-          <p className="flex items-center font-semibold">{expedition} · 10 deploy <BattleHelp topic="roles" /></p>
+          <div className="flex items-center font-semibold">{expedition} · 10 deploy <BattleHelp topic="roles" /></div>
           <ul className="grid grid-cols-2 gap-1 text-sm">
             {formationState.members.map(member => {
               const actor = member.role === 'uma' ? member.outfit : member.heroine
-              const crew = save.crew.find(row => crewSpeaker(row) === actor)
+              const xp = campaignActorXp(save, actor)
               const minimum = member.role === 'uma' ? readiness?.minimum : readiness?.support
-              const level = campaignLevel(crew?.xp ?? 0, save.campaignCurve)
-              return <li key={actor}>{nameOf(pack, actor)}{crew && ` · Lv ${level}`}
-                {minimum && crew && level < minimum && <span className="text-amber-200"> of {minimum} recommended</span>}</li>
+              const level = campaignLevel(xp ?? 0, save.campaignCurve)
+              return <li key={actor}>{nameOf(pack, actor)}{xp !== undefined && ` · Lv ${level}`}
+                {minimum && xp !== undefined && level < minimum && <span className="text-amber-200"> of {minimum} recommended</span>}</li>
             })}
           </ul>
           <button type="button" className={action} aria-pressed={useFitted} onClick={() => setUseFitted(!useFitted)}>{useFitted ? 'Use fitted armor' : 'Use issued armor'}</button>
+          {offeredRefits.length > 0 && <fieldset className="flex flex-wrap gap-2 rounded-lg border border-white/10 p-2">
+            <legend className="text-sm">Sortie refit</legend>
+            <select className={action} aria-label="Crafted part" value={refitPart} onChange={event => setRefitPart(event.currentTarget.value)}>
+              <option value="">Use issued part</option>
+              {offeredRefits.map(recipe => <option key={recipe.part} value={recipe.part}>{PARTS_BY_ID.get(recipe.part)?.name}</option>)}
+            </select>
+            <select className={action} aria-label="Refit crew member" value={refitActor} onChange={event => setRefitActor(Number(event.currentTarget.value))}>
+              {formationState.members.map((member, index) => <option key={index} value={index}>{nameOf(pack, member.role === 'uma' ? member.outfit : member.heroine)}</option>)}
+            </select>
+            {refitPart && refitted && !Object.values(refitted).includes(refitPart)
+              && <p className="w-full text-sm text-amber-200">This crew member uses the issued part to stay within Capacity.</p>}
+          </fieldset>}
           {deploymentStats}
           <button type="button" className={primary} onClick={() => {
             setLaunching(true)
@@ -398,7 +417,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
           </div>
         </>}
         {state.step === 'results' && state.won && readiness && !save.worlds.missions.includes(mission.id)
-          && <p className="flex items-center text-sm">{CAMPAIGN_ACT_XP[readiness.act]} XP per eligible participant <BattleHelp topic="xp" /></p>}
+          && <div className="flex items-center text-sm">{CAMPAIGN_ACT_XP[readiness.act]} XP per eligible participant <BattleHelp topic="xp" /></div>}
         {state.step === 'results' && <div className="flex gap-2">
           <BattleHelp topic="results" />
           {state.won ? <button type="button" className={primary} disabled={settling} onClick={() => {

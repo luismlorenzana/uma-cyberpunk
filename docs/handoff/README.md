@@ -23,7 +23,7 @@ CY97 delivered CY83–CY90 through the existing game link. CY91 records the host
 
 The campaign menus, advancement, supply forecasts and tender operations are implemented. The [combat balance pass](tasks/CY102.md) and [resource balance pass](tasks/CY103.md) record scripted results and the phone play checks. [System locations](tasks/CY104.md), [expedition operations](tasks/CY105.md) and [individual interactions](tasks/CY106.md) track exact Art and Story follow-through.
 
-[CY129 · Campaign combat progression and battle help](tasks/CY129.md) specifies the live Laser and subclass rollout, repeatable gear acquisition, character progression, per-battle readiness and in-context help across all four acts.
+[CY129 · Campaign combat progression and battle help](tasks/CY129.md) records the live rollout and remaining device review for Laser and subclasses, salvage, XP and armor, per-battle readiness and in-context help.
 
 ## Content coverage closure
 

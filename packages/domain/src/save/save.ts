@@ -267,6 +267,8 @@ export interface FleetHull {
 export interface Save extends Omit<SaveV22, 'version'> {
   version: 23
   campaignCurve?: 1
+  /** Returned expedition specialists whose identities live in the book rather than ordinary crew records. */
+  expeditionXp?: Record<string, number>
   salvage?: CampaignSalvage
 }
 
@@ -805,9 +807,9 @@ export function parseSave(value: unknown, path = 'save'): Save {
     if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
     return { ...parseSaveV19(value, path), version: SAVE_VERSION, expedition: null }
   }
-  const { expedition, combatTraining, finaleProgress, station, fleet, campaignCurve, salvage, ...rest } = object(value, path, Object.keys(value as Obj))
+  const { expedition, combatTraining, finaleProgress, station, fleet, campaignCurve, expeditionXp, salvage, ...rest } = object(value, path, Object.keys(value as Obj))
   if ((station !== undefined || fleet !== undefined) && version < 22) throw new SaveParseError(path + '.station', 'requires version 22')
-  if ((campaignCurve !== undefined && campaignCurve !== 1) || (version < 23 && (campaignCurve !== undefined || salvage !== undefined))) {
+  if ((campaignCurve !== undefined && campaignCurve !== 1) || (version < 23 && (campaignCurve !== undefined || expeditionXp !== undefined || salvage !== undefined))) {
     throw new SaveParseError(path + '.campaignCurve', 'requires the current campaign progression')
   }
   const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path, version >= 23)
@@ -818,8 +820,15 @@ export function parseSave(value: unknown, path = 'save'): Save {
   const active = expedition == null ? null : parseExpeditionRun(expedition, path + '.expedition', base.crew, version)
   if (active && parsedFleet?.[active.duo]?.condition === 'parked') throw new SaveParseError(path + '.fleet', 'active expedition also parked')
   const work = salvage === undefined ? undefined : parseSalvage(salvage, path + '.salvage', base.mission)
+  const xp = expeditionXp === undefined ? undefined : parseExpeditionXp(expeditionXp, path + '.expeditionXp')
   return { ...base, version: SAVE_VERSION, expedition: active, ...(parsedFleet ? { fleet: parsedFleet } : {}),
-    ...(campaignCurve === 1 ? { campaignCurve } : {}), ...(work ? { salvage: work } : {}) }
+    ...(campaignCurve === 1 ? { campaignCurve } : {}), ...(work ? { salvage: work } : {}), ...(xp ? { expeditionXp: xp } : {}) }
+}
+
+function parseExpeditionXp(value: unknown, path: string): Record<string, number> {
+  const rows = object(value, path, Object.keys((value ?? {}) as Obj))
+  if (Object.keys(rows).length > 150) throw new SaveParseError(path, 'expected at most 150 returned specialists')
+  return Object.fromEntries(Object.entries(rows).map(([actor, xp]) => [id(actor, path), count(xp, path + '.' + actor)]))
 }
 
 function parseSalvage(value: unknown, path: string, mission: Save['mission']): CampaignSalvage {

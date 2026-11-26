@@ -105,13 +105,15 @@ export function unitHelpTopics(unit: UnitState): BattleTopic[] {
 export function actionHelpTopic(action: Act): BattleTopic {
   switch (action.kind) {
     case 'attack': return action.mode ?? (action.aim ? 'aim' : 'forecast')
+    case 'prepare': return 'windup'
     case 'talk': return 'talk'
     case 'barrier': return 'barrier'
     case 'mend': return 'mend'
     case 'reboot': return 'reboot'
     case 'item': return 'item'
     case 'tech': return 'tech'
+    case 'hack': return 'hack'
     case 'wait': return 'wait'
-    default: return 'controls'
+    case 'none': return 'controls'
   }
 }
