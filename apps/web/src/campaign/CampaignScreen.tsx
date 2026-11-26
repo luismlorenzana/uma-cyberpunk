@@ -282,6 +282,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const voice = active && finalBook && active.id === finalBook.speakerAt
     ? speaker === 'captain' ? finalBook.bridge : speaker === undefined ? undefined : finalBook.speakers.get(speaker) : undefined
   const signOn = active && loaded?.book.fourAct && loaded.book.recruits?.find(row => row.signOn === active.id)
+  const portArrival = loaded && save && port && !night && !pendingPair && !missionState && !error
+    && !save.story.seen.includes(port.scene) ? port : undefined
   if (invitation && loaded) return <main className={viewport} style={insets} data-recruit-invitation>
     <section className="mx-auto mt-6 max-w-lg space-y-4 rounded-xl border border-cyan-200/20 bg-[#101e32] p-5" aria-labelledby="invite-title">
       <h1 id="invite-title" className="font-display text-2xl font-bold">{nameOf(loaded.book.story, invitation.outfit)}</h1>
@@ -292,7 +294,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
       </div>
     </section>
   </main>
-  if (loaded && active && activeScene) return <CampaignScene key={voice ?? activeScene} loaded={loaded} sceneId={voice ?? activeScene}
+  if (loaded && active && activeScene
+    && !(signOn && portArrival && active.port === portArrival.id && activeScene !== portArrival.scene)) return <CampaignScene
+    key={voice ?? activeScene} loaded={loaded} sceneId={voice ?? activeScene}
     onExit={signOn ? () => setActive(null) : undefined}
     exitLabel={signOn ? 'Leave meeting' : undefined}
     squad={save?.expedition?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : [])}
@@ -388,12 +392,12 @@ function Campaign({ layout }: { layout: StageLayout }) {
         return settleDay(nightSector ? { ...next, story: seeScene(next.story, night.scene) } : next, campaignDay)
       })} />
   }
-  if (loaded && save && port && !night && !pendingPair && !missionState && !error && !save.story.seen.includes(port.scene)) {
-    return <CampaignScene key={port.scene} loaded={loaded} sceneId={port.scene} fail={setError}
+  if (loaded && portArrival) {
+    return <CampaignScene key={portArrival.scene} loaded={loaded} sceneId={portArrival.scene} fail={setError}
       finish={(effects) => void updateSave((s) => {
-        if (s.story.seen.includes(port.scene)) return s
+        if (s.story.seen.includes(portArrival.scene)) return s
         const next = reduceEffects(s, effects)
-        return { ...next, story: seeScene(next.story, port.scene) }
+        return { ...next, story: seeScene(next.story, portArrival.scene) }
       })} />
   }
 
