@@ -81,7 +81,7 @@ it('uses real jump costs from Homestretch and assigns one cabin only when the in
   const sw3Place = 'sw3-relay'
   const sw3Arrival = { id: 'sw3-open', place: sw3Place, trigger: { arrive: sw3Place }, cast: [], steps: [{ narrate: 'The relief ship comes alongside.' }] }
   const home = parseCampaignBook({ ...STAND_IN_FILES,
-    'chapters/sw3-arrival.json': { schemaVersion: 1, id: 'sw3-arrival', world: 'sw3', number: 1, danger: 1, leads: [9000001],
+    'chapters/sw3-arrival.json': { schemaVersion: 1, id: 'sw3-arrival', world: 'sw3', number: 2, danger: 1, leads: [9000001],
       scenes: [sw3Arrival, ...scenes.slice(1).map(scene => ({ ...scene, place: sw3Place, trigger: { talk: sw3Place } }))], missions: [] },
     'campaign.json': { schemaVersion: 1, draft: true, opening: opening.id, quests: [opening, remoteSignOn, remoteStory],
       recruits: [recruit], assets: [], art: [],
