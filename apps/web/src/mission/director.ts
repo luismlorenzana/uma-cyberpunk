@@ -55,16 +55,16 @@ export const chapterOf = (pack: StoryPack, mission: string): Chapter | undefined
 
 // --- Story steps -------------------------------------------------------------------------------------------------------
 
-/** The XP a newcomer joins at (TC51, D16): the squad's level, never level 1 after a fight: the crew's average XP, or the
- * XP of the mission she just fought in (its scene aboard is where leads come aboard), whichever is higher. */
+/** Four-act recruits start their own progression. Older profiles inherit the crew average or the joining battle's XP. */
 export function joiningXp(save: Save, outfit: number): number {
+  if (save.campaignCurve) return 0
   const mean = save.crew.length ? Math.floor(save.crew.reduce((n, m) => n + m.xp, 0) / save.crew.length) : 0
   const m = save.mission
   const fought = m?.won && m.squad.includes(outfit) ? rewards((m.battle?.input ?? null) as BattleInput | null, true).xp : 0
   return Math.max(mean, fought)
 }
 
-/** A story step's change: the story state, the crew (join, aboard: she joins at the squad's level and takes her place
+/** A story step's change: the story state, the crew (join, aboard: she takes her place
  * in a squad, CY18), whose coming aboard opens her modules (placed at once where a slot is free, CY15), the ship (a refit
  * adds a deck), or a faction's standing (CY18). */
 export function applyStep(save: Save, pack: StoryPack, step: EffectStep): Save {

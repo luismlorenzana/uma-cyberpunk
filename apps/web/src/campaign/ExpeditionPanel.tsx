@@ -2,7 +2,7 @@ import { COMMAND_HULL, COMMAND_STATIONS, storesAt, WATCHES_PER_DAY, type Campaig
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
 import { campaignControl, campaignPrimary, CampaignQuestRow } from './CampaignQuestRow'
-import { expeditionBerth, expeditionLaunchBudget, expeditionPlan, expeditionOfficer, expeditionStations, fitExpeditionHull, loadTender, parkCutter, repairExpeditionCutter, resumeVoyage, berthVoyage, setBerthRationPriority, tendAtBerth, TENDER_ARMOR_ALLOY } from './expedition'
+import { expeditionBerth, expeditionLaunchBudget, expeditionPlan, expeditionOfficer, expeditionStations, fitExpeditionHull, loadTender, parkCutter, repairExpeditionCutter, requestTenderRelief, resumeVoyage, berthVoyage, setBerthRationPriority, tendAtBerth, TENDER_ARMOR_ALLOY } from './expedition'
 import type { CampaignNavigation } from './navigation'
 import { watchLabel } from './appointments'
 import { stationOf } from './watch'
@@ -93,6 +93,8 @@ export function ExpeditionPanel({ book, save, port, complete, navigation, open, 
           }).then(() => { if (stored) parked(stored) })
         }}>Park cutter</button>}
       <button type="button" className={campaignControl} onClick={() => void updateSave(s => tendAtBerth(s, book))}>Advance berth supply watch</button>
+      {requestTenderRelief(save, book) !== save && <button type="button" className={campaignControl}
+        onClick={() => void updateSave(s => requestTenderRelief(s, book))}>Request emergency cutter supplies</button>}
       {run.integrity !== undefined && run.integrity < COMMAND_HULL && <button type="button" className={campaignControl}
         onClick={() => void updateSave(s => repairExpeditionCutter(s, book))}>Repair cutter · 1 watch</button>}
       {(['fuel', 'provisions'] as const).map(kind => <button type="button" key={kind} className={campaignControl + ' disabled:opacity-50'}

@@ -1,9 +1,9 @@
-import { firstStation, newSave, parseCampaignBook, startSupply, STAND_IN_FILES,
+import { COMMAND_HULL, firstStation, newSave, parseCampaignBook, requestRelief, startSupply, STAND_IN_FILES,
   type CampaignBook, type FixedDuo, type SupplyNetwork } from '@cyber/domain'
 import { expect, it } from 'vitest'
-import { expeditionLaunchBudget, tendAtBerth } from './expedition'
+import { expeditionLaunchBudget, requestTenderRelief, resumeVoyage, tendAtBerth } from './expedition'
 import { forecastStation, stationBuildForecast } from './station-forecast'
-import { advanceStationWatches } from './watch'
+import { advanceStationWatches, repairStarterCutter } from './watch'
 
 const supply: SupplyNetwork = {
   after: 'opening', start: 'relay', routes: [],
@@ -74,4 +74,30 @@ it('budgets the Gate exactly once and shows the authored departure margin and ea
   expect(expeditionLaunchBudget(crossed, book, duo, new Set())).toMatchObject({
     fuel: 2, provisions: 3, fuelMargin: 3, provisionMargin: 3, watches: 3, at: 3,
   })
+})
+
+it('repairs the starter cutter at a remote dock for one Ship Alloy and one watch, with free service at Home', () => {
+  const blank = start()
+  const current = { ...blank, station: { ...blank.station, anchor: 'home', integrity: 4 }, wallet: { ...blank.wallet, alloy: 1 } }
+  const repaired = repairStarterCutter(current, book)
+  expect(repaired.station?.integrity).toBe(COMMAND_HULL)
+  expect(repaired.station?.absoluteWatch).toBe(1)
+  expect(repaired.wallet.alloy).toBe(0)
+  expect(repaired.campaignSupply).toEqual(current.campaignSupply)
+  expect(repairStarterCutter(repaired, book)).toBe(repaired)
+  const empty = { ...current, wallet: repaired.wallet }
+  expect(repairStarterCutter(empty, book)).toBe(empty)
+  expect(repairStarterCutter({ ...empty, station: { ...empty.station, anchor: 'relay' } }, book).station?.integrity).toBe(COMMAND_HULL)
+})
+
+it('shares the daily relief limit and adds emergency supplies only to the stranded expedition cutter', () => {
+  const save = { ...start(), expedition: { duo: duo.id, ship: 'test-cutter', fuel: 0, provisions: 0, members: [],
+    berthed: true as const, towFuelDue: true as const } }
+  const supplied = requestTenderRelief(save, book)
+  expect(supplied.expedition).toMatchObject({ fuel: 3, provisions: 2, towFuelDue: true })
+  expect(supplied.campaignSupply).toEqual({ ...save.campaignSupply, reliefDay: save.campaignDay.day })
+  expect(supplied.station?.absoluteWatch).toBe(save.station.absoluteWatch)
+  expect(requestRelief(supplied.campaignSupply!, save.campaignDay.day)).toBe(supplied.campaignSupply)
+  expect(requestTenderRelief(supplied, book)).toBe(supplied)
+  expect(resumeVoyage(supplied, book).expedition?.fuel).toBe(2)
 })

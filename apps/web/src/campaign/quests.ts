@@ -4,6 +4,7 @@ import { finaleQuestReady, recordFinaleOutcome } from './cy90'
 import { commitExpedition, expeditionForQuest, expeditionQuestBlock } from './expedition'
 import { clearCampaignPosts, homeQuestReady } from './pair'
 import { formationReady } from './specialist-input'
+import { initializeCampaignCurve } from './progression'
 import { custodyCommit } from './station-custody'
 
 export function questScene(save: Save, quest: CampaignQuest): string {
@@ -96,7 +97,7 @@ export function finishCampaignDialogue(save: Save, book: CampaignBook, quest: Ca
     const arrivals = effects.filter(step => step.kind === 'join' || step.kind === 'aboard')
     if (arrivals.length !== 1 || arrivals[0]?.kind !== 'join' || arrivals[0].outfit !== recruit.outfit) return save
   }
-  const next = effects.reduce((state, step) => applyStep(state, book.story, step), save)
+  const next = effects.reduce((state, step) => applyStep(state, book.story, step), initializeCampaignCurve(save, book))
   const scene = questScene(save, quest)
   let story = seeScene(next.story, scene)
   for (const candidate of book.quests) {

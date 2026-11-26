@@ -9,7 +9,7 @@ import { dispatchStationDelivery, stationDelivery } from './station-logistics'
 import { watchLabel } from './appointments'
 import { type LoadedCampaign } from './load'
 import { updateSave } from '../save/game'
-import { advanceStationWatches, cutterArrival, cutterRations, stationOf, stationRations, transferStationStock } from './watch'
+import { advanceStationWatches, cutterArrival, cutterRations, repairStarterCutter, starterCutterRepairCost, stationOf, stationRations, transferStationStock } from './watch'
 import { nextStationDawn } from './station-forecast'
 
 const button = 'min-h-11 rounded-lg px-3 text-sm font-semibold text-white'
@@ -48,6 +48,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
   const shipUpkeep = book?.stationStory ? cutterRations(save, book) : upkeep
   const stationUpkeep = book?.stationStory ? stationRations(save, book) : 0
   const dawn = book?.stationStory && nextStationDawn(save, book)
+  const repair = book?.stationStory ? starterCutterRepairCost(save, book) : undefined
   const supplyOrder = (kind: 'fuel' | 'provisions' | 'alloy', capacity: number | undefined) =>
     change((current, stock) => {
       const original = network.ports.find(row => row.id === port.id)
@@ -96,7 +97,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
       })}
     </ul>}
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm" aria-label="Ship cargo">
-      <span>Fuel {supply.fuel}</span><span>Provisions {supply.provisions}</span><span>Alloy {save.wallet.alloy}</span>
+      <span>Fuel {supply.fuel}</span><span>Provisions {supply.provisions}</span><span>Ship Alloy {save.wallet.alloy}</span>
       <span>Cutter upkeep · {shipUpkeep} provisions at dawn</span>
     </div>
     <p className="text-sm text-slate-300">After dawn · {dawn ? dawn.cutterStock : Math.max(0, supply.provisions - shipUpkeep)} cutter provisions
@@ -156,6 +157,10 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
       </div>
     </div>
     <div className="flex flex-wrap items-center gap-2">
+      {book && repair !== undefined && <button type="button" className={action} disabled={save.wallet.alloy < repair}
+        onClick={() => change(current => repairStarterCutter(current, book))}>
+        Repair cutter · 1 watch{repair > 0 && ` · ${repair} Ship Alloy`}
+      </button>}
       {watch && <button type="button" className={action} onClick={watch}>Advance a supply watch</button>}
       {requestRelief(supply, save.campaignDay.day) !== supply && <button type="button" className={action} onClick={() => change((current, stock) => {
         const next = requestRelief(stock, current.campaignDay.day)

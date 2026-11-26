@@ -92,11 +92,21 @@ export function cutterArrival(save: Save, book: CampaignBook, aboard?: number, d
   return { ...save, station: { ...state, travellers } }
 }
 
-export function repairStarterCutter(save: Save, book: CampaignBook): Save {
+export function starterCutterRepairCost(save: Save, book: CampaignBook): number | undefined {
   const station = stationOf(save, book)
-  if (save.mission || save.expedition || save.campaignDay.pending || save.pairScene || save.campaignSupply?.port !== station.anchor
-    || (station.integrity ?? COMMAND_HULL) === COMMAND_HULL) return save
-  return advanceStationWatches({ ...save, station: { ...station, integrity: COMMAND_HULL } }, book, 1)
+  const port = save.campaignSupply?.port
+  if (!port || save.mission || save.expedition || save.campaignDay.pending || save.pairScene
+    || (station.integrity ?? COMMAND_HULL) === COMMAND_HULL) return
+  if (port === station.anchor) return 0
+  if (book.stationStory && book.supply?.ports.some(row => row.id === port)) return 1
+}
+
+export function repairStarterCutter(save: Save, book: CampaignBook): Save {
+  const cost = starterCutterRepairCost(save, book)
+  if (cost === undefined || save.wallet.alloy < cost) return save
+  const station = { ...stationOf(save, book), integrity: COMMAND_HULL }
+  const wallet = { ...save.wallet, alloy: save.wallet.alloy - cost }
+  return advanceStationWatches({ ...save, station, wallet }, book, 1)
 }
 
 export function advanceStationWatches(save: Save, book: CampaignBook, count: number, inTransit = false): Save {

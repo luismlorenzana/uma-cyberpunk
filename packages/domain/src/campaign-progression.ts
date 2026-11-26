@@ -7,7 +7,7 @@ for (let index = 1; index < CAMPAIGN_LEVEL_CAP; index++) {
 }
 export const CAMPAIGN_XP_THRESHOLDS: readonly number[] = thresholds
 
-export const CAMPAIGN_ACT_XP = { 1: 75, 2: 100, 3: 125, 4: 150 } as const
+export const CAMPAIGN_ACT_XP = { 1: 75, 2: 60, 3: 85, 4: 100 } as const
 export type CombatAct = keyof typeof CAMPAIGN_ACT_XP
 
 export function campaignLevel(xp: number, curve?: 1): number {
