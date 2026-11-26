@@ -1,6 +1,7 @@
-import { newMember, newSave, parseCampaignBook, parseSave, STAND_IN_FILES } from '@cyber/domain'
+import { newMember, newSave, parseCampaignBook, parseSave, startSupply, STAND_IN_FILES } from '@cyber/domain'
 import { expect, it } from 'vitest'
 import { finishCampaignDialogue, questAvailable, questScene, recruitOnBoard, recruitProgress } from './quests'
+import { homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
 
 const stock = { fuel: 3, provisions: 2, alloy: 1 }
 const chapterFile = 'chapters/sw1-ch1.json'
@@ -72,4 +73,37 @@ it('opens one shared capital from either saved proof and rejects a cyclic altern
   }
   expect(() => bookWith([first.id, capital.id])).toThrow(/cycle/)
   expect(() => bookWith([first.id, 'missing-proof'])).toThrow(/unknown quest missing-proof/)
+})
+
+it('uses real jump costs from Homestretch and assigns one cabin only when the invitation is accepted', () => {
+  const remoteSignOn = { ...signOn, after: opening.id, port: 'sw3' }
+  const remoteStory = { ...firstStory, port: 'sw3' }
+  const sw3Place = 'sw3-relay'
+  const sw3Arrival = { id: 'sw3-open', place: sw3Place, trigger: { arrive: sw3Place }, cast: [], steps: [{ narrate: 'The relief ship comes alongside.' }] }
+  const home = parseCampaignBook({ ...STAND_IN_FILES,
+    'chapters/sw3-arrival.json': { schemaVersion: 1, id: 'sw3-arrival', world: 'sw3', number: 2, danger: 1, leads: [9000001],
+      scenes: [sw3Arrival, ...scenes.slice(1).map(scene => ({ ...scene, place: sw3Place, trigger: { talk: sw3Place } }))], missions: [] },
+    'campaign.json': { schemaVersion: 1, draft: true, opening: opening.id, quests: [opening, remoteSignOn, remoteStory],
+      recruits: [recruit], assets: [], art: [],
+      supply: { after: opening.id, start: 'sw1',
+        routes: [{ from: 'sw1', to: 'sw2', fuel: 2 }, { from: 'sw2', to: 'sw3', fuel: 3 }],
+        ports: [['sw1', opening.scene], ['sw2', 'sw2-ch1-s1'], ['sw3', sw3Arrival.id]].map(([id, scene]) =>
+          ({ id, name: id, scene, stock, upkeep: stock, reserve: stock, produces: stock })) } } })
+  const fresh = newSave('test', '2026-11-26T00:00:00Z')
+  expect(homeQuestTravel(fresh, home, remoteSignOn)).toBeNull()
+  const ready = finishCampaignDialogue(fresh, home, opening, [])
+  expect(homeQuestTravel(ready, home, remoteSignOn)).toMatchObject({ destination: 'sw3', fuel: 5, affordable: true })
+  const short = { ...ready, campaignSupply: { ...startSupply(home.supply!), fuel: 4 } }
+  expect(travelForHomeQuest(short, home, remoteSignOn)).toBe(short)
+
+  const arrived = travelForHomeQuest(ready, home, remoteSignOn)
+  expect(arrived.campaignSupply).toMatchObject({ port: 'sw3', fuel: 1 })
+  expect(travelForHomeQuest(arrived, home, remoteSignOn)).toBe(arrived)
+  expect(homestretchCabins(home, arrived)).toEqual([])
+  expect(questAvailable(arrived, home, remoteStory, 'sw3')).toBe(false)
+  const joined = finishCampaignDialogue(arrived, home, remoteSignOn, [{ kind: 'join', outfit: recruit.outfit }], 'sw3')
+  const restored = parseSave(JSON.parse(JSON.stringify(joined)))
+  expect(homestretchCabins(home, restored)).toEqual([{ outfit: recruit.outfit, berth: 1 }])
+  expect(questAvailable(restored, home, remoteStory, 'sw3')).toBe(true)
+  expect(finishCampaignDialogue(restored, home, remoteSignOn, [], 'sw3')).toBe(restored)
 })

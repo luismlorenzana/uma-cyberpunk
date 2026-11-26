@@ -34,7 +34,7 @@ Deliver through the real campaign. Each milestone has a playable entry, exit, de
 
 | Order | Packets | Delivery checkpoint |
 | --- | --- | --- |
-| 1 | CY98 Ship Home, CY99 Roster and chapters, CY100 Operations | Implemented and checked in the real campaign. |
+| 1 | Homestretch cutaway, CY99 Roster and chapters, CY100 Operations | First Watch opens the ship deck. Working rooms and all 50 recruitment leads use the same campaign. |
 | 2 | CY101 Advancement and equipment, [CY102 Battle balance](tasks/CY102.md), [CY103 Resource balance](tasks/CY103.md) | Effective stats, tuning and supply forecasts implemented. Phone play completes the balance acceptance. |
 | 3 | [CY104 System and location navigation](tasks/CY104.md), [CY105 Expedition operations](tasks/CY105.md), [CY106 Individual relationships](tasks/CY106.md) | Runtime routes, state, costs, withdrawal, and personal activities are wired. Art supplies exact location plates and Story supplies any new actor-specific scenes. |
 | Throughout | [CY91 iPhone checks](tasks/CY91.md), [CY92 Story](tasks/CY92.md), [CY93 General Art](tasks/CY93.md), [CY94 Character Art](tasks/CY94.md), [CY95 Sprites](tasks/CY95.md), [CY96 Intake](tasks/CY96.md) | Update the authored scene, UI destination, imagery and verification as mechanics change. |
