@@ -278,12 +278,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }
   if (loaded && save && mission && command && supply && support) {
     const quest = missionQuest
-    const allocated = command.id === loaded.book.fourActFinale?.hushApproach ? finaleRun(save, loaded.book) : undefined
-    const bridgeAshore = new Set(sortieAshore ?? support.ashore)
-    for (const assigned of allocated?.members ?? []) {
-      const member = save.crew.find(member => assigned.role === 'uma' ? member.outfit === assigned.outfit : member.heroine === assigned.heroine)
-      if (member) bridgeAshore.add(member.outfit)
-    }
+    const bridgeAshore = missionAshore(loaded.book, save)
     const art = loaded.book.art.find((entry) => entry.scene === quest?.scene)
     const commandArt = loaded.book.commandArt?.get(command.id)
     const backdrop = commandArt?.backdrop ?? art?.backdrop

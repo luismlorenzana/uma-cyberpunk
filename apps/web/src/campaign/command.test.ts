@@ -1,6 +1,8 @@
-import { newMember, newSave, parseSave, resumeCommand, type CampaignSupply, type CommandAction, type CommandEncounter, type Save } from '@cyber/domain'
+import { newMember, newSave, parseCampaignBook, parseSave, resumeCommand, STAND_IN_FILES,
+  type CampaignBook, type CampaignSupply, type CommandAction, type CommandEncounter, type FixedDuo, type Save } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { retry } from '../mission/director'
+import { missionAshore } from './call-up'
 import { assignOfficer, drillOfficer, issueCommand, launchCommand, settleCommand } from './command'
 
 const encounter: CommandEncounter = {
@@ -40,6 +42,29 @@ describe('campaign ship command', () => {
     expect(run?.input.presentation?.present).toEqual([])
     expect(run?.input.presentation?.crew.pilot).toBeUndefined()
     expect(run?.input.officers.pilot).toBe(0)
+  })
+
+  it('credits the finale escort bridge and keeps its passengers off stale bridge assignments', () => {
+    const base = parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': { schemaVersion: 1, draft: true,
+      opening: 'opening', quests: [{ id: 'opening', title: 'First Watch', scene: 'sw1-ch1-s1' }], art: [], assets: [] } })
+    const escort = outf + 1
+    const duo: FixedDuo = { id: 'finale-duo', system: 'relay', umas: [outf, outf + 2], returns: [],
+      expedition: { ship: 'finale-cutter', members: [{ role: 'uma', outfit: outf }] } }
+    const book: CampaignBook = { ...base, fourActFinale: { hushApproach: encounter.id } as NonNullable<CampaignBook['fourActFinale']>,
+      fourAct: { schemaVersion: 1, systems: new Map(), arcs: new Map(), duos: new Map([[duo.id, duo]]), personalQuestOwners: new Map() } }
+    const crew = [newMember(outf), newMember(escort)]
+    const assigned = assignOfficer(assignOfficer({ ...ready(), crew, campaignCurve: 1,
+      finaleProgress: { duo: duo.id, releases: [] } }, 'pilot', outf), 'gunnery', escort)
+    const ashore = missionAshore(book, assigned)
+    expect(ashore).toEqual(new Set([outf]))
+    let flown = launchCommand(assigned, stock, encounter, { ashore, relay: 0 })
+    const cast = resumeCommand(flown.mission?.battle?.input, [])?.input.presentation
+    expect(cast?.crew.pilot).toBeUndefined()
+    expect(cast?.crew.gunnery?.speaker).toBe(escort)
+    expect(cast?.present.map(actor => actor.speaker)).toEqual([escort])
+    for (let turn = 0; turn < 3; turn++) flown = issueCommand(flown, encounter.id, turn, { order: 'fire', shields: 0, guns: 3, fighters: 0 })
+    expect(flown.mission?.won).toBe(true)
+    expect(settleCommand(flown, encounter.id, { book, act: 4 }).crew.map(member => member.xp)).toEqual([0, 100])
   })
 
   it('freezes assigned skills and charges launch only once', () => {
