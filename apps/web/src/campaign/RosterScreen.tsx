@@ -20,6 +20,7 @@ import { characterBuild } from './character-build'
 import { CharacterStats } from './CharacterStats'
 import { CharacterEquipment } from './CharacterEquipment'
 import { CharacterProgression } from './CharacterProgression'
+import { expeditionCrewBands } from './training'
 
 const roles: readonly RosterKind[] = ['Uma', 'General', 'Lieutenant']
 const choices = { Uma: 'Umas', General: 'Generals', Lieutenant: 'Lieutenants' }
@@ -91,12 +92,19 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
   const partner = duo?.umas.find(outfit => outfit !== lead)
   const assignment = duo?.expedition?.members.find(row => (row.role === 'uma' ? row.outfit : row.heroine) === entry?.speaker)
   const variant = assignment ? (duo?.expedition?.members.filter(row => row.role === assignment.role).indexOf(assignment) ?? 0) : 0
+  const route = duo?.expedition?.route
+  const formationIndex = assignment ? duo?.expedition?.members.indexOf(assignment) : undefined
+  const formationEncounter = formationIndex === undefined ? undefined : route?.stops
+    .map(id => navigation.quests.get(id)?.encounter)
+    .find(id => id && book.ground.has(id))
+  const formationBands = formationIndex === undefined || !formationEncounter || typeof actor !== 'string' ? undefined
+    : expeditionCrewBands(navigation.missions.get(formationEncounter)?.mission.scenario)[formationIndex]
   const info = master.status === 'ready' && typeof actor === 'number' ? master.view.info.get(actor) : undefined
-  const bands = info ? bandsOf(info.stats) : STAND_IN_BANDS
+  const bands = info ? bandsOf(info.stats) : formationBands ?? STAND_IN_BANDS
+  const bandsSource = info ? 'Personal bands' : formationBands ? 'Bands for the first expedition battle' : 'Standard bands for this preview'
   const xp = actor === undefined ? undefined : campaignActorXp(save, actor)
   const fit = actor === undefined ? undefined : { actor, bands, assignment, variant }
   const build = fit && (tab === 'Stats' || tab === 'Equipment') ? characterBuild(save, fit) : undefined
-  const route = duo?.expedition?.route
   const related = [...new Set([duo?.local?.base, duo?.local?.evidence, ...(duo?.returns.map(row => row.quest) ?? []),
     route?.launch, ...route?.stops ?? [], route?.return])].flatMap(id =>
     id && !entry?.quests.includes(id) ? navigation.quests.get(id) ?? [] : [])
@@ -170,7 +178,7 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
         </div>
         <div ref={detail} id={`${tabId}-panel`} role="tabpanel" aria-labelledby={`${tabId}-${tab}`} tabIndex={0}
           className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain p-2.5 focus-visible:outline-2 focus-visible:outline-cyan-200" data-character-pane={tab}>
-          {tab === 'Stats' && <CharacterStats bands={bands} personal={!!info} build={build} />}
+          {tab === 'Stats' && <CharacterStats bands={bands} source={bandsSource} build={build} />}
           {tab === 'Equipment' && <CharacterEquipment key={entry.speaker} book={book} save={save} context={fit} build={build} />}
           {tab === 'Progression' && <CharacterProgression save={save} actor={entry.speaker} assigned={!!assignment} />}
           {tab === 'Story' && <>

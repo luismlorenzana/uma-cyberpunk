@@ -7,15 +7,15 @@ const attributes = [
   ['guts', 'Guts', 'Hack resistance'], ['wit', 'Wit', 'Accuracy and hacking'],
 ] as const
 
-export function CharacterStats({ bands, personal, build }: {
-  bands: Bands; personal: boolean; build?: ReturnType<typeof characterBuild>
+export function CharacterStats({ bands, source, build }: {
+  bands: Bands; source: string; build?: ReturnType<typeof characterBuild>
 }) {
   const stats = build?.stats
   return <div className="space-y-4">
     <section aria-label="Combat attributes">
       <div className="flex items-center justify-between gap-2">
         <div><h3 className="font-display font-bold">Combat attributes</h3>
-          <p className="text-xs text-slate-400">{personal ? 'Personal bands' : 'Standard bands for this preview'}</p></div>
+          <p className="text-xs text-slate-400">{source}</p></div>
         <BattleHelp topic="armor" />
       </div>
       <dl className="divide-y divide-white/8 rounded-lg border border-white/10 bg-black/15 px-3">
