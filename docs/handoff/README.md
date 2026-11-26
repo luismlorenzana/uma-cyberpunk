@@ -23,6 +23,8 @@ CY97 delivered CY83–CY90 through the existing game link. CY91 records the host
 
 The campaign menus, advancement, supply forecasts and tender operations are implemented. The [combat balance pass](tasks/CY102.md) and [resource balance pass](tasks/CY103.md) record scripted results and the phone play checks. [System locations](tasks/CY104.md), [expedition operations](tasks/CY105.md) and [individual interactions](tasks/CY106.md) track exact Art and Story follow-through.
 
+[CY129 · Campaign combat progression and battle help](tasks/CY129.md) specifies the live Laser and subclass rollout, repeatable gear acquisition, character progression, per-battle readiness and in-context help across all four acts.
+
 ## Content coverage closure
 
 The [roadmap](four-act-roadmap.md#story-and-art-coverage-closure) begins with exact splash destinations, Lieutenant publication and timed frames. Send [CY110](tasks/CY110.md) to Story, [CY111](tasks/CY111.md) to General Art, and the role-specific sections of [CY112](tasks/CY112.md) to the Character Splash sessions. [CY113](tasks/CY113.md) and [CY114](tasks/CY114.md) cover portrait and combat art follow-through.
