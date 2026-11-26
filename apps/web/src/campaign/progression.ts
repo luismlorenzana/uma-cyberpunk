@@ -1,5 +1,5 @@
 
-import type { BattleInput } from '@cyber/battle'
+import type { BattleInput, Loadout } from '@cyber/battle'
 import { CAMPAIGN_ACT_XP, CAMPAIGN_XP_THRESHOLDS, campaignArmor, campaignLevel, crewSpeaker, levelOf, migrateCampaignXp,
   type CampaignBook, type CombatAct, type ExpeditionRun, type Save, type Speaker } from '@cyber/domain'
 
@@ -10,17 +10,25 @@ export function campaignActorXp(save: Pick<Save, 'crew' | 'expeditionXp'>, actor
   return save.crew.find(member => crewSpeaker(member) === actor)?.xp ?? (typeof actor === 'string' ? save.expeditionXp?.[actor] : undefined)
 }
 
+export function campaignArmorForXp(xp: number, curve?: 1) {
+  return curve ? campaignArmor(campaignLevel(xp, curve)) : { core: veteranCoreHp(xp), arms: 0, legs: 0, next: undefined }
+}
+
+export function reinforceCampaignArmor(loadout: Loadout, hp: ReturnType<typeof campaignArmorForXp>): Loadout {
+  if (!(hp.core || hp.arms || hp.legs)) return loadout
+  const { core, leftArm, rightArm, legs } = loadout
+  return { ...loadout, core: { ...core, hp: (core.hp ?? 0) + hp.core },
+    leftArm: { ...leftArm, hp: (leftArm.hp ?? 0) + hp.arms }, rightArm: { ...rightArm, hp: (rightArm.hp ?? 0) + hp.arms },
+    legs: { ...legs, hp: (legs.hp ?? 0) + hp.legs } }
+}
+
 export function campaignBattleProgression(input: BattleInput, save: Pick<Save, 'crew' | 'campaignCurve' | 'expeditionXp'>): BattleInput {
   const xp = [...Object.entries(save.expeditionXp ?? {}), ...save.crew.map(member => [String(crewSpeaker(member)), member.xp] as const)]
-  const bonuses = new Map(xp.map(([actor, earned]) => [actor, save.campaignCurve
-    ? campaignArmor(campaignLevel(earned, save.campaignCurve)) : { core: veteranCoreHp(earned), arms: 0, legs: 0 }]))
+  const bonuses = new Map(xp.map(([actor, earned]) => [actor, campaignArmorForXp(earned, save.campaignCurve)]))
   return { ...input, units: input.units.map(unit => {
     const hp = unit.side === 'squad' && unit.ref ? bonuses.get(unit.ref.id) : undefined
     if (!hp || !(hp.core || hp.arms || hp.legs)) return unit
-    const { core, leftArm, rightArm, legs } = unit.loadout
-    return { ...unit, loadout: { ...unit.loadout, core: { ...core, hp: (core.hp ?? 0) + hp.core },
-      leftArm: { ...leftArm, hp: (leftArm.hp ?? 0) + hp.arms }, rightArm: { ...rightArm, hp: (rightArm.hp ?? 0) + hp.arms },
-      legs: { ...legs, hp: (legs.hp ?? 0) + hp.legs } } }
+    return { ...unit, loadout: reinforceCampaignArmor(unit.loadout, hp) }
   }) }
 }
 

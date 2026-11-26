@@ -160,7 +160,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     return <div className={viewport} style={insets} role="status">Resuming scene…</div>
   }
   function openCrew(outfit: number) {
-    setRosterBrowse({ kind: 'Uma', search: '', page: 0, selected: outfit })
+    setRosterBrowse({ kind: 'Uma', search: '', page: 0, selected: outfit, tab: 'Story' })
     selectView('Roster')
   }
   function showStationStory(key: string, after?: () => void, repeat = false): boolean {
@@ -1019,7 +1019,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {hangar && loaded && save && !expedition && <section aria-label="Hangar" className="space-y-3 rounded-xl border border-white/15 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="font-display text-lg font-bold">Hangar</h2>
-              <button type="button" className={button} onClick={() => selectView('Roster')}>Crew rigs</button>
+              <button type="button" className={button} onClick={() => {
+                setRosterBrowse(current => ({ ...current, tab: 'Equipment' }))
+                selectView('Roster')
+              }}>Crew rigs</button>
             </div>
             {save.crew.some(member => !member.expeditionOnly)
               ? <Suspense fallback={<p role="status">Opening squads…</p>}><Squads save={{ ...save, crew: save.crew.filter(member => !member.expeditionOnly) }}

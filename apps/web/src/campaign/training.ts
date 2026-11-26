@@ -21,21 +21,24 @@ export function groundSquadCapacity(scenario: string | undefined): number {
   return Math.min(4, (scenario ? SCENARIOS[scenario]?.input.units.filter(unit => unit.side === 'squad').length : 0) || 1)
 }
 
+export function expeditionCrewBands(scenario: string | undefined): Bands[] {
+  return scenario ? (SCENARIOS[scenario]?.input.units ?? []).filter(unit => unit.side === 'squad').map(unit => unit.bands) : []
+}
+
 /** All ten fixed expedition members arrive from the saved roster with role-appropriate issued equipment. */
 export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, story: StoryPack, save?: Save,
   bandsOf?: CampaignBands, useFitted = true, rules?: GroundRules, refit?: ExpeditionRefit): BattleInput {
   const scenario = SCENARIOS[mission.scenario!]!
-  const slots = scenario.input.units.filter(unit => unit.side === 'squad')
+  const slots = expeditionCrewBands(scenario.id)
   const variants = new Map<string, number>()
   const fittings = run.members.map((member, index) => {
     const role = member.role
     const variant = variants.get(role) ?? 0
     variants.set(role, variant + 1)
     const identity = member.role === 'uma' ? member.outfit : member.heroine
-    const bands = member.role === 'uma' ? personalBands(slots[index]!.bands, bandsOf?.(member.outfit)) : slots[index]!.bands
+    const bands = member.role === 'uma' ? personalBands(slots[index]!, bandsOf?.(member.outfit)) : slots[index]!
     const objectiveDeck = scenario.input.objective.kind === 'hack' && variant === 0 ? 'back-deck' : undefined
-    const template = member.role === 'uma' ? laserFitting(trainingOf(save ?? {}, member.outfit, true), false, objectiveDeck)
-      : specialistFitting(role === 'boss-ally' ? 'wing' : role === 'melee-shield' ? 'shield' : role === 'ranged-medic' ? 'medic' : 'sniper', variant)
+    const template = expeditionRoleKit(member, variant, save, objectiveDeck)
     const equipped = useFitted ? save?.crew.find(row => member.role === 'uma' ? row.outfit === member.outfit : row.heroine === member.heroine)?.rig : undefined
     const optional = refit?.actor === identity && campaignRefitParts(save).find(row => row.part === refit.part)
     const armor = optional ? { ...template.rig, ...equipped, [optional.slot]: optional.part } : equipped
@@ -78,6 +81,16 @@ export function expeditionGroundInput(mission: Mission, run: ExpeditionRun, stor
 export type CampaignBands = (outfit: number) => Bands | undefined
 export interface ExpeditionRefit { actor: Speaker; part: string }
 
+export function campaignLaserTraining(save: Pick<Save, 'combatTraining'>, outfit: number) {
+  return save.combatTraining?.[outfit] ? trainingOf(save, outfit) : { rank: 1, subclass: 'heal' as const }
+}
+
+export function expeditionRoleKit(member: ExpeditionRun['members'][number], variant: number, save?: Save, expansion?: string) {
+  const role = member.role
+  return role === 'uma' ? laserFitting(trainingOf(save ?? {}, member.outfit, true), false, expansion)
+    : specialistFitting(role === 'boss-ally' ? 'wing' : role === 'melee-shield' ? 'shield' : role === 'ranged-medic' ? 'medic' : 'sniper', variant)
+}
+
 export function campaignRefitParts(save?: Save) {
   return salvageRecipes.filter(recipe => save?.campaignGear.parts.includes(recipe.part)
     && !save.crew.some(member => member.rig?.[recipe.slot] === recipe.part))
@@ -90,22 +103,28 @@ function personalBands(slot: Bands, personal?: Bands): Bands {
 }
 
 /** Chassis fitting preserves rank modifiers, weapon families and role mounts. Fit validation is shared with the engine. */
-function fitCampaignChassis(fit: ReturnType<typeof laserFitting>, bands: Bands, worn?: Rig | null, parts: readonly string[] = []) {
+export const CAMPAIGN_ARMOR_SLOTS = ['core', 'leftArm', 'rightArm', 'legs', 'visor', 'coat'] as const
+
+export function applyCampaignArmor(fit: ReturnType<typeof laserFitting>, worn: Rig) {
+  const gear = loadoutOf(worn)
+  return { ...fit, rig: worn, loadout: { ...fit.loadout, core: gear.core, leftArm: gear.leftArm, rightArm: gear.rightArm,
+    legs: gear.legs, visor: gear.visor, coat: gear.coat } }
+}
+
+export function fitCampaignChassis(fit: ReturnType<typeof laserFitting>, bands: Bands, worn?: Rig | null, parts: readonly string[] = []) {
   const { rig, loadout } = fit
   const fits = (candidate: UnitInput['loadout']) => loadOf(candidate) <= capacityOf({ bands, loadout: candidate })
-  const armor = ['core', 'leftArm', 'rightArm', 'legs', 'visor', 'coat'] as const
   for (const fallback of [rig, { ...rig, legs: 'legs-light' }, { ...rig, legs: 'legs-light', visor: 'visor-basic' }]) {
     const issued = loadoutOf(fallback)
     const candidate = { ...loadout, legs: issued.legs, visor: issued.visor }
     if (!fits(candidate)) continue
     const refit = { ...fallback }
-    for (const slot of armor) {
+    for (const slot of CAMPAIGN_ARMOR_SLOTS) {
       const part = worn?.[slot]
       if (part && parts.includes(part)) refit[slot] = part
     }
-    const gear = loadoutOf(refit)
-    const withGear = { ...candidate, core: gear.core, leftArm: gear.leftArm, rightArm: gear.rightArm, legs: gear.legs, visor: gear.visor, coat: gear.coat }
-    return fits(withGear) ? { ...fit, rig: refit, loadout: withGear } : { ...fit, rig: fallback, loadout: candidate }
+    const withGear = applyCampaignArmor(fit, refit)
+    return fits(withGear.loadout) ? withGear : { ...fit, rig: fallback, loadout: candidate }
   }
   throw new Error('The issued role kit exceeds this slot’s Capacity.')
 }
@@ -119,8 +138,7 @@ export function campaignSquadInput(input: BattleInput, save: Save, options: {
     const outfit = Number(unit.ref.id)
     const bands = personalBands(unit.bands, options.bandsOf?.(outfit))
     const member = save.crew.find(row => row.outfit === outfit && !row.heroine)
-    const prior = save.combatTraining?.[outfit]
-    const progress = prior ? trainingOf(save, outfit) : { rank: 1, subclass: 'heal' as const }
+    const progress = campaignLaserTraining(save, outfit)
     const objectiveDeck = input.objective.kind === 'hack' || input.objective.kind === 'freeLeader' && !input.objective.collar
     const back = unit.id === lead?.id ? options.expansion ?? (objectiveDeck ? 'back-deck' : undefined) : undefined
     const requiredWeapon = unit.signature && (unit.signature.mount === 'left' || unit.signature.mount === 'back')

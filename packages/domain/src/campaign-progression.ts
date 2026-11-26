@@ -28,6 +28,8 @@ const armorMilestones = [
   [15, 3, 1, 1], [18, 3, 2, 1], [20, 4, 2, 1], [24, 4, 2, 2], [30, 5, 2, 2],
 ] as const
 
+export const CAMPAIGN_ARMOR_LEVELS = armorMilestones.map(([level]) => level)
+
 export function campaignArmor(level: number) {
   const next = armorMilestones.findIndex(([threshold]) => threshold > level)
   const [, core, arms, legs] = (next < 0 ? armorMilestones.at(-1) : armorMilestones[next - 1]) ?? armorMilestones[0]

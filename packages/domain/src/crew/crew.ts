@@ -155,8 +155,7 @@ export function weaponLine(mount: WeaponLine['mount'], name: string, w: Weapon, 
   }
 }
 
-export function rigStats(rig: Rig, bands: Bands): RigStats {
-  const loadout = loadoutOf(rig)
+export function rigStats(rig: Rig, bands: Bands, loadout = loadoutOf(rig)): RigStats {
   const u = unitOf(bands, loadout)
   const load = loadOf(loadout), capacity = capacityOf(u)
   const hp = maxHpOf(u)
