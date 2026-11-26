@@ -23,7 +23,7 @@ export function CharacterProgression({ save, actor, assigned }: { save: Save; ac
   const laser = typeof actor === 'number' ? campaignLaserTraining(save, actor) : undefined
   const milestones = curve ? CAMPAIGN_ARMOR_LEVELS.filter(value => value > 1) : [5, 10, 15]
   const nextArmor = milestones.find(value => value > level)
-  return <div className="space-y-4">
+  return <div className={'grid items-start gap-3' + (laser ? ' sm:grid-cols-[minmax(8rem,1fr)_minmax(0,2fr)]' : '')}>
     <section aria-label="Level and experience" className="rounded-xl border border-cyan-200/20 bg-[#142238] px-3 pb-3">
       <div className="flex items-center justify-between gap-3">
         <div><h3 className="font-display text-lg font-bold">{xp === undefined ? 'Level progression' : `Level ${level}`}</h3>
@@ -32,7 +32,7 @@ export function CharacterProgression({ save, actor, assigned }: { save: Save; ac
         <BattleHelp topic="xp" />
       </div>
       {xp !== undefined && <progress aria-label="Experience to next level" value={capped ? 1 : xp - floor} max={capped ? 1 : next - floor}
-        className="mt-2 block h-2 w-full accent-cyan-200" />}
+        className="mt-2 block h-2 w-full overflow-hidden rounded-full bg-slate-700 accent-cyan-200 [&::-webkit-progress-bar]:bg-slate-700 [&::-webkit-progress-value]:bg-cyan-200" />}
     </section>
     {laser && <section aria-label="Laser rank track">
       <div className="flex items-center justify-between gap-2">
@@ -54,7 +54,7 @@ export function CharacterProgression({ save, actor, assigned }: { save: Save; ac
       </ol>
       <p className="mt-2 text-xs text-slate-400">Expedition launch opens Rank 6 and retires the subclass.</p>
     </section>}
-    <section aria-label="Armor milestones" className="space-y-2">
+    <section aria-label="Armor milestones" className={'space-y-2' + (laser ? ' sm:col-span-2' : '')}>
       <div><h3 className="font-display font-bold">Armor milestones</h3>
         <p className="text-xs text-slate-300">+{armor.core} Core · +{armor.arms} per arm · +{armor.legs} Legs</p></div>
       <ol className="grid grid-cols-3 gap-1.5 sm:grid-cols-4">
