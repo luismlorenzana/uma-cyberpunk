@@ -56,6 +56,7 @@ Keep the packet's implementation, script, art, release IDs and acceptance aligne
 | --- | --- | --- |
 | CY98–CY100 · Home, Roster and Operations | 2026-11-25 | Open and resume from the real ship, browse all 250 roster entries, and find authored chapters, objectives, operation costs and status by act. |
 | CY101 · Advancement and equipment | 2026-11-25 | New formations use earned armor reinforcement. Hangar slot comparisons and effective equipment are visible on real sortie preparation. |
+| CY130 · Campaign character menu | 2026-11-26 | A single Roster selection spans Stats, Equipment, Progression and Story. Compare armor, apply named loadouts and inspect level, armor and Laser tracks. Touch navigation and save reload were checked at 844 × 390 and 667 × 375. Physical iPhone review remains in [CY91](tasks/CY91.md). |
 | [CY97 · Four-act release](tasks/CY97.md) | 2026-11-25 | All four acts, both endings and return to play are live. The exact combined Story and Art catalog is active at the existing link. |
 
 The [historical Done ledger](archive/previous-queue.md#done) records shipped work through D86. The [D87 disposition matrix](archive/four-act-disposition.md) records retired requirements and the active successor for each earlier open packet. The archive preserves the previous pilot and historical decisions for evidence and regression.
