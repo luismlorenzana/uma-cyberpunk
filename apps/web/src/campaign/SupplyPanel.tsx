@@ -19,9 +19,9 @@ function driveBay(save: Save) {
   return { ship, location, problem }
 }
 
-export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book, assets, open, locate, destination, watch }: {
+export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book, assets, open, locate, destination, watch, showMap = true }: {
   save: Save; network: SupplyNetwork; supply: CampaignSupply; port: SupplyPort; worlds: Record<string, World>; upkeep: number
-  book?: CampaignBook; assets?: LoadedCampaign['assets']; open?: (quest: string) => void; locate?: () => void; destination?: string; watch?: () => void
+  book?: CampaignBook; assets?: LoadedCampaign['assets']; open?: (quest: string) => void; locate?: () => void; destination?: string; watch?: () => void; showMap?: boolean
 }) {
   const drives = shipCapabilities(save.ship)
   const flags = save.story.flags
@@ -38,13 +38,13 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
   }
   const strategic = !!book?.fourAct && !!assets
   const batch = book?.fourAct ? 8 : undefined
-  return <section className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3" aria-label="Star map and supply">
+  return <section className="space-y-3 rounded-xl border border-white/15 bg-white/5 p-3" aria-label={showMap ? 'Star map and supply' : 'Cargo'}>
     <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <h2 className="font-display text-lg font-bold">Star map</h2>
+      <h2 className="font-display text-lg font-bold">{showMap ? 'Star map' : 'Cargo'}</h2>
       <p className="text-sm">Docked at {port.name}</p>
     </div>
     {liberated && <p className="text-sm font-semibold text-cyan-200">Liberated · +{liberated.alloy} alloy each night</p>}
-    {strategic && <SystemsMap book={book} assets={assets} save={save} stock={supply} drives={drives} open={open} locate={locate} destination={destination}
+    {showMap && strategic && <SystemsMap book={book} assets={assets} save={save} stock={supply} drives={drives} open={open} locate={locate} destination={destination}
       travel={(destination) => change((current, stock) => {
         const capabilities = shipCapabilities(current.ship)
         const first = nextCampaignStop(network, stock.port, destination, capabilities, current.story.flags)
@@ -53,7 +53,7 @@ export function SupplyPanel({ save, network, supply, port, worlds, upkeep, book,
         const next = jumpRoute(stock, route, capabilities, current.story.flags)
         return next === stock ? current : { ...current, campaignSupply: next }
       })} />}
-    {!strategic && <ul className={mapped ? 'relative aspect-[2.3] rounded-lg bg-[#080c19]' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'} aria-label="Landing ports">
+    {showMap && !strategic && <ul className={mapped ? 'relative aspect-[2.3] rounded-lg bg-[#080c19]' : 'grid grid-cols-2 gap-2 sm:grid-cols-3'} aria-label="Landing ports">
       {mapped && network.routes.map((route) => {
         const from = worlds[route.from]!, to = worlds[route.to]!
         const dx = to.x! - from.x!, dy = (to.y! - from.y!) / 2.3

@@ -1,6 +1,7 @@
-import { newMember, newSave, parseCampaignBook, parseSave, STAND_IN_FILES } from '@cyber/domain'
+import { newMember, newSave, parseCampaignBook, parseSave, startSupply, STAND_IN_FILES } from '@cyber/domain'
 import { expect, it } from 'vitest'
 import { finishCampaignDialogue, questAvailable, questScene, recruitOnBoard, recruitProgress } from './quests'
+import { homestretchCabins, homeQuestTravel, travelForHomeQuest } from './homestretch'
 
 const stock = { fuel: 3, provisions: 2, alloy: 1 }
 const chapterFile = 'chapters/sw1-ch1.json'
@@ -72,4 +73,33 @@ it('opens one shared capital from either saved proof and rejects a cyclic altern
   }
   expect(() => bookWith([first.id, capital.id])).toThrow(/cycle/)
   expect(() => bookWith([first.id, 'missing-proof'])).toThrow(/unknown quest missing-proof/)
+})
+
+it('uses real jump costs from Homestretch and assigns one cabin only when the invitation is accepted', () => {
+  const remoteSignOn = { ...signOn, after: opening.id, port: 'shore' }
+  const remoteStory = { ...firstStory, port: 'shore' }
+  const home = parseCampaignBook({ ...STAND_IN_FILES, [chapterFile]: { ...chapter,
+    scenes: [...chapter.scenes.slice(0, -1), ...scenes, chapter.scenes.at(-1)] },
+    'campaign.json': { schemaVersion: 1, draft: true, opening: opening.id, quests: [opening, remoteSignOn, remoteStory],
+      recruits: [recruit], assets: [], art: [],
+      supply: { after: opening.id, start: 'sw1',
+        routes: [{ from: 'sw1', to: 'relay', fuel: 2 }, { from: 'relay', to: 'shore', fuel: 3 }],
+        ports: ['sw1', 'relay', 'shore'].map(id => ({ id, name: id, scene: opening.scene, stock, upkeep: stock, reserve: stock, produces: stock })) } } })
+  const fresh = newSave('test', '2026-11-26T00:00:00Z')
+  expect(homeQuestTravel(fresh, home, remoteSignOn)).toBeNull()
+  const ready = finishCampaignDialogue(fresh, home, opening, [])
+  expect(homeQuestTravel(ready, home, remoteSignOn)).toMatchObject({ destination: 'shore', fuel: 5, affordable: true })
+  const short = { ...ready, campaignSupply: { ...startSupply(home.supply!), fuel: 4 } }
+  expect(travelForHomeQuest(short, home, remoteSignOn)).toBe(short)
+
+  const arrived = travelForHomeQuest(ready, home, remoteSignOn)
+  expect(arrived.campaignSupply).toMatchObject({ port: 'shore', fuel: 1 })
+  expect(travelForHomeQuest(arrived, home, remoteSignOn)).toBe(arrived)
+  expect(homestretchCabins(home, arrived)).toEqual([])
+  expect(questAvailable(arrived, home, remoteStory, 'shore')).toBe(false)
+  const joined = finishCampaignDialogue(arrived, home, remoteSignOn, [{ kind: 'join', outfit: recruit.outfit }], 'shore')
+  const restored = parseSave(JSON.parse(JSON.stringify(joined)))
+  expect(homestretchCabins(home, restored)).toEqual([{ outfit: recruit.outfit, berth: 1 }])
+  expect(questAvailable(restored, home, remoteStory, 'shore')).toBe(true)
+  expect(finishCampaignDialogue(restored, home, remoteSignOn, [], 'shore')).toBe(restored)
 })

@@ -6,7 +6,7 @@ import { nameOf } from '../story/runner'
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm disabled:opacity-50'
 const refits = ['engines', 'engineering', 'hangar', 'quarters'] as const
 
-export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly, showReport }: { book: CampaignBook; save: Save; port: SupplyPort; onlyProject?: string; refitsOnly?: boolean; showReport?: (scene: string) => void }) {
+export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly, showReport, expanded }: { book: CampaignBook; save: Save; port: SupplyPort; onlyProject?: string; refitsOnly?: boolean; showReport?: (scene: string) => void; expanded?: boolean }) {
   const projects = book.projects?.filter(project => !refitsOnly && (!onlyProject || onlyProject === project.id)
     && portProjectOpen(book, save, project, port.id)) ?? []
   const crew = save.crew.filter(({ outfit, expeditionOnly }) => !expeditionOnly && !campaignSupport(book, save).ashore.has(outfit))
@@ -42,7 +42,7 @@ export function ProjectsPanel({ book, save, port, onlyProject, refitsOnly, showR
         </div>
       })}
     </div>}
-    {!onlyProject && <details>
+    {!onlyProject && <details open={expanded}>
       <summary className="min-h-11 cursor-pointer py-2 font-semibold">Ship refits and duties</summary>
       <div className="space-y-2 text-sm">
         {refits.flatMap((id) => {
