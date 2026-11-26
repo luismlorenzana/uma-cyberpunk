@@ -1,5 +1,5 @@
 import {
-  COMMAND_HULL, COMMAND_ORDERS, COMMAND_SHIELD, COMMAND_STATIONS, MAX_DRILLS, STARTER_CUTTER, commandActionError, commandFacts, resolvedCommand, resumeCommand,
+  CAMPAIGN_ACT_XP, COMMAND_HULL, COMMAND_ORDERS, COMMAND_SHIELD, COMMAND_STATIONS, MAX_DRILLS, STARTER_CUTTER, commandActionError, commandFacts, resolvedCommand, resumeCommand,
   type CampaignSupply, type CampaignReleaseFile, type CommandAction, type CommandEncounter, type CommandInput, type CommandState, type CommandStation, type Mission, type Save,
 } from '@cyber/domain'
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react'
@@ -16,6 +16,9 @@ import { nameOf } from '../story/runner'
 import { expeditionOfficer, expeditionStations, setExpeditionOfficer } from './expedition'
 import { campaignCommandFront, tuneCampaignCommand } from './command-tuning'
 import { CampaignThumbnail } from './CampaignThumbnail'
+import type { CombatReadiness } from './navigation'
+import { BattleHelp } from '../battle/BattleHelp'
+import { orderTopics } from '../battle/help'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm font-semibold text-white disabled:opacity-50'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-3 text-sm font-bold text-[#0b0d17] disabled:opacity-50'
@@ -24,7 +27,7 @@ const stations = { pilot: 'Pilot', shields: 'Shields', gunnery: 'Gunnery', engin
 const orders = { evade: 'Evade', brace: 'Brace shields', fire: 'Fire guns', intercept: 'Intercept', strike: 'Fighter strike', reroute: 'Reroute power' }
 const powerLabels = { shields: 'Shields', guns: 'Guns', fighters: 'Fighters' }
 
-export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, objectiveLabel, ashore, homeDefense, finale, emitterRoute, qualifications, portraits, requiredLead, loaded }: {
+export default function ShipCommandScreen({ save, mission, encounter, supply, names, backdrop, objectiveArt, objectiveLabel, ashore, homeDefense, finale, emitterRoute, qualifications, portraits, requiredLead, loaded, readiness }: {
   loaded: LoadedCampaign
   save: Save; mission: Mission; encounter: CommandEncounter; supply: CampaignSupply; names: ReadonlyMap<number, string>; backdrop?: CampaignReleaseFile
   objectiveArt?: CampaignReleaseFile; objectiveLabel?: string
@@ -34,6 +37,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   qualifications?: ReadonlyMap<number, CommandStation>
   portraits?: ReadonlyMap<number | string, CampaignReleaseFile>
   emitterRoute?: string
+  readiness?: CombatReadiness
 }) {
   const [background, setBackground] = useState<string | null>(null)
   const [reinforce, setReinforce] = useState(false)
@@ -90,9 +94,10 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
           : state.step === 'results' ? state.won ? 'Convoy secured' : 'Defense lost' : 'Convoy defense'}</h1>
       {state.step === 'briefing' && <>
         <p className="max-w-xl text-sm">{mission.brief}</p>
-        <button type="button" className={primary} onClick={() => void updateSave(toDeploy)}>Prepare ship</button>
+        <div className="flex items-center gap-2"><button type="button" className={primary} onClick={() => void updateSave(toDeploy)}>Prepare ship</button><BattleHelp /></div>
       </>}
       {state.step === 'deploy' && <>
+        <div className="flex items-center text-sm">Bridge stations <BattleHelp topic="bridge" /></div>
         {expedition && <div className="grid gap-2 sm:grid-cols-2" aria-label="Expedition bridge stations">
           {COMMAND_STATIONS.map(station => <label key={station} className="flex items-center justify-between gap-2 font-semibold">{stations[station]}
             <select className="min-h-11 rounded-lg bg-[#182238] px-2 text-sm" value={expeditionStations(expedition)[station]}
@@ -121,7 +126,9 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
             </div>
           })}
         </div>}
-        <p className="text-sm">Cargo {cargo.fuel} fuel · {cargo.provisions} provisions</p>
+        {readiness && <p className="flex items-center text-sm">Recommended Lv {readiness.minimum}–{readiness.maximum}
+          {!!readiness.bridge && ` · Bridge drills ${readiness.bridge}+`}<BattleHelp topic="readiness" /></p>}
+        <p className="flex items-center text-sm">Cargo {cargo.fuel} fuel · {cargo.provisions} provisions <BattleHelp topic="supplies" /></p>
         <details className="text-sm"><summary className="min-h-11 cursor-pointer py-2">Threat forecast · {prepared.threats.length} waves</summary>
           <ol className="list-decimal space-y-1 pl-5">{prepared.threats.map((wave, i) => <li key={i}>{wave.section === 'fore' ? 'Fore' : 'Aft'} · {wave.power} incoming power · {wave.fighters} fighters</li>)}</ol>
         </details>
@@ -154,9 +161,11 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
         objectiveArt={objectiveArt} objectiveLabel={objectiveLabel} />
         : <p role="alert">The saved defense can’t resume.</p>)}
       {state.step === 'results' && !save.commandCinema.pending && <div className="flex flex-wrap gap-2">
+        {state.won && readiness && !save.worlds.missions.includes(mission.id) && <p className="w-full text-sm">{CAMPAIGN_ACT_XP[readiness.act]} XP per eligible participant</p>}
+        <BattleHelp topic="results" />
         {run?.state.last && <p className="w-full text-sm">{commandFacts(savedCommandEvent(save, run.state.turn)!)}</p>}
         {run?.state.emitter === 0 && <p className="w-full text-sm text-cyan-200">Emitter disabled{state.won && emitterRoute && ` · ${emitterRoute}`}</p>}
-        {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id, loaded.book.fourAct ? { requiredLead, book: loaded.book } : undefined))}>Debrief</button>
+        {state.won ? <button type="button" className={primary} onClick={() => void updateSave((s) => settleCommand(s, encounter.id, loaded.book.fourAct ? { requiredLead, book: loaded.book, act: readiness?.act } : undefined))}>Debrief</button>
           : <button type="button" className={primary} onClick={() => {
             if (reports) { setShowRetry(true); setContext(reports.retry) }
             else void updateSave(retryCommand)
@@ -195,7 +204,9 @@ function CommandBoard({ encounter, input, state, relay, actions, portraits, obje
       <div className="flex flex-wrap justify-between gap-1 text-sm font-bold">
         <span>{state.result ? `Resolved · ${state.turn} orders` : `Wave ${state.turn + 1}/${input.threats.length}`}</span><span>{state.result ? `Reactor ${state.power}` : `Reactor ${spent}/${state.power}`}</span>
       </div>
-      <p className="rounded-lg bg-[#58263d] px-2 py-1 text-sm font-semibold">{threat ? `Incoming ${threat.section} · ${threat.power} fire · ${threat.fighters} fighters` : 'Encounter resolved'}</p>
+      <p className="flex items-center rounded-lg bg-[#58263d] px-2 text-sm font-semibold">{threat ? `Incoming ${threat.section} · ${threat.power} fire · ${threat.fighters} fighters` : 'Encounter resolved'} <BattleHelp topic="shipThreat" disabled={!!cinema.pending} /></p>
+      <div className="flex gap-1"><BattleHelp topic="shipHull" disabled={!!cinema.pending} />
+        {!!state.emitter && <BattleHelp topic="emitter" disabled={!!cinema.pending} />}</div>
       {objectiveArt && <div className="flex min-h-14 items-center gap-3 rounded-lg bg-[#24314a] px-2" data-command-objective>
         <CampaignThumbnail asset={objectiveArt} className="h-14 w-24 shrink-0 object-contain" />
         <div className="min-w-0 flex-1 text-sm">
@@ -229,6 +240,7 @@ function CommandBoard({ encounter, input, state, relay, actions, portraits, obje
     </section>
     <section className="space-y-2" aria-label="Commands">
       {cinema.pending && event ? <CommandCinematic event={event} encounter={encounter.id} loaded={loaded} beat={cinema.pending.beat} fast={cinema.fast} /> : state.result ? <button type="button" className={button} onClick={() => void updateSave(replayCommandCinema)}>Replay last order</button> : <>
+      <div className="flex items-center text-sm">Power allocation <BattleHelp topic="shipPower" detail={`${spent} of ${state.power} assigned`} /></div>
       <div className="grid grid-cols-3 gap-2">
         {(['shields', 'guns', 'fighters'] as const).map((system) => <div key={system} className="space-y-1 text-sm">
           <p>{powerLabels[system]} {action[system]}</p>
@@ -249,6 +261,7 @@ function CommandBoard({ encounter, input, state, relay, actions, portraits, obje
         </button>}
       </div>
       <div className="flex items-center gap-2">
+        <BattleHelp topic={action.target === 'emitter' ? 'emitter' : orderTopics[action.order]} />
         <button type="button" className={primary} disabled={!!problem || pending} onClick={() => {
           setPending(true)
           void updateSave((s) => issueCommand(s, encounter.id, state.turn, action)).finally(() => setPending(false))

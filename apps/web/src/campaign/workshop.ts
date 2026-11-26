@@ -5,25 +5,31 @@ import {
 } from '@cyber/domain'
 import { SCENARIOS } from '../mission/battleInput'
 import { questComplete } from './quests'
+import { salvageRecipes, salvageSite } from './salvage'
 
 export function workshopAt(save: Save, book: CampaignBook) {
   const { workshop, supply } = book
-  if (!workshop || !supply || save.mission || save.campaignDay.pending || save.pairScene) return null
-  const invitation = book.quests.find(({ id }) => id === workshop.after)
+  if (!supply || save.mission || save.expedition || save.campaignDay.pending || save.pairScene) return null
+  const invitation = book.quests.find(({ id }) => id === workshop?.after)
   const cargo = save.campaignSupply ?? startSupply(supply)
-  const port = supply.ports.find(({ id }) => id === workshop.port)
-  return invitation && questComplete(save, invitation, book) && cargo.port === workshop.port && port ? { workshop, cargo, port: developedPort(book, save, port) } : null
+  const port = supply.ports.find(({ id }) => id === cargo.port)
+  const legacy = workshop && invitation && questComplete(save, invitation, book) && cargo.port === workshop.port ? workshop : undefined
+  const site = salvageSite(save, book)
+  if (!port || !legacy && !site?.docked && !site?.base) return null
+  const recipes = [...legacy?.recipes ?? [], ...salvageRecipes.filter(recipe => !!save.salvage?.clears[recipe.contract]
+    || save.campaignGear.parts.includes(recipe.part))]
+  return { recipes, cargo, port: developedPort(book, save, port), legacy: !!legacy }
 }
 
 export function sendWorkshopAlloy(save: Save, book: CampaignBook): Save {
   const at = workshopAt(save, book)
-  const shipment = at && loadShipment(at.cargo, at.port, 'alloy')
+  const shipment = at?.legacy && loadShipment(at.cargo, at.port, 'alloy')
   if (!shipment || save.campaignGear.alloy + shipment.alloy > CAMPAIGN_WORKSHOP_ALLOY_MAX) return save
   return observeManagement(save, { ...save, campaignSupply: shipment.supply, campaignGear: { ...save.campaignGear, alloy: save.campaignGear.alloy + shipment.alloy } })
 }
 
 export function craftCampaignPart(save: Save, book: CampaignBook, part: string): Save {
-  const recipe = workshopAt(save, book)?.workshop.recipes.find((entry) => entry.part === part)
+  const recipe = workshopAt(save, book)?.recipes.find((entry) => entry.part === part)
   const gear = save.campaignGear
   if (!recipe || gear.parts.includes(part) || gear.alloy < recipe.alloy) return save
   return observeManagement(save, { ...save, campaignGear: { alloy: gear.alloy - recipe.alloy, parts: [...gear.parts, part] } })
@@ -57,7 +63,7 @@ function supportsWorkshopMissions(book: CampaignBook, rig: Rig): boolean {
 }
 
 export function fitCampaignPart(save: Save, book: CampaignBook, outfit: number, part: string, equip: boolean): Save {
-  const recipe = workshopAt(save, book)?.workshop.recipes.find((entry) => entry.part === part)
+  const recipe = workshopAt(save, book)?.recipes.find((entry) => entry.part === part)
   const member = save.crew.find((entry) => entry.outfit === outfit)
   if (!recipe || !member || !canTakeOrdinaryAssignment(member) || !save.campaignGear.parts.includes(part) || campaignSupport(book, save).ashore.has(outfit) || awayMembers(save.operations, save.squads).includes(outfit)) return save
   const issued = issuedCampaignRig()
@@ -65,6 +71,7 @@ export function fitCampaignPart(save: Save, book: CampaignBook, outfit: number, 
   if ((rig[recipe.slot] === part) === equip) return save
   if (equip && save.crew.some((entry) => entry.outfit !== outfit && entry.rig && Object.values(entry.rig).includes(part))) return save
   const next = { ...rig, [recipe.slot]: equip ? part : issued[recipe.slot] }
-  if (!supportsWorkshopMissions(book, next)) return save
+  if (salvageRecipes.some(entry => entry.part === part) ? !rigFits(next, { speed: 3, stamina: 3, power: 3, guts: 3, wit: 3 })
+    : !supportsWorkshopMissions(book, next)) return save
   return observeManagement(save, { ...save, crew: save.crew.map((entry) => entry === member ? { ...entry, rig: next } : entry) })
 }

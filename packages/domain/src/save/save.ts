@@ -40,7 +40,7 @@ import { COMMAND_HULL, COMMAND_STATIONS, MAX_DRILLS, type CommandCrew, type Comm
  * 17 reserved cabin evenings, committed choices, frozen morning plans and per-companion rotation (CY48);
  * 18 management receipts and independent first-use/report acknowledgements (CY51);
  * 19 saved command cinematic position and fast-playback preference (CY54); 20 the active expedition (CY87). */
-export const SAVE_VERSION = 22
+export const SAVE_VERSION = 23
 
 export interface Account {
   /** The Firebase uid the save belongs to. */
@@ -264,7 +264,17 @@ export interface FleetHull {
   run?: ExpeditionRun
 }
 
-export type Save = SaveV22
+export interface Save extends Omit<SaveV22, 'version'> {
+  version: 23
+  campaignCurve?: 1
+  salvage?: CampaignSalvage
+}
+
+export interface CampaignSalvage {
+  sequence: number
+  clears: Record<string, number>
+  active?: { id: string; contract: string; port: string; release: string; alloy: number }
+}
 
 /** What the API stores and returns: the save and its revision (0: nothing stored yet). */
 export interface SaveEnvelope {
@@ -795,16 +805,36 @@ export function parseSave(value: unknown, path = 'save'): Save {
     if (value && typeof value === 'object' && ('expedition' in value || 'combatTraining' in value)) throw new SaveParseError(path, 'unknown version 20 keys')
     return { ...parseSaveV19(value, path), version: SAVE_VERSION, expedition: null }
   }
-  const { expedition, combatTraining, finaleProgress, station, fleet, ...rest } = object(value, path, Object.keys(value as Obj))
+  const { expedition, combatTraining, finaleProgress, station, fleet, campaignCurve, salvage, ...rest } = object(value, path, Object.keys(value as Obj))
   if ((station !== undefined || fleet !== undefined) && version < 22) throw new SaveParseError(path + '.station', 'requires version 22')
-  const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path)
+  if ((campaignCurve !== undefined && campaignCurve !== 1) || (version < 23 && (campaignCurve !== undefined || salvage !== undefined))) {
+    throw new SaveParseError(path + '.campaignCurve', 'requires the current campaign progression')
+  }
+  const training = combatTraining === undefined ? undefined : parseCombatTraining(combatTraining, path, version >= 23)
   const finale = finaleProgress === undefined ? undefined : parseFinaleProgress(finaleProgress, path + '.finaleProgress')
   const base = { ...parseSaveV19({ ...rest, version: 19 }, path), ...(training ? { combatTraining: training } : {}),
     ...(finale ? { finaleProgress: finale } : {}), ...(station === undefined ? {} : { station: parseStation(station, path + '.station') }) }
   const parsedFleet = fleet === undefined ? undefined : parseFleet(fleet, path + '.fleet', base.crew)
   const active = expedition == null ? null : parseExpeditionRun(expedition, path + '.expedition', base.crew, version)
   if (active && parsedFleet?.[active.duo]?.condition === 'parked') throw new SaveParseError(path + '.fleet', 'active expedition also parked')
-  return { ...base, version: SAVE_VERSION, expedition: active, ...(parsedFleet ? { fleet: parsedFleet } : {}) }
+  const work = salvage === undefined ? undefined : parseSalvage(salvage, path + '.salvage', base.mission)
+  return { ...base, version: SAVE_VERSION, expedition: active, ...(parsedFleet ? { fleet: parsedFleet } : {}),
+    ...(campaignCurve === 1 ? { campaignCurve } : {}), ...(work ? { salvage: work } : {}) }
+}
+
+function parseSalvage(value: unknown, path: string, mission: Save['mission']): CampaignSalvage {
+  const row = object(value, path, ['sequence', 'clears', 'active'])
+  const sequence = count(row.sequence, path + '.sequence')
+  const counts = object(row.clears, path + '.clears', Object.keys((row.clears ?? {}) as Obj))
+  if (Object.keys(counts).length > 64) throw new SaveParseError(path, 'too many salvage contracts')
+  const clears = Object.fromEntries(Object.entries(counts).map(([key, n]) => [id(key, path + '.clears'), bounded(n, path + '.clears.' + key, sequence)]))
+  if (row.active === undefined) return { sequence, clears }
+  const entry = object(row.active, path + '.active', ['id', 'contract', 'port', 'release', 'alloy'])
+  const attempt = id(entry.id, path + '.active.id')
+  if (attempt !== `salvage-${sequence}` || mission?.id !== attempt) throw new SaveParseError(path + '.active.id', 'expected the active salvage mission')
+  return { sequence, clears, active: { id: attempt, contract: id(entry.contract, path + '.active.contract'),
+    port: id(entry.port, path + '.active.port'), release: id(entry.release, path + '.active.release'),
+    alloy: bounded(entry.alloy, path + '.active.alloy', CAMPAIGN_WORKSHOP_ALLOY_MAX) } }
 }
 
 function parseExpeditionRun(expedition: unknown, field: string, crew: readonly CrewMember[], version = SAVE_VERSION): ExpeditionRun {
@@ -1059,20 +1089,20 @@ function parseFinaleProgress(raw: unknown, path: string): FinaleProgress {
     ...(row.withdrawn === undefined ? {} : { withdrawn: id(row.withdrawn, path + '.withdrawn') }) }
 }
 
-function parseCombatTraining(combatTraining: unknown, path: string): Record<string, CombatTraining> {
+function parseCombatTraining(combatTraining: unknown, path: string, phases: boolean): Record<string, CombatTraining> {
   const field = `${path}.combatTraining`
   const rows = object(combatTraining, field, Object.keys((combatTraining ?? {}) as Obj))
   if (Object.keys(rows).length > 1000) throw new SaveParseError(field, 'too many training records')
   return Object.fromEntries(Object.entries(rows).map(([key, value]) => {
     const here = `${field}.${key}`
     if (!/^[1-9][0-9]*$/.test(key) || !Number.isSafeInteger(Number(key))) throw new SaveParseError(here, 'expected an outfit id')
-    const row = object(value, here, ['rank', 'subclass'])
+    const row = object(value, here, phases ? ['rank', 'subclass', 'focused'] : ['rank', 'subclass'])
     const rank = bounded(row.rank, here + '.rank', 10)
     const subclass = row.subclass as CombatSubclass | null
-    if (!rank || (subclass !== null && !COMBAT_SUBCLASSES.includes(subclass))) {
+    if (!rank || (subclass !== null && !COMBAT_SUBCLASSES.includes(subclass)) || (row.focused !== undefined && (row.focused !== true || rank < 6))) {
       throw new SaveParseError(here, 'expected a valid rank and subclass choice')
     }
-    return [key, { rank, subclass }]
+    return [key, { rank, subclass, ...(row.focused === true ? { focused: true } : {}) }]
   }))
 }
 

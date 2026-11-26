@@ -20,15 +20,15 @@ export interface FormationMember {
 }
 export type GroundCombat = { kind: 'uma' } | { kind: 'combined'; members: FormationMember[]; windups: string[] }
 
-export interface CombatTraining { rank: number; subclass: CombatSubclass | null }
+export interface CombatTraining { rank: number; subclass: CombatSubclass | null; focused?: true }
 
 export function trainingOf(save: Pick<Save, 'combatTraining'>, outfit: number, shifted = false): CombatTraining {
   const record = save.combatTraining?.[outfit] ?? { rank: 1, subclass: null }
-  return shifted ? { rank: Math.max(6, record.rank), subclass: null } : { ...record, rank: Math.min(5, record.rank) }
+  return shifted || record.focused ? { ...record, rank: Math.max(6, record.rank), subclass: null } : { ...record, rank: Math.min(5, record.rank) }
 }
 
 export function chooseSubclass(save: Save, outfit: number, subclass: CombatSubclass | null): Save {
-  if (!save.crew.some((member) => member.outfit === outfit)) return save
+  if (!save.crew.some((member) => member.outfit === outfit && !member.heroine) || save.combatTraining?.[outfit]?.focused) return save
   const current = save.combatTraining?.[outfit] ?? { rank: 1, subclass: null }
   return { ...save, combatTraining: { ...save.combatTraining, [outfit]: { ...current, subclass } } }
 }

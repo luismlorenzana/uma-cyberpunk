@@ -1,7 +1,7 @@
 
 import {
   nextCampaignStop, rehabilitationQuestIds, shipCapabilities,
-  type CampaignBook, type CampaignQuest, type Save, type Speaker,
+  type CampaignBook, type CampaignQuest, type CombatAct, type Save, type Speaker,
 } from '@cyber/domain'
 import { SCENARIOS } from '../mission/battleInput'
 import { expeditionForQuest, expeditionQuestBlock } from './expedition'
@@ -18,7 +18,7 @@ export interface RosterBrowse {
   selected?: Speaker
 }
 
-export const operationTypes = ['All', 'Ship', 'Ground', 'Story'] as const
+export const operationTypes = ['All', 'Ship', 'Ground', 'Story', 'Salvage'] as const
 export const operationStates = ['Ready', 'All', 'Completed', 'Locked'] as const
 export interface OperationBrowse {
   type: typeof operationTypes[number]
@@ -101,6 +101,29 @@ export function indexCampaignNavigation(book: CampaignBook) {
 }
 
 export type CampaignNavigation = ReturnType<typeof indexCampaignNavigation>
+
+export function combatActFor(navigation: CampaignNavigation, quest?: CampaignQuest): CombatAct {
+  switch (quest && navigation.acts.get(quest.id)) {
+    case 'Act II': return 2
+    case 'Act III': return 3
+    case 'Act IV': return 4
+    default: return 1
+  }
+}
+
+export interface CombatReadiness { act: CombatAct; minimum: number; maximum: number; support?: number; bridge?: number }
+
+export function combatReadiness(book: CampaignBook, navigation: CampaignNavigation, quest?: CampaignQuest): CombatReadiness | undefined {
+  const id = quest?.encounter
+  if (!book.fourAct || !id || !book.ground.has(id) && !book.commands.has(id)) return
+  const act = combatActFor(navigation, quest)
+  const configured = book.combatReadiness?.get(id)
+  if (configured) return { ...configured, act }
+  if (act === 4) return { act, minimum: 11, maximum: 15, support: 8, bridge: 2 }
+  if (act === 3) return { act, minimum: 8, maximum: 12, support: 6, bridge: 2 }
+  if (act === 2) return { act, minimum: 4, maximum: 8, bridge: 1 }
+  return book.ground.get(id)?.rescue ? { act, minimum: 2, maximum: 4 } : { act, minimum: 1, maximum: 2, bridge: 0 }
+}
 
 export function operationObjective(book: CampaignBook, save: Save, quest: CampaignQuest, navigation: CampaignNavigation) {
   const id = quest.encounter

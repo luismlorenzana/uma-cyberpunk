@@ -20,7 +20,7 @@ const BOND = { rank: 1, rapport: 0, path: null, seen: [] }
 const CABIN = { slots: { bed: null, desk: null, wall: null, floor: null, light: null, keepsake: null }, revealed: [], request: null }
 
 describe('the save', () => {
-  it('is version 22', () => expect(SAVE_VERSION).toBe(22))
+  it('is version 23', () => expect(SAVE_VERSION).toBe(23))
 
   it('retains a version 20 expedition and validates tender preparation on the same route', () => {
     const base = newSave('captain', T0)
