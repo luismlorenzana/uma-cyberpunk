@@ -2,6 +2,9 @@
 
 > **Reusable foundation.** This page documents the approved workflows used for compatible Cyberpunk updates. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
 
+For an active four-act delivery, use the [art synchronization runbook](four-act-art-sync.md) to
+choose the cast category, art type and private batch scope.
+
 `uma-art-authoring` publishes approved Cyberpunk sources to its existing Platform collections, then
 runs this game's `art:publish` CLI. The game builds an art-only candidate from the currently selected
 private campaign. The candidate retains its story, quests, gates, rules and save IDs. No web build
@@ -14,7 +17,7 @@ expressions and Story approval remain in CY49/CY50.
 
 ## Four-act destination
 
-Use `--campaign four-act` with `pnpm art:publish` or `pnpm art:sync` to target the four-act game release. The same option scopes an art rollback. Local combat-sprite intake uses `--four-act`. The publisher validates the release identity, stages the art-only manifest under `campaign/releases/four-act/` and advances `campaign/four-act.json` using its expected generation. Platform continues to use the existing Cyberpunk universe collections. The Art Authoring hook passes the four-act target explicitly. The live game reads `content/campaign-art-plan/four-act-art-publish.json` by default. That private registry binds Lieutenant outfits and approved expressions by canonical board identity. Wardrobe access follows each Lieutenant’s return settlement, and scene outfit overrides use the exact authored look.
+Use `--campaign four-act` with `pnpm art:publish` or `pnpm art:sync` to target the four-act game release. The same option scopes an art rollback. Local combat-sprite intake uses `--four-act`. The publisher validates the release identity, stages the art-only manifest under `campaign/releases/four-act/` and advances `campaign/four-act.json` using its expected generation. Platform continues to use the existing Cyberpunk universe collections. The Art Authoring hook passes the four-act target explicitly. The four-act publisher reads `content/campaign-art-plan/four-act-art-publish.json` by default. That private registry binds Lieutenant outfits and approved expressions by canonical board identity. Wardrobe access follows each Lieutenant’s return settlement, and scene outfit overrides use the exact authored look.
 
 ## Two deliveries and their boundaries
 
@@ -32,8 +35,9 @@ subsequent registered-image replacements follow the same general-art publisher.
 | Authoring publisher | `art/universes/cyberpunk/` and `enemy-art/cyberpunk/` in the existing private content bucket | Approved looks, splashes, portrait recipes and supported categories visible to Platform |
 | Game publisher | `campaign/cyberpunk/` in that bucket | Hash-addressed game images, an immutable campaign manifest and finally its selected pointer |
 
-The game storage adapter only reads those Cyberpunk prefixes and only writes its campaign prefix.
-It cannot write the master-data bucket, its `latest`/`candidate` channels, Farm art or any other game.
+The game storage adapter reads Cyberpunk source and campaign prefixes. Campaign, scene-splash
+and sprite writers each use their own explicit Cyberpunk prefix. The shared master-data channels
+and other games have their own release flows.
 The existing Farm publisher still follows its existing Platform release hook. Cyberpunk never enters
 Farm's character-indexed portrait/illustration families, avoiding same-character universe collisions.
 
