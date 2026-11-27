@@ -37,6 +37,9 @@ The opening draft in the ignored `content/four-act-launch/` holds the premise, o
 ## Catalog and review receipts
 
 The optional `fourAct` campaign field is a versioned registry parsed by the same book loader as quests and scenes. Version 1 binds `systems[].capital` to a playable operation and its civic settlement. `arcs[]` match one recruit to an authored home, a General, three distinct lieutenants and, for complete routes, the nonlethal operation and custody quest. `duos[]` bind two same-system leads and separately identified returns. Production books require all 50 arcs, 25 fixed duos and five capital outcomes. An older local opening draft may omit the registry.
+A capital route can bind five eligible bases and proof flags to the existing capital quest chain. Once the proof
+scene is seen, that same branch supplies the ready and naming scenes and the capital squad. The route uses the
+existing scene history and flags. Books with the original capital fields still load.
 
 A personal route starts at the shared premise and may depend on earlier steps in its own chain. Each battle chapter can field the named lead alone. The four-act runtime uses the quest-to-lead index for availability and deployment. Existing save records keep the completed encounter and played custody scene, which together make custody and scattering visible on the roster. The opening review restores either seen variant of a settled dialogue after reload.
 

@@ -1,6 +1,6 @@
 import { awayMembers, canTakeOrdinaryAssignment, resting, seeScene, type CampaignBook, type CampaignQuest, type Chapter, type EffectStep, type Mission, type Save } from '@cyber/domain'
 import { applyStep, setSquad, startMission } from '../mission/director'
-import { optionalCampaignTraining, personalMissionLead, questAvailable } from './quests'
+import { capitalLeads, optionalCampaignTraining, personalMissionLead, questAvailable } from './quests'
 import { campaignCallUp, missionAshore } from './call-up'
 import { expeditionForQuest, expeditionSquad } from './expedition'
 import { groundSquadCapacity } from './training'
@@ -31,6 +31,13 @@ export function beginCampaignEncounter(save: Save, book: CampaignBook, quest: Ca
   }
   const away = awayMembers(save.operations, save.squads)
   const available = next.crew.filter((member) => canTakeOrdinaryAssignment(member) && !ashore.has(member.outfit) && !away.includes(member.outfit) && !resting(member)).map(({ outfit }) => outfit)
+  const capital = capitalLeads(save, book, quest.id)
+  if (capital.length) {
+    const alternate = book.ground.get(mission.id)?.alternate
+    const scenario = alternate && next.story.flags.includes(alternate.flag) ? alternate.scenario : mission.scenario
+    const capacity = book.commands.has(mission.id) ? 4 : groundSquadCapacity(scenario)
+    return setSquad(started, [...capital, ...available.filter(outfit => !capital.includes(outfit))].slice(0, capacity))
+  }
   const lead = personalMissionLead(book, quest)
   if (lead !== undefined) {
     // An authored lead can take her own mission while strained. A missing or away lead cannot be substituted.
