@@ -12,6 +12,7 @@ export const ART_BUCKET = 'uma-platform-content'
 export const CAMPAIGN_PREFIX = 'campaign/cyberpunk/'
 export const SCENE_SPLASH_PREFIX = 'art/universes/cyberpunk/scene-splashes/'
 export const COMBAT_SPRITE_PREFIX = 'art/universes/cyberpunk/combat-sprites/'
+export const ORIGINAL_ART_PREFIX = 'art/universes/cyberpunk/originals/'
 export const SOURCE_PREFIXES = ['art/universes/cyberpunk/', 'enemy-art/cyberpunk/'] as const
 
 export function safeObject(path: string): string {
@@ -33,7 +34,7 @@ export class GcsArtStorage implements ArtStorage {
     const token = result.stdout.trim()
     if (!token || /\s/.test(token)) throw new Error('No Google Cloud access token')
     return token
-  }, private readonly writePrefix: typeof CAMPAIGN_PREFIX | typeof COMBAT_SPRITE_PREFIX | typeof SCENE_SPLASH_PREFIX = CAMPAIGN_PREFIX) {}
+  }, private readonly writePrefix: typeof CAMPAIGN_PREFIX | typeof COMBAT_SPRITE_PREFIX | typeof SCENE_SPLASH_PREFIX | typeof ORIGINAL_ART_PREFIX = CAMPAIGN_PREFIX) {}
 
   private async authenticated(url: string, init: RequestInit = {}) {
     const send = async (token: Promise<string>) => {

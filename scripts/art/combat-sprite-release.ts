@@ -27,7 +27,7 @@ export async function readSpriteApprovalIndex(file: string, only: readonly strin
   }
   const bundles = p.list(root.bundles, 'bundles', (value, field) => {
     const required = ['character', 'outfit', 'version', 'manifestSha256', 'approval']
-    const row = p.object(value, field, [...required, 'directory', 'placementsSha256', 'pages', 'form', 'roles', 'loadouts'], required)
+    const row = p.object(value, field, [...required, 'directory', 'placementsSha256', 'pages', 'form', 'roles', 'loadouts', 'original'], required)
     const character = p.slug(row.character, field + '.character')
     const identity = parseCombatSpriteIdentity(p, row, field)
     const version = p.text(row.version, field + '.version', 7)
@@ -71,7 +71,27 @@ export async function readSpriteApprovalIndex(file: string, only: readonly strin
 type SourceIndex = Awaited<ReturnType<typeof readSpriteApprovalIndex>>
 type SpriteSource = SourceIndex['bundles'][number]
 const identityOf = (source: SpriteSource): CombatSpriteIdentity => source.form === undefined
-  ? { outfit: source.outfit } : { outfit: source.outfit, form: source.form, roles: source.roles }
+  ? { outfit: source.outfit } : { outfit: source.outfit, form: source.form, roles: source.roles,
+    ...(source.original ? { original: source.original } : {}) }
+
+async function verifyOriginalSpriteSource(source: SpriteSource) {
+  if (!source.original || source.status !== 'approved') return
+  const { directory, original } = source
+  const json = async (file: string) => JSON.parse((await readFile(file)).toString('utf8'))
+  const [active, approval, receipt, reviewed] = await Promise.all([
+    json(resolve(directory, '../active-bundle.json')), json(resolve(directory, 'approval.json')),
+    readFile(resolve(directory, 'source-approval.json')), json(resolve(directory, 'review-bindings.json')),
+  ])
+  const checks = { 'bundle.json': source.manifest, 'asset-placements.json': source.placements,
+    ...Object.fromEntries(source.pages.map(page => [page.file, page.sha256])) }
+  if (source.character !== original.actor || active.version !== source.version || approval.status !== 'approved' ||
+    approval.scope !== 'complete-sprite-art-and-album' || approval.character !== original.actor || approval.version !== source.version ||
+    approval.sourceApprovalReceiptSHA256 !== sha(receipt) ||
+    reviewed.status !== 'approved' || reviewed.albumKey !== original.actor || reviewed.version !== source.version ||
+    reviewed.form !== source.form || Object.entries(checks).some(([file, hash]) => approval.hashes?.[file] !== hash)) {
+    throw new Error('Original sprite source does not match the active owner-approved album: ' + original.actor)
+  }
+}
 
 /** The current book, including its alternate encounters, owns role and fixed-fitting assignments. */
 function heroineFittings(book: SelectedCampaign['book'], source: Extract<CombatSpriteIdentity, { outfit: string }>, allowUnbound = false) {
@@ -98,15 +118,22 @@ function heroineFittings(book: SelectedCampaign['book'], source: Extract<CombatS
   }
   return required
 }
+
+function originalFittings(book: SelectedCampaign['book'], actor: string) {
+  const matching = [...book.ground.values()].filter(ground => ground.cues?.opponents?.some(row => row.actor === actor))
+  if (!matching.length) throw new Error('Original sprite actor has no authored encounter: ' + actor)
+  return new Set(matching.flatMap(ground => ground.boss?.portrait.startsWith(actor + '-') ? [ground.boss.unit] : []))
+}
 interface PlatformPlan { path: string; prior: StoredObject | null; bytes: Buffer; payloads?: Map<string, Buffer> }
 
 function verifyPlatformVersion(prior: StoredObject | null, source: SpriteSource, placements?: string) {
   if (!prior) return
   const previous = JSON.parse(prior.bytes.toString('utf8')) as {
     schemaVersion?: number; outfit?: number | string; form?: string; roles?: string[]; version?: string; manifest?: { sha256?: string };
-    status?: 'withdrawn'; manifestSha256?: string; placements?: { sha256?: string }
+    status?: 'withdrawn'; manifestSha256?: string; placements?: { sha256?: string }; original?: CombatSpriteIdentity['original']
   }
   if (previous?.schemaVersion !== 1 || previous.outfit !== source.outfit || previous.form !== source.form ||
+    previous.original?.actor !== source.original?.actor ||
     !/^v\d{3,6}$/.test(previous.version ?? '') ||
     !/^[a-f0-9]{64}$/.test(previous.status === 'withdrawn' ? previous.manifestSha256 ?? '' : previous.manifest?.sha256 ?? '')) {
     throw new Error('Malformed Platform combat sprite index for outfit ' + source.outfit)
@@ -157,8 +184,10 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
   await concurrent(sources.bundles, async source => {
     const key = combatSpriteKey(source)
     const identity = identityOf(source)
-    const registered = typeof source.outfit === 'number' ? crew.has(source.outfit) : heroines.has(source.outfit)
+    const registered = source.original ? selected.campaign === 'four-act' && casting.minor.includes(source.outfit)
+      : typeof source.outfit === 'number' ? crew.has(source.outfit) : heroines.has(source.outfit)
     if (!registered && !refs.has(key)) throw new Error('Combat sprite outfit is outside the selected campaign: ' + source.outfit)
+    await verifyOriginalSpriteSource(source)
     const root = COMBAT_SPRITE_PREFIX + key + '/'
     const path = root + 'index.json'
     const prior = await platform.read(path)
@@ -171,7 +200,11 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
         status: source.status, manifestSha256: source.manifest }) })
       return
     }
-    const required = identity.form === undefined ? new Set<string>() : heroineFittings(selected.book, identity, sources.compatibleOnly)
+    if (source.original && (!source.loadouts || source.loadouts.some(row => row.rigs.length || !row.attacks.length || row.attacks.includes('back') || row.medic))) {
+      throw new Error('Original sprite loadouts require exact encounter and hand weapon bindings')
+    }
+    const required = identity.original ? originalFittings(selected.book, identity.outfit)
+      : identity.form === undefined ? new Set<string>() : heroineFittings(selected.book, identity, sources.compatibleOnly)
     const legacy = source.loadouts ? null : await readCombatSprite(source.directory, source, true, identity)
     const stage = legacy ?? await readCompleteCombatSprite(source.directory, { ...source, loadouts: source.loadouts!, compatibleOnly: sources.compatibleOnly }, identity)
     const { ref } = stage
@@ -214,6 +247,7 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
   if (!campaignChanged && !platformChanges.length) return { ...result, status: 'unchanged' }
 
   await sources.assertCurrent()
+  await concurrent(sources.bundles, verifyOriginalSpriteSource)
   const platformPayloads = orderedPlans.flatMap(([source, plan]) => {
     const root = COMBAT_SPRITE_PREFIX + combatSpriteKey(source) + '/'
     return [...(plan.payloads ?? [])].map(([path, bytes]) => ({ path, platformPath: root + path.split('/').at(-1)!, bytes }))
@@ -241,6 +275,7 @@ export async function publishCombatSprites(storage: ArtStorage, platform: ArtSto
   await options.report?.('campaign-staged', release.release)
 
   await sources.assertCurrent()
+  await concurrent(sources.bundles, verifyOriginalSpriteSource)
   await assertSelection(storage, campaignPointer, selected.pointer)
   await concurrent(orderedPlans, ([, plan]) => assertSelection(platform, plan.path, plan.prior))
   if (options.stageOnly) return { ...result, status: 'staged' }

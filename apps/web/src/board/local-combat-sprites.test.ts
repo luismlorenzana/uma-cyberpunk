@@ -45,3 +45,19 @@ it('selects exact frozen friendly and authored hostile loadouts, even for the sa
   expect(completeLoadout(binding, { ...unit, side: 'enemy', sprite: { role: 'boss-enemy', form: 'standard', fitting: 'commander' } })).toBeUndefined()
   expect(completeLoadout({ ...binding, loadouts: undefined }, { ...unit, frozenRig: rig })).toBeUndefined()
 })
+
+it('requires the exact original actor, authored fitting and weapon band before playing a joined boss animation', () => {
+  const file = { path: 'campaign/file.json', sha256: '0'.repeat(64), bytes: 1 }
+  const binding: CampaignCombatSprite = { outfit: 'test-court-regent', form: 'joined', roles: ['boss-enemy'],
+    original: { actor: 'original-test-court-regent', rank: 'regents', court: 'silver', weaponBand: 'melee' },
+    manifest: file, placements: file, pages: [],
+    loadouts: [{ set: 'blade', rigs: [], encounters: ['guardian'], attacks: ['right'] }] }
+  const unit = { ref: { kind: 'heroine', id: 'test-court-regent' }, side: 'enemy',
+    sprite: { role: 'boss-enemy', form: 'standard', fitting: 'guardian' },
+    loadout: { leftHand: null, rightHand: { kind: 'weapon', band: 'melee' } } } as UnitInput
+  const rifle = { ...unit, loadout: { ...unit.loadout, rightHand: { ...unit.loadout.rightHand!, band: 'short' as const } } }
+  expect(completeLoadout(binding, unit)?.set).toBe('blade')
+  expect(completeLoadout(binding, rifle)).toBeUndefined()
+  expect(completeLoadout(binding, { ...unit, ref: { kind: 'heroine', id: 'other' } })).toBeUndefined()
+  expect(completeLoadout(binding, { ...unit, sprite: { ...unit.sprite!, fitting: 'backup' } })).toBeUndefined()
+})

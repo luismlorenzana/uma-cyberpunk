@@ -13,7 +13,7 @@ staging, and selection on the same batch. The first inventory is
 | Character | Approved Uma look IDs in Character Art. Import with `looks`. | Scene-splash role `crew`. Bind by source ID and reviewed scene or action. | Published portrait recipes for the selected Uma keys. Import with `portraits`. | Approved bundle keyed by numeric outfit. Verify the actual rig and motion. |
 | Boss | Enemy Art look IDs for the General. Track enemy, custody, resident and cleared ally use by destination. Import with `enemies`. | Scene-splash roles `boss-enemy` and `boss-ally`. Run each role separately. | Published portrait recipes for the General's keys. Bind the exact outfit and role used in the scene. | Approved bundle keyed by board identity and form. Confirm `boss-enemy` and/or `boss-ally` for the game fitting. |
 | Lieutenant | Lieutenant look IDs in Enemy Art. Import with `enemies` using only those IDs and their game bindings. | Scene-splash role `lieutenant`. Bind canonical Platform IDs to the exact scenes and supporting cast. | Published portrait recipes for selected Lieutenant keys. Verify pre-return and returned scene routing. | Approved bundle keyed by board identity and form, with the campaign role `sub-boss`. Check encounter and returned-ally fittings. |
-| Seraine | Original collection. Reconcile any installed art by the original actor ID and approved game destination. Dedicated Platform route pending. | Original collection. Preserve the five installed Queen finale splash bindings. The scene-splash publisher has no Seraine role. | Original collection. Confirm an approved recipe for the exact outfit and speaker. A route from original expressions to Platform and the game is pending. | Original collection. Track authored motion by actor, form and encounter. The complete-bundle publisher currently accepts crew outfits and ranked heroine roles. |
+| Seraine | Publish active original bases with `art:originals`. Match the original actor and state to an exact four-act asset. | Publish the original splash album alongside bases. Keep the existing combat scene keys and bind variants to their reviewed destinations. | The original image channel accepts approved standalone expressions. Campaign use requires a matching expression asset. Face-crop recipes require the reviewed base, crop geometry and dialogue routing. | Publish static views in the original collection. Publish active approved complete animation bundles under an original combat-sprite key. Select a game binding only when the actor, joined form, fitting and hand weapon agree. |
 
 Here, base art means approved native looks and their game dialogue/profile crops. Expression
 recipes include their own neutral base, face pieces, placements and tags. If a base revision
@@ -80,9 +80,8 @@ supporting cast at the destination.
    ```
 
    Use `enemies` for Boss or Lieutenant base art and `portraits` for an expression batch.
-   Sprite staging verifies immutable objects for both destinations. The first Seraine batch
-   needs a reviewed original-identity and destination mapping through [CY128](../handoff/tasks/CY128.md)
-   before it uses a dedicated publisher. Existing Seraine bindings are evidence for that intake.
+   Sprite staging verifies immutable objects for both destinations. Use the original publishing
+   route below for Seraine. Existing Seraine bindings remain evidence for [CY128](../handoff/tasks/CY128.md).
 4. Review the candidate in the actual scene or encounter and confirm the receipt records only
    the expected assets and presentation changes. Select the reviewed immutable game release
    with `pnpm art:publish --campaign four-act --select $release`. For sprites, use the same
@@ -94,3 +93,35 @@ supporting cast at the destination.
 The receipt records category, type, asset IDs, source and approval pins, Platform index generation,
 game destination status, candidate and selected releases, and verification results. Keep exact
 source IDs, images, named cast and review evidence under ignored `content/`.
+
+## Original collections
+
+Pass the original album directory containing `collection.json` and the reviewed private
+binding file. Each binding gives the destination `asset`, exact Art `source` ID,
+approved `sha256` and current destination hash in `prior`. Use `prior: null` only
+for a new joined-base key for an existing named opponent. The publisher checks the
+active study and per-image owner approval, verifies the native bytes and preserves
+the original actor, rank, court and depicted state in the Platform index.
+
+```powershell
+pnpm art:originals --album "$originalAlbum" --bindings "$bindings" --receipt "$receipt" --dry-run
+pnpm art:originals --album "$originalAlbum" --bindings "$bindings" --receipt "$receipt" --stage-only
+pnpm art:originals --album "$originalAlbum" --bindings "$bindings" --receipt "$receipt" --expect-release "$reviewedRelease"
+```
+
+Staging writes the verified Platform index at
+`art/universes/cyberpunk/originals/<collection>/index.json` and an immutable
+campaign candidate. Review that candidate in the authored scenes or encounters before
+selecting it. The normal command rechecks the source, Platform and campaign generation
+before selection. Mounting Summit, resting and other undirected variants belong in the
+Platform album until an exact Story beat calls for them.
+
+For animation, use the existing `combat-sprites` approval index and include an
+`original` object with the namespaced album `actor`, `rank`, `court` and
+reviewed `weaponBand`. Use the existing Story actor as `outfit`, `joined` as
+`form` and `boss-enemy` as the game role for a named opponent. The writer checks the
+active bundle selection, owner approval receipt, placement rows and frozen atlas pins.
+With `compatibleOnly: true`, an empty `loadouts` list publishes the approved bundle
+to Platform for review. A playable assignment adds the exact encounter unit fitting
+and matching hand mount. The board checks the deployed weapon band before selecting the
+clip. Review all four facings and attack timing in that encounter before selection.
