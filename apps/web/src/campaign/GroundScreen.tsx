@@ -38,7 +38,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
   expedition?: string
   formationRun?: Save['expedition']
   loaded?: LoadedCampaign
-  onSettled?: (scenes: string[]) => void
+  onSettled?: (scenes: string[], squad: readonly number[]) => void
   combatShift?: string
   readiness?: CombatReadiness
 }) {
@@ -435,7 +435,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                   .filter(scene => !settled.story.seen.includes(scene))
                 return released.length ? { ...settled, story: released.reduce(seeScene, settled.story) } : settled
               })
-              if (released.length) onSettled?.(released)
+              if (released.length) onSettled?.(released, state.squad)
             }
             void debrief().catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
               .finally(() => setSettling(false))
@@ -471,10 +471,11 @@ function GroundBattle({ layout, input, actions, close, mission, portrait, interi
     <button type="button" className={primary} onClick={() => void updateSave((save) => toDeploy(retry(save)))}>Prepare again</button>
   </div>
   const objective = input.objective
-  const preserve = input.units.find(unit => unit.id === input.preserve || input.protect?.includes(unit.id))?.label
+  const preserve = input.units.find(unit => unit.id === input.preserve || input.protect?.includes(unit.id))
   const expeditionObjective = input.rulesVersion === EXPEDITION_RULES_VERSION
-    ? preserve ? `Complete the objective · Keep ${preserve} alive`
-      : objective.kind === 'hack' ? objective.last ? 'Separate the five witness channels, then break the Collar · Keep both Seraine alive' : 'Activate the terminal'
+    ? preserve?.ref?.id.startsWith('seraine-') ? `Complete the objective before ${preserve.label ?? 'the target'} falls`
+      : preserve?.label ? `Complete the objective · Keep ${preserve.label} alive`
+      : objective.kind === 'hack' ? objective.last ? 'Separate the five last-pulse channels, then break the Collar before either Seraine falls' : 'Activate the terminal'
         : objective.kind === 'hold' ? `Hold for ${objective.rounds} rounds` : undefined
     : undefined
   const objectiveLabel = expeditionObjective ?? (input.objective.kind === 'freeLeader' && input.objective.collar === 'rigBreak' ? 'Objective · Break the Collar'

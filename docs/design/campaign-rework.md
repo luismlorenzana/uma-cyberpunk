@@ -13,7 +13,7 @@
 | Planetary pairings | Story supplies a fixed same-system duo for each Uma. The two personal routes remain independently tracked until their shared planetary work. With 50 Umas across five ten-Uma systems, the production scope is 25 duos unless Story revises the map or roster. |
 | Act III admission | The five distinct home capitals must all be liberated. Each launching duo must have all six of its own named lieutenants recovered and its 2 Umas and 2 Boss Allies cleared for that expedition. Finishing other duos' personal stories or recovering their lieutenants is optional for that launch. |
 | Expedition party | Each fixed duo launches a smaller ship from the Homestretch with exactly 2 Umas, 2 Boss Allies and 6 lieutenants. All ten deploy together on every Act III ground battle. Their dialogue, ship roles and gear follow the same ten identities. |
-| Opponents | The early opposition is the Palinode and its controlled or loyal forces. Act II reveals the Seraine threat. All combat opponents in Act III are Seraine. Each duo frees a named Herald or Echo at the end of its mission. The Queens are reserved for Act IV. |
+| Opponents | The early opposition is the Palinode and its controlled or loyal forces. Act II reveals the Seraine threat. All combat opponents in Act III are Seraine. Each duo ends a named Herald or Echo by separating her pulse from the Choir. The Queens are reserved for Act IV. |
 | Ending | Act IV is the final battle and soft ending. The specific readiness rule, Queen encounters, final choice and ending variations go through the Act IV workshop. |
 
 The Act III gate is evaluated from completed capital operations and the actual six returned people. Five arbitrary captures, the age of the save, a relationship rank, an unrelated home result, or reaching a chapter in the earlier tier pack have no role in admission.
@@ -48,7 +48,7 @@ Reveal the Seraine through recovered testimony, local evidence and the original 
 
 ## Act III · The ten-person expeditions
 
-Launch from the Homestretch with a dedicated small ship, its crew, support allocation and a named route beyond the home systems. Show expedition selection, crew readiness, supplies, its own bridge and the next objective. Give each group a briefing, approach, several distinct operations, a last encounter with its named Herald or Echo, liberation and return. Agree objective chains and exact chapter counts in CY92. Use common ship interiors, tools and equipment families across routes, with local landmarks, outcomes and authored differences to make each expedition distinct.
+Launch from the Homestretch with a dedicated small ship, its crew, support allocation and a named route beyond the home systems. Show expedition selection, crew readiness, supplies, its own bridge and the next objective. Give each group a briefing, approach, several distinct operations, a last encounter with its named Herald or Echo, the target's ending and a return. Use common ship interiors, tools and equipment families across routes, with local landmarks, outcomes and authored differences to make each expedition distinct.
 
 | Group | Count | Tactics identity |
 | --- | --- | --- |
@@ -60,11 +60,11 @@ Launch from the Homestretch with a dedicated small ship, its crew, support alloc
 
 These are encounter fitting families. Tune variants within each family and mark any fixed story weapon explicitly. Keep ordinary loadout choices outside those commitments. All ten start on the board at each Act III tactical deployment. An objective may spread them across multiple entrances on one board. Turn speed, camera and reactions must support ten friendly figures plus the authored opposing force.
 
-The target's release is a gameplay outcome followed by authored aftermath. Establish the reason she can break away and the place she goes. Her release updates the story and finale ledger. An additional playable Seraine roster would be a separate owner decision. With five duos per home system and five Seraine courts, Story can use three Heralds and two Echoes as targets per court if that mapping fits. Record the actual lineup privately.
+When the crew separates a target's pulse from the Choir, her markings go dark and she comes apart into light. Her last pulse traces a route to her Queen and updates the finale ledger. The crew records and mourns the ending. The Seraine remain an opposing cast, and the Collar victims from the five systems and the Palinode are saved.
 
 ## Act IV · Final battle and a soft ending
 
-Use the five capitals, named Seraine releases, expedition outcomes, and actual relationship and home histories to construct the finale. The Queens and their relationship to the Choir belong here. Keep resolution and individual epilogues connected to what happened in play. Reserve decisions on the Queen sequence, threshold of expedition victories, exact final mechanics, shared ship roles and ending branches for CY90. An unfinished optional expedition needs a deliberate place in the ending design.
+Settle the five capitals and record one Seraine ending per court to open the finale. Use expedition outcomes and the actual relationship and home histories for the resolution and epilogues. The Choir and all Seraine still joined end in the Hush. Unfinished expeditions keep their own completion records. CY90 defines the Queen sequence, shared ship roles and ending branches.
 
 ## Four gameplay pillars
 

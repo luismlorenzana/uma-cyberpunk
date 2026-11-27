@@ -72,7 +72,7 @@ Use the private `content/cy90/content-coverage` audit as the baseline. The cover
 | Expedition systems | [CY87](tasks/CY87.md), [CY88](tasks/CY88.md), [CY89](tasks/CY89.md) | All 25 ten-person expeditions and their ship and ground results delivered. |
 | Ending and release | [CY90](tasks/CY90.md), [CY91](tasks/CY91.md), [CY97](tasks/CY97.md) | Both endings and return to play live. Physical iPhone check remains open. |
 | Story authoring | [CY92](tasks/CY92.md) | Approved four-act catalog and dialogue delivered. |
-| General art | [CY93](tasks/CY93.md) | Approved exact bindings are integrated. Dedicated location and liberated-state assets remain in authoring. |
+| General art | [CY93](tasks/CY93.md) | Approved exact bindings are integrated. Dedicated locations and last-pulse effects use the current Story briefs. |
 | Character art | [CY94](tasks/CY94.md) | Approved exact bindings are integrated. New variants and splashes need the matching role, outfit and scene approval. |
 | Sprite authoring | [CY95](tasks/CY95.md) | All 250 albums published. Game has 551 exact sets. Unmatched fittings remain on the Art lane. |
 | Integration across all lanes | [CY96](tasks/CY96.md) | CY97 recorded the combined release. Recurring Story and Art intake continues here. |

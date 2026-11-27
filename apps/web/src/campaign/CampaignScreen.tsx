@@ -83,7 +83,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     ? save.station?.sceneRelease : undefined)
   const [loaded, setLoaded] = useState<LoadedCampaign | null>(null)
   const [location, setLocation] = useState<string | null>(null)
-  const [groundReports, setGroundReports] = useState<string[]>([])
+  const [groundReports, setGroundReports] = useState<{ scene: string; squad: readonly number[] }[]>([])
   const [reportScene, setReportScene] = useState<string | null>(null)
   const [finaleScene, setFinaleScene] = useState<string | null>(null)
   const [sharedConsent, setSharedConsent] = useState<{ ally: CampaignAlly; quest: CampaignQuest; day: number } | null>(null)
@@ -261,8 +261,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const hush = loaded && save && ground && loaded.book.fourActFinale?.ground.includes(ground.id) ? finaleRun(save, loaded.book) : undefined
   const trainee = personalLead ?? missionState?.squad[0] ?? missionChapter?.leads[0]
   if (loaded && groundReports[0]) {
+    const { scene, squad } = groundReports[0]
     const advance = () => setGroundReports(scenes => scenes.slice(1))
-    return <CampaignScene key={groundReports[0]} loaded={loaded} sceneId={groundReports[0]} finish={advance} fail={advance} />
+    return <CampaignScene key={scene} loaded={loaded} sceneId={scene} squad={squad} finish={advance} fail={advance} />
   }
   if (loaded && save && mission && (training || ground) && trainee !== undefined && !sortieAshore?.has(trainee) && !groundPaused) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
@@ -273,7 +274,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
         acceptsFitted={!!ground && !ground.combat && !expeditionFight && !hush && (!!loaded.book.fourAct || loaded.book.workshop?.missions.includes(mission.id))}
         ashore={sortieAshore} requiredLead={personalLead}
         editableSquad={!!ground && (!!loaded.book.sectors?.length || !!missionState?.callUp || personalLead !== undefined)}
-        onSettled={setGroundReports} close={() => setGroundPaused(true)} />
+        onSettled={(scenes, squad) => setGroundReports(scenes.map(scene => ({ scene, squad })))}
+        close={() => setGroundPaused(true)} />
     </Suspense>
   }
   if (loaded && save && mission && command && supply && support) {
@@ -408,7 +410,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
       setActive(null)
     } : undefined}
     exitLabel={signOn ? 'Leave meeting' : undefined}
-    squad={save?.expedition?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : [])}
+    squad={(save?.expedition ?? (save && active.id.startsWith('fa-finale-') ? finaleRun(save, loaded.book) : undefined))
+      ?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : [])}
     battle={async (id, effects) => {
       const chapter = Object.values(loaded.book.story.chapters).find((c) => c.scenes.some((scene) => scene.id === active.scene))
       const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id)
@@ -971,8 +974,9 @@ function Campaign({ layout }: { layout: StageLayout }) {
             <section aria-label="Act IV · The final operation" className="space-y-2 rounded-lg border border-white/15 p-3 text-sm">
               <h2 className="font-semibold">Act IV · The final operation</h2>
               <p>{readiness.capitals} / 5 capital settlements</p>
+              <p>End one Seraine in each court to trace the way to its Queen.</p>
               <ul>{readiness.courts.map(court => <li key={court.name}>
-                {court.name} · {court.witness ? 'Witness ready' : 'Witness needed'}
+                {court.name} · {court.witness ? 'Last pulse traced' : 'Last pulse needed'}
                 {!court.witness && <ul>{court.witnesses.filter(witness => loaded.book.quests.some(q => q.id === witness.release))
                   .map(witness => <li key={witness.flag} className="ml-4 text-white/70">
                     {loaded.book.quests.find(q => q.id === witness.release)?.title}
