@@ -1,4 +1,12 @@
-import { awayMembers, campaignSupport, crewSpeaker, resting, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
+import { awayMembers, campaignSupport, canTakeOrdinaryAssignment, crewSpeaker, resting, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
+import { voyageCrew } from './watch'
+
+export function bridgeCrew(save: Save, ashore?: ReadonlySet<number>, clearedAllies?: ReadonlySet<number>, requiredLead?: number) {
+  const away = new Set(awayMembers(save.operations, save.squads)), deployed = voyageCrew(save)
+  return save.crew.filter(member => !ashore?.has(member.outfit) && !away.has(member.outfit)
+    && (requiredLead === undefined || !member.heroine)
+    && (canTakeOrdinaryAssignment(member) || (member.heroine && clearedAllies?.has(member.outfit) && !deployed.has(member.heroine))))
+}
 
 /** Only that operation borrows both members of an available, released home pair. */
 export function campaignCallUp(book: CampaignBook, save: Save, quest: CampaignQuest): number[] {

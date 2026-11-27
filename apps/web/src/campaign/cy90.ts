@@ -57,6 +57,17 @@ export function selectFinaleFormation(save: Save, book: CampaignBook, duo: strin
   return { ...save, finaleProgress: { ...progress(save), duo }, story: setFlag(save.story, 'fa-finale-transit-ready', ready) }
 }
 
+/** Only cleared, present Generals can join the Act IV bridge. The Hush escort keeps its boarding passengers off the bridge. */
+export function finaleBridgeAllies(save: Save, book: CampaignBook): ReadonlySet<number> {
+  const available = new Set(save.crew.filter(member => member.heroine && !resting(member)).map(member => member.heroine))
+  return new Set((book.allies ?? []).flatMap(ally => {
+    const arc = book.fourAct?.arcs.get(ally.partner)
+    if (arc?.general !== ally.heroine || !available.has(ally.heroine)) return []
+    const quest = book.quests.find(row => row.id === arc.rehabilitation?.clearance)
+    return quest && questComplete(save, quest, book) ? [ally.member] : []
+  }))
+}
+
 export function finaleRun(save: Save, book: CampaignBook): ExpeditionRun | undefined {
   const duo = progress(save).duo
   const formation = duo && book.fourAct?.duos.get(duo)?.expedition
