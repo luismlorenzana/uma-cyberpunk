@@ -7,7 +7,31 @@ import { formationReady } from './specialist-input'
 import { initializeCampaignCurve } from './progression'
 import { custodyCommit } from './station-custody'
 
-export function questScene(save: Save, quest: CampaignQuest): string {
+// The proof scene records which local team opened the route. Later bases cannot change that branch.
+function capitalBranch(save: Save, book: CampaignBook, quest: string) {
+  const route = book.fourAct?.capitalRoutes?.get(quest)
+  if (!route) return
+  return route.branches.find(branch => save.story.seen.includes(branch.proof)) ?? route.branches.find(branch => {
+    const base = book.quests.find(row => row.id === branch.base)
+    return base && branch.proofFlags.every(flag => save.story.flags.includes(flag)) && questComplete(save, base, book)
+  })
+}
+
+export function capitalLeads(save: Save, book: CampaignBook, quest: string): readonly number[] {
+  const branch = capitalBranch(save, book, quest)
+  return branch ? book.fourAct?.duos.get(branch.duo)?.umas ?? [] : []
+}
+
+export function questScene(save: Save, quest: CampaignQuest, book?: CampaignBook): string {
+  const route = book?.fourAct?.capitalRoutes?.get(quest.id)
+  if (book && route && (route.proof === quest.id || route.ready === quest.id || route.glyph === quest.id)) {
+    const branch = capitalBranch(save, book, quest.id)
+    if (branch) {
+      if (route.proof === quest.id) return branch.proof
+      if (route.ready === quest.id) return branch.ready
+      return save.story.flags.includes(route.courtFlag) ? branch.courtName : branch.raceName
+    }
+  }
   const variant = quest.sceneWhen
   return variant && save.story.flags.includes(variant.flag) ? variant.scene : quest.scene
 }
@@ -23,7 +47,8 @@ export function personalMissionLead(book: CampaignBook, quest: CampaignQuest): n
 
 export function personalMissionBlock(save: Save, book: CampaignBook, quest: CampaignQuest): string | null {
   const lead = personalMissionLead(book, quest)
-  const required = lead === undefined && book.fourAct && quest.encounter && !optionalCampaignTraining(book, quest)
+  const required = quest.encounter && book.fourAct?.capitalRoutes?.has(quest.id) ? capitalLeads(save, book, quest.id)
+    : lead === undefined && book.fourAct && quest.encounter && !optionalCampaignTraining(book, quest)
     ? Object.values(book.story.chapters).find(chapter => chapter.scenes.some(scene => scene.id === quest.scene))?.leads ?? []
     : lead === undefined ? [] : [lead]
   if (!required.length) return null
@@ -36,8 +61,12 @@ export function personalMissionBlock(save: Save, book: CampaignBook, quest: Camp
 export function questComplete(save: Save, quest: CampaignQuest, book?: CampaignBook): boolean {
   const recruit = book?.recruits?.find(({ signOn }) => signOn === quest.id)
   if (recruit) return save.crew.some(({ outfit }) => outfit === recruit.outfit)
+  const route = book?.fourAct?.capitalRoutes?.get(quest.id)
   const seen = book?.fourAct
     ? save.story.seen.includes(quest.scene) || (!!quest.sceneWhen && save.story.seen.includes(quest.sceneWhen.scene))
+      || !!route?.branches.some(branch => quest.id === route.proof ? save.story.seen.includes(branch.proof)
+        : quest.id === route.ready ? save.story.seen.includes(branch.ready)
+          : quest.id === route.glyph && (save.story.seen.includes(branch.raceName) || save.story.seen.includes(branch.courtName)))
     : save.story.seen.includes(questScene(save, quest))
   return seen && (!quest.encounter || save.worlds.missions.includes(quest.encounter))
     && captureGate(save, book, quest)
@@ -47,6 +76,7 @@ export function questAvailable(save: Save, book: CampaignBook, quest: CampaignQu
   if (context !== 'quarters' && book.allies?.some(row => row.pairConsent === quest.id)) return false
   if ((quest.port && quest.port !== port) || quest.flags?.some(flag => !save.story.flags.includes(flag))
     || questComplete(save, quest, book) || !homeQuestReady(save, book, quest.id) || !finaleQuestReady(save, book, quest)) return false
+  if (book.fourAct?.capitalRoutes?.has(quest.id) && !capitalBranch(save, book, quest.id)) return false
   const expedition = expeditionForQuest(book, quest.id, save.expedition?.duo)
   if (expeditionQuestBlock(save, book, quest.id, expedition, q => questComplete(save, q, book))) return false
   if (!captureGate(save, book, quest) || (!expedition && personalMissionBlock(save, book, quest))) return false
@@ -98,7 +128,7 @@ export function finishCampaignDialogue(save: Save, book: CampaignBook, quest: Ca
     if (arrivals.length !== 1 || arrivals[0]?.kind !== 'join' || arrivals[0].outfit !== recruit.outfit) return save
   }
   const next = effects.reduce((state, step) => applyStep(state, book.story, step), initializeCampaignCurve(save, book))
-  const scene = questScene(save, quest)
+  const scene = questScene(save, quest, book)
   let story = seeScene(next.story, scene)
   for (const candidate of book.quests) {
     const variant = candidate.sceneWhen

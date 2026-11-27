@@ -20,7 +20,7 @@ import { availableSharedVisit, closePairScene, nextHomeScene, openPairScene, pai
 import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
 import { FinalePanel } from './FinalePanel'
-import { finishCampaignDialogue, optionalCampaignTraining, personalMissionLead, questAvailable, questComplete, questScene } from './quests'
+import { capitalLeads, finishCampaignDialogue, optionalCampaignTraining, personalMissionLead, questAvailable, questComplete, questScene } from './quests'
 import { missionAshore } from './call-up'
 import { ShipHome, homeAreas, type HomeArea } from './ShipHome'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
@@ -211,7 +211,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     setError(null)
     try {
       await updateSave(current => {
-        if (offer.release !== loaded.release.release || questScene(current, offer.quest) !== offer.scene) return current
+        if (offer.release !== loaded.release.release || questScene(current, offer.quest, loaded.book) !== offer.scene) return current
         const invited = finishCampaignDialogue(current, loaded.book, offer.quest, offer.effects, current.campaignSupply?.port ?? loaded.book.supply?.start)
         return invited === current ? current : closeRecruitment(cutterArrival(invited, loaded.book, offer.outfit), offer.quest.id)
       })
@@ -256,6 +256,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   const battleReadiness = loaded && navigation ? combatReadiness(loaded.book, navigation, missionQuest ?? undefined) : undefined
   const expeditionFight = loaded && missionQuest ? expeditionForQuest(loaded.book, missionQuest.id, save?.expedition?.duo) : undefined
   const personalLead = loaded && missionQuest ? personalMissionLead(loaded.book, missionQuest) : undefined
+  const capitalSquad = loaded && save && missionQuest ? capitalLeads(save, loaded.book, missionQuest.id) : []
   const command = mission && loaded?.book.commands.get(mission.id)
   const ground = salvage?.ground ?? (mission && loaded?.book.ground.get(mission.id))
   const hush = loaded && save && ground && loaded.book.fourActFinale?.ground.includes(ground.id) ? finaleRun(save, loaded.book) : undefined
@@ -267,7 +268,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   }
   if (loaded && save && mission && (training || ground) && trainee !== undefined && !sortieAshore?.has(trainee) && !groundPaused) {
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Loading mission…</div>}>
-      <GroundScreen key={mission.id} loaded={loaded} save={save} mission={mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
+      <GroundScreen key={mission.id} loaded={loaded} save={save} mission={capitalSquad.length ? { ...mission, fixedSquad: [...capitalSquad] } : mission} layout={layout} trainee={trainee} label={nameOf(loaded.book.story, trainee)}
         expedition={hush ? 'Hush expedition' : expeditionFight?.expedition?.route?.name} formationRun={hush} ground={ground || undefined} pack={loaded.book.story} bossArt={ground && ground.boss ? loaded.assets.get(ground.boss.portrait) : undefined}
         combatSprites={loaded.release.combatSprites}
         combatShift={loaded.book.combatShift} readiness={battleReadiness}
@@ -345,7 +346,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
 
   const speaker = save?.finaleProgress?.speaker
   const finalBook = loaded?.book.fourActFinale
-  const activeScene = active && save ? questScene(save, active) : undefined
+  const activeScene = active && save ? questScene(save, active, loaded?.book) : undefined
   const voice = active && finalBook && active.id === finalBook.speakerAt
     ? speaker === 'captain' ? finalBook.bridge : speaker === undefined ? undefined : finalBook.speakers.get(speaker) : undefined
   const signOn = active && loaded?.book.fourAct && loaded.book.recruits?.find(row => row.signOn === active.id)
@@ -411,7 +412,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
     } : undefined}
     exitLabel={signOn ? 'Leave meeting' : undefined}
     squad={(save?.expedition ?? (save && active.id.startsWith('fa-finale-') ? finaleRun(save, loaded.book) : undefined))
-      ?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : [])}
+      ?.members.flatMap(member => member.role === 'uma' ? [member.outfit] : []) ?? (save ? capitalLeads(save, loaded.book, active.id) : [])}
     battle={async (id, effects) => {
       const chapter = Object.values(loaded.book.story.chapters).find((c) => c.scenes.some((scene) => scene.id === active.scene))
       const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id)
@@ -433,6 +434,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       }
       setSavingScene(true)
       void updateSave((s) => {
+        if (questScene(s, active, loaded.book) !== activeScene) return s
         const next = finishCampaignDialogue(s, loaded.book, active, effects, s.campaignSupply?.port ?? supply?.port)
         return next !== s && next.station ? { ...next, station: cancelStationAppointment(next.station, { quest: active.id }) } : next
       }).then(() => {

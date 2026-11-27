@@ -33,7 +33,7 @@ export interface CommandCinematics {
   actors: CommandActorArt[]
   effects?: { kind: CommandEffectKey; slot: string; composition?: CampaignComposition }[]
   encounters: { encounter: string; objective: string; commander?: Speaker;
-    preparation?: string; victory?: string; withdrawal?: string; retry?: string; disabled?: string;
+    alarm?: string; preparation?: string; victory?: string; withdrawal?: string; retry?: string; disabled?: string;
     enemy?: { contact: string; disabled: string; withdrawal: string } }[]
 }
 export const COMMAND_EFFECT_KEYS = ['shields', 'guns', 'fighter-strike', 'intercept', 'hit', 'emitter-hit', 'emitter-disabled', 'friendly-damage', 'power'] as const

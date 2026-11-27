@@ -13,7 +13,27 @@ export interface PersonalArc {
   rehabilitation?: { sessions: readonly string[]; release: string; quarters: string; clearance?: string }
 }
 
-interface Capital { operation: string; settlement: string }
+export interface CapitalBranch {
+  duo: string
+  base: string
+  proofFlags: readonly string[]
+  proof: string
+  ready: string
+  raceName: string
+  courtName: string
+}
+export interface CapitalRoute {
+  entry: string
+  proof: string
+  ready: string
+  escort: string
+  operation: string
+  settlement: string
+  glyph: string
+  courtFlag: string
+  branches: readonly CapitalBranch[]
+}
+interface Capital { operation: string; settlement: string; route?: CapitalRoute }
 interface HomeSystem { id: string; capital?: Capital }
 interface LieutenantReturn { heroine: string; quest: string; operation?: string }
 const LIEUTENANT_ROLES = ['melee-shield', 'ranged-medic', 'long-range'] as const
@@ -46,6 +66,7 @@ export interface FourActCampaign {
   /** Includes sign-on, personal missions and rehabilitation. Shared beats are left unowned. */
   personalQuestOwners: ReadonlyMap<string, number>
   transit?: { flag: string; quests: readonly string[] }
+  capitalRoutes?: ReadonlyMap<string, CapitalRoute>
 }
 
 type Book = Pick<CampaignBook, 'opening' | 'draft' | 'quests' | 'scenes' | 'story' | 'recruits' | 'ground' | 'commands' | 'supply' | 'allies'>
@@ -120,20 +141,62 @@ export function parseFourActCampaign(p: P, value: unknown, book: Book): FourActC
     transit = { flag, quests: stages.map(stage => stage.id) }
   }
 
+  function parseCapitalRoute(raw: unknown, path: string, operation: CampaignQuest, finish: CampaignQuest): CapitalRoute {
+    const row = p.object(raw, path, ['entry', 'proof', 'ready', 'escort', 'glyph', 'branches'])
+    const entry = quest(row.entry, path + '.entry')
+    const proof = quest(row.proof, path + '.proof')
+    const ready = quest(row.ready, path + '.ready')
+    const escort = quest(row.escort, path + '.escort')
+    const glyph = quest(row.glyph, path + '.glyph')
+    if (entry.encounter || proof.encounter || ready.encounter || glyph.encounter || !escort.encounter
+      || proof.after !== entry.id || ready.after !== proof.id || escort.after !== ready.id
+      || operation.after !== escort.id || glyph.after !== finish.id || !glyph.sceneWhen) {
+      return p.fail(path, 'expected the existing capital entry, proof, readiness, escort, operation and settlement chain')
+    }
+    const scene = (raw: unknown, field: string) => {
+      const id = p.slug(raw, field)
+      const value = book.scenes.get(id)
+      if (!value || [...walkSteps(value.steps, '')].some(({ step }) => step.kind === 'battle' || step.kind === 'join' || step.kind === 'aboard'))
+        p.fail(field, 'expected a capital dialogue scene')
+      return id
+    }
+    const branches = p.list(row.branches, path + '.branches', (raw, field): CapitalBranch => {
+      const branch = p.object(raw, field, ['duo', 'base', 'proofFlags', 'proof', 'ready', 'raceName', 'courtName'])
+      const proofFlags = p.list(branch.proofFlags, field + '.proofFlags', (flag, key) => p.slug(flag, key), 4)
+      if (!proofFlags.length || new Set(proofFlags).size !== proofFlags.length) p.fail(field, 'expected distinct base proof flags')
+      return { duo: p.slug(branch.duo, field + '.duo'), base: quest(branch.base, field + '.base').id, proofFlags,
+        proof: scene(branch.proof, field + '.proof'), ready: scene(branch.ready, field + '.ready'),
+        raceName: scene(branch.raceName, field + '.raceName'), courtName: scene(branch.courtName, field + '.courtName') }
+    }, 5)
+    const states = branches.flatMap(branch => [branch.proof, branch.ready, branch.raceName, branch.courtName])
+    const defaultBranch = branches[0]
+    const reserved = new Set(book.quests.filter(q => q !== proof && q !== ready && q !== glyph)
+      .flatMap(q => [q.scene, q.sceneWhen?.scene]))
+    if (branches.length !== 5 || new Set(states).size !== states.length || states.some(id => reserved.has(id))
+      || defaultBranch?.proof !== proof.scene || defaultBranch.ready !== ready.scene
+      || defaultBranch.raceName !== glyph.scene || defaultBranch.courtName !== glyph.sceneWhen.scene
+      || branches.some(branch => !entry.requiresAny?.includes(branch.base)) || entry.requiresAny?.length !== branches.length) {
+      p.fail(path, 'expected distinct scenes and one correctly bound capital branch per alternate base')
+    }
+    return { entry: entry.id, proof: proof.id, ready: ready.id, escort: escort.id, operation: operation.id,
+      settlement: finish.id, glyph: glyph.id, courtFlag: glyph.sceneWhen.flag, branches }
+  }
+
   p.list(source.systems, 'fourAct.systems', (raw, field) => {
     const row = p.object(raw, field, ['id', 'capital'], ['id'])
     const id = p.slug(row.id, field + '.id')
     if (systems.has(id)) p.fail(field + '.id', 'duplicate home system')
     let capital: Capital | undefined
     if (row.capital !== undefined) {
-      const spec = p.object(row.capital, field + '.capital', ['operation', 'settlement'])
+      const spec = p.object(row.capital, field + '.capital', ['operation', 'settlement', 'route'], ['operation', 'settlement'])
       const operation = quest(spec.operation, field + '.capital.operation')
       const finish = settlement(spec.settlement, field + '.capital.settlement')
       if (!operation.encounter || (!book.ground.has(operation.encounter) && !book.commands.has(operation.encounter))
         || !ancestors(finish).has(operation.id)
         || capitalMissions.has(operation.encounter)) p.fail(field + '.capital', 'expected a unique ship or ground operation followed by a civic settlement')
       capitalMissions.add(operation.encounter!)
-      capital = { operation: operation.id, settlement: finish.id }
+      const route = spec.route === undefined ? undefined : parseCapitalRoute(spec.route, field + '.capital.route', operation, finish)
+      capital = { operation: operation.id, settlement: finish.id, ...(route ? { route } : {}) }
     }
     systems.set(id, { id, ...(capital ? { capital } : {}) })
   }, 5)
@@ -368,6 +431,19 @@ export function parseFourActCampaign(p: P, value: unknown, book: Book): FourActC
     }
   }
 
+  const capitalRoutes = new Map<string, CapitalRoute>()
+  for (const system of systems.values()) {
+    const route = system.capital?.route
+    if (!route) continue
+    if (new Set(route.branches.map(branch => branch.duo)).size !== 5 || route.branches.some(branch => {
+      const duo = duos.get(branch.duo)
+      return duo?.system !== system.id || duo.local?.base !== branch.base
+    })) p.fail('fourAct.systems', 'capital branches must use the five matching local bases')
+    for (const id of [route.entry, route.proof, route.ready, route.escort, route.operation, route.settlement, route.glyph]) {
+      if (capitalRoutes.has(id)) p.fail('fourAct.systems', 'each capital quest belongs to one capital')
+      capitalRoutes.set(id, route)
+    }
+  }
   for (const { operation, settlement } of [...systems.values()].flatMap(system => system.capital ? [system.capital] : [])) {
     if (personalQuestOwners.has(operation) || personalQuestOwners.has(settlement)) p.fail('fourAct.systems', 'capital liberation has its own route')
   }
@@ -376,7 +452,8 @@ export function parseFourActCampaign(p: P, value: unknown, book: Book): FourActC
     || !transit || duos.size !== 25 || [...duos.values()].some(duo => !duo.local || duo.returns.length !== 6 || !duo.expedition?.route))) {
     p.fail('fourAct', 'a production book needs 50 captures and rehabilitations, five capital outcomes and 25 full expedition routes with shared transit')
   }
-  return { schemaVersion: 1, systems, arcs, duos, personalQuestOwners, ...(transit ? { transit } : {}) }
+  return { schemaVersion: 1, systems, arcs, duos, personalQuestOwners, ...(transit ? { transit } : {}),
+    ...(capitalRoutes.size ? { capitalRoutes } : {}) }
 }
 
 export function parseExpeditionFormation(p: P, raw: unknown, path: string, arcs: readonly [PersonalArc, PersonalArc],

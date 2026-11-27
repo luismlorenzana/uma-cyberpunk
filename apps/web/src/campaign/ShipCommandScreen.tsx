@@ -83,12 +83,12 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   } : undefined)
   const assault = run ? run.input.version !== 1 : !!encounter.assault
   const preparation = reinforce ? finale?.preparation : undefined
-  const contextButtons = (['preparation', 'victory', 'withdrawal', 'retry', 'disabled'] as const).flatMap(kind => {
+  const contextButtons = (['alarm', 'preparation', 'victory', 'withdrawal', 'retry', 'disabled'] as const).flatMap(kind => {
     if (reports && (kind === 'withdrawal' || kind === 'retry')) return []
     const scene = commandContextScene(save, loaded.book, kind)
-    return scene ? [<button key={kind} type="button" className={button} onClick={() => setContext(scene)}>{kind === 'preparation' ? 'Mission context' : kind === 'retry' ? 'Retry briefing' : kind === 'disabled' ? 'Emitter report' : 'Crew report'}</button>] : []
+    return scene ? [<button key={kind} type="button" className={button} onClick={() => setContext(scene)}>{kind === 'alarm' ? 'Initial alarm' : kind === 'preparation' ? 'Mission context' : kind === 'retry' ? 'Retry briefing' : kind === 'disabled' ? 'Emitter report' : 'Crew report'}</button>] : []
   })
-  if (context && loaded.book.scenes.has(context)) return <CampaignScene key={loaded.release.release + ':' + context} loaded={loaded} sceneId={context}
+  if (context && loaded.book.scenes.has(context)) return <CampaignScene key={loaded.release.release + ':' + context} loaded={loaded} sceneId={context} squad={state.squad}
     finish={() => setContext(null)} fail={message => { setError(message); setContext(null) }} onExit={() => setContext(null)} exitLabel="Back to bridge" />
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"
     style={{ ...insets, ...(background ? { backgroundImage: `linear-gradient(#080d1aeb, #080d1acf), url(${background})` } : {}) }}>

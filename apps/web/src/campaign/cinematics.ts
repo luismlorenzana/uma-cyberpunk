@@ -51,7 +51,7 @@ export function retryCommand(save: Save): Save {
   return { ...next, commandCinema: { ...next.commandCinema, retries: Math.min(1000, save.commandCinema.retries + 1) } }
 }
 
-export function commandContextScene(save: Save, book: CampaignBook, kind: 'preparation' | 'victory' | 'withdrawal' | 'retry' | 'disabled'): string | undefined {
+export function commandContextScene(save: Save, book: CampaignBook, kind: 'alarm' | 'preparation' | 'victory' | 'withdrawal' | 'retry' | 'disabled'): string | undefined {
   const mission = save.mission
   if (!mission || save.commandCinema.pending) return undefined
   const binding = book.commandCinematics?.encounters.find(row => row.encounter === mission.id), id = binding?.[kind]
@@ -59,6 +59,7 @@ export function commandContextScene(save: Save, book: CampaignBook, kind: 'prepa
   if (!scene) return undefined
   const run = mission.battle && resumeCommand(mission.battle.input, mission.battle.actions)
   if (kind === 'preparation' ? mission.step !== 'deploy'
+    : kind === 'alarm' ? mission.step !== 'battle' || run?.state.turn !== 0
     : kind === 'retry' ? mission.step !== 'battle' || run?.state.turn !== 0 || !save.commandCinema.retries
     : kind === 'disabled' ? run?.state.emitter !== 0 || run.state.result !== 'won' || mission.step !== 'results' || !mission.won
     : run?.state.result !== (kind === 'victory' ? 'won' : 'lost')) return undefined
