@@ -43,14 +43,14 @@ Each of the 25 expeditions takes two Laser Umas, two winged Generals and six lie
 | Personal arc and rehabilitation | Run the Uma's ship and ground encounters, capture her General and attend rehabilitation with both actors. Move her Boss Ally into the shared quarters and open her own relationship scenes when appropriate. |
 | Local bases and capitals | See which same-system Uma is her fixed partner, investigate together, see who the lieutenants are and what remains for their return. Restore services and liberate five capitals. |
 | Locating the next operation | A readiness view shows the five capital outcomes and each duo's six individual lieutenant statuses. A ready duo can embark while other duo stories remain open. |
-| Expedition ship | Allocate supplies and take two Umas, two cleared Boss Allies and six lieutenants on their own small ship. Play its actual bridge missions. All ten deploy together in Act III battles against the Seraine. See the target's liberation, outcome report and return. |
-| Finale and return | Free a witness from each Seraine court and return to the main ship. Follow the readiness list to prepare the finale. After reaching Lark, reopen travel for civic visits, relationship scenes and repairs. |
+| Expedition ship | Allocate supplies and take two Umas, two cleared Boss Allies and six lieutenants on their own small ship. Play its bridge missions. All ten deploy together in Act III battles against the Seraine. Play the target's ending, read the debrief and return. |
+| Finale and return | Record one Seraine ending per court and return to the main ship. Follow the readiness list to prepare the finale. After reaching Lark, reopen travel for civic visits, relationship scenes and repairs. |
 
 ## The finale and return to play
 
-The five liberated capitals and five recorded witness releases open the finale. At Halcyon, choose an eligible ten-person formation. Secure the civilian nodes, commit the common cut, and hear your recorded witnesses. The outer Queen operations can be played in any order. Follow the objective and keep the named Seraine alive.
+The five liberated capitals and one recorded Seraine ending per court open the finale. At Halcyon, choose an eligible ten-person formation. Secure the civilian nodes, commit the common cut and trace the recorded last pulses. The outer Queen operations can be played in any order. Complete each objective before the Queen falls.
 
-The last approach uses the bridge assignments and the chosen formation's cutter in a station campaign. Choose who will speak at the berth before deploying the formation. The ground battle requires separating the witness channels before breaking the Collar. Both named Seraine must survive. The briefing and objective list track which actions are available. Withdraw and retry from the crew report if the attempt fails.
+The last approach uses the bridge assignments and the chosen formation's cutter in a station campaign. Choose who will speak at the berth before deploying the formation. On the ground, separate the five pulse channels and break the Collar before either Seraine falls. The briefing and objective list track which actions are available. Withdraw and retry from the crew report if the attempt fails.
 
 Both approaches to Lark lead to the shared berth. Supper and the folded request reopen travel. The ordinary ending is available there. Recorded mutual relationship choices can open the True Ending. A private reunion or shared visit has its own choices and can be revisited if deferred. Civic events appear where the relevant officers are available. At a repair site, survey first, then complete the two work stages. The project remembers its stage if you leave and return.
 
