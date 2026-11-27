@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import type { CampaignBook, CampaignQuest, CampaignReleaseFile, Save } from '@cyber/domain'
 import { nameOf } from '../story/runner'
-import { CampaignThumbnail } from './CampaignThumbnail'
+import { CampaignAvatar } from './CampaignThumbnail'
+import { recruitPortrait } from './menu-portraits'
+import { systemName } from './player-labels'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
 import { homeQuestTravel } from './homestretch'
 import { TravelTiming } from './TravelTiming'
@@ -25,8 +27,7 @@ export default function RecruitCrew({ book, save, assets, meet, cargo }: {
   const quest = selected && quests.get(selected.recruit.signOn)
   const travel = quest && homeQuestTravel(save, book, quest)
   const port = book.supply?.ports.find(row => row.id === quest?.port)
-  const street = selected && book.wardrobe?.members.find(row => row.speaker === selected.recruit.outfit)?.looks.street
-  const portrait = street && assets.get(street.profile ?? street.asset)
+  const portrait = selected && recruitPortrait(book, assets, selected.recruit.outfit, quest?.scene)
   return <section className="space-y-3" aria-labelledby="recruit-title">
     <header className="flex flex-wrap items-center justify-between gap-3">
       <div>
@@ -42,18 +43,20 @@ export default function RecruitCrew({ book, save, assets, meet, cargo }: {
         onClick={() => { setSystem(undefined); setChoice(undefined) }}>All · {remaining.length}</button>
       {systems.map(({ id }) => <button key={id} type="button" className={campaignControl + ' capitalize aria-pressed:border-cyan-200'}
         aria-pressed={system === id} onClick={() => { setSystem(id); setChoice(undefined) }}>
-        {id.replaceAll('-', ' ')} · {remaining.filter(row => row.system === id).length}
+        {systemName(id)} · {remaining.filter(row => row.system === id).length}
       </button>)}
     </nav>
     <div className="grid items-start gap-3 sm:grid-cols-[minmax(13rem,1fr)_minmax(14rem,1fr)]">
       <ul aria-label="Available recruits" className="grid max-h-64 gap-1 overflow-auto rounded-xl border border-white/10 bg-[#101b2d] p-2 sm:grid-cols-2">
         {shown.map(({ recruit, name }) => <li key={recruit.outfit}><button type="button" data-recruit={recruit.outfit}
-          aria-pressed={choice === recruit.outfit} className={campaignControl + ' w-full justify-start text-left aria-pressed:border-cyan-200'}
-          onClick={() => setChoice(recruit.outfit)}>{name}</button></li>)}
+          aria-pressed={choice === recruit.outfit} className={campaignControl + ' w-full justify-start gap-2 px-2 text-left aria-pressed:border-cyan-200'}
+          onClick={() => setChoice(recruit.outfit)}>
+          <CampaignAvatar asset={recruitPortrait(book, assets, recruit.outfit, quests.get(recruit.signOn)?.scene)} name={name} className="size-8 rounded" />
+          {name}</button></li>)}
       </ul>
       {selected && quest ? <article className="space-y-3 rounded-xl border border-white/10 bg-[#101b2d] p-3" aria-label="Selected recruit">
         <div className="flex items-center gap-3">
-          <CampaignThumbnail asset={portrait} className="size-16 shrink-0 rounded-lg object-cover object-top" />
+          <CampaignAvatar asset={portrait} name={selected.name} className="size-16 rounded-lg" />
           <div><h2 className="font-display text-xl font-bold">{selected.name}</h2>{port && <p className="text-sm text-cyan-200">{port.name}</p>}</div>
         </div>
         <p className="text-sm text-slate-200">{selected.recruit.request}</p>

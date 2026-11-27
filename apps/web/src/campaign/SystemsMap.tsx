@@ -1,3 +1,4 @@
+import { systemName } from './player-labels'
 import { developedPort, storesAt, type CampaignBook, type CampaignSupply, type Save } from '@cyber/domain'
 import { useState } from 'react'
 import { CampaignThumbnail } from './CampaignThumbnail'
@@ -48,7 +49,7 @@ export function SystemsMap({ book, assets, save, stock, drives, travel, open, lo
     <div className="flex flex-wrap gap-2">
       {[...groups.map(row => row.id), 'frontier'].map(id => <button key={id} type="button"
         className={campaignControl + ' capitalize aria-pressed:ring-2 aria-pressed:ring-cyan-300'} aria-pressed={id === area}
-        onClick={() => { setArea(id); select(undefined) }}>{id === 'frontier' ? 'Frontier and return ports' : id.replaceAll('-', ' ')}</button>)}
+        onClick={() => { setArea(id); select(undefined) }}>{id === 'frontier' ? 'Frontier and return ports' : systemName(id)}</button>)}
     </div>
     {group && <p className="text-sm text-slate-200">
       {complete(settlement) ? 'Capital liberated' : 'Capital contested'} · {group.duos.filter(row => complete(row.local?.base)).length}/{group.duos.filter(row => row.local).length} liberation bases open

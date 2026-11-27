@@ -8,8 +8,11 @@ export interface PortraitDerivation {
   dialogue: { asset: string; left: number; top: number; width: number; height: number }
   profile: { asset: string; left: number; top: number; size: number }
 }
+export interface CampaignActionSplash { asset: string; width: number; height: number }
+export interface CampaignSignatureSplash extends CampaignActionSplash { side: 'squad' | 'enemy'; part: string }
 export interface CampaignWardrobe {
-  members: { speaker: Speaker; looks: Record<string, WardrobeLook>; default?: string; after?: string; requiresFlag?: string; visibleLooks?: string[] }[]
+  members: { speaker: Speaker; looks: Record<string, WardrobeLook>; default?: string; after?: string; requiresFlag?: string; visibleLooks?: string[];
+    stationSplash?: CampaignActionSplash; signatureSplashes?: CampaignSignatureSplash[] }[]
   scenes: { scene: string; context: LookContext; outfits?: { speaker: Speaker; look: string }[] }[]
   crops: PortraitDerivation[]
 }

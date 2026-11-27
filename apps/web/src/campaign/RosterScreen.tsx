@@ -4,7 +4,9 @@ import { awayMembers, bandsOf, campaignSupport, campaignLevel, crewSpeaker, ROLE
   type CampaignReleaseFile, type Save, type Speaker } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
-import { CampaignThumbnail } from './CampaignThumbnail'
+import { CampaignAvatar } from './CampaignThumbnail'
+import { menuPortrait, recruitPortrait } from './menu-portraits'
+import { formationRoleName, systemName } from './player-labels'
 import { campaignControl, CampaignQuestRow } from './CampaignQuestRow'
 import { expeditionWatchScene } from './expedition'
 import { questScene } from './quests'
@@ -25,10 +27,6 @@ import { expeditionCrewBands } from './training'
 const roles: readonly RosterKind[] = ['Uma', 'General', 'Lieutenant']
 const choices = { Uma: 'Umas', General: 'Generals', Lieutenant: 'Lieutenants' }
 const pageSize = 18
-const assignments = {
-  uma: 'Rifle officer', 'boss-ally': 'Melee officer', 'melee-shield': 'Shield specialist',
-  'ranged-medic': 'Combat medic', 'long-range': 'Long-range specialist',
-} as const
 
 export default function RosterScreen({ book, save, assets, complete, navigation, port, open, travel, evening, shared, report, browse, onBrowse }: {
   book: CampaignBook; save: Save; assets: ReadonlyMap<string, CampaignReleaseFile>; complete: ReadonlySet<string>
@@ -56,19 +54,16 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
   const members = new Map(save.crew.map(member => [crewSpeaker(member), member]))
   const profile = (row: RosterEntry) => {
     const look = book.wardrobe?.members.find(member => member.speaker === row.speaker)
-    if (row.kind !== 'Uma' && !members.has(row.speaker)
+    const returned = row.kind === 'Lieutenant' && row.quests.every(id => complete.has(id))
+    if (row.kind !== 'Uma' && !members.has(row.speaker) && !returned
       && (!look?.after || !save.story.seen.includes(look.after))) return undefined
     if (look?.requiresFlag && !save.story.flags.includes(look.requiresFlag)) return undefined
     return look
   }
   const avatar = (row: RosterEntry) => {
     const look = profile(row)
-    const first = navigation.quests.get(row.quests[0] ?? '')
-    const fallback = row.kind === 'Uma' && book.art.find(art => art.scene === first?.scene)?.portraits
-      .find(portrait => portrait.speaker === row.speaker && !portrait.emote)?.profile
-    const preferred = look?.looks[look.default ?? 'ship-casual']
-    const ref = preferred?.profile ?? look?.looks['ship-casual']?.profile ?? (fallback || undefined)
-    return ref ? assets.get(ref) : undefined
+    return menuPortrait(look, assets, row.kind === 'Uma' ? ['ship-casual', 'street'] : ['quarters-front', 'combat-station'])
+      ?? (row.kind === 'Uma' ? recruitPortrait(book, assets, row.speaker, navigation.quests.get(row.quests[0] ?? '')?.scene) : undefined)
   }
   function select(speaker: Speaker) {
     onBrowse({ ...browse, selected: speaker })
@@ -101,7 +96,7 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
     : expeditionCrewBands(navigation.missions.get(formationEncounter)?.mission.scenario)[formationIndex]
   const info = master.status === 'ready' && typeof actor === 'number' ? master.view.info.get(actor) : undefined
   const bands = info ? bandsOf(info.stats) : formationBands ?? STAND_IN_BANDS
-  const bandsSource = info ? 'Personal bands' : formationBands ? 'Bands for the first expedition battle' : 'Standard bands for this preview'
+  const bandsSource = info ? 'Personal stats' : formationBands ? 'Expedition stats' : 'Standard stats'
   const xp = actor === undefined ? undefined : campaignActorXp(save, actor)
   const fit = actor === undefined ? undefined : { actor, bands, assignment, variant }
   const build = fit && (tab === 'Stats' || tab === 'Equipment') ? characterBuild(save, fit) : undefined
@@ -143,7 +138,7 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
             {candidates.slice(visiblePage * pageSize, (visiblePage + 1) * pageSize).map(row => <li key={row.speaker}>
               <button type="button" data-roster-actor={row.speaker} aria-pressed={entry?.speaker === row.speaker} onClick={() => select(row.speaker)}
                 className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1 text-left hover:bg-white/8 aria-pressed:bg-[#213c58] focus-visible:outline-2 focus-visible:outline-cyan-200">
-                <CampaignThumbnail asset={avatar(row)} className="size-9 shrink-0 rounded-md object-cover" />
+                <CampaignAvatar asset={avatar(row)} name={names.get(row.speaker)!} className="size-9 rounded-md" />
                 <span className="min-w-0"><span className="block break-words text-xs font-semibold sm:text-sm">{names.get(row.speaker)}</span>
                   <span className="block text-[11px] text-slate-300">{rosterStatus(row, save, book, complete)}</span></span>
               </button>
@@ -159,10 +154,10 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
       </aside>
       {entry && fit ? <article className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-xl border border-white/10 bg-[#101b2d]" data-character={entry.speaker}>
         <header className="flex shrink-0 items-center gap-2.5 border-b border-white/10 bg-[#142239] p-2.5">
-          <CampaignThumbnail asset={avatar(entry)} className="size-13 shrink-0 rounded-lg object-cover sm:size-14" />
+          <CampaignAvatar asset={avatar(entry)} name={names.get(entry.speaker)!} className="size-13 rounded-lg sm:size-14" />
           <div className="min-w-0 flex-1">
             <h2 className="break-words font-display text-lg leading-tight font-bold sm:text-xl">{names.get(entry.speaker)}</h2>
-            <p className="mt-1 text-xs text-slate-300">{rosterStatus(entry, save, book, complete)}{entry.system && ' · ' + entry.system.replaceAll('-', ' ')}</p>
+            <p className="mt-1 text-xs text-slate-300">{rosterStatus(entry, save, book, complete)}{entry.system && ' · ' + systemName(entry.system)}</p>
           </div>
           {xp !== undefined && <p className="shrink-0 rounded-md border border-cyan-200/25 bg-cyan-200/8 px-2 py-1 font-mono text-sm font-bold text-cyan-100">Lv {campaignLevel(xp, save.campaignCurve)}</p>}
         </header>
@@ -227,7 +222,7 @@ export default function RosterScreen({ book, save, assets, complete, navigation,
               {returned && report && returnScene && <button type="button" className={campaignControl}
                 onClick={() => report(returnScene)}>Revisit the return conversation</button>}
             </section>
-            {route && assignment && <p className="text-sm text-slate-300">{route.name} · {assignments[assignment.role]}</p>}
+            {route && assignment && <p className="text-sm text-slate-300">{route.name} · {formationRoleName[assignment.role]}</p>}
             {related.length > 0 && <details className="rounded-lg border border-white/10">
               <summary className="flex min-h-11 cursor-pointer items-center px-3 font-semibold">Duo operations</summary>
               <ol>{related.map(quest => <CampaignQuestRow key={quest.id} quest={quest} book={book} save={save}

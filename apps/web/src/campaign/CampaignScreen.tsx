@@ -1,4 +1,6 @@
 import type { SceneDecision } from '../story/ScenePlayer'
+import { CampaignAvatar } from './CampaignThumbnail'
+import { menuPortrait, residentPortrait } from './menu-portraits'
 import {
   awayMembers, campaignCaptures, campaignSpeaker, campaignSupport, campaignUpkeep, CORE_CAPTURES, crewSpeaker, developedPort, expeditionReadiness, finaleAllies, finishCampaignNightScene, fleetMobilized, homeOutcome, moduleAt, pairProgress, pairVisit, reactorPips, rehabilitationQuestIds, seeScene, SIGNAL_CAPTURES,
   cancelStationAppointment, sectorNightId, sectorVisit, setFlag, startCampaignNight, startSupply, stationDate, stationRoom, STATION_MODULES,
@@ -133,8 +135,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
       loadedFor.current = { owner, check, pinned: sceneRelease, release: value.release.release }
       setLoaded(value)
     }, (err: unknown) => {
-      if (live) setError(err instanceof ContentError && err.status === 404 ? 'Campaign release unavailable.'
-        : err instanceof Error ? err.message : String(err))
+      if (live) {
+        console.warn('Campaign content:', err)
+        setError(err instanceof ContentError && err.status === 404 ? 'Campaign unavailable.' : 'Could not load the campaign. Check your connection and try again.')
+      }
     }).finally(() => { if (live) setPending(false) })
     return () => { live = false }
   }, [check, owner, sceneRelease])
@@ -301,10 +305,10 @@ function Campaign({ layout }: { layout: StageLayout }) {
       if (image) (profile ? profiles : portraits).set(speaker, image)
     }
     for (const member of save.crew) {
-      if (!member.heroine) continue
-      const look = loaded.book.wardrobe?.members.find(row => row.speaker === member.heroine)?.looks['combat-station']
-      const image = look && loaded.assets.get(look.profile ?? look.portrait ?? look.dialogue ?? look.asset)
-      if (image) profiles.set(member.heroine, image)
+      const speaker = crewSpeaker(member)
+      const look = loaded.book.wardrobe?.members.find(row => row.speaker === speaker)
+      const image = menuPortrait(look, loaded.assets, member.heroine ? ['combat-station'] : ['pilot'])
+      if (image) profiles.set(speaker, image)
     }
     return <Suspense fallback={<div className={viewport} style={insets} role="status">Opening the bridge…</div>}>
       <ShipCommandScreen loaded={loaded} save={save} mission={mission} encounter={command} supply={supply}
@@ -418,7 +422,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
       const mission = chapter?.missions.find((m) => m.id === active.encounter && m.id === id)
       const training = mission?.scenario === 'training' && chapter && (mission.fixedSquad ?? chapter.leads).length === 1
       if (!chapter || !mission || (!training && !loaded.book.commands.has(id) && !loaded.book.ground.has(id))) {
-        setError('This release is missing the encounter.')
+        setError('Could not start this operation. Return to Operations and try again.')
       } else {
         await updateSave((s) => beginCampaignEncounter(s, loaded.book, active, chapter, mission, effects, s.campaignSupply?.port ?? supply?.port))
         setGroundPaused(false)
@@ -886,7 +890,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
           {quarters && loaded && !showingEvening && <section aria-label="Crew cabins" className="space-y-2 rounded-xl border border-white/15 p-3">
             <h2 className="font-display text-lg font-bold">Quarters</h2>
             {cabins.length > 0 && save ? <Suspense fallback={<p role="status">Opening cabin directory…</p>}>
-              <StationCabins cabins={cabins} book={loaded.book} save={save} open={actor => {
+              <StationCabins cabins={cabins} book={loaded.book} assets={loaded.assets} save={save} open={actor => {
                 const kind = navigation?.roster.find(row => row.speaker === actor)?.kind
                 if (!kind) return
                 setRosterBrowse({ kind, search: '', page: 0, selected: actor })
@@ -927,7 +931,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
               const last = contactDay(save, actor)
               return [<button key={visit.companion} type="button" className={button + ' flex-col items-start py-2'}
                 onClick={() => cabin ? chooseCabin(cabin) : chooseEvening(visit)}>
-                <span>{name} · {title}</span>
+                <span className="flex items-center gap-2"><CampaignAvatar asset={residentPortrait(loaded.book, loaded.assets, actor)} name={name} className="size-8 rounded" />{name} · {title}</span>
                 {loaded.book.stationStory && <span className="text-xs text-cyan-200">
                   {last ? 'Last visit · ' + (save.campaignDay.day - last) + ' nights ago' : 'First visit'}{established && ' · Established bond'}
                 </span>}
@@ -940,7 +944,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
               const last = contactDay(save, actor)
               return [<button key={actor} type="button" className={button + ' flex-col items-start py-2'}
                 onClick={() => void updateSave(current => checkInWithLieutenant(current, loaded.book, actor))}>
-                <span>Check in with {name}</span>
+                <span className="flex items-center gap-2"><CampaignAvatar asset={residentPortrait(loaded.book, loaded.assets, actor)} name={name} className="size-8 rounded" />Check in with {name}</span>
                 <span className="text-xs text-cyan-200">{last ? 'Last check-in · ' + (save.campaignDay.day - last) + ' nights ago' : 'First check-in'}</span>
               </button>]
             })}
@@ -1042,7 +1046,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
           </Suspense>}
           {quarters && pairPanels}
           {quarters && loaded && save && !eveningOpen && <Suspense fallback={null}>
-            <StationCare book={loaded.book} save={save} port={port?.id} open={openCare} travel={openNavigation} />
+            <StationCare book={loaded.book} assets={loaded.assets} save={save} port={port?.id} open={openCare} travel={openNavigation} />
           </Suspense>}
           {systems && basePanels}
           {currentView === 'Home' && !bridge && (homeArea === 'Navigation' || cargoRoom) && supplyPanel}
@@ -1050,7 +1054,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
             <h2 className="font-display text-lg font-bold">Evidence</h2>
             {Object.entries(save.story.files).map(([id, indices]) => {
               const evidence = loaded.book.story.files[id]
-              return evidence && <ul key={id} aria-label={id.replaceAll('-', ' ')} className="space-y-1 text-sm">
+              return evidence && <ul key={id} aria-label="Evidence record" className="space-y-1 text-sm">
                 {indices.map((index) => evidence.lines[index] && <li key={index}>{evidence.lines[index]!.text}</li>)}
               </ul>
             })}

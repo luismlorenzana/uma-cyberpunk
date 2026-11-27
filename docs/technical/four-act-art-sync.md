@@ -21,6 +21,21 @@ changes coordinates, put the dependent crop and recipe in the same candidate and
 changes in their respective batches. A mixed-cast splash has one source row and an explicit
 supporting cast at the destination.
 
+## Campaign portraits and combat splashes
+
+The Roster and recruitment menus prefer an approved profile crop for the current outfit,
+then its approved portrait, dialogue crop or native look. The cabin directory and care rooms
+use the existing resident and custody states. A returned Lieutenant is eligible for her roster
+portrait even when her place on the roster is derived from a completed return.
+
+The art release can bind a station splash to the actor who is actually speaking from her station.
+A ground splash matches the deployed actor, side and recorded hand weapon. It plays for a resolved
+signature or the matching Laser rifle Thermal fire mode in full cut-in playback. Quick and off settings
+keep their normal pacing. These are presentation fields in the wardrobe and add no battle actions.
+
+Story-only artwork stays in the Platform album until a reachable scene has the depicted cast,
+outfit and phase. Existing ordered cuts keep their timing and return cues.
+
 ## Source and release mechanics
 
 - **Art Authoring.** Use the active approved manifests in `uma-art-authoring`. Pin the source

@@ -76,7 +76,10 @@ export default function OperationsScreen({ book, save, port, complete, navigatio
     <ol className="rounded-xl border border-white/10 bg-[#101b2d]">
       {matching.slice(current * pageSize, (current + 1) * pageSize).map(quest => <CampaignQuestRow key={quest.id}
         quest={quest} book={book} save={save} port={port} complete={complete} navigation={navigation} open={open} travel={travel} />)}
-      {matching.length === 0 && <li className="p-3 text-sm text-slate-300">No matching operations.</li>}
+      {matching.length === 0 && <li className="flex flex-wrap items-center gap-2 p-3 text-sm text-slate-300">No matching operations.
+        {query && (state !== 'All' || act !== 'All acts' || type !== 'All') && <button type="button" className={campaignControl}
+          onClick={() => onBrowse({ ...browse, type: 'All', act: 'All acts', state: 'All', page: 0 })}>Search all operations</button>}
+      </li>}
     </ol>
     {matching.length > pageSize && <div className="flex gap-2">
       <button type="button" className={campaignControl + ' disabled:opacity-35'} disabled={current === 0} onClick={() => onBrowse({ ...browse, page: current - 1 })}>Previous</button>
