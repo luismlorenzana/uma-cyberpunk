@@ -56,6 +56,7 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
     qualifications?: ReadonlyMap<number, CommandStation>; contributions?: string[]; cast?: CommandCast; requiredLead?: number;
     vessel?: CommandInput['vessel'] }): Save {
   if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id) return save
+  const commandCinema = { fast: save.commandCinema.fast, retries: 0, pending: null }
   if (save.expedition) {
     const current = save.expedition
     if (current.berthed || !canLaunch({ ...supply, fuel: current.fuel, provisions: current.provisions }, encounter)) return save
@@ -63,7 +64,7 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
     if (!presentation) return save
     const officers = Object.fromEntries(COMMAND_STATIONS.map(station => [station, presentation.crew[station] ? expeditionOfficer(current, station).drills : 0])) as CommandInput['officers']
     const input = commandSnapshot(shipWith(['bridge']), encounter, presentation, officers, Number(!!current.reinforced), [], support?.vessel)
-    return deploy({ ...save, commandCinema: { ...save.commandCinema, retries: 0, pending: null },
+    return deploy({ ...save, commandCinema,
       expedition: { ...current, fuel: current.fuel - encounter.cost.fuel, provisions: current.provisions - encounter.cost.provisions } }, input)
   }
   if (!canLaunch(supply, encounter)) return save
@@ -94,7 +95,7 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
     (support?.relay ?? 0) + (support?.preparation?.integrity ?? 0), support?.contributions ?? [], support?.vessel)
   const campaignSupply = { ...supply, fuel: supply.fuel - encounter.cost.fuel, provisions: supply.provisions - encounter.cost.provisions }
   const wallet = cost ? { ...save.wallet, alloy: save.wallet.alloy - cost } : save.wallet
-  return deploy({ ...setSquad(save, save.mission.squad), campaignSupply, wallet, commandCinema: { ...save.commandCinema, retries: 0, pending: null } }, input)
+  return deploy({ ...setSquad(save, save.mission.squad), campaignSupply, wallet, commandCinema }, input)
 }
 
 /** Freeze the chosen ship and cast before the battle starts or the player reloads. */

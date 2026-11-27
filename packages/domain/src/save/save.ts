@@ -1125,7 +1125,11 @@ function parseSaveV19(value: unknown, path: string): SaveV19 {
   const raw = object(value, path, Object.keys(value as Obj))
   const { commandCinema, ...older } = raw
   const base = parseSaveV18({ ...older, version: 18 }, path)
-  const cinema = object(commandCinema, path + '.commandCinema', ['fast', 'retries', 'pending'])
+  const cinema = object(commandCinema, path + '.commandCinema', ['fast', 'retries', 'pending', 'seenEnemySignal'])
+  const seenEnemySignal = cinema.seenEnemySignal
+  if (seenEnemySignal !== undefined && seenEnemySignal !== 'hail' && seenEnemySignal !== 'departure') {
+    throw new SaveParseError(path + '.commandCinema.seenEnemySignal', 'unknown enemy signal')
+  }
   if (typeof cinema.fast !== 'boolean') throw new SaveParseError(path + '.commandCinema.fast', 'expected boolean')
   const pending = cinema.pending === null ? null : (() => {
     const row = object(cinema.pending, path + '.commandCinema.pending', ['encounter', 'turn', 'beat'])
@@ -1136,7 +1140,8 @@ function parseSaveV19(value: unknown, path: string): SaveV19 {
       || !('officers' in base.mission.battle.input) || !('reactor' in base.mission.battle.input)) throw new SaveParseError(path + '.commandCinema.pending', 'expected the latest committed ship order')
     return { encounter, turn, beat }
   })()
-  return { ...base, version: 19, commandCinema: { fast: cinema.fast, retries: bounded(cinema.retries, path + '.commandCinema.retries', 1000), pending } }
+  return { ...base, version: 19, commandCinema: { fast: cinema.fast, retries: bounded(cinema.retries, path + '.commandCinema.retries', 1000), pending,
+    ...(seenEnemySignal ? { seenEnemySignal } : {}) } }
 }
 
 function parseSaveV18(value: unknown, path: string): SaveV18 {

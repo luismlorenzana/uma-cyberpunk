@@ -15,6 +15,7 @@ export interface CommandCinemaState {
   fast: boolean
   retries: number
   pending: { encounter: string; turn: number; beat: number } | null
+  seenEnemySignal?: 'hail' | 'departure'
 }
 export interface CommandActorArt {
   speaker: Speaker
@@ -34,6 +35,7 @@ export interface CommandCinematics {
   effects?: { kind: CommandEffectKey; slot: string; composition?: CampaignComposition }[]
   encounters: { encounter: string; objective: string; commander?: Speaker;
     alarm?: string; preparation?: string; victory?: string; withdrawal?: string; retry?: string; disabled?: string;
+    hail?: string; departure?: string;
     enemy?: { contact: string; disabled: string; withdrawal: string } }[]
 }
 export const COMMAND_EFFECT_KEYS = ['shields', 'guns', 'fighter-strike', 'intercept', 'hit', 'emitter-hit', 'emitter-disabled', 'friendly-damage', 'power'] as const

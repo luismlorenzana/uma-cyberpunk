@@ -55,7 +55,7 @@ export interface CampaignSceneArt {
   scene: string
   backdrop?: string
   /** Presentation-only cuts at existing script paths, including selected choice branches. */
-  backdropCues?: { at: string; asset: string | null; location?: string; portraits?: 'show' | 'hide' }[]
+  backdropCues?: { at: string; timing?: 'after'; asset: string | null; location?: string; portraits?: 'show' | 'hide' }[]
   portraits: { speaker: Speaker; asset: string; emote?: string; profile?: string }[]
   composition?: CampaignComposition
 }
@@ -516,15 +516,19 @@ export function parseCampaignBook(files: Record<string, unknown>, identity?: Cam
     unique(p, `${path}.portraits`, portraits, (portrait) => `${portrait.speaker}:${portrait.emote ?? ''}`)
     const composition = a.composition === undefined ? undefined : parseComposition(p, a.composition, path + '.composition', asset)
     const backdropCues = a.backdropCues === undefined ? undefined : p.list(a.backdropCues, path + '.backdropCues', (value, field) => {
-      const cue = p.object(value, field, ['at', 'asset', 'location', 'portraits'], ['at', 'asset'])
+      const cue = p.object(value, field, ['at', 'asset', 'location', 'portraits', 'timing'], ['at', 'asset'])
       const at = p.text(cue.at, field + '.at', 256)
-      if (![...walkSteps(declared.steps, 'steps')].some(step => step.path === at)) p.fail(field + '.at', 'unknown scene step')
+      const step = [...walkSteps(declared.steps, 'steps')].find(step => step.path === at)?.step
+      if (!step) p.fail(field + '.at', 'unknown scene step')
+      if (cue.timing !== undefined && (cue.timing !== 'after' || cue.asset === null || !['line', 'narrate', 'thought', 'slot'].includes(step?.kind ?? ''))) {
+        p.fail(field + '.timing', 'an after cue needs an image and a displayed line')
+      }
       if (cue.portraits !== undefined && cue.portraits !== 'show' && cue.portraits !== 'hide') p.fail(field + '.portraits', 'expected show or hide')
       if (cue.asset === null && (cue.location !== undefined || cue.portraits !== undefined)) p.fail(field, 'restoring a scene uses its original location and portrait treatment')
       const portraits: 'show' | 'hide' | undefined = cue.portraits === 'show' || cue.portraits === 'hide' ? cue.portraits : undefined
-      return { at, asset: cue.asset === null ? null : asset(cue.asset, field + '.asset'), ...(portraits ? { portraits } : {}), ...(cue.location === undefined ? {} : { location: p.text(cue.location, field + '.location', 80) }) }
+      return { at, ...(cue.timing === 'after' ? { timing: 'after' as const } : {}), asset: cue.asset === null ? null : asset(cue.asset, field + '.asset'), ...(portraits ? { portraits } : {}), ...(cue.location === undefined ? {} : { location: p.text(cue.location, field + '.location', 80) }) }
     }, 32)
-    if (backdropCues) unique(p, path + '.backdropCues', backdropCues, cue => cue.at)
+    if (backdropCues) unique(p, path + '.backdropCues', backdropCues, cue => cue.at + ':' + (cue.timing ?? 'before'))
     return { scene, portraits, ...(a.backdrop === undefined ? {} : { backdrop: asset(a.backdrop, `${path}.backdrop`) }), ...(composition ? { composition } : {}),
       ...(backdropCues ? { backdropCues } : {}) }
   }, fourActCatalog ? 8192 : 4096)

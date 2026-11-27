@@ -39,7 +39,7 @@ function Bust({ pack, speaker }: { pack: StoryPack; speaker: Speaker }) {
 export interface ScenePresentation {
   location?: string
   backdrop?: string
-  backdropCues?: { step: Step; url?: string; location?: string; portraits?: 'show' | 'hide' }[]
+  backdropCues?: { step: Step; timing?: 'after'; url?: string; location?: string; portraits?: 'show' | 'hide' }[]
   portraits: ScenePortraitImage[]
   illustrations?: Record<string, string>
   composition?: Omit<CampaignComposition, 'layers'> & { layers: (CampaignComposition['layers'][number] & { url: string })[] }
@@ -97,8 +97,16 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
   useEffect(() => {
     let live = true
     setSplash(undefined)
-    const cuts = new Map(presentation?.backdropCues?.map(cue => [cue.step, cue]))
+    const cuts = new Map(presentation?.backdropCues?.filter(cue => !cue.timing).map(cue => [cue.step, cue]))
+    const closings = new Map(presentation?.backdropCues?.filter(cue => cue.timing === 'after').map(cue => [cue.step, cue]))
+    let lastLine: Extract<Prompt, { kind: 'line' }> | undefined
     const ask = (p: Prompt) => new Promise<number>((r) => { if (!live) return; resolve.current = r; setPrompt(p) })
+    const showLine = (line: Extract<Prompt, { kind: 'line' }>) => {
+      const done = ask(line)
+      const current = resolve.current
+      if (autoRef.current) window.setTimeout(() => { if (live && current === resolve.current) advance() }, 900 + line.text.length * 45)
+      return done
+    }
     const choose = async (kind: 'choice' | 'path', prompt: Prompt) => {
       const decision = () => {
         const current = decisionRef.current
@@ -124,14 +132,18 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
         const cue = cuts.get(step)
         if (live && cue) setSplash(cue.url ? cue : undefined)
       },
+      afterStep: step => {
+        const cue = closings.get(step)
+        if (!live || skipping.current || !cue?.url || !lastLine) return
+        setSplash(cue)
+        return showLine(lastLine).then(() => {})
+      },
       line: async (speaker, text, style) => {
         // React's development double-mount starts a second run; only the live one writes the Log.
         if (!live) return new Promise<void>(() => {})
         setLog((l) => [...l, { actor: speaker, speaker: speaker === null ? '' : nameOf(pack, speaker), text: fillCaptain(text, captain) }])
-        const done = ask({ kind: 'line', speaker, text, style })
-        const current = resolve.current
-        if (autoRef.current) window.setTimeout(() => { if (live && current === resolve.current) advance() }, 900 + text.length * 45)
-        await done
+        lastLine = { kind: 'line', speaker, text, style }
+        await showLine(lastLine)
       },
       emote: async (actor, emote) => {
         if (live && presentation) setExpressions((old) => ({ ...old, [actor]: emote }))

@@ -8,6 +8,7 @@ import type { BondPath, Call, CaptainOption, ChoiceOption, EffectStep, Romance, 
 export interface SceneUi {
   /** Presentation follows only steps actually visited, also when fast-forwarding. */
   beforeStep?(step: Step): void
+  afterStep?(step: Step): Promise<void> | void
   /** Shows a line (by its speaker, or narration) and resolves when the player taps on. */
   line(speaker: Speaker | null, text: string, kind: 'line' | 'thought' | 'narrate'): Promise<void>
   emote(actor: Speaker, emote: string): Promise<void>
@@ -96,6 +97,8 @@ export async function playSteps(steps: readonly Step[], ui: SceneUi, o: RunOptio
       }
       default: ui.effect(step)
     }
+    const after = ui.afterStep?.(step)
+    if (after) await after
   }
 }
 
