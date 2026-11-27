@@ -54,11 +54,12 @@ export function CompositionLayer({ layer }: { layer: NonNullable<ScenePresentati
 
 export interface SceneDecision { kind?: 'choice' | 'path'; selected?: number; commit: (index: number) => Promise<void> }
 
-export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit, exitLabel, lookContext }: {
+export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, onBond, presentation, pathFooter, decision, onExit, exitLabel, lookContext, battleTitle }: {
   pack: StoryPack
   scene: Scene | { id: string; place: string; steps: Step[]; look?: Look }
   squad: readonly number[]
   onEffect: Parameters<typeof playScene>[1]['effect']
+  battleTitle?: (mission: string) => string
   onBattle: (mission: string) => Promise<void>
   onDone: () => void
   /** A bond scene's effects: a captain's choice's rapport, the path chosen (CY13). */
@@ -113,7 +114,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
           await decision()?.commit(index)
           setChoiceError(null)
           return index
-        } catch (error) { setChoiceError(error instanceof Error ? error.message : 'Could not save. Try again.') }
+        } catch (error) { console.warn('Scene choice:', error); setChoiceError('Could not save your choice. Try again.') }
         finally { if (live) setSavingChoice(false) }
       }
       return 0
@@ -206,7 +207,7 @@ export function ScenePlayer({ pack, scene, squad, onEffect, onBattle, onDone, on
       )}
       {prompt?.kind === 'battle' && (
         <div data-battle-step style={promptInsets} className="absolute inset-x-6 bottom-6 rounded-xl border border-[#ff3d6e]/50 bg-[#0b0d17]/95 p-3">
-          <div className="font-display text-[16px] font-bold">Mission: {prompt.mission}</div>
+          <div className="font-display text-[16px] font-bold">{battleTitle?.(prompt.mission) ?? 'Prepare for battle'}</div>
           <button type="button" onClick={() => advance()} className="mt-2 min-h-11 w-full rounded-md bg-[#ff3d6e] font-bold text-white">Deploy</button>
         </div>
       )}

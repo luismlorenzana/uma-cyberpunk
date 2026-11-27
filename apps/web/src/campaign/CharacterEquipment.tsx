@@ -157,7 +157,7 @@ export function CharacterEquipment({ book, save, context, build }: {
     </section>}
     {(view === 'parts' && editable || view === 'loadouts' && preset) && <section aria-label="Fit preview" className="space-y-2 rounded-xl border border-cyan-200/20 bg-[#142238] p-2.5">
       <h3 className="font-display font-bold">{view === 'parts' ? partName(selected) : preset?.name}</h3>
-      {fallback && <p className="text-xs text-amber-200">The stored fit exceeds this preview’s Capacity. The equipped totals show issued gear.</p>}
+      {fallback && <p className="text-xs text-amber-200">This loadout exceeds capacity. These stats show the issued gear.</p>}
       <StatComparison current={stats} preview={compare(desired)} />
       {fitIssue && <p className="text-xs text-amber-200">{fitIssue}</p>}
       <div className="flex flex-wrap gap-2">

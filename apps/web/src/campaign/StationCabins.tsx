@@ -1,13 +1,15 @@
 import { useState } from 'react'
-import { stationCapacity, type CampaignBook, type Save, type Speaker } from '@cyber/domain'
+import { stationCapacity, type CampaignBook, type CampaignReleaseFile, type Save, type Speaker } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
+import { CampaignAvatar } from './CampaignThumbnail'
+import { residentPortrait } from './menu-portraits'
 import { campaignControl } from './CampaignQuestRow'
 import { moveHomeCabin, type homestretchCabins } from './homestretch'
 import { stationOf } from './watch'
 
-export default function StationCabins({ cabins, book, save, open }: {
-  cabins: ReturnType<typeof homestretchCabins>; book: CampaignBook; save: Save; open: (actor: Speaker) => void
+export default function StationCabins({ cabins, book, save, open, assets }: {
+  cabins: ReturnType<typeof homestretchCabins>; book: CampaignBook; save: Save; assets: ReadonlyMap<string, CampaignReleaseFile>; open: (actor: Speaker) => void
 }) {
   const [search, setSearch] = useState('')
   const [moving, setMoving] = useState<Speaker>()
@@ -31,7 +33,7 @@ export default function StationCabins({ cabins, book, save, open }: {
     <ul className="grid gap-2 sm:grid-cols-2">
       {visible.map(({ actor, name, berth, temporary, away }) => <li key={actor} className="rounded border border-white/10 p-2">
         <button type="button" className={campaignControl + ' w-full justify-between'} onClick={() => open(actor)}>
-          <span>{name}</span>
+          <span className="flex items-center gap-2 text-left"><CampaignAvatar asset={residentPortrait(book, assets, actor)} name={name} className="size-8 rounded" />{name}</span>
           <span className="text-xs text-cyan-200">{berth === undefined ? 'Awaiting a cabin' : temporary ? 'Guest room ' + berth : 'Cabin ' + berth}{away && ' · Away'}</span>
         </button>
         {moving === actor ? <form className="mt-2 flex flex-wrap items-center gap-2" onSubmit={event => {

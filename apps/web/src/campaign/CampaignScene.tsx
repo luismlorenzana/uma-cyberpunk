@@ -1,3 +1,4 @@
+import { battleTitle } from './player-labels'
 import { wardrobeSceneArt, walkSteps, type EffectStep } from '@cyber/domain'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ScenePlayer, type SceneDecision, type ScenePresentation } from '../story/ScenePlayer'
@@ -64,13 +65,13 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
       if (live) setPresentation({ ...(backdrop ? { backdrop } : {}), portraits, illustrations: Object.fromEntries(illustrations),
         ...(backdropCues ? { backdropCues } : {}),
         ...(art?.composition && layers ? { composition: { ...art.composition, layers: layers.filter((layer) => layer !== null) } } : {}) })
-    }, (err: unknown) => { if (live) fail(err instanceof Error ? err.message : String(err)) })
+    }, (err: unknown) => { if (live) { console.warn('Campaign scene artwork:', err); fail('Could not open this scene. Try again.') } })
     return () => { live = false; urls.forEach((url) => URL.revokeObjectURL(url)) }
   }, [loaded, art, scene])
 
   if (!presentation) return <div className={viewport} style={insets} role="status">Loading the scene…</div>
   return <ScenePlayer pack={loaded.book.story} scene={scene} squad={squad} presentation={{ ...presentation, location: placeLabel }}
-    decision={decision} onExit={onExit} exitLabel={exitLabel}
+    battleTitle={id => battleTitle(loaded.book, id)} decision={decision} onExit={onExit} exitLabel={exitLabel}
     pathFooter={captainDate ? 'Either choice keeps the campaign open.' : undefined}
     onEffect={(step) => { steps.current.push(step) }}
     onBond={(effect) => { bonds.current.push(effect) }}
@@ -78,7 +79,7 @@ export function CampaignScene({ loaded, sceneId, finish, fail, battle, captainDa
       if (leaving.current) return
       leaving.current = true
       if (battle) await battle(id, steps.current)
-      else fail('This scene can’t start an exercise.')
+      else fail('This scene cannot start the operation.')
     }}
     onDone={() => {
       if (leaving.current) return

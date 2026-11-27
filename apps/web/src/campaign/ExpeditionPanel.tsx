@@ -1,3 +1,4 @@
+import { formationRoleName } from './player-labels'
 import { COMMAND_HULL, COMMAND_STATIONS, storesAt, WATCHES_PER_DAY, type CampaignBook, type CampaignQuest, type FixedDuo, type Save } from '@cyber/domain'
 import { updateSave } from '../save/game'
 import { nameOf } from '../story/runner'
@@ -132,7 +133,7 @@ export function ExpeditionPanel({ book, save, port, complete, navigation, open, 
       <ul className="grid gap-1 text-sm sm:grid-cols-2">{run.members.map((member, i) => {
         const speaker = member.role === 'uma' ? member.outfit : member.heroine
         const station = COMMAND_STATIONS.find(station => expeditionStations(run)[station] === i)
-        return <li key={speaker}>{nameOf(book.story, speaker)} · {member.role.replaceAll('-', ' ')}{station && ' · ' + station}</li>
+        return <li key={speaker}>{nameOf(book.story, speaker)} · {formationRoleName[member.role]}{station && ' · ' + station}</li>
       })}</ul>
     </details>
   </section>

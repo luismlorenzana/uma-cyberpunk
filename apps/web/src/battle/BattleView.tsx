@@ -291,10 +291,12 @@ function BattleBoard({ layout, session: first, control, debug, training, objecti
       if (c.kind === 'moved') await Promise.race([sc.walk(c.unit, c.path, speed), wait((c.path.length * 350) / speed + 400)])
       else if (c.kind === 'attack') {
         if (c.mode) popDoll(before, c.unit, FIRE_MODE_LABEL[c.mode])
-        const sp = cutInSpeed(settingRef.current, seen.current, c, after)
+        const programmed = (c.signature ? signatureArt.get(c.unit + ':' + c.signature.id) : undefined)
+          ?? (c.mode === 'thermal' && c.role === 'main' ? signatureArt.get(`${c.unit}:thermal:${c.with}`) : undefined)
+        const sp = programmed && settingRef.current === 'auto' ? 'full' : cutInSpeed(settingRef.current, seen.current, c, after)
         seen.current.add(`${c.unit}:${c.with}`)
         if (current) { await wait(CUT_IN_MS[current.speed] / speed / 2); setCutIn(null) }
-        const splash = sp === 'full' && c.signature ? signatureArt.get(c.unit + ':' + c.signature.id) : undefined
+        const splash = sp === 'full' ? programmed : undefined
         current = sp === 'off' ? null : { attacker: c.unit, target: c.target, band: c.band, role: c.role, signature: c.signature?.label,
           splash, speed: sp, numbers: [], key: Math.random() }
         setCutIn(current)

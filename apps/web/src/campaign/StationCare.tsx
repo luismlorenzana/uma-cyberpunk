@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { appointmentFor, rehabilitationQuestIds, SECURE_WARD_BERTHS, stationRoom, type CampaignBook, type CampaignQuest, type Save } from '@cyber/domain'
+import { appointmentFor, rehabilitationQuestIds, SECURE_WARD_BERTHS, stationRoom, type CampaignBook, type CampaignQuest, type CampaignReleaseFile, type Save } from '@cyber/domain'
 import { nameOf } from '../story/runner'
 import { updateSave } from '../save/game'
+import { CampaignAvatar } from './CampaignThumbnail'
+import { menuPortrait } from './menu-portraits'
 import { campaignControl } from './CampaignQuestRow'
 import { generalPhase, questAvailable, questComplete } from './quests'
 import { stationOf } from './watch'
 import { careLeadAway, carePort, reserveAppointment } from './appointments'
 import { stationCustody } from './station-custody'
 
-export function StationCare({ book, save, port, open, travel }: {
-  book: CampaignBook; save: Save; port?: string; open: (quest: CampaignQuest) => void; travel: (port?: string) => void
+export function StationCare({ book, save, port, open, travel, assets }: {
+  book: CampaignBook; save: Save; port?: string; assets: ReadonlyMap<string, CampaignReleaseFile>; open: (quest: CampaignQuest) => void; travel: (port?: string) => void
 }) {
   const [filter, setFilter] = useState('')
   const state = stationOf(save, book)
@@ -27,7 +29,7 @@ export function StationCare({ book, save, port, open, travel }: {
     return [{ name, arc, phase, next }]
   })
   const availableBeds = 1 + (openWard ? SECURE_WARD_BERTHS : 0)
-  const portName = (id: string) => book.supply?.ports.find(row => row.id === id)?.name ?? id
+  const portName = (id: string) => book.supply?.ports.find(row => row.id === id)?.name ?? 'Local port'
   function location(actor: string) {
     const place = places.get(actor)
     if (!place) return 'Residential quarters'
@@ -49,8 +51,11 @@ export function StationCare({ book, save, port, open, travel }: {
         const away = session && careLeadAway(save, book, next.id)
         const venue = session ? carePort(book, save, next.id) ?? state.anchor : next?.port
         return <article key={arc.general} className="space-y-1 rounded border border-white/10 p-2">
-          <h3 className="text-sm font-semibold">{name}</h3>
-          <p className="text-xs">{phase} · {location(arc.general)}</p>
+          <div className="flex items-center gap-2">
+            <CampaignAvatar asset={menuPortrait(book.wardrobe?.members.find(row => row.speaker === arc.general), assets,
+              places.has(arc.general) ? ['reform-front', 'combat-station'] : ['quarters-front', 'combat-station'])} name={name} className="size-9 rounded" />
+            <div><h3 className="text-sm font-semibold">{name}</h3><p className="text-xs">{phase} · {location(arc.general)}</p></div>
+          </div>
           {away && <p className="text-sm text-amber-200">The lead Uma is away on assignment.</p>}
           {next && available && !away && <button type="button" className={campaignControl}
             onClick={() => venue && venue !== port ? travel(venue) : open(next)}>

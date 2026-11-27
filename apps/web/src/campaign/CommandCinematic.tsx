@@ -106,18 +106,26 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast }: { eve
   const callLine = authoredScene && loaded.book.scenes.get(authoredScene)?.steps.find(step => step.kind === 'line' && step.speaker === event.actor?.speaker)
   const enemySpeaking = beat === 2 && !!enemyText && !!event.commander
   const enemy = enemySpeaking ? loaded.book.commandCinematics?.actors.find(actor => actor.speaker === event.commander!.speaker && actor.role === 'enemy') : undefined
-  const actor = enemySpeaking ? enemy : crew, voice = crew?.orders?.[event.action.order]
+  const stationSplash = !enemySpeaking && actorSpeaker !== undefined
+    ? loaded.book.wardrobe?.members.find(row => row.speaker === actorSpeaker)?.stationSplash : undefined
+  const actor = useMemo(() => {
+    if (enemySpeaking) return enemy
+    if (!crew || !stationSplash) return crew
+    const { asset, width, height } = stationSplash
+    return { ...crew, composition: { width, height, portraits: 'show' as const, layers: [{ asset, x: 0, y: 0, width, height, opacity: 1, fit: 'contain' as const }] } }
+  }, [crew, enemy, enemySpeaking, stationSplash])
+  const voice = crew?.orders?.[event.action.order]
   const emote = enemySpeaking ? 'stern' : event.after.result === 'lost' && beat === 3 ? 'worried' : event.after.result === 'won' && beat === 3 ? 'relieved' : 'determined'
   const speaker = beat === 0 ? 'Captain' : enemySpeaking ? event.commander!.name : event.actor?.name ?? 'Watch officer'
-  const outcome = event.after.result === 'lost' ? 'Withdrawal required' : event.after.result === 'won' ? 'Immediate objective secured' : 'Awaiting next order'
+  const outcome = event.after.result === 'lost' ? 'Withdrawal required' : event.after.result === 'won' ? 'Objective secured' : 'Awaiting next order'
   const line = beat === 0 ? voice?.captain ?? `${orderNames[event.action.order]} · ${event.action.target === 'emitter' ? 'Shield emitter' : 'Opposing ship'}`
-    : beat === 1 ? voice?.acknowledgement ?? `Order acknowledged at ${event.station}.`
-    : beat === 2 ? enemyText ?? (callLine && callLine.kind === 'line' ? callLine.text : undefined) ?? voice?.result ?? 'The confirmed response is on the tactical display.'
+    : beat === 1 ? voice?.acknowledgement ?? `Ready at ${event.station}.`
+    : beat === 2 ? enemyText ?? (callLine && callLine.kind === 'line' ? callLine.text : undefined) ?? voice?.result ?? (event.after.last?.hullDamage ? 'We took a hit.' : 'Holding course.')
     : event.after.result === 'lost' ? crew?.states?.loss ?? outcome : event.after.result === 'won' ? crew?.states?.victory ?? outcome
       : event.disabled ? crew?.states?.disabled ?? 'Emitter confirmed disabled.' : voice?.result ?? outcome
   function advance(skip = false) {
     setBusy(true)
-    void updateSave(save => advanceCommandCinema(save, encounter, event.turn, beat, skip)).catch(error => setError(String(error))).finally(() => setBusy(false))
+    void updateSave(save => advanceCommandCinema(save, encounter, event.turn, beat, skip)).catch(error => { console.warn('Ship order playback:', error); setError('Could not save playback. Try again.') }).finally(() => setBusy(false))
   }
   useEffect(() => {
     if (beat === 3 || error) return

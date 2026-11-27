@@ -16,14 +16,14 @@ const states = { ready: 'Ready', unfunded: 'Awaiting funding', building: 'Work i
 
 function receiptSubject(event: ManagementReceipt, loaded: LoadedCampaign) {
   const subject = PARTS_BY_ID.get(event.subject)?.name ?? MODULES_BY_ID.get(event.subject as ModuleId)?.name
-    ?? loaded.book.projects?.find(({ id }) => id === event.subject)?.title ?? event.subject.replaceAll('-', ' ')
+    ?? loaded.book.projects?.find(({ id }) => id === event.subject)?.title ?? ({ fuel: 'Fuel', provisions: 'Provisions', alloy: 'Alloy' } as Record<string, string>)[event.subject] ?? 'Supplies'
   return subject
 }
 
 function receiptLabel(event: ManagementReceipt, loaded: LoadedCampaign) {
   const subject = receiptSubject(event, loaded), officer = event.officer ? ` · ${nameOf(loaded.book.story, event.officer)}` : ''
   const destination = { ship: 'cutter cargo', hangar: 'Hangar', port: 'port stock', station: 'station reserves' }[event.destination]
-  return `Day ${event.day} · ${event.kind.replaceAll('-', ' ')} · ${subject}${event.kind === 'shipment' ? ` × ${event.amount} → ${destination}` : ''}${officer}`
+  return `Day ${event.day} · ${reportNames[event.kind]} · ${subject}${event.kind === 'shipment' ? ` × ${event.amount} → ${destination}` : ''}${officer}`
 }
 
 function LocationArt({ loaded, location, state, props }: { loaded: LoadedCampaign; location: ManagementLocation; state: ReturnType<typeof locationState>; props: LocationProp[] }) {
@@ -73,7 +73,7 @@ export default function LocationScreen({ save, loaded, location, back, error }: 
   if (scene && loaded.book.scenes.has(scene.id)) return <CampaignScene key={`${loaded.release.release}:${scene.id}`} loaded={loaded} sceneId={scene.id}
     placeLabel={location.title} exitLabel="Back to room" fail={message => { setFailure(message); setScene(null) }} onExit={() => setScene(null)} finish={() => {
       void updateSave(current => scene.key.startsWith('location:') || managementReports(current, loaded.book, location).some(report => report.key === scene.key)
-        ? acknowledgeManagement(current, scene.key) : current).then(() => setScene(null), error => { setFailure(String(error)); setScene(null) })
+        ? acknowledgeManagement(current, scene.key) : current).then(() => setScene(null), error => { console.warn('Management report:', error); setFailure('Could not save the report. Try again.'); setScene(null) })
     }} />
   return <main className="absolute inset-0 overflow-hidden bg-[#0b0d17] text-[#e8ebf5]" style={{ margin: 'var(--inset-top) var(--inset-right) var(--inset-bottom) var(--inset-left)' }}>
     <LocationArt loaded={loaded} location={location} state={state} props={visibleLocationProps(save, loaded.book, location)} />

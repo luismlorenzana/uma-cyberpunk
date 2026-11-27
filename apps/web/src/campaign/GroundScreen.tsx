@@ -1,3 +1,4 @@
+import { signatureSplashFiles } from './action-art'
 import { capacityOf, EXPEDITION_RULES_VERSION, loadOf, maxHpOf, moveOf, type BattleAction, type BattleInput } from '@cyber/battle'
 import { awayMembers, bandsOf, CAMPAIGN_ACT_XP, campaignLevel, chooseSubclass, COMBAT_SUBCLASSES, FORMATION_NAME, SUBCLASS_NAME, trainingOf, crewSpeaker, groundCueScenes, groundOpponentScenes, PARTS_BY_ID, resting, seeScene, type CampaignRelease, type CampaignReleaseFile, type GroundEncounter, type Mission, type Save, type StoryPack } from '@cyber/domain'
 import type { StageLayout } from '@luismlorenzana/uma-stage'
@@ -129,10 +130,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
       if (asset) campaignPortraits.set(unit.id, asset)
     }
     return <><GroundBattle layout={layout} input={input} actions={state.battle.actions as BattleAction[]} close={close} campaignPortraits={campaignPortraits}
-      combatSprites={combatSprites} signatureSplashes={ground?.signatureSplashes?.flatMap(splash => {
-        const asset = loaded?.assets.get(splash.asset)
-        return asset ? [[splash.unit + ':' + splash.signature, asset] as const] : []
-      })}
+      combatSprites={combatSprites} signatureSplashes={loaded ? signatureSplashFiles(loaded, input, ground) : undefined}
       withdraw={salvage ? () => void updateSave(s => closeSalvage(s, mission.id, false))
         : reports ? () => void updateSave(s => withdrawCampaignAttempt(s, mission.id)) : undefined}
       onStoryCues={ground?.cues || hushCrew || voices ? cues => {
@@ -290,7 +288,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               if (!run || s.mission?.id !== mission.id || s.mission.step !== 'deploy') return s
               const prepared = focusExpeditionCrew(currentSave(s), run.members)
               return deploy(prepared, prepareExpedition(prepared, run), formationRun ?? undefined)
-            }).catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
+            }).catch((error: unknown) => { console.warn('Ground operation:', error); setDeploymentError('Could not save deployment. Try again.') })
               .finally(() => setLaunching(false))
           }}>Deploy all ten</button>
           {deploymentError && <p role="alert" className="text-sm text-red-300">{deploymentError}</p>}
@@ -410,7 +408,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
                   return ally ? [ally.outfit] : []
                 })
                 return deploy(setSquad(prepared, squad), input)
-              }).catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
+              }).catch((error: unknown) => { console.warn('Ground deployment:', error); setDeploymentError('Could not deploy the squad. Try again.') })
                 .finally(() => setLaunching(false))
             }}>Deploy</button>
             <button type="button" className={action} onClick={close}>Campaign</button>
@@ -437,7 +435,7 @@ export default function GroundScreen({ save, mission, layout, trainee, label, cl
               })
               if (released.length) onSettled?.(released, state.squad)
             }
-            void debrief().catch((error: unknown) => setDeploymentError(error instanceof Error ? error.message : String(error)))
+            void debrief().catch((error: unknown) => { console.warn('Ground debrief:', error); setDeploymentError('Could not save the debrief. Try again.') })
               .finally(() => setSettling(false))
           }}>Debrief</button>
             : <button type="button" className={primary} onClick={() => void (async () => {

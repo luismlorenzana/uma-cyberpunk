@@ -177,9 +177,9 @@ export function describeCampaignQuest(quest: CampaignQuest, book: CampaignBook, 
     const required = [quest.after, ...quest.requires ?? []].find(id => id && !complete.has(id))
     const branch = quest.requiresAny?.some(id => complete.has(id)) ? [] : quest.requiresAny?.flatMap(id => byTitle(id) ?? [])
     const duo = expeditionForQuest(book, quest.id, save.expedition?.duo)
-    reason = required ? 'Finish ' + (byTitle(required) ?? 'the prior chapter') : branch?.length ? 'Finish ' + branch.join(' or ')
+    reason = required ? 'Finish ' + (byTitle(required) ?? 'the prior chapter') : branch?.length ? 'Complete one of the required operations'
       : expeditionQuestBlock(save, book, quest.id, duo, row => complete.has(row.id))
-        ?? personalMissionBlock(save, book, quest) ?? 'Awaiting campaign progress'
+        ?? personalMissionBlock(save, book, quest) ?? 'Continue the campaign to unlock this'
   }
   return { done, ready: ready && clear, destination, travels, nextPort, reason }
 }

@@ -8,7 +8,10 @@ import type { CutInSpeed } from './playback'
 export const SIDE_HUE = { squad: '#2ee6ff', enemy: '#ff3d6e' } as const
 const PART_NAME = { core: 'Core', leftArm: 'L arm', rightArm: 'R arm', legs: 'Legs' } as const
 
-export const labelOf = (state: BattleState, id: string): string => state.input.units.find((u) => u.id === id)?.label ?? id
+export const labelOf = (state: BattleState, id: string): string => {
+  const unit = state.input.units.find(row => row.id === id)
+  return unit?.label ?? (unit?.side === 'squad' ? 'Crew member' : unit?.leader ? 'Commander' : 'Enemy unit')
+}
 const initials = (label: string) => label.split(' ').map((w) => w[0]).join('').slice(0, 3)
 /** An Uma's outfit id (her face and bust come from master data, D19), or null for a stand-in, an enemy or a guest. */
 export const umaOf = (state: BattleState, id: string): string | null => { const r = state.input.units.find((u) => u.id === id)?.ref; return r?.kind === 'uma' ? r.id : null }
