@@ -1,6 +1,6 @@
 # Homestretch station, cutters and campaign calendar
 
-**Approved direction for planning · D94 · 2026-11-26.** The live campaign still uses the fixed D93 cutaway. This design extends the [four-act campaign](campaign-rework.md) and gives the [implementation roadmap](../handoff/homestretch-station-roadmap.md) its game rules. Counts and time units below are design targets. Play and balance establish costs, yields and durations.
+**D94 · 2026-11-26.** This design extends the [four-act campaign](campaign-rework.md) and gives the [implementation roadmap](../handoff/homestretch-station-roadmap.md) its game rules. The CY127 overview draws the station from its saved room states and the same cutter kit follows real voyages. Play and balance establish costs, yields and durations.
 
 ## What the player does
 

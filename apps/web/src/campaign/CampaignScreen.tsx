@@ -395,7 +395,7 @@ function Campaign({ layout }: { layout: StageLayout }) {
   if (loaded && save && launchReview && launchDuo) {
     const ready = questAvailable(save, loaded.book, launchReview, port?.id) && !save.mission && !save.campaignDay.pending && !save.pairScene
     const block = ready ? undefined : expeditionQuestBlock(save, loaded.book, launchReview.id, launchDuo, q => complete.has(q.id)) ?? 'Finish the pending campaign activity'
-    return <main className={viewport} style={insets}>
+    return <main key={launchReview.id} className={viewport} style={insets}>
       <ExpeditionLaunchReview book={loaded.book} save={save} duo={launchDuo} complete={complete} block={block}
         launch={() => { if (ready) { setLaunchReview(null); setActive(launchReview) } }}
         cargo={() => { setLaunchReview(null); selectView('Home', 'Cargo') }}

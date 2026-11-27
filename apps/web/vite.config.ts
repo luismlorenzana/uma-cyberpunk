@@ -53,7 +53,7 @@ export default defineConfig(({ mode }) => {
         registerType: 'prompt',
         injectRegister: null,
         // Approved branding uses versioned URLs; iOS may keep the image selected at Add to Home Screen.
-        includeAssets: ['icons/uma-cyberpunk-v1-64.png', 'icons/uma-cyberpunk-v1-touch-180.png', 'images/homestretch-cutaway.webp'],
+        includeAssets: ['icons/uma-cyberpunk-v1-64.png', 'icons/uma-cyberpunk-v1-touch-180.png'],
         includeManifestIcons: false,
         manifest: {
           name: 'Uma Cyberpunk',
