@@ -6,6 +6,7 @@ import { deploy, finishBattle, finishMission, recordAction, retry, setSquad } fr
 import { expeditionOfficer } from './expedition'
 import { creditCampaignClear } from './progression'
 import { advanceStationWatches, stationOf } from './watch'
+import { bridgeCrew } from './call-up'
 
 export function missionOfficer(save: Save, station: CommandStation) {
   const override = save.mission?.callUp?.stations?.[station]
@@ -14,15 +15,18 @@ export function missionOfficer(save: Save, station: CommandStation) {
   return { outfit: override, ...(save.commandTraining[override]?.[station] ?? { drills: 0, trainedDay: null }) }
 }
 
-export function assignOfficer(save: Save, station: CommandStation, outfit: number | null, ashore?: ReadonlySet<number>): Save {
+export function assignOfficer(save: Save, station: CommandStation, outfit: number | null, ashore?: ReadonlySet<number>, clearedAllies?: ReadonlySet<number>): Save {
   if (save.expedition || save.mission?.step !== 'deploy' || missionOfficer(save, station)?.outfit === outfit) return save
-  if (outfit !== null && (ashore?.has(outfit) || awayMembers(save.operations, save.squads).includes(outfit) || !canTakeOrdinaryAssignment(save.crew.find(member => member.outfit === outfit)))) return save
-  if (save.mission.callUp) {
-    const stations = { ...save.mission.callUp.stations, [station]: outfit }
+  const available = bridgeCrew(save, ashore, clearedAllies)
+  if (outfit !== null && !available.some(member => member.outfit === outfit)) return save
+  const called = available.filter(member => clearedAllies?.has(member.outfit)).map(member => member.outfit)
+  const callUp: NonNullable<Save['mission']>['callUp'] = save.mission.callUp ?? (called.length ? { members: called } : undefined)
+  if (callUp) {
+    const stations = { ...callUp.stations, [station]: outfit }
     for (const role of COMMAND_STATIONS) {
       if (role !== station && outfit !== null && missionOfficer(save, role)?.outfit === outfit) stations[role] = null
     }
-    return { ...save, mission: { ...save.mission, callUp: { ...save.mission.callUp, stations } } }
+    return { ...save, mission: { ...save.mission, callUp: { ...callUp, stations } } }
   }
   const commandCrew = { ...save.commandCrew }
   const commandTraining = { ...save.commandTraining }
@@ -54,7 +58,7 @@ export function canLaunch(supply: CampaignSupply, encounter: CommandEncounter): 
 export function launchCommand(save: Save, supply: CampaignSupply, encounter: CommandEncounter,
   support?: { ashore: ReadonlySet<number>; relay: number; preparation?: { alloy: number; integrity: number };
     qualifications?: ReadonlyMap<number, CommandStation>; contributions?: string[]; cast?: CommandCast; requiredLead?: number;
-    vessel?: CommandInput['vessel'] }): Save {
+    vessel?: CommandInput['vessel']; clearedAllies?: ReadonlySet<number> }): Save {
   if (save.mission?.step !== 'deploy' || save.mission.id !== encounter.id) return save
   const commandCinema = { fast: save.commandCinema.fast, retries: 0, pending: null }
   if (save.expedition) {
@@ -70,10 +74,8 @@ export function launchCommand(save: Save, supply: CampaignSupply, encounter: Com
   if (!canLaunch(supply, encounter)) return save
   const cost = support?.preparation?.alloy ?? 0
   if (save.wallet.alloy < cost) return save
-  const away = new Set(awayMembers(save.operations, save.squads))
   const requiredLead = support?.requiredLead
-  const available = save.crew.filter(member => canTakeOrdinaryAssignment(member) && !support?.ashore.has(member.outfit) && !away.has(member.outfit)
-    && (requiredLead === undefined || !member.heroine))
+  const available = bridgeCrew(save, support?.ashore, support?.clearedAllies, requiredLead)
   if (requiredLead !== undefined && (save.mission.squad[0] !== requiredLead || !available.some(member => member.outfit === requiredLead))) return save
   const byMember = new Map(available.map(member => {
     const speaker = crewSpeaker(member)

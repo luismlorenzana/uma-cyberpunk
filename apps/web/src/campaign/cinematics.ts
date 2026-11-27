@@ -1,15 +1,14 @@
-import { awayMembers, commandFacts, crewSpeaker, resolvedCommand, resumeCommand, walkSteps,
+import { commandFacts, crewSpeaker, resolvedCommand, resumeCommand, walkSteps,
   type CampaignBook, type CommandAction, type CommandActorArt, type CommandCast, type Save, type Speaker } from '@cyber/domain'
 import { retry } from '../mission/director'
 import { nameOf } from '../story/runner'
-import { missionAshore } from './call-up'
+import { bridgeCrew, missionAshore } from './call-up'
 
-export function freezeCommandCast(save: Save, book: CampaignBook, encounter: string, objective: string): CommandCast {
-  const ashore = missionAshore(book, save), away = awayMembers(save.operations, save.squads)
+export function freezeCommandCast(save: Save, book: CampaignBook, encounter: string, objective: string, clearedAllies?: ReadonlySet<number>): CommandCast {
   const binding = book.commandCinematics?.encounters.find(row => row.encounter === encounter)
   const commander = binding?.commander
   return { crew: {}, objective: binding?.objective ?? objective,
-    present: save.crew.filter(member => !member.expeditionOnly && !ashore.has(member.outfit) && !away.includes(member.outfit)).map(member => {
+    present: bridgeCrew(save, missionAshore(book, save), clearedAllies).map(member => {
       const speaker = crewSpeaker(member)
       return { speaker, name: nameOf(book.story, speaker) }
     }),

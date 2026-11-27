@@ -87,7 +87,7 @@ function CommandEffects({ event, animate }: { event: ResolvedCommand; animate: b
   </svg>
 }
 
-export function CommandCinematic({ event, loaded, encounter, beat, fast }: { event: ResolvedCommand; loaded: LoadedCampaign; encounter: string; beat: number; fast: boolean }) {
+export function CommandCinematic({ event, loaded, encounter, beat, fast, allowAllySplash }: { event: ResolvedCommand; loaded: LoadedCampaign; encounter: string; beat: number; fast: boolean; allowAllySplash: boolean }) {
   const [error, setError] = useState<string | null>(null), [busy, setBusy] = useState(false)
   const activeExpedition = useGame(state => state.save?.expedition)
   const binding = loaded.book.commandCinematics?.encounters.find(row => row.encounter === encounter)
@@ -106,7 +106,7 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast }: { eve
   const callLine = authoredScene && loaded.book.scenes.get(authoredScene)?.steps.find(step => step.kind === 'line' && step.speaker === event.actor?.speaker)
   const enemySpeaking = beat === 2 && !!enemyText && !!event.commander
   const enemy = enemySpeaking ? loaded.book.commandCinematics?.actors.find(actor => actor.speaker === event.commander!.speaker && actor.role === 'enemy') : undefined
-  const stationSplash = !enemySpeaking && actorSpeaker !== undefined
+  const stationSplash = !enemySpeaking && (typeof actorSpeaker === 'number' || (allowAllySplash && actorSpeaker !== undefined))
     ? loaded.book.wardrobe?.members.find(row => row.speaker === actorSpeaker)?.stationSplash : undefined
   const actor = useMemo(() => {
     if (enemySpeaking) return enemy

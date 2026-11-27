@@ -2,8 +2,10 @@ import { newMember, newSave, parseCampaignBook, parseSave, resumeCommand, STAND_
   type CampaignBook, type CampaignSupply, type CommandAction, type CommandEncounter, type FixedDuo, type Save } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { retry } from '../mission/director'
-import { missionAshore } from './call-up'
+import { bridgeCrew, missionAshore } from './call-up'
 import { assignOfficer, drillOfficer, issueCommand, launchCommand, settleCommand } from './command'
+import { finaleBridgeAllies } from './cy90'
+import { freezeCommandCast } from './cinematics'
 
 const encounter: CommandEncounter = {
   id: 'relay-convoy', cost: { fuel: 1, provisions: 2 }, transport: 6, enemy: 15,
@@ -65,6 +67,36 @@ describe('campaign ship command', () => {
     for (let turn = 0; turn < 3; turn++) flown = issueCommand(flown, encounter.id, turn, { order: 'fire', shields: 0, guns: 3, fighters: 0 })
     expect(flown.mission?.won).toBe(true)
     expect(settleCommand(flown, encounter.id, { book, act: 4 }).crew.map(member => member.xp)).toEqual([0, 100])
+  })
+
+  it('admits only a cleared available General on a temporary finale bridge assignment', () => {
+    const base = parseCampaignBook({ ...STAND_IN_FILES, 'campaign.json': { schemaVersion: 1, draft: true,
+      opening: 'opening', quests: [{ id: 'opening', title: 'First Watch', scene: 'sw1-ch1-s1' }], art: [], assets: [] } })
+    const general = outf + 3, guest = outf + 4
+    const clearance = { id: 'clearance', title: 'Clearance', scene: 'approved-clearance' }
+    const arc = { outfit: outf, general: 'general', system: 'relay', home: { world: 'relay', place: 'bridge' }, lieutenants: [],
+      rehabilitation: { sessions: [], release: 'release', quarters: 'quarters', clearance: clearance.id } }
+    const book = { ...base, quests: [...base.quests, clearance],
+      allies: [{ heroine: 'general', member: general, partner: outf }] as CampaignBook['allies'],
+      fourAct: { schemaVersion: 1 as const, systems: new Map(), arcs: new Map([[outf, arc]]), duos: new Map(), personalQuestOwners: new Map() } }
+    const initial = assignOfficer(ready(), 'gunnery', outf)
+    const invited = { ...initial, crew: [...initial.crew, { ...newMember(general), heroine: 'general', expeditionOnly: true as const },
+      { ...newMember(guest), heroine: 'guest', expeditionOnly: true as const }] }
+    expect(finaleBridgeAllies(invited, book).size).toBe(0)
+    const cleared = { ...invited, story: { ...invited.story, seen: [clearance.scene] } }
+    const allowed = finaleBridgeAllies(cleared, book)
+    expect([...allowed]).toEqual([general])
+    expect(bridgeCrew(cleared, new Set([general]), allowed).map(member => member.outfit)).toEqual([outf])
+    expect(assignOfficer(cleared, 'gunnery', guest, new Set(), allowed)).toBe(cleared)
+    expect(assignOfficer(cleared, 'gunnery', general)).toBe(cleared)
+    const assigned = parseSave(JSON.parse(JSON.stringify(assignOfficer(cleared, 'gunnery', general, new Set(), allowed))))
+    expect(assigned.commandCrew).toEqual(initial.commandCrew)
+    expect(assigned.mission?.callUp?.stations?.gunnery).toBe(general)
+    const launched = launchCommand(assigned, stock, encounter, { relay: 0, ashore: new Set(), clearedAllies: allowed,
+      cast: freezeCommandCast(assigned, book, encounter.id, 'Shuttle', allowed) })
+    const cast = resumeCommand(launched.mission?.battle?.input, [])?.input.presentation
+    expect(cast?.crew.gunnery?.speaker).toBe('general')
+    expect(cast?.present.map(row => row.speaker)).toEqual([outf, 'general'])
   })
 
   it('freezes assigned skills and charges launch only once', () => {

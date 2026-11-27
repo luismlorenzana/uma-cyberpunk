@@ -23,7 +23,7 @@ import { PairPanel } from './PairPanel'
 import { HomePanel } from './HomePanel'
 import { FinalePanel } from './FinalePanel'
 import { capitalLeads, finishCampaignDialogue, optionalCampaignTraining, personalMissionLead, questAvailable, questComplete, questScene } from './quests'
-import { missionAshore } from './call-up'
+import { bridgeCrew, missionAshore } from './call-up'
 import { ShipHome, homeAreas, type HomeArea } from './ShipHome'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
 import { careLeadAway, carePort, isCareSession } from './appointments'
@@ -41,7 +41,7 @@ import { DatePanel } from './DatePanel'
 import { ExpeditionLaunchReview, ExpeditionPanel } from './ExpeditionPanel'
 import { expeditionForQuest, expeditionPlan, expeditionQuestBlock } from './expedition'
 import { beginCampaignEncounter } from './sortie'
-import { finaleActivities, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
+import { finaleActivities, finaleBridgeAllies, finaleFormations, finaleReadiness, finaleRepairOptions, finaleRun, finaleVoices,
   finishFinaleActivity, selectFinaleFormation, selectFinaleVoice, workFinaleRepair } from './cy90'
 import { cabinVisitors, canBookNightContact, checkInWithLieutenant, closeNight, contactDay, enterNight, finishNightContact,
   nextQueuedMorning, nightActive, nightVisitsLeft, spendNightContact, visitActors, watchesUntilNight } from './night-economy'
@@ -318,8 +318,8 @@ function Campaign({ layout }: { layout: StageLayout }) {
         ashore={bridgeAshore} requiredLead={personalLead} homeDefense={homeDefense} finale={finale} emitterRoute={emitterRoute} readiness={battleReadiness}
         qualifications={new Map(loaded.book.sectors?.map((sector) => [sector.officer, sector.qualification]))}
         portraits={new Map([...portraits, ...profiles])}
-        names={new Map(save.crew.filter(({ outfit, heroine, expeditionOnly }) => !expeditionOnly && (personalLead === undefined || !heroine)
-          && !bridgeAshore.has(outfit) && !awayMembers(save.operations, save.squads).includes(outfit)).map(member => [member.outfit, nameOf(loaded.book.story, crewSpeaker(member))]))} />
+        names={new Map(bridgeCrew(save, bridgeAshore, battleReadiness?.act === 4 ? finaleBridgeAllies(save, loaded.book) : undefined, personalLead)
+          .map(member => [member.outfit, nameOf(loaded.book.story, crewSpeaker(member))]))} />
     </Suspense>
   }
   if (loaded && save && finaleScene && loaded.book.scenes.has(finaleScene)) {
