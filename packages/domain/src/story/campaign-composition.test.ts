@@ -25,7 +25,10 @@ describe('campaign scene composition', () => {
       { at: 'steps[1]', asset: null }]).art[0]?.backdropCues).toEqual([
       { at: 'steps[0]', asset: 'pose', portraits: 'hide' }, { at: 'steps[1]', asset: null },
     ])
+    expect(parseCues([{ at: 'steps[0]', asset: 'pose' },
+      { at: 'steps[0]', timing: 'after', asset: 'plate' }]).art[0]?.backdropCues?.[1]).toEqual({ at: 'steps[0]', timing: 'after', asset: 'plate' })
     for (const invalid of [
+      [{ at: 'steps[0]', timing: 'after', asset: null }],
       [{ at: 'steps[0]', asset: null, portraits: 'show' }], [{ at: 'steps[0]', asset: 'pose', portraits: 'always' }],
       [{ at: 'steps[999]', asset: 'pose' }], [{ at: 'steps[0]', asset: 'missing' }],
       [{ at: 'steps[0]', asset: 'pose' }, { at: 'steps[0]', asset: 'plate' }],

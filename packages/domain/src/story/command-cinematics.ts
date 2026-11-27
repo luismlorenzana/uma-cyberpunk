@@ -54,7 +54,7 @@ export function parseCommandCinematics(value: unknown, book: Pick<CampaignBook, 
     return id
   }
   const encounters = unique(p.list(root.encounters, 'commandCinematics.encounters', (value, field) => {
-    const row = p.object(value, field, ['encounter', 'objective', 'commander', 'alarm', 'preparation', 'victory', 'withdrawal', 'retry', 'disabled', 'enemy'], ['encounter', 'objective'])
+    const row = p.object(value, field, ['encounter', 'objective', 'commander', 'alarm', 'preparation', 'victory', 'withdrawal', 'retry', 'disabled', 'enemy', 'hail', 'departure'], ['encounter', 'objective'])
     const encounter = p.slug(row.encounter, field + '.encounter')
     if (!book.commands.has(encounter)) p.fail(field, 'unknown ship encounter')
     const commander = row.commander === undefined ? undefined : speaker(row.commander, field + '.commander')
@@ -65,8 +65,17 @@ export function parseCommandCinematics(value: unknown, book: Pick<CampaignBook, 
       return { contact: p.text(lines.contact, field, 240), disabled: p.text(lines.disabled, field, 240), withdrawal: p.text(lines.withdrawal, field, 240) }
     })()
     const contexts = Object.fromEntries(['alarm', 'preparation', 'victory', 'withdrawal', 'retry', 'disabled'].flatMap(key => row[key] === undefined ? [] : [[key, scene(row[key], field + '.' + key)]]))
+    const signals = Object.fromEntries(['hail', 'departure'].flatMap(key => {
+      if (row[key] === undefined) return []
+      const path = field + '.' + key
+      const id = scene(row[key], path), steps = book.scenes.get(id)!.steps
+      const spoken = [...walkSteps(steps, '')].filter(({ step }) => step.kind === 'line')
+      if (commander === undefined || spoken.length !== 1 || spoken[0]?.step.kind !== 'line' || spoken[0].step.speaker !== commander
+        || steps.some(step => !['line', 'emote', 'narrate'].includes(step.kind))) p.fail(path, 'expected one line from the named commander')
+      return [[key, id]]
+    }))
     if (row.disabled !== undefined && !book.commands.get(encounter)?.assault) p.fail(field, 'disabled context needs a real emitter')
-    return { encounter, objective: p.text(row.objective, field + '.objective', 80), ...(commander === undefined ? {} : { commander }), ...(enemy ? { enemy } : {}), ...contexts }
+    return { encounter, objective: p.text(row.objective, field + '.objective', 80), ...(commander === undefined ? {} : { commander }), ...(enemy ? { enemy } : {}), ...contexts, ...signals }
   }, Math.max(64, book.commands.size)), row => row.encounter, 'commandCinematics.encounters')
   const stations = unique(p.list(root.stations, 'commandCinematics.stations', (value, field) => {
     const row = p.object(value, field, ['station', 'backdrop']), station = row.station as CommandStation

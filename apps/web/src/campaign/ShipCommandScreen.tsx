@@ -10,7 +10,7 @@ import { missionAshore } from './call-up'
 import { campaignImage, type LoadedCampaign } from './load'
 import { CampaignScene } from './CampaignScene'
 import { CommandCinematic } from './CommandCinematic'
-import { commandContextScene, freezeCommandCast, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
+import { acknowledgeEnemySignal, commandContextScene, freezeCommandCast, pendingEnemySignal, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
 import { finaleRun, retryCampaignAttempt, withdrawCampaignAttempt } from './cy90'
 import { nameOf } from '../story/runner'
 import { expeditionOfficer, expeditionStations, setExpeditionOfficer } from './expedition'
@@ -49,6 +49,7 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   const withdrawn = save.finaleProgress?.withdrawn === mission.id
   const [showRetry, setShowRetry] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [signalError, setSignalError] = useState<string | null>(null)
   useEffect(() => {
     setBackground(null)
     if (!backdrop) return
@@ -88,6 +89,14 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
     const scene = commandContextScene(save, loaded.book, kind)
     return scene ? [<button key={kind} type="button" className={button} onClick={() => setContext(scene)}>{kind === 'alarm' ? 'Initial alarm' : kind === 'preparation' ? 'Mission context' : kind === 'retry' ? 'Retry briefing' : kind === 'disabled' ? 'Emitter report' : 'Crew report'}</button>] : []
   })
+  const signal = pendingEnemySignal(save, loaded.book)
+  if (signal && signalError) return <main className="absolute inset-0 bg-[#0b1020] p-4 text-white" style={insets}>
+    <p role="alert">{signalError}</p>
+    <button type="button" className={button} onClick={() => setSignalError(null)}>Retry enemy channel</button>
+  </main>
+  if (signal) return <CampaignScene key={loaded.release.release + ':' + signal.scene} loaded={loaded} sceneId={signal.scene} squad={state.squad}
+    finish={() => void updateSave(s => acknowledgeEnemySignal(s, loaded.book, encounter.id, signal)).catch(() => setSignalError('Could not save the enemy transmission.'))}
+    fail={setSignalError} />
   if (context && loaded.book.scenes.has(context)) return <CampaignScene key={loaded.release.release + ':' + context} loaded={loaded} sceneId={context} squad={state.squad}
     finish={() => setContext(null)} fail={message => { setError(message); setContext(null) }} onExit={() => setContext(null)} exitLabel="Back to bridge" />
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"

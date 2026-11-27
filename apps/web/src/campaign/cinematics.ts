@@ -48,7 +48,29 @@ export function replayCommandCinema(save: Save): Save {
 export function retryCommand(save: Save): Save {
   if (save.mission?.step !== 'results' || save.mission.won || !save.mission.battle || !resumeCommand(save.mission.battle.input, save.mission.battle.actions)) return save
   const next = retry(save)
-  return { ...next, commandCinema: { ...next.commandCinema, retries: Math.min(1000, save.commandCinema.retries + 1) } }
+  return { ...next, commandCinema: { ...next.commandCinema, retries: Math.min(1000, save.commandCinema.retries + 1), seenEnemySignal: undefined } }
+}
+
+export function pendingEnemySignal(save: Save, book: Pick<CampaignBook, 'commandCinematics'>) {
+  const mission = save.mission
+  if (!mission?.battle || save.commandCinema.pending) return
+  const binding = book.commandCinematics?.encounters.find(row => row.encounter === mission.id)
+  if (!binding || binding.commander === undefined) return
+  const run = resumeCommand(mission.battle.input, mission.battle.actions)
+  const commander = run?.input.presentation?.commander
+  if (!run || (commander && commander.speaker !== binding.commander)) return
+  if (mission.step === 'battle' && run.state.turn === 0 && !save.commandCinema.seenEnemySignal && binding.hail) {
+    return { kind: 'hail' as const, scene: binding.hail }
+  }
+  if (mission.step === 'results' && run.state.result === 'won' && save.commandCinema.seenEnemySignal !== 'departure' && binding.departure) {
+    return { kind: 'departure' as const, scene: binding.departure }
+  }
+}
+
+export function acknowledgeEnemySignal(save: Save, book: Pick<CampaignBook, 'commandCinematics'>, encounter: string, signal: NonNullable<ReturnType<typeof pendingEnemySignal>>): Save {
+  const pending = pendingEnemySignal(save, book)
+  if (save.mission?.id !== encounter || pending?.kind !== signal.kind || pending.scene !== signal.scene) return save
+  return { ...save, commandCinema: { ...save.commandCinema, seenEnemySignal: signal.kind } }
 }
 
 export function commandContextScene(save: Save, book: CampaignBook, kind: 'alarm' | 'preparation' | 'victory' | 'withdrawal' | 'retry' | 'disabled'): string | undefined {

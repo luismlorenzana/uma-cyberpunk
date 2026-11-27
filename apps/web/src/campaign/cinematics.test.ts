@@ -2,7 +2,7 @@ import { commandEffectKeys, commandFacts, newMember, newSave, parseSave, resolve
   type CampaignBook, type CommandAction, type CommandEncounter, type CommandInput, type Save } from '@cyber/domain'
 import { describe, expect, it } from 'vitest'
 import { assignOfficer, issueCommand, launchCommand, settleCommand } from './command'
-import { advanceCommandCinema, commandLog, commandStationArt, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
+import { acknowledgeEnemySignal, advanceCommandCinema, pendingEnemySignal, commandLog, commandStationArt, replayCommandCinema, retryCommand, savedCommandEvent } from './cinematics'
 
 const first = 9000701, second = 9000702
 const encounter: CommandEncounter = { id: 'escort', cost: { fuel: 1, provisions: 2 }, transport: 6, enemy: 15,
@@ -66,6 +66,29 @@ describe('committed ship order cinematics', () => {
     expect(save.commandCinema.pending!.turn).toBe(1)
     expect(mechanical(save)).toEqual(truth)
     expect(commandLog(save)).toHaveLength(1)
+  })
+
+  it('plays one hail and one departure per battle, preserving acknowledgement across reload', () => {
+    const book: Pick<CampaignBook, 'commandCinematics'> = {
+      commandCinematics: { actors: [], stations: [], encounters: [
+        { encounter: 'escort', objective: 'Relief transport', commander: 'patrol', hail: 'greeting', departure: 'departure' },
+      ] },
+    }
+    let save = launched()
+    const hail = pendingEnemySignal(save, book)!
+    expect(hail).toEqual({ kind: 'hail', scene: 'greeting' })
+    expect(acknowledgeEnemySignal(save, book, 'other-encounter', hail)).toBe(save)
+    save = reload(acknowledgeEnemySignal(save, book, 'escort', hail))
+    expect(pendingEnemySignal(save, book)).toBeUndefined()
+    for (let turn = 0; turn < 3; turn++) save = issueCommand(save, 'escort', turn, fire)
+    expect(save.mission?.won).toBe(true)
+    expect(pendingEnemySignal(save, book)).toBeUndefined()
+    save = advanceCommandCinema(save, 'escort', 3, 0, true)
+    save = reload(advanceCommandCinema(save, 'escort', 3, 3))
+    const departure = pendingEnemySignal(save, book)!
+    expect(departure).toEqual({ kind: 'departure', scene: 'departure' })
+    save = reload(acknowledgeEnemySignal(save, book, 'escort', departure))
+    expect(pendingEnemySignal(save, book)).toBeUndefined()
   })
 
   it('fast playback produces exactly the same battle state as normal playback', () => {
