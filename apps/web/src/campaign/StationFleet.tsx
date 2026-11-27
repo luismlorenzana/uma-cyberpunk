@@ -8,6 +8,7 @@ import { COMMISSIONING_BERTHS, commissionCutter, commissioningBerthsUsed, expedi
 import { questComplete } from './quests'
 import { stationJourney } from './station-travel'
 import { advanceStationWatches, repairStarterCutter, stationOf } from './watch'
+import { CutterVisual } from './VesselVisuals'
 
 export function StationFleet({ book, save, complete, navigation, yardRoom, inspect, reviewLaunch, operations = false }: {
   book: CampaignBook; save: Save; complete: ReadonlySet<string>; navigation: (port?: string) => void
@@ -36,7 +37,7 @@ export function StationFleet({ book, save, complete, navigation, yardRoom, inspe
   return <section className="space-y-3 rounded-xl border border-white/15 p-3" aria-label="Station fleet">
     {!operations && <>
       <h2 className="font-display text-lg font-bold">{STARTER_CUTTER.name}</h2>
-      <img src="/images/homestretch-cutaway.webp" alt="Two-deck cutter interior" className="max-h-40 w-full rounded object-cover object-center" />
+      <CutterVisual id={STARTER_CUTTER.id} name={STARTER_CUTTER.name} integrity={station.integrity} state="berthed" />
       <div className="flex flex-wrap gap-2">
         <button type="button" className={campaignPrimary} onClick={() => navigation()}>Plot cutter route</button>
         {!anchored && <button type="button" className={campaignControl} onClick={() => navigation(station.anchor)}>Set course for Homestretch</button>}
@@ -73,8 +74,14 @@ export function StationFleet({ book, save, complete, navigation, yardRoom, inspe
       const commission = (reinforced: boolean) => void updateSave(s =>
         commissionCutter(s, book, duo, new Set(book.quests.filter(q => questComplete(s, q, book)).map(q => q.id)), reinforced))
       return <article key={duo.id} className="space-y-1 rounded border border-white/10 p-2">
-        <h4 className="text-sm font-semibold">{route.name}</h4>
-        <p className="text-xs">{duo.umas.map(actor => nameOf(book.story, actor)).join(' and ')} · {status}</p>
+        <header className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="text-sm font-semibold">{route.name}</h4>
+            <p className="text-xs">{duo.umas.map(actor => nameOf(book.story, actor)).join(' and ')} · {status}</p>
+          </div>
+          {hull && <CutterVisual id={hull.ship} name={route.name} integrity={voyage?.integrity ?? hull.integrity} reinforced={voyage?.reinforced ?? hull.reinforced}
+            state={active && !active.berthed ? 'underway' : hull.condition === 'commissioning' ? 'commissioning' : 'berthed'} compact />}
+        </header>
         {hull?.condition === 'commissioning' && <p className="text-sm">{yard === 'active'
           ? `Ready ${watchLabel(station.absoluteWatch + (hull.watches ?? 0))}` : 'Waiting for shipyard power'}</p>}
         {active && activePlan?.current && <p className="text-sm">Next · {activePlan.current.title}</p>}

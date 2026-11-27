@@ -10,6 +10,7 @@ import { watchLabel } from './appointments'
 import { campaignControl, campaignPrimary } from './CampaignQuestRow'
 import { stationBuildForecast } from './station-forecast'
 import { advanceStationWatches, stationOf, stationRations, stationResidentCount, stationWorkers } from './watch'
+import { StationExterior, StationRoomPlan } from './VesselVisuals'
 import type { HomeArea } from './ShipHome'
 
 const destinations: Partial<Record<StationModule, HomeArea>> = {
@@ -107,14 +108,14 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
       <span>{STARTER_CUTTER.name} · {book.supply?.ports.find(row => row.id === port)?.name ?? port}</span>
       <button type="button" className={campaignControl} onClick={returnHome}>Plot return to Homestretch</button>
     </div>}
-    <div className="flex flex-wrap gap-1" aria-label="Station camera">
+    <div className="flex flex-wrap gap-1 [&>button]:px-2" aria-label="Station camera">
       <button type="button" className={campaignControl} onClick={() => onFocus({ zoom: 1 })}>Overview</button>
       {STATION_DECKS.map(key => <button key={key} type="button" className={campaignControl + ' aria-pressed:border-cyan-100'} aria-pressed={deck === key}
         onClick={() => onFocus({ deck: key, zoom: 1 })}>{key}</button>)}
       <button type="button" className={campaignControl} onClick={() => adjust(-.25)} disabled={zoom === 1}>Zoom out</button>
       <button type="button" className={campaignControl} onClick={() => adjust(.25)} disabled={zoom === 2}>Zoom in</button>
     </div>
-    <div className={'grid gap-3 ' + (room ? 'sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]' : '')}>
+    <div className={'grid gap-3 ' + (room || !deck ? 'sm:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]' : '')}>
       <div ref={scroll} className="max-h-80 min-w-0 overflow-auto rounded-lg border border-cyan-100/20 bg-[#0a111f] p-2"
         style={{ touchAction: 'none' }} onPointerMove={handlePointer}
         onPointerDown={event => {
@@ -158,12 +159,10 @@ export default function StationHome({ book, save, open, recruit, calendar, retur
           </section>)}
         </div>
       </div>
+      {!deck && <StationExterior state={state} />}
       {room && current && status && <section className="space-y-2 rounded-lg border border-white/15 bg-[#111e2e] p-3" aria-label={current.label}>
         <h2 className="font-semibold">{current.label}</h2>
-        <div aria-hidden="true" className="grid grid-cols-4 gap-2 rounded border border-cyan-100/20 bg-[#0a1322] p-3">
-          {Array.from({ length: current.berths > 20 ? current.berths / 10 : 4 }, (_, index) =>
-            <span key={index} className={'h-4 rounded-sm border border-cyan-100/25 ' + (status === 'active' ? 'bg-cyan-200/20' : 'border-dashed')} />)}
-        </div>
+        <StationRoomPlan room={room} status={status} cutterBerthed={room === 'cutter' && port === state.anchor} />
         <p className="text-sm">{condition[status]}{status === 'building' && ` · ${state.rooms[room]} watches left`}</p>
         {!!current.berths && <p className="text-sm">{current.berths} permanent cabins</p>}
         {buildForecast && <div className="space-y-1 text-sm" aria-label="Build forecast">

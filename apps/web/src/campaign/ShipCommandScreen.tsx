@@ -20,6 +20,7 @@ import { CampaignThumbnail } from './CampaignThumbnail'
 import type { CombatReadiness } from './navigation'
 import { BattleHelp } from '../battle/BattleHelp'
 import { orderTopics } from '../battle/help'
+import { CutterVisual } from './VesselVisuals'
 
 const button = 'min-h-11 rounded-lg bg-white/10 px-3 text-sm font-semibold text-white disabled:opacity-50'
 const primary = 'min-h-11 rounded-lg bg-[#2ee6ff] px-3 text-sm font-bold text-[#0b0d17] disabled:opacity-50'
@@ -92,7 +93,12 @@ export default function ShipCommandScreen({ save, mission, encounter, supply, na
   return <main className="absolute inset-0 overflow-y-auto bg-[#0b1020] bg-cover bg-center p-3 text-[#e8ebf5]"
     style={{ ...insets, ...(background ? { backgroundImage: `linear-gradient(#080d1aeb, #080d1acf), url(${background})` } : {}) }}>
     <div className="mx-auto max-w-4xl space-y-3">
-      {vessel && <p className="text-sm text-cyan-200">{vessel.name} · {expedition ? '10 aboard' : 'Cutter command'}</p>}
+      {vessel && <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-cyan-200">{vessel.name} · {expedition ? '10 aboard' : 'Cutter command'}</p>
+        <CutterVisual id={vessel.id} name={vessel.name} integrity={run?.state.hull ?? vessel.integrity}
+          reinforced={assigned?.reinforced ?? (assigned && save.fleet?.[assigned.duo]?.reinforced)}
+          state={run ? 'underway' : 'berthed'} compact />
+      </div>}
       {error && <p role="alert">{error}</p>}
       <h1 className="font-display text-xl font-bold">{assault
         ? state.step === 'results' ? state.won ? 'Approach secured' : 'Approach withdrawn' : finale ? 'Gate approach' : 'Station approach'

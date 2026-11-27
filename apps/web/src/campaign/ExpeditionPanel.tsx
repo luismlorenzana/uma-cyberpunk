@@ -8,6 +8,7 @@ import { watchLabel } from './appointments'
 import { stationOf } from './watch'
 import { nextStationDawn } from './station-forecast'
 import { BattleHelp } from '../battle/BattleHelp'
+import { CutterVisual } from './VesselVisuals'
 
 export function ExpeditionLaunchReview({ book, save, duo, complete, block, launch, cargo, back }: {
   book: CampaignBook; save: Save; duo: FixedDuo; complete: ReadonlySet<string>; block?: string
@@ -17,8 +18,14 @@ export function ExpeditionLaunchReview({ book, save, duo, complete, block, launc
   if (!budget) return <button type="button" className={campaignControl} onClick={back}>Back</button>
   const sufficient = budget.fuelMargin >= 0 && budget.provisionMargin >= 0
   const stock = save.campaignSupply
+  const hull = save.fleet?.[duo.id]
+  const expedition = duo.expedition
   return <section className="mx-auto max-w-lg space-y-3 rounded-xl border border-cyan-200/20 bg-[#101e32] p-4" aria-label="Expedition launch review">
-    <h1 className="font-display text-xl font-bold">{duo.expedition?.route?.name}</h1>
+    <header className="flex flex-wrap items-center justify-between gap-2">
+      <h1 className="font-display text-xl font-bold">{expedition?.route?.name}</h1>
+      {expedition?.route && <CutterVisual id={expedition.ship} name={expedition.route.name} state="berthed"
+        integrity={hull?.integrity} reinforced={hull?.reinforced} compact />}
+    </header>
     <div className="space-y-1 text-sm" aria-label="Formation at launch">
       {duo.umas.map(outfit => <p key={outfit}>{nameOf(book.story, outfit)} · Laser Rank {Math.max(6, save.combatTraining?.[outfit]?.rank ?? 1)} · Laser-only</p>)}
       <div className="flex items-center">The Umas retire subclasses at launch. The eight allies use full kits at Lv 6 or higher.<BattleHelp topic="roles" /></div>
@@ -58,7 +65,11 @@ export function ExpeditionPanel({ book, save, port, complete, navigation, open, 
   const sharedBerth = book.stationStory && run.berthed && berth?.port.id === station.anchor
   const dawn = sharedBerth && nextStationDawn(save, book)
   return <section aria-label="Active expedition" className="space-y-3 rounded-xl border border-white/15 bg-[#101b2d] p-3">
-    <h2 className="font-display text-xl font-bold">{route.name} · Expedition</h2>
+    <header className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="font-display text-xl font-bold">{route.name} · Expedition</h2>
+      <CutterVisual id={run.ship} name={route.name} state={run.berthed ? 'berthed' : 'underway'}
+        integrity={run.integrity} reinforced={run.reinforced} compact />
+    </header>
     <p className="text-sm">{run.berthed ? 'Berthed at ' + (berth?.port.name ?? 'Homestretch') : current?.title ?? 'Departure'} · {run.members.length} assigned</p>
     <p className="text-sm">Cutter cargo · {run.fuel} fuel · {run.provisions} provisions · Hull {run.integrity ?? COMMAND_HULL}/{COMMAND_HULL}</p>
     <p className="text-sm">Remaining ship battles · {fuel} fuel · {provisions} provisions</p>
