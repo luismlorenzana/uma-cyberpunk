@@ -112,7 +112,7 @@ export function CommandCinematic({ event, loaded, encounter, beat, fast, allowAl
     if (enemySpeaking) return enemy
     if (!crew || !stationSplash) return crew
     const { asset, width, height } = stationSplash
-    return { ...crew, composition: { width, height, portraits: 'show' as const, layers: [{ asset, x: 0, y: 0, width, height, opacity: 1, fit: 'contain' as const }] } }
+    return { ...crew, composition: { width, height, portraits: 'show' as const, layers: [{ asset, x: 0, y: 0, width, height, opacity: 100, fit: 'contain' as const }] } }
   }, [crew, enemy, enemySpeaking, stationSplash])
   const voice = crew?.orders?.[event.action.order]
   const emote = enemySpeaking ? 'stern' : event.after.result === 'lost' && beat === 3 ? 'worried' : event.after.result === 'won' && beat === 3 ? 'relieved' : 'determined'
