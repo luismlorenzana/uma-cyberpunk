@@ -1,4 +1,4 @@
-import type { HeroineSpriteRole, TalkContact } from '@cyber/battle'
+import type { HeroineSpriteRole, TalkContact, WeaponBand } from '@cyber/battle'
 import type { CampaignWardrobe } from '../campaign-wardrobe'
 import { parseCampaignWardrobe } from './campaign-wardrobe'
 import { parseComposition } from './composition'
@@ -134,8 +134,9 @@ export interface CampaignReleaseFile {
   bytes: number
 }
 
-export type CombatSpriteIdentity = { outfit: number; form?: never; roles?: never }
-  | { outfit: string; form: string; roles: HeroineSpriteRole[] }
+export type CombatSpriteIdentity = { outfit: number; form?: never; roles?: never; original?: never }
+  | { outfit: string; form: string; roles: HeroineSpriteRole[];
+    original?: { actor: string; rank: string; court: string; weaponBand: WeaponBand } }
 
 const heroineSpriteRoles: readonly HeroineSpriteRole[] = ['boss-enemy', 'boss-ally', 'sub-boss']
 
@@ -182,13 +183,14 @@ export type CampaignCombatSprite = CombatSpriteIdentity & {
   pages: (CampaignReleaseFile & { file: string })[]
 }
 
-export function combatSpriteKey(identity: Pick<CombatSpriteIdentity, 'outfit' | 'form'>): string {
+export function combatSpriteKey(identity: Pick<CombatSpriteIdentity, 'outfit' | 'form' | 'original'>): string {
+  if (identity.original) return `original/${identity.original.actor}/${identity.form}`
   return typeof identity.outfit === 'number' ? String(identity.outfit) : `heroine/${identity.outfit}/${identity.form}`
 }
 
 export function parseCombatSpriteIdentity(p: P, row: Record<string, unknown>, path: string): CombatSpriteIdentity {
   if (typeof row.outfit !== 'string') {
-    if (row.form !== undefined || row.roles !== undefined) p.fail(path, 'crew sprite has no heroine form or role')
+    if (row.form !== undefined || row.roles !== undefined || row.original !== undefined) p.fail(path, 'crew sprite has no named form or role')
     return { outfit: p.int(row.outfit, path + '.outfit', 1, Number.MAX_SAFE_INTEGER) }
   }
   const roles = p.list(row.roles, path + '.roles', (raw, field) =>
@@ -196,8 +198,20 @@ export function parseCombatSpriteIdentity(p: P, row: Record<string, unknown>, pa
   if (!roles.length || new Set(roles).size !== roles.length || (roles.includes('sub-boss') && roles.length > 1)) {
     p.fail(path + '.roles', 'expected distinct boss roles or a sub-boss role')
   }
-  return { outfit: p.slug(row.outfit, path + '.outfit'), form: p.slug(row.form, path + '.form'),
-    roles: heroineSpriteRoles.filter(role => roles.includes(role)) }
+  const outfit = p.slug(row.outfit, path + '.outfit'), form = p.slug(row.form, path + '.form')
+  const original: CombatSpriteIdentity['original'] = row.original === undefined ? undefined : (() => {
+    const meta = p.object(row.original, path + '.original', ['actor', 'rank', 'court', 'weaponBand'])
+    const actor = p.slug(meta.actor, path + '.original.actor')
+    const weaponBand = meta.weaponBand
+    if (actor !== 'original-' + outfit || form !== 'joined' || roles.length !== 1 || roles[0] !== 'boss-enemy') {
+      p.fail(path, 'expected a joined named original opponent')
+    }
+    if (weaponBand !== 'melee' && weaponBand !== 'short' && weaponBand !== 'long' && weaponBand !== 'tech') {
+      return p.fail(path + '.original.weaponBand', 'expected an approved weapon band')
+    }
+    return { actor, rank: p.slug(meta.rank, path + '.original.rank'), court: p.slug(meta.court, path + '.original.court'), weaponBand }
+  })()
+  return { outfit, form, roles: heroineSpriteRoles.filter(role => roles.includes(role)), ...(original ? { original } : {}) }
 }
 
 /** A transport batch preserves the individual story-document pins used by publishers. */
@@ -347,7 +361,7 @@ export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_IND
     return pages
   })()
   const combatSprites = index.combatSprites === undefined ? undefined : p.list(index.combatSprites, 'combatSprites', (value, path) => {
-    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages', 'form', 'roles', 'loadouts'], ['outfit', 'manifest', 'placements', 'pages'])
+    const row = p.object(value, path, ['outfit', 'manifest', 'placements', 'pages', 'form', 'roles', 'loadouts', 'original'], ['outfit', 'manifest', 'placements', 'pages'])
     const reference = (key: 'manifest' | 'placements') => entry(p.object(row[key], path + '.' + key, ['path', 'sha256', 'bytes']), path + '.' + key, false)
     const pages = p.list(row.pages, path + '.pages', (value, field) => {
       const page = p.object(value, field, ['file', 'path', 'sha256', 'bytes'])

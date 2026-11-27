@@ -9,14 +9,16 @@ import { promisify } from 'node:util'
 import { require as loadTs } from 'tsx/cjs/api'
 
 const { sha, parsePublishConfig } = loadTs('./model.ts', import.meta.url)
-const { loadSelected, publishArtCandidate, rollbackArt } = loadTs('./publish.ts', import.meta.url)
+const { gameplayFingerprint, loadSelected, publishArtCandidate, rollbackArt } = loadTs('./publish.ts', import.meta.url)
 const { resolveArt } = loadTs('./sources.ts', import.meta.url)
 const { syncWardrobes } = loadTs('./sync.ts', import.meta.url)
-const { CAMPAIGN_PREFIX: PREFIX, COMBAT_SPRITE_PREFIX: SPRITES, GenerationConflict, GcsArtStorage } = loadTs('./storage.ts', import.meta.url)
+const { CAMPAIGN_PREFIX: PREFIX, COMBAT_SPRITE_PREFIX: SPRITES, ORIGINAL_ART_PREFIX: ORIGINALS,
+  GenerationConflict, GcsArtStorage } = loadTs('./storage.ts', import.meta.url)
 const { readSpriteApprovalIndex, publishCombatSprites } = loadTs('./combat-sprite-release.ts', import.meta.url)
 const { P, parseCombatSpriteLoadouts } = loadTs('../../packages/domain/src/story/index.ts', import.meta.url)
 const { main: publishCommand } = loadTs('./cli.ts', import.meta.url)
 const { resolveSplashBindings } = loadTs('./splash-bindings.ts', import.meta.url)
+const { publishOriginalImages, readOriginalAlbum, readOriginalBindings } = loadTs('./originals.ts', import.meta.url)
 const { STAND_IN_FILES } = loadTs('../../packages/domain/src/story/stand-in.ts', import.meta.url)
 const encode = value => Buffer.from(JSON.stringify(value))
 const runFile = promisify(execFile)
@@ -642,6 +644,58 @@ test('selects and rolls back four-act image and sprite updates under their own p
   assert.equal(rolledBack.promoted, true)
   assert.deepEqual((await loadSelected(f.storage, 'four-act')).release, fourAct)
   assert.deepEqual((await loadSelected(f.storage)).pointer, old.pointer)
+})
+
+test('publishes the active approved original album using an exact and separate four-act binding', async t => {
+  const base = 'test-court-regent-joined-base', actor = 'original-test-court-regent', id = actor + '-base-v002'
+  const f = await fixture(config => { config.assets.push({ id: base, file: base + '.png' }) })
+  const path = PREFIX + 'campaign/four-act.json'
+  f.storage.add(path, encode({ ...f.release, campaign: 'four-act' }))
+  const selected = await loadSelected(f.storage, 'four-act')
+  const root = await mkdtemp(join(tmpdir(), 'cyberpunk-original-album-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const platform = new MemoryStorage(ORIGINALS), folder = join(root, 'regents/silver/regent')
+  const write = (file, value) => writeFile(file, encode(value))
+  await mkdir(join(folder, 'v002'), { recursive: true })
+  for (const section of ['dialogue-portraits', 'splash-art', 'categories/combat-sprites']) {
+    await mkdir(join(folder, section), { recursive: true })
+    await write(join(folder, section, 'active-study.json'), { ownerApproved: false, activeVersion: 'v001' })
+  }
+  await write(join(root, 'collection.json'), { schemaVersion: 1, kind: 'original-character-collection', id: 'test-court',
+    ranks: [{ id: 'regents' }], courts: [{ id: 'silver' }], characters: [{ id: 'regent', rank: 'regents', court: 'silver' }] })
+  await write(join(folder, 'character.json'), { id: actor })
+  const active = join(folder, 'active-study.json')
+  await write(active, { ownerApproved: true, activeVersion: 'v002' })
+  const source = { id, title: 'Joined', state: 'joined', image: 'approved.png', sha256: sha(f.newer), width: 40, height: 60,
+    approval: { status: 'approved', by: 'owner', on: '2026-01-01' } }
+  await write(join(folder, 'v002/manifest.json'), { schemaVersion: 1, unitId: actor, fullBodyAssets: [
+    source, { ...source, id: actor + '-draft-v002', image: 'unreviewed.png', approval: { status: 'draft' } },
+  ] })
+  await writeFile(join(folder, 'v002/approved.png'), f.newer)
+  const album = await readOriginalAlbum(root)
+  assert.deepEqual(album.entries.map(row => [row.actor, row.rank, row.court, row.id]), [[actor, 'regents', 'silver', id]])
+  const binding = { asset: base, source: id, sha256: sha(f.newer), prior: sha(f.original) }
+  const bindings = readOriginalBindings({ schemaVersion: 1, bindings: [binding] })
+  const publish = (rows, options, campaign = selected) => publishOriginalImages(f.storage, platform, campaign, album, rows, options)
+  await assert.rejects(publish([{ ...binding, asset: 'test-court-guard-joined-base' }]), /crosses actor identities/)
+  await assert.rejects(publish([{ ...binding, prior: '1'.repeat(64) }]), /campaign art changed/)
+  const plan = await publish(bindings, { dryRun: true })
+  assert.equal(plan.changes, 1)
+  assert.equal(platform.writes.length, 0)
+  assert.equal(f.storage.writes.length, 0)
+  const result = await publish(bindings)
+  assert.equal(plan.release, result.release)
+  assert.equal(result.promoted, true)
+  const live = await loadSelected(f.storage, 'four-act')
+  assert.equal(gameplayFingerprint(live.files), gameplayFingerprint(selected.files))
+  assert.equal(live.release.assets.find(row => row.id === base).sha256, source.sha256)
+  assert.equal((await loadSelected(f.storage)).release.release, 'baseline')
+  const index = JSON.parse((await platform.read(ORIGINALS + 'test-court/index.json')).bytes)
+  assert.equal(index.assets[0].sha256, source.sha256)
+  assert.equal((await publish(bindings, {}, live)).promoted, false)
+  assert.equal(platform.writes.length, 2)
+  await write(active, { ownerApproved: false, activeVersion: 'v002' })
+  await assert.rejects(publish(bindings, { stageOnly: true }, live), /album changed/)
 })
 
 test('art publishing preserves paged Story pins and guards approved room backdrop replacements', async () => {

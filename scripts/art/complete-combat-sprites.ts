@@ -29,24 +29,28 @@ export async function readCompleteSpriteSource(directory: string, source: { mani
   const placements = await pinned('asset-placements.json', 'json', source.placements)
   const data = JSON.parse(payloads.get(placements.path)!.toString())
   const placementRows: unknown[] = data.frames
+  const original = bundle.character.startsWith('original-')
   const expectedFrames = new Map(bundle.sets.flatMap(set => bundle.views.flatMap(view =>
     Object.entries(set.frames[view]).map(([pose, cel]) => [set.id + '/' + view + '/' + pose, cel] as const))))
   if (data.character !== bundle.character || data.status !== 'approved' || data.version !== bundle.version ||
     JSON.stringify(data.cell) !== JSON.stringify(bundle.cell) || JSON.stringify(data.foot) !== JSON.stringify(bundle.foot) ||
-    JSON.stringify(data.views) !== JSON.stringify(bundle.views) || !Array.isArray(placementRows) || placementRows.length !== expectedFrames.size) {
+    (!(original && data.views === undefined) && JSON.stringify(data.views) !== JSON.stringify(bundle.views)) ||
+    !Array.isArray(placementRows) || placementRows.length !== expectedFrames.size) {
     throw new Error('Complete sprite placements disagree with the manifest')
   }
   const frames: CompleteSpritePlacement[] = []
   for (const value of placementRows) {
     if (!value || typeof value !== 'object') throw new Error('Invalid complete sprite placement')
-    const row = value as CompleteSpritePlacement
-    const key = row.setId + '/' + row.view + '/' + row.pose
+    const row = value as CompleteSpritePlacement & { id?: string; file?: string }
+    const pose = original ? row.pose ?? row.id : row.pose
+    const key = row.setId + '/' + row.view + '/' + pose
     const cel = expectedFrames.get(key)
     if (!cel || row.page !== cel.page || row.sha256 !== cel.sha256 ||
+      (row.file !== undefined && row.file !== cel.file) ||
       !cel.rect.every((dimension, index) => dimension === [row.rect?.x, row.rect?.y, row.rect?.width, row.rect?.height][index]) ||
       row.pivot?.x !== bundle.foot[0] || row.pivot?.y !== bundle.foot[1]) throw new Error('Complete sprite placement differs: ' + key)
     expectedFrames.delete(key)
-    frames.push(row)
+    frames.push(pose === row.pose ? row : { ...row, pose: pose! })
   }
 
   const pages = await Promise.all(Object.values(bundle.pages).map(async page => {

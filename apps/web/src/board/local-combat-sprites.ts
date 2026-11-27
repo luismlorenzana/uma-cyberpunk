@@ -34,7 +34,9 @@ export function matchesSpriteBinding(binding: CampaignCombatSprite, unit: Pick<U
   if (unit.ref?.id !== String(binding.outfit)) return false
   if (typeof binding.outfit === 'number') return unit.ref?.kind === 'uma' && !!unit.frozenRig
   const sprite = unit.sprite
-  if (unit.ref?.kind !== 'heroine' || !sprite || sprite.form !== binding.form || !binding.roles.includes(sprite.role)) return false
+  // Named original bosses already use the standard joined pose in the authored battle snapshots.
+  const form = binding.original ? 'standard' : binding.form
+  if (unit.ref?.kind !== 'heroine' || !sprite || sprite.form !== form || !binding.roles?.includes(sprite.role)) return false
   if (unit.side === 'squad') return sprite.role !== 'boss-enemy' && !!unit.frozenRig
   return sprite.role !== 'boss-ally' && !!sprite.fitting
 }
@@ -44,7 +46,15 @@ export const COMPLETE_VIEW = { S: 'front-left', E: 'front-right', W: 'rear-left'
 /** The battle snapshot supplies the identity, deployed role and actual equipment. */
 export function completeLoadout(binding: CampaignCombatSprite, unit: UnitInput): CombatSpriteLoadout | undefined {
   if (!binding.loadouts || !matchesSpriteBinding(binding, unit)) return
-  if (unit.side === 'enemy') return binding.loadouts.find(row => unit.sprite?.fitting && row.encounters.includes(unit.sprite.fitting))
+  if (unit.side === 'enemy') return binding.loadouts.find(row => {
+    if (!unit.sprite?.fitting || !row.encounters.includes(unit.sprite.fitting)) return false
+    const original = binding.original
+    if (!original) return true
+    return row.attacks.length > 0 && row.attacks.every(mount => {
+      const weapon = mount === 'left' ? unit.loadout.leftHand : mount === 'right' ? unit.loadout.rightHand : null
+      return weapon?.kind === 'weapon' && weapon.band === original.weaponBand
+    })
+  })
   const rig = unit.frozenRig
   return rig && binding.loadouts.find(row => row.rigs.some(match => rig.leftHand === match.left && rig.rightHand === match.right
     && (match.back === undefined || rig.back === match.back)))
@@ -92,7 +102,9 @@ export async function campaignCombatLooks(input: BattleInput, published: Publish
     try {
       const { outfit, manifest, pages } = binding
       const bundle = parseCompleteSpriteBundle(jsonOf(await CONTENT.pack(manifest.path, manifest)))
-      if (bundle.status !== 'approved' || (typeof outfit === 'string' && bundle.character !== outfit)) throw new Error('Complete sprite identity mismatch')
+      if (bundle.status !== 'approved' || (typeof outfit === 'string' && bundle.character !== (binding.original?.actor ?? outfit))) {
+        throw new Error('Complete sprite identity mismatch')
+      }
       const byFile = new Map(pages.map(page => [page.file, page]))
       const selectedSets = new Set(units.map(({ choice }) => choice.set))
       const usedPages = new Set(bundle.sets.filter(set => selectedSets.has(set.id))
