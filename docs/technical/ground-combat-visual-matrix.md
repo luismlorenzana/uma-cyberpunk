@@ -1,10 +1,10 @@
 # Ground combat mechanic-to-visual matrix
 
-> **Reusable foundation.** This page documents the supported combat cues and shared sprite motion. The [four-act systems plan](four-act-campaign.md) sets new campaign requirements. Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
+> **Historical fitted-sprite reference.** The tables below describe CY57-era review cases. The live four-act board uses [approved fixed appearances](combat-sprite-bundles.md#active-format). Use the [current authoring contract](../design/campaign-art-delivery.md) for new bindings.
 
-Use this contract for campaign Training, boarding and ground missions on battle rules versions 1–4.
-The [39-part equipment matrix](../handoff/combat-sprite-coverage.json) specifies which shapes are needed.
-This matrix specifies when those shapes move or change. A single pose or effect can cover several rows.
+The historical review covered campaign Training, boarding and ground missions on battle rules versions 1–4.
+The [39-part equipment matrix](../handoff/combat-sprite-coverage.json) records the shapes reviewed for that pipeline.
+The cue timing below remains a reference for existing shared effects.
 [Battle rules](../game/battle.md), [terrain](../game/terrain.md), and the reducer's [cue types](../../packages/battle/src/types.ts) are the gameplay references.
 The campaign player currently renders outfit figures or standees, walk and facing, generic attack
 cut-ins and numbers, down/removal states and board updates. The local album supplies the fitted
