@@ -137,6 +137,6 @@ reviewed `weaponBand`. Use the existing Story actor as `outfit`, `joined` as
 `form` and `boss-enemy` as the game role for a named opponent. The writer checks the
 active bundle selection, owner approval receipt, placement rows and frozen atlas pins.
 With `compatibleOnly: true`, an empty `loadouts` list publishes the approved bundle
-to Platform for review. A playable assignment adds the exact encounter unit fitting
-and matching hand mount. The board checks the deployed weapon band before selecting the
-clip. Review all four facings and attack timing in that encounter before selection.
+to Platform for review. A playable assignment pins the approved encounter and authored attack mounts.
+The board keeps that appearance across equipment changes. Review all four facings and
+attack timing in that encounter before selection.
