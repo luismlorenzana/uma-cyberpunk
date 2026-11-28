@@ -313,7 +313,7 @@ function parseSupplyNetwork(p: P, value: unknown, story: StoryPack, quests: Read
   return { after, start, ports, routes }
 }
 
-const FOUR_ACT_IMAGE_LIMIT = 8192
+const FOUR_ACT_IMAGE_LIMIT = 12_288
 
 export function parseCampaignRelease(value: unknown, file = CAMPAIGN_PREVIEW_INDEX): CampaignRelease {
   const p = new P(file)
