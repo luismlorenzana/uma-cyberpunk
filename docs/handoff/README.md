@@ -54,6 +54,7 @@ Keep the packet's implementation, script, art, release IDs and acceptance aligne
 
 | Delivery | Date | Result |
 | --- | --- | --- |
+| [CY109 · Ordered splash playback](archive/CY109.md) | 2026-11-28 | Verified timed cuts, Captain choices, Skip, missing-image fallback and replay in the four-act campaign at both landscape phone sizes. |
 | CY98–CY100 · Home, Roster and Operations | 2026-11-25 | Open and resume from the real ship, browse all 250 roster entries, and find authored chapters, objectives, operation costs and status by act. |
 | CY101 · Advancement and equipment | 2026-11-25 | New formations use earned armor reinforcement. Hangar slot comparisons and effective equipment are visible on real sortie preparation. |
 | CY130 · Campaign character menu | 2026-11-26 | A single Roster selection spans Stats, Equipment, Progression and Story. Compare armor, apply named loadouts and inspect level, armor and Laser tracks. Touch navigation and save reload were checked at 844 × 390 and 667 × 375. Physical iPhone review remains in [CY91](tasks/CY91.md). |
