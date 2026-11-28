@@ -22,42 +22,30 @@ export interface CombatLook {
 const slots = Object.keys(RIG_SLOTS) as (keyof typeof RIG_SLOTS)[]
 type DecodedPages = Map<string, Promise<{ image: HTMLImageElement; bytes: number }>>
 
-export function matchCombatFitting(bundle: Pick<SpriteBundle, 'outfit' | 'fittings'>, unit: Pick<UnitInput, 'ref' | 'frozenRig' | 'sprite'>): SpriteFitting | undefined {
-  const kind = typeof bundle.outfit === 'number' ? 'uma' : 'heroine'
-  if (unit.ref?.kind !== kind || unit.ref.id !== String(bundle.outfit)) return
-  const rig = unit.frozenRig
-  if (!rig) return kind === 'heroine' ? bundle.fittings.find(fit => fit.id === unit.sprite?.fitting) : undefined
-  return bundle.fittings.find(fit => slots.every(slot => fit.rig[slot] === rig[slot]))
-}
-
-export function matchesSpriteBinding(binding: CampaignCombatSprite, unit: Pick<UnitInput, 'ref' | 'side' | 'sprite' | 'frozenRig'>): boolean {
+function matchesSpriteBinding(binding: CampaignCombatSprite, unit: Pick<UnitInput, 'ref' | 'side' | 'sprite'>): boolean {
   if (unit.ref?.id !== String(binding.outfit)) return false
-  if (typeof binding.outfit === 'number') return unit.ref?.kind === 'uma' && !!unit.frozenRig
+  if (typeof binding.outfit === 'number') return unit.ref?.kind === 'uma'
   const sprite = unit.sprite
   // Named original bosses already use the standard joined pose in the authored battle snapshots.
   const form = binding.original ? 'standard' : binding.form
   if (unit.ref?.kind !== 'heroine' || !sprite || sprite.form !== form || !binding.roles?.includes(sprite.role)) return false
-  if (unit.side === 'squad') return sprite.role !== 'boss-enemy' && !!unit.frozenRig
-  return sprite.role !== 'boss-ally' && !!sprite.fitting
+  return unit.side === 'squad' ? sprite.role !== 'boss-enemy' : sprite.role !== 'boss-ally'
 }
 
 export const COMPLETE_VIEW = { S: 'front-left', E: 'front-right', W: 'rear-left', N: 'rear-right' } as const
 
-/** The battle snapshot supplies the identity, deployed role and actual equipment. */
-export function completeLoadout(binding: CampaignCombatSprite, unit: UnitInput): CombatSpriteLoadout | undefined {
-  if (!binding.loadouts || !matchesSpriteBinding(binding, unit)) return
-  if (unit.side === 'enemy') return binding.loadouts.find(row => {
-    if (!unit.sprite?.fitting || !row.encounters.includes(unit.sprite.fitting)) return false
-    const original = binding.original
-    if (!original) return true
-    return row.attacks.length > 0 && row.attacks.every(mount => {
-      const weapon = mount === 'left' ? unit.loadout.leftHand : mount === 'right' ? unit.loadout.rightHand : null
-      return weapon?.kind === 'weapon' && weapon.band === original.weaponBand
-    })
-  })
-  const rig = unit.frozenRig
-  return rig && binding.loadouts.find(row => row.rigs.some(match => rig.leftHand === match.left && rig.rightHand === match.right
-    && (match.back === undefined || rig.back === match.back)))
+/** Choose an approved whole-character set by actor and story role. */
+export function completeSpriteSet(binding: CampaignCombatSprite, unit: UnitInput): CombatSpriteLoadout | undefined {
+  const sets = binding.loadouts
+  if (!sets || !matchesSpriteBinding(binding, unit)) return
+  if (unit.side === 'enemy') {
+    const encounter = unit.sprite?.fitting
+    const assigned = encounter ? sets.find(row => row.encounters.includes(encounter)) : undefined
+    // Original actors are approved for named encounters only.
+    if (assigned || binding.original) return assigned
+  }
+  // Older albums identify their friendly sets with rig rows. Use the first such set as the fixed look.
+  return sets.find(row => row.rigs.length > 0) ?? sets[0]
 }
 
 /** Reuse the board cell player with exactly one layer per complete cel and no equipment composition. */
@@ -93,7 +81,7 @@ export async function campaignCombatLooks(input: BattleInput, published: Publish
   const decoded: DecodedPages = new Map()
   const matched = published.flatMap(binding => {
     const units = input.units.flatMap(unit => {
-      const choice = completeLoadout(binding, unit)
+      const choice = completeSpriteSet(binding, unit)
       return choice ? [{ unit, choice }] : []
     })
     return units.length ? [{ binding, units }] : []

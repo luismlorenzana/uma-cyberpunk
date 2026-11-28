@@ -4,11 +4,11 @@ Use the complete-animation format for the live campaign. Start from a locally ap
 
 ## Author a batch
 
-1. Select an approved template version. Pin its bundle and placement SHA-256 hashes. Inspect its four quarter views and every fitting you plan to reuse. Use the actual assigned gear and matching silhouette for each target.
+1. Select an approved fixed-appearance template. Pin its bundle and placement SHA-256 hashes. Inspect its four quarter views and the silhouette for each target.
 2. Choose the target swatches from that actor’s approved armor reference. Map exact source RGB values to the target shades. Include the ramp from highlight to shadow where needed. Where an exact source color also occurs on protected details, supply a hash-pinned, same-size black-and-white atlas mask. White allows changes. With a mask list, pages absent from the list stay at their source colors.
-3. Keep the existing silhouette, anchors, weapon contact, and animation cues. Send a different armor form or loadout for source art when those details change. Image generation is reserved for those geometry exceptions.
+3. Keep the existing silhouette, anchors, weapon contact and animation cues. Each actor uses the same art through gameplay equipment changes.
 4. Run the exporter once for the approved batch. It writes draft cels, atlases, placements, a contact sheet for each actor and a receipt with their exact hashes. Use the contact sheets and representative playback to review the batch. Check ears, markings, visor, shield, Back gear and poses wherever color masks intersect.
-5. Apply the existing local Art approval workflow to exact selected versions and add them to the corresponding actor albums. Return the selected paths, owner approval and the bundle, placement and page SHA-256 pins. Include numeric outfit IDs for crew and stable board IDs, forms, story roles and actual hand or Back assignments for bosses and lieutenants. Engineering uses those pins for Platform and the four-act campaign publication.
+5. Apply the existing local Art approval workflow to exact selected versions and add them to the corresponding actor albums. Return the selected paths, owner approval and the bundle, placement and page SHA-256 pins. Include numeric outfit IDs for crew and stable board IDs, forms and story roles for bosses and lieutenants. Engineering uses those pins for Platform and the four-act campaign publication.
 
 ## Run the exporter
 
@@ -54,4 +54,4 @@ Use category `characters`, `bosses` or `lieutenants`. Recipe paths resolve besid
 
 ## Definition of done
 
-Every selected actor has an approved palette, matching template and complete versioned album bundle. The source alpha and frames keep their original dimensions and geometry. Playback matches the reference timing. Approved palette changes are reproducible from the exact recipe and template. The game handoff names any actor who needs new silhouette, hand contact or equipment art.
+Every selected actor has an approved palette, matching template and complete versioned album bundle. The source alpha and frames keep their original dimensions and geometry. Playback matches the reference timing. Approved palette changes are reproducible from the exact recipe and template.
