@@ -43,7 +43,8 @@ it('uses a General’s approved standard appearance on either approved side', ()
   expect(completeSpriteSet(binding, unit)?.set).toBe('blade')
   expect(completeSpriteSet(binding, { ...unit, side: 'enemy', sprite: { role: 'boss-enemy', form: 'standard' } })?.set).toBe('blade')
   expect(completeSpriteSet(binding, { ...unit, side: 'enemy' })).toBeUndefined()
-  expect(completeSpriteSet({ ...binding, roles: ['boss-ally'] }, { ...unit, side: 'enemy', sprite: { role: 'boss-enemy', form: 'standard' } })).toBeUndefined()
+  const alliedOnly: CampaignCombatSprite = { ...binding, roles: ['boss-ally'] }
+  expect(completeSpriteSet(alliedOnly, { ...unit, side: 'enemy', sprite: { role: 'boss-enemy', form: 'standard' } })).toBeUndefined()
 })
 
 it('keeps an original opponent set on its approved encounter as weapons change', () => {
